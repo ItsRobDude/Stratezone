@@ -56,7 +56,7 @@ Stratezone should reward players for understanding how bases work.
 
 Good play should often mean:
 
-- cutting a power pylon
+- cutting power by destroying or disabling a power plant
 - destroying an extractor
 - disabling a radar station
 - capturing a neutral repair platform
@@ -79,7 +79,7 @@ At normal zoom, the player should quickly understand:
 - this is a rover or tank
 - this is artillery
 - this is a generator
-- this is a pylon
+- this is a power plant
 - this is a resource well
 - this line or glow means powered territory
 
@@ -167,7 +167,13 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Some units should be stronger when grouped or supported; expensive specialist units may stand a better chance alone.
 - Resource gathering uses refinery/extractor buildings placed over money-making wells.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
-- The first mission includes an on-map commander troop who must be defended.
+- The first mission includes an on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- First prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery.
+- First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
+- Colony Hub is where new units spawn.
+- Barracks controls allowed troop count; upgrades unlock new troop purchases.
+- Power Plant generates power in a small radius, and underpowered buildings shut off.
+- The first enemy faction should rebuild and produce from limited resources, racing the player for new wells, but slower than usual in Level 1.
 - The first mission objective is to destroy all enemies on the map.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
 - Ancient tech is omitted for now.
@@ -182,3 +188,4 @@ These are intentionally unresolved:
 - How expensive should a replacement worker be relative to basic combat units?
 - Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
 - How many mission archetypes belong in the first campaign slice?
+- Exact Level 1 enemy production speed and resource handicap.

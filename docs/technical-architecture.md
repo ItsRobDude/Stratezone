@@ -64,6 +64,9 @@ The architecture is shaped around these realities:
 - resource gathering uses powered refinery/extractor buildings on map-controlled wells, not survival-style hauling
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
+- first prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery
+- first prototype units are Worker, Rifleman, Guardian, Rover, and Commander
+- enemy bases can rebuild and produce from limited resources
 - debugging must be straightforward enough for future Codex runs to reason about quickly
 
 ## Proposed Repo Shape
@@ -193,15 +196,16 @@ Early requirements:
 
 ### Power System
 
-Owns powered territory, pylon/generator links, outage consequences, and build radius.
+Owns powered territory, power-source links, outage consequences, and build radius.
 
 Power should be a core identity system, not a decorative requirement.
 
 Early requirements:
 
 - structures can require power
-- pylons extend territory
+- power plants generate power in a small radius
 - disconnected buildings lose function or degrade
+- underpowered buildings shut off
 - power overlay is readable
 
 ### Economy System
@@ -214,6 +218,7 @@ Early requirements:
 - material income over time
 - spend materials on construction and units
 - consequences when extractors are destroyed or unpowered
+- enemy economy uses limited resources and can race the player for unclaimed wells
 
 ### Worker System
 
@@ -238,14 +243,18 @@ Owns attack legality, damage, armor if used, range, cooldowns, projectiles, deat
 Early requirements:
 
 - individual infantry/security unit
+- Rifleman as the basic troop
+- Guardian as the laser trooper
+- Rover as the small fast scout vehicle for fog-of-war exploration
+- fragile Commander with a pistol as a mission fail-condition unit
 - group-benefit behavior for low-cost units where useful
 - higher-cost specialist or heavy unit that can operate with less support
-- scout rover or light vehicle
 - turret
 - enemy attacker
 - building damage
 - enemy infrastructure as valid targets
 - first enemy faction can reuse the player-like technology set with different visuals, costs, timings, or tactical emphasis
+- enemy production/rebuild behavior with limited resources; Level 1 should run slower than the normal baseline
 
 ### Mission System
 
@@ -254,7 +263,7 @@ Owns objectives, mission phases, scripted events, fresh-scenario setup, and win/
 Early requirements:
 
 - deploy colony hub
-- build extractor
+- build power plant, barracks, and extractor/refinery
 - survive raid
 - destroy all enemies on the map
 - defend an on-map commander unit
@@ -349,6 +358,7 @@ Early HUD surfaces:
 
 - resource count
 - power status
+- troop cap / allowed troop count
 - worker status
 - selected entity card
 - build menu

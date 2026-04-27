@@ -21,7 +21,7 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 
 ## Core Fantasy
 
-You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on recruitable workers, generators, pylons, extractors/refineries, habitats, defenses, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
+You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable workers, barracks capacity, power plants, extractors/refineries, defenses, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
 
 ## Primary Player Verbs
 
@@ -38,9 +38,14 @@ You command an expedition on a dangerous frontier world. Each level is a fresh s
 The first playable target is a single fresh-scenario mission, internally called **First Landing**:
 
 1. Deploy a command crawler into a colony hub.
-2. Build power, an extractor, and basic defenses.
+2. Build a power plant, barracks, an extractor/refinery, and basic defenses.
 3. Defend against early enemy or objective pressure.
 4. Build enough force to push outward through fog of war.
 5. Destroy all enemies on the map.
+
+First prototype roster:
+
+- **Buildings:** Colony Hub, Barracks, Power Plant, Extractor/Refinery.
+- **Units:** Worker, Rifleman, Guardian, Rover, Commander.
 
 See [docs/product-roadmap.md](docs/product-roadmap.md) for the working roadmap.

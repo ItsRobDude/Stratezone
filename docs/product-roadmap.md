@@ -42,8 +42,14 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 - Some units should perform best grouped or supported; elite/expensive units can stand alone better.
 - Resource gathering uses refinery/extractor buildings placed over money-making wells.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
-- The first mission includes an on-map commander troop who must be defended.
+- The first mission includes an on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
+- First prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery.
+- First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
+- Colony Hub is where new units spawn.
+- Barracks controls allowed troop count; upgrades unlock new troop purchases.
+- Power Plant generates power in a small radius. Underpowered buildings shut off.
+- Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Ancient tech is out of scope for now.
 - The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
 - Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, or combined fail states.
@@ -53,6 +59,8 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 1. Vision lock
    - Decide worker replacement cost relative to basic combat units.
    - Decide first-pass building footprint/buffer values.
+   - Decide first-pass troop cap values and Barracks upgrade unlocks.
+   - Decide Level 1 enemy production speed and resource handicap.
    - Decide the first campaign's mission archetypes.
    - Decide how much sci-fi utility tech belongs in the first unit roster.
 
@@ -64,10 +72,10 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 3. Greybox First Landing
    - Build a rough playable map with placeholder shapes.
    - Implement camera, selection, move commands, and basic construction.
-   - Add power radius, extractor/refinery, colony hub, fog of war, and one enemy pressure event.
+   - Add Colony Hub, Barracks, Power Plant radius, Extractor/Refinery, fog of war, and one enemy pressure event.
 
 4. First combat loop
-   - Add one player infantry unit, one worker unit, one support-friendly low-cost unit, one vehicle, and one same-tech human enemy attacker.
+   - Add Worker, Rifleman, Guardian, Rover, Commander, and same-tech human enemy equivalents.
    - Add building damage and repair.
    - Add an enemy infrastructure target.
 
@@ -110,8 +118,9 @@ Systems:
 - selection
 - move command
 - simple unit/building entities
-- command crawler or colony hub
-- pylon/power radius
+- Colony Hub unit spawning
+- Barracks troop cap and upgrade unlock path
+- Power Plant radius and underpowered shutoff
 - extractor/refinery on a resource well
 - construction with recruitable worker units
 - first fog-of-war pass
@@ -122,6 +131,7 @@ Exit criteria:
 - the player can establish a tiny outpost
 - power radius affects placement or function
 - resource extraction feeds construction
+- unpowered buildings visibly shut off
 
 ## Milestone 2: First Landing Mission
 
@@ -131,7 +141,7 @@ Mission arc:
 
 1. land
 2. deploy hub
-3. extend power
+3. build power plant and barracks
 4. extract resources
 5. survive pressure
 6. scout through black unexplored fog of war
@@ -148,6 +158,7 @@ Systems:
 - win/loss conditions
 - at least one non-base-destruction failure criterion
 - on-map commander defend condition
+- enemy rebuild/production from limited resources
 - HUD objective tracker
 
 Exit criteria:

@@ -19,8 +19,14 @@ Current locked vision choices:
 - Combat uses individual units with varied strength, specialty, and cost. Some units should perform best in groups; elite or expensive units can stand alone better.
 - Resource gathering uses Dominion-style wells: place a refinery/extractor over a money-making node and protect it.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
-- The first mission has an on-map commander troop who must be defended, and keeping him at home base should be a sensible strategy.
+- The first mission has an on-map commander troop who must be defended. He is a fragile fail-condition unit with a pistol, and keeping him at home base should be a sensible strategy.
 - Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud.
+- First prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery.
+- First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
+- Colony Hub is where new units spawn.
+- Barracks controls allowed troop count; upgrading it unlocks new troop purchases.
+- Power Plant generates power in a small radius. Underpowered buildings shut off.
+- Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Ancient-tech mystery is out of scope for now.
 - Visual tone is military-industrial with restrained near-future utility tech.
 - Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, objective timer expired, or combinations of those.
@@ -55,6 +61,7 @@ If this direction changes, update this file and the README in the same pass.
 - Start with one playable mission, not a full sandbox.
 - Keep colony systems light and legible.
 - Make power/build radius central to base expansion.
+- Underpowered buildings should shut off, not merely lose bonuses.
 - Make workers valuable as expensive recruitable units, not life-sim colonists.
 - Workers must not be given combat utility in the first prototype; fleeing is their defensive behavior.
 - Building placement should not show a visible grid, but structures need spacing/buffer constraints so small maps cannot be over-crammed.

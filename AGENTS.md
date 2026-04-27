@@ -43,12 +43,13 @@ Read the focused docs before making broad changes:
 1. `docs/project-identity.md` for player promise, design pillars, and scope boundaries.
 2. `docs/technical-architecture.md` for stack direction and system ownership.
 3. `docs/system-contracts.md` for first-pass prototype behavior contracts.
-4. `docs/engineering-standards.md` for coding, validation, and contribution standards.
-5. `docs/first-landing-mission-spec.md` for Level 1 details.
-6. `docs/product-roadmap.md` for milestone direction and unresolved decisions.
-7. `docs/implementation-checklists.md` for acceptance checks, done rules, and baseline content IDs.
-8. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
-9. Code and assets once implementation begins.
+4. `docs/content-data-spec.md` for stable IDs and content data shapes.
+5. `docs/engineering-standards.md` for coding, validation, and contribution standards.
+6. `docs/first-landing-mission-spec.md` for Level 1 details.
+7. `docs/product-roadmap.md` for milestone direction and unresolved decisions.
+8. `docs/implementation-checklists.md` for acceptance checks, done rules, and baseline content IDs.
+9. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
+10. Code and assets once implementation begins.
 
 If code and docs drift, fix the drift deliberately. Do not silently turn current implementation accidents into product truth.
 
@@ -113,6 +114,7 @@ When adding or changing game direction, update the smallest relevant doc:
 - `docs/scaffold-plan.md` for first Godot scaffold expectations.
 - `docs/first-landing-mission-spec.md` for Level 1 mission changes.
 - `docs/system-contracts.md` for first-pass system behavior changes.
+- `docs/content-data-spec.md` for content schema, stable IDs, or tunable data changes.
 - `docs/implementation-checklists.md` for acceptance checks, done rules, or content ID changes.
 - `docs/engineering-standards.md` for validation and process changes.
 - `docs/product-roadmap.md` for milestone status and open decisions.

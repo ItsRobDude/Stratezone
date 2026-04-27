@@ -88,6 +88,7 @@ Stratezone/
     scaffold-plan.md
     first-landing-mission-spec.md
     system-contracts.md
+    content-data-spec.md
     implementation-checklists.md
     release-roadmap.md
   game/
@@ -334,7 +335,7 @@ Prefer explicit content definitions for:
 - missions
 - faction modifiers
 
-The first pass can be simple JSON, CSV, or Godot resources. Choose the format after the Godot scaffold, but keep content data separate from hardcoded scene behavior.
+The first pass can be simple JSON, CSV, or Godot resources. Choose the format after the Godot scaffold, but keep content data separate from hardcoded scene behavior. See `docs/content-data-spec.md` for first-pass fields, IDs, and validation expectations.
 
 Content definitions should be:
 

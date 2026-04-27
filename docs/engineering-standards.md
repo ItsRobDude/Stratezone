@@ -62,12 +62,13 @@ Follow this order when making decisions:
 1. `docs/project-identity.md`
 2. `docs/technical-architecture.md`
 3. `docs/system-contracts.md`
-4. `docs/engineering-standards.md`
-5. `docs/first-landing-mission-spec.md`
-6. `docs/product-roadmap.md`
-7. `docs/implementation-checklists.md`
-8. `docs/release-roadmap.md`
-9. implementation code and assets
+4. `docs/content-data-spec.md`
+5. `docs/engineering-standards.md`
+6. `docs/first-landing-mission-spec.md`
+7. `docs/product-roadmap.md`
+8. `docs/implementation-checklists.md`
+9. `docs/release-roadmap.md`
+10. implementation code and assets
 
 If code and docs disagree, do not paper over it. Either update the code or update the docs with a clear reason.
 
@@ -140,7 +141,7 @@ If a name is temporary, mark it as temporary in a doc or TODO with a clear repla
 
 Use stable lowercase snake_case IDs for content, save references, and tests.
 
-Initial IDs are listed in `docs/implementation-checklists.md`. Use those IDs for first-pass units, buildings, factions, weapons, resources, and `mission_first_landing`.
+Initial IDs and first-pass content fields are listed in `docs/content-data-spec.md`. Use those IDs for first-pass units, buildings, factions, weapons, resources, and `mission_first_landing`.
 
 Rules:
 

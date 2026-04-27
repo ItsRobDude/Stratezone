@@ -41,7 +41,7 @@ If the behavior is not supported by a doc, stop and update the smallest relevant
 
 Use stable, boring IDs for data and saveable references.
 
-Initial IDs:
+Initial IDs are defined in `docs/content-data-spec.md` and repeated here for checklist convenience:
 
 - `mission_first_landing`
 - `faction_player_expedition`
@@ -71,7 +71,7 @@ Rules:
 - IDs are lowercase snake_case.
 - Save data should store IDs, not scene paths or display names.
 - Display names may change without changing IDs.
-- New IDs should be added here or to a future content-data spec before broad use.
+- New IDs should be added to `docs/content-data-spec.md` before broad use.
 
 ## Simulation Ownership Examples
 
@@ -204,4 +204,3 @@ Before any itch.io or Steam-facing build:
 - support/contact path exists
 - release notes or known issues exist
 - upload process is documented or scripted
-

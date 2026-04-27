@@ -33,6 +33,7 @@ Current docs in place:
 - `docs/scaffold-plan.md`
 - `docs/first-landing-mission-spec.md`
 - `docs/system-contracts.md`
+- `docs/content-data-spec.md`
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
@@ -117,6 +118,7 @@ Deliverables:
 - scaffold plan
 - First Landing mission spec
 - system contracts
+- content data spec
 - implementation checklists
 - first-mission assumptions
 - worker-importance direction

@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "unit_worker",
+      "display_name": "Worker",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "builder_repair",
+      "cost": 150,
+      "health": 60,
+      "movement_speed": 1.0,
+      "sight_range": 6,
+      "train_requirements": {
+        "allowed_by_building_id": "building_barracks",
+        "spawn_building_id": "building_colony_hub"
+      },
+      "spawn_rule": "colony_hub",
+      "weapon_ids": [],
+      "can_construct": true,
+      "can_repair": true,
+      "can_attack": false,
+      "can_capture": false,
+      "can_run_over_infantry": false,
+      "tags": ["worker", "non_combat", "flees"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "unit_rifleman",
+      "display_name": "Rifleman",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "basic_infantry",
+      "cost": 100,
+      "health": 80,
+      "movement_speed": 1.1,
+      "sight_range": 7,
+      "train_requirements": {
+        "allowed_by_building_id": "building_barracks",
+        "spawn_building_id": "building_colony_hub"
+      },
+      "spawn_rule": "colony_hub",
+      "weapon_ids": ["weapon_rifle"],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": true,
+      "can_capture": false,
+      "can_run_over_infantry": false,
+      "tags": ["infantry", "fragile"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "unit_guardian",
+      "display_name": "Guardian",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "durable_infantry",
+      "cost": 140,
+      "health": 125,
+      "movement_speed": 0.9,
+      "sight_range": 7,
+      "train_requirements": {
+        "allowed_by_building_id": "building_barracks",
+        "spawn_building_id": "building_colony_hub"
+      },
+      "spawn_rule": "colony_hub",
+      "weapon_ids": ["weapon_guardian_laser"],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": true,
+      "can_capture": false,
+      "can_run_over_infantry": false,
+      "tags": ["infantry", "durable"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "unit_rover",
+      "display_name": "Rover",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "scout_vehicle",
+      "cost": 175,
+      "health": 140,
+      "movement_speed": 1.6,
+      "sight_range": 11,
+      "train_requirements": {
+        "allowed_by_building_id": "building_barracks",
+        "spawn_building_id": "building_colony_hub"
+      },
+      "spawn_rule": "colony_hub",
+      "weapon_ids": [],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": false,
+      "can_capture": false,
+      "can_run_over_infantry": true,
+      "tags": ["vehicle", "scout", "no_gun"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "unit_commander",
+      "display_name": "Commander",
+      "faction_availability": ["faction_player_expedition"],
+      "role": "mission_critical_vip",
+      "cost": 0,
+      "health": 45,
+      "movement_speed": 0.9,
+      "sight_range": 7,
+      "train_requirements": {
+        "allowed_by_building_id": null,
+        "spawn_building_id": null
+      },
+      "spawn_rule": "mission_start_only",
+      "weapon_ids": ["weapon_pistol"],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": true,
+      "can_capture": false,
+      "can_run_over_infantry": false,
+      "tags": ["commander", "fragile", "mission_critical"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "unit_tank",
+      "display_name": "Tank",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "heavy_vehicle",
+      "cost": 450,
+      "health": 450,
+      "movement_speed": 0.75,
+      "sight_range": 8,
+      "train_requirements": {
+        "allowed_by_building_id": null,
+        "spawn_building_id": null
+      },
+      "spawn_rule": "colony_hub_destroyed_reveal",
+      "weapon_ids": ["weapon_rocket"],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": true,
+      "can_capture": false,
+      "can_run_over_infantry": true,
+      "tags": ["vehicle", "heavy", "level_1_reveal_only"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}
+

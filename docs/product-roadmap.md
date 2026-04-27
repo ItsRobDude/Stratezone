@@ -20,7 +20,7 @@ The intended product is:
 
 ## Current Status
 
-The repo is in pre-production.
+The repo is in pre-production with an initial Godot 4 C# scaffold.
 
 Current docs in place:
 
@@ -37,7 +37,7 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-No engine project, gameplay code, art pipeline, or build tooling is established yet.
+The initial `game/` project, placeholder content data, and content validation script exist. Godot and the .NET SDK still need to be installed or exposed on PATH before the scaffold can be opened and compiled on this machine.
 
 The first prototype stack is locked as Godot 4 with C#.
 
@@ -80,9 +80,10 @@ The first prototype stack is locked as Godot 4 with C#.
    - Decide how much sci-fi utility tech belongs in the first unit roster.
 
 2. Engine scaffold
-   - Create the Godot 4 C# project.
-   - Add a minimal C# runtime.
-   - Establish folder layout and validation commands.
+   - Install or expose Godot .NET and the .NET SDK on the development machine.
+   - Open and verify the Godot 4 C# project.
+   - Compile the minimal C# runtime.
+   - Expand validation commands beyond content data checks.
 
 3. Greybox First Landing
    - Build a rough small playable map with placeholder shapes.

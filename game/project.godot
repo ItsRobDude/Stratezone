@@ -1,0 +1,35 @@
+; Engine configuration file.
+; It is best edited using the Godot editor.
+
+config_version=5
+
+[application]
+
+config/name="Stratezone"
+run/main_scene="res://scenes/main/Main.tscn"
+config/features=PackedStringArray("4.4", "C#", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[dotnet]
+
+project/assembly_name="Stratezone"
+
+[input]
+
+select={
+"deadzone": 0.5,
+"events": []
+}
+command_move={
+"deadzone": 0.5,
+"events": []
+}
+camera_pan={
+"deadzone": 0.5,
+"events": []
+}
+

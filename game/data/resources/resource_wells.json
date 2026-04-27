@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "well_first_landing_start",
+      "resource_id": "resource_materials",
+      "capacity": 1200,
+      "extraction_rate": 8,
+      "starts_claimed_by": "faction_player_expedition",
+      "depletes": true,
+      "tags": ["first_landing", "starting_well"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "well_first_landing_central",
+      "resource_id": "resource_materials",
+      "capacity": 1800,
+      "extraction_rate": 10,
+      "starts_claimed_by": null,
+      "depletes": true,
+      "tags": ["first_landing", "contested"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}
+

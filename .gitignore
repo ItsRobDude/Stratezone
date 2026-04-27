@@ -1,0 +1,17 @@
+# Godot local/editor state
+.godot/
+.mono/
+
+# .NET build output
+bin/
+obj/
+
+# Export/build artifacts
+builds/
+exports/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+

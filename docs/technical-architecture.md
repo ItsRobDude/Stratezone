@@ -335,7 +335,7 @@ Prefer explicit content definitions for:
 - missions
 - faction modifiers
 
-The first pass can be simple JSON, CSV, or Godot resources. Choose the format after the Godot scaffold, but keep content data separate from hardcoded scene behavior. See `docs/content-data-spec.md` for first-pass fields, IDs, and validation expectations.
+The current first pass uses JSON under `game/data/`. Future Godot resources or CSV tables can be considered later, but content data must stay separate from hardcoded scene behavior. See `docs/content-data-spec.md` for first-pass fields, IDs, and validation expectations.
 
 Content definitions should be:
 
@@ -454,7 +454,7 @@ Browser/web is not the default if Godot C# remains the technical path.
 ## Open Architecture Decisions
 
 - Exact repo layout after Godot scaffolding.
-- JSON vs Godot resources for content data.
+- Whether JSON remains the long-term content data format or Godot resources earn their place later.
 - Exact building footprint/buffer values for constrained maps.
 - Exact worker replacement cost relative to basic combat units.
 - Whether to use a third-party pathfinding helper or stay engine-native/simple first.

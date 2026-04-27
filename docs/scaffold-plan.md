@@ -108,7 +108,11 @@ The first scene can be ugly. It should be useful.
 
 ## First Validation Targets
 
-There are no validation commands yet. Once the scaffold exists, expose or document small commands for:
+Current validation command:
+
+- `python tools/validate_content.py`
+
+Once Godot .NET and the .NET SDK are installed or available on PATH, expose or document commands for:
 
 - Godot project load or headless sanity check
 - C# build or compile check
@@ -129,5 +133,6 @@ The scaffold is complete when:
 - the first validation commands are documented in `docs/engineering-standards.md`
 - no gameplay rule is forced to live only inside a visual scene script
 
-At that point, implementation should move to the greybox First Landing loop, not more scaffold polishing.
+Current status: the repo scaffold and content validation exist, but Godot/.NET machine setup is still required before the open/compile checks can pass locally.
 
+At that point, implementation should move to the greybox First Landing loop, not more scaffold polishing.

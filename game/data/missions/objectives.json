@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "objective_destroy_all_enemies",
+      "display_name": "Destroy All Enemies",
+      "objective_type": "destroy_required_enemy_targets",
+      "target_filters": ["faction_private_military"],
+      "success_condition": "no_required_enemy_targets_remaining",
+      "failure_condition": null,
+      "hud_text": "Destroy all enemy forces.",
+      "completion_behavior": "win_mission",
+      "tags": ["first_landing"]
+    },
+    {
+      "id": "objective_protect_commander",
+      "display_name": "Protect the Commander",
+      "objective_type": "protect_mission_critical_unit",
+      "target_filters": ["unit_commander"],
+      "success_condition": "unit_commander_alive_until_mission_complete",
+      "failure_condition": "unit_commander_dead",
+      "hud_text": "Keep the Commander alive.",
+      "completion_behavior": "fail_mission_on_failure",
+      "tags": ["first_landing"]
+    }
+  ]
+}
+

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "resource_materials",
+      "display_name": "Materials",
+      "storage_behavior": "stockpile",
+      "shown_in_hud": true,
+      "tags": ["primary_resource"]
+    }
+  ]
+}
+

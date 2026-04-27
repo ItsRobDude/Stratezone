@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "mission_first_landing",
+      "display_name": "First Landing",
+      "target_duration_minutes": {
+        "min": 5,
+        "max": 10
+      },
+      "map_id": "map_first_landing_greybox",
+      "player_faction_id": "faction_player_expedition",
+      "enemy_faction_ids": ["faction_private_military"],
+      "starting_entities": [
+        {
+          "content_id": "building_colony_hub",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_base"
+        },
+        {
+          "content_id": "unit_commander",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_base"
+        },
+        {
+          "content_id": "building_colony_hub",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base"
+        },
+        {
+          "content_id": "building_pylon",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_pylon_weak_point"
+        },
+        {
+          "content_id": "building_defense_tower",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_tower_route"
+        }
+      ],
+      "starting_resources": [
+        {
+          "faction_id": "faction_player_expedition",
+          "resource_id": "resource_materials",
+          "amount": 650
+        },
+        {
+          "faction_id": "faction_private_military",
+          "resource_id": "resource_materials",
+          "amount": 450
+        }
+      ],
+      "resource_wells": ["well_first_landing_start", "well_first_landing_central"],
+      "objectives": ["objective_destroy_all_enemies", "objective_protect_commander"],
+      "failure_conditions": ["commander_killed"],
+      "event_ids": ["event_first_landing_initial_pressure"],
+      "fog_rules": {
+        "unexplored": "black",
+        "explored_terrain_stays_visible": true,
+        "track_last_known_enemies": false
+      },
+      "special_rules": ["colony_hub_destroyed_reveals_tank"],
+      "tags": ["first_landing", "playable_ugly"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}
+

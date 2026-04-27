@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "event_first_landing_initial_pressure",
+      "display_name": "Initial Pressure",
+      "trigger": {
+        "type": "elapsed_time_or_player_expansion",
+        "elapsed_seconds": 180,
+        "also_trigger_on": "player_claims_central_well"
+      },
+      "warning_text": "Enemy movement detected near the central well.",
+      "spawn_rules": [
+        {
+          "unit_id": "unit_rifleman",
+          "count": 3,
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base"
+        }
+      ],
+      "targeting_rule": "level_1_priority",
+      "resource_cost": {
+        "resource_id": "resource_materials",
+        "amount": 150
+      },
+      "repeat_behavior": "once",
+      "tags": ["first_landing", "tame_pressure"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}
+

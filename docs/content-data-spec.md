@@ -23,17 +23,14 @@ It exists to keep units, buildings, weapons, factions, resources, missions, and 
 
 ## Storage Direction
 
-The first storage format should be chosen after the Godot scaffold exists.
+The current first-pass storage format is JSON under `game/data/`.
 
-Acceptable first-pass options:
+This is intentionally simple and text-reviewable. Godot resources can replace or wrap this later only if they make authoring, validation, or runtime loading meaningfully better.
 
-- JSON files under `game/data/`
+Acceptable future options:
+
 - Godot resources under `game/data/`
 - CSV only for flat balance tables where relationships stay simple
-
-Preferred early default:
-
-- text-reviewable files that Codex and Git can inspect easily
 
 Avoid:
 
@@ -72,6 +69,7 @@ The first prototype should support these content categories:
 - weapons
 - resources
 - resource wells
+- maps
 - factions
 - missions
 - mission events
@@ -265,6 +263,27 @@ Prototype rules:
 - First Landing uses one limited resource.
 - Wells are scarce, trickle income, and can deplete.
 - Extractor/Refinery income stops when the well depletes, the building is unpowered, or the building is destroyed.
+
+## Map Definition
+
+Required fields:
+
+- `id`
+- `display_name`
+- `biome`
+- `target_size`
+- `required_features`
+- `tags`
+
+First-pass map ID:
+
+- `map_first_landing_greybox`
+
+Prototype rules:
+
+- First Landing starts as a small greybox map.
+- The map should include a player start, enemy edge-of-fog reveal, central choke, contested well, and enemy pylon weak point.
+- Terrain and art values are placeholders until the first playable map exists.
 
 ## Faction Definition
 

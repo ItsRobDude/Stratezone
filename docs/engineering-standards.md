@@ -187,14 +187,20 @@ Visual polish and scene wiring can use lighter smoke checks at first, but simula
 
 ## Validation Contract
 
-There are no validation commands yet because the engine project has not been scaffolded.
+Current validation commands:
 
-When tooling exists, this repo should define a small, obvious validation contract such as:
+- `python tools/validate_content.py`
+
+Planned validation commands once Godot .NET and the .NET SDK are installed or available on PATH:
+
+- `dotnet build game/Stratezone.csproj`
+- `godot --headless --path game --quit`
+
+Later validation should add:
 
 - format check
-- C# build/compile check
-- unit tests
-- Godot project load/export sanity check
+- simulation unit tests
+- Godot export sanity check
 - packaged Windows build check when release work begins
 - itch.io or Steam upload dry-run/checklist steps once public release work begins
 

@@ -55,7 +55,7 @@ If code and docs drift, fix the drift deliberately. Do not silently turn current
 
 ## Current Stage
 
-This repo is in pre-production / prototype planning. Prefer small documentation, planning, and scaffolding changes over broad implementation until the first Godot project exists.
+This repo is in pre-production / prototype planning. The first Godot project scaffold exists, but Godot/.NET machine verification is still pending. Prefer small implementation steps until the scaffold opens, compiles, and runs locally.
 
 Locked first prototype technical direction:
 

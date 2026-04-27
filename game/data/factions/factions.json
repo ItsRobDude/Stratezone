@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "faction_player_expedition",
+      "display_name": "Player Expedition",
+      "color_key": "blue",
+      "available_unit_ids": ["unit_worker", "unit_rifleman", "unit_guardian", "unit_rover", "unit_commander", "unit_tank"],
+      "available_building_ids": ["building_colony_hub", "building_barracks", "building_power_plant", "building_pylon", "building_extractor_refinery", "building_defense_tower", "building_gun_tower", "building_rocket_tower"],
+      "economy_modifiers": {
+        "resource_income_multiplier": 1.0
+      },
+      "production_modifiers": {
+        "build_time_multiplier": 1.0
+      },
+      "ai_profile_id": null,
+      "tags": ["player"]
+    },
+    {
+      "id": "faction_private_military",
+      "display_name": "Private Military",
+      "color_key": "red",
+      "available_unit_ids": ["unit_worker", "unit_rifleman", "unit_guardian", "unit_rover", "unit_tank"],
+      "available_building_ids": ["building_colony_hub", "building_barracks", "building_power_plant", "building_pylon", "building_extractor_refinery", "building_defense_tower", "building_gun_tower", "building_rocket_tower"],
+      "economy_modifiers": {
+        "resource_income_multiplier": 0.75
+      },
+      "production_modifiers": {
+        "build_time_multiplier": 1.25
+      },
+      "ai_profile_id": "ai_profile_level_1_private_military",
+      "tags": ["enemy", "level_1_slow"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}
+

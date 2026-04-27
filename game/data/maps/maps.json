@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "map_first_landing_greybox",
+      "display_name": "First Landing Greybox",
+      "biome": "meadow_light_forest",
+      "target_size": "small",
+      "required_features": ["player_start", "enemy_edge_of_fog", "central_choke", "contested_well", "enemy_pylon_weak_point"],
+      "tags": ["first_landing", "placeholder"]
+    }
+  ]
+}
+

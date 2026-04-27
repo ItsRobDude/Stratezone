@@ -46,7 +46,8 @@ Read the focused docs before making broad changes:
 4. `docs/engineering-standards.md` for coding, validation, and contribution standards.
 5. `docs/first-landing-mission-spec.md` for Level 1 details.
 6. `docs/product-roadmap.md` for milestone direction and unresolved decisions.
-7. Code and assets once implementation begins.
+7. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
+8. Code and assets once implementation begins.
 
 If code and docs drift, fix the drift deliberately. Do not silently turn current implementation accidents into product truth.
 
@@ -104,6 +105,7 @@ When adding or changing game direction, update the smallest relevant doc:
 - `docs/system-contracts.md` for first-pass system behavior changes.
 - `docs/engineering-standards.md` for validation and process changes.
 - `docs/product-roadmap.md` for milestone status and open decisions.
+- `docs/release-roadmap.md` for public-build or storefront-readiness changes.
 - Future design docs only when a topic needs more detail than these files can hold.
 
 Keep docs concrete. Prefer player verbs, systems, constraints, and examples over vague mood language.

@@ -45,7 +45,8 @@ Follow this order when making decisions:
 4. `docs/engineering-standards.md`
 5. `docs/first-landing-mission-spec.md`
 6. `docs/product-roadmap.md`
-7. implementation code and assets
+7. `docs/release-roadmap.md`
+8. implementation code and assets
 
 If code and docs disagree, do not paper over it. Either update the code or update the docs with a clear reason.
 
@@ -161,6 +162,7 @@ When tooling exists, this repo should define a small, obvious validation contrac
 - unit tests
 - Godot project load/export sanity check
 - packaged Windows build check when release work begins
+- itch.io or Steam upload dry-run/checklist steps once public release work begins
 
 The exact commands should be documented here and exposed from the repo root when possible.
 

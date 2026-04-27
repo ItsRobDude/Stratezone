@@ -88,6 +88,7 @@ Stratezone/
     scaffold-plan.md
     first-landing-mission-spec.md
     system-contracts.md
+    release-roadmap.md
   game/
     project.godot
     scenes/

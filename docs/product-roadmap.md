@@ -33,6 +33,7 @@ Current docs in place:
 - `docs/scaffold-plan.md`
 - `docs/first-landing-mission-spec.md`
 - `docs/system-contracts.md`
+- `docs/release-roadmap.md`
 
 No engine project, gameplay code, art pipeline, or build tooling is established yet.
 
@@ -95,6 +96,11 @@ The first prototype stack is locked as Godot 4 with C#.
    - Add destroy-all-enemies objective and win/loss state.
    - Add one midlevel twist.
    - Add readable HUD warnings.
+
+6. Release runway
+   - Keep `docs/release-roadmap.md` current as build tooling appears.
+   - Add packaged-build checks before any public demo.
+   - Separate prototype completeness from sellable release readiness.
 
 ## Milestone 0: Foundation Docs and Decisions
 
@@ -230,7 +236,7 @@ Exit criteria:
 
 ## Milestone 5: Vertical Slice
 
-Goal: make a small shareable build.
+Goal: make one mission feel like a small, coherent game slice.
 
 Deliverables:
 
@@ -241,12 +247,141 @@ Deliverables:
 - packaged Windows build
 - known issues list
 - playtest feedback notes
+- build version display
 
 Exit criteria:
 
 - a tester can run and play without developer explanation
 - the first 20 minutes communicate Stratezone's identity
 - the build produces actionable feedback
+- the build is still a prototype, not a sellable release
+
+## Milestone 6: Playtest Build
+
+Goal: let a small private tester play without the developer narrating.
+
+Code and tool work:
+
+- package a Windows build from Godot
+- expose repeatable build/run commands or documented steps
+- add basic settings for resolution/window mode, input basics, and volume
+- add restart/quit flow
+- add visible version/build info
+- document log or crash-report location
+- add a playtest feedback template
+
+Exit criteria:
+
+- a tester can launch, play, fail, restart, and quit without editor access
+- one 20-30 minute session produces useful feedback
+- known issues are tracked in writing
+
+## Milestone 7: Public Demo / Itch Build
+
+Goal: prepare a public or semi-public downloadable build through itch.io.
+
+Code and tool work:
+
+- create repeatable Windows export steps
+- create a release folder layout that contains only shippable files
+- version build filenames and in-game build display
+- prepare an itch upload path using `butler push`
+- test a clean download/install/run path
+
+Store/page work:
+
+- itch page draft
+- screenshots from the actual build
+- short description that matches the build
+- install notes and known issues
+- minimum supported OS/hardware notes
+
+Exit criteria:
+
+- the Windows build can be downloaded and run outside the repo
+- the itch page does not claim features missing from the build
+- strangers can give gameplay feedback instead of setup feedback
+
+## Milestone 8: Steam Page Candidate
+
+Goal: prepare for Steam visibility before a full release claim.
+
+Code and tool work:
+
+- keep a stable demo or playtest branch
+- ensure the build includes every feature claimed on the page
+- add a release checklist that separates store-page readiness from build readiness
+- decide whether Steam starts with a demo, playtest, Early Access candidate, or full release candidate
+
+Store/page work:
+
+- capsule/key art plan
+- screenshots from current build
+- short trailer or gameplay capture plan
+- truthful feature list
+- Steam tags and genre positioning
+- Coming Soon timing plan
+
+Exit criteria:
+
+- store claims match the playable build
+- Steam submission work has a checklist
+- missing features are not hidden inside marketing copy
+
+## Milestone 9: Steam Demo or Early Access Candidate
+
+Goal: submit a build and page that can survive platform review.
+
+Code and tool work:
+
+- packaged Windows build on a release branch
+- repeatable Steam build upload steps
+- clean first-run flow
+- settings, restart, credits, license notes, and support info
+- crash/log capture documented
+- release notes and known issues
+
+Store/platform work:
+
+- complete Steam store presence checklist
+- complete Steam game build checklist
+- submit store page before build review
+- account for review time and Coming Soon visibility
+
+Exit criteria:
+
+- the store page and build describe the same game
+- the build launches and plays outside the editor
+- remaining blockers are platform/process issues, not missing basics
+
+## Milestone 10: Sellable Release Candidate
+
+Goal: make a build that can reasonably be sold.
+
+Code and tool work:
+
+- final release branch
+- versioned build artifact
+- clean install/uninstall behavior
+- save/load or clearly documented mission-run expectations
+- stable performance on target hardware
+- final credits and license audit
+- post-launch patch process
+
+Store/business work:
+
+- final screenshots and trailer
+- final store copy that matches the build
+- price decision
+- support/contact path
+- launch discount decision if applicable
+- first-patch plan
+
+Exit criteria:
+
+- a buyer can install, play, understand, quit, relaunch, and get support
+- the repo can reproduce the release build
+- the build is honest enough to sell, not just useful for feedback
 
 ## Later Tracks
 
@@ -258,8 +393,6 @@ These are not first-prototype commitments:
 - persistent expedition progression, only if mission-first structure earns it
 - sandbox/skirmish
 - map editor
-- Steam demo
-- itch.io public page
 - mod support
 - multiplayer
 
@@ -269,3 +402,5 @@ These are not first-prototype commitments:
 - Worker replacement cost relative to basic combat units.
 - First campaign mission archetypes and failure-condition mix.
 - Whether the first public build should be a demo, prototype, or private playtest.
+- Whether Steam starts with a demo, playtest, Early Access candidate, or full release candidate.
+- Whether the first paid release targets itch.io first, Steam first, or both after the demo proves itself.

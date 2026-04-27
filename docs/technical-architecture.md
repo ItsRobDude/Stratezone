@@ -62,7 +62,8 @@ The architecture is shaped around these realities:
 - the first playable mission matters more than future-perfect engine abstraction
 - levels are fresh authored scenarios rather than a persistent colony campaign
 - resource gathering uses powered refinery/extractor buildings on map-controlled wells, not survival-style hauling
-- fog of war is in scope
+- fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
+- building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
 - debugging must be straightforward enough for future Codex runs to reason about quickly
 
 ## Proposed Repo Shape
@@ -183,7 +184,7 @@ Owns terrain, buildability, passability, resource wells, starting zones, neutral
 
 Early requirements:
 
-- grid or tile-aware placement
+- freeform-feeling placement with hidden footprint/buffer constraints
 - passability checks
 - resource-well positions
 - base start area
@@ -225,9 +226,10 @@ Early requirements:
 - build tasks
 - repair tasks
 - worker danger or casualty consequences
+- flee behavior when threatened
 - simple priority rules
 
-Avoid deep personality simulation in the first prototype. Workers should behave like costly utility troops: they can die under attack, but losing them is a meaningful economic and tactical setback.
+Avoid deep personality simulation in the first prototype. Workers should behave like costly utility troops with no combat value: they can die under attack, should flee when threatened, and losing them is a meaningful economic and tactical setback.
 
 ### Combat System
 
@@ -254,8 +256,7 @@ Early requirements:
 - deploy colony hub
 - build extractor
 - survive raid
-- repair/activate objective
-- destroy enemy infrastructure
+- destroy all enemies on the map
 - defend an on-map commander unit
 - fail if mission-specific critical conditions are broken, such as colony hub destroyed, commander killed, transport lost, convoy escaped, or objective timer expired
 
@@ -417,7 +418,6 @@ Browser/web is not the default if Godot C# remains the technical path.
 - Final Godot version and C# setup.
 - Exact repo layout after Godot scaffolding.
 - JSON vs Godot resources for content data.
-- Grid-based movement vs continuous movement with tile-aware placement.
-- Worker replacement cost and whether workers have weak self-defense.
-- First fog-of-war implementation shape.
+- Exact building footprint/buffer values for constrained maps.
+- Worker replacement cost relative to basic combat units.
 - Whether to use a third-party pathfinding helper or stay engine-native/simple first.

@@ -42,7 +42,7 @@ The early goal is not a survival game, giant sandbox, or persistent colony sim. 
 
 The colony should matter, but the player should still feel like an RTS commander.
 
-Workers, power, production, repairs, and mission objectives should create pressure. Workers are expensive recruitable units: it is normal for them to die if the base is under attack, but losing them should hurt because replacing them costs resources and slows the base.
+Workers, power, production, repairs, and mission objectives should create pressure. Workers are expensive recruitable units: it is normal for them to die if the base is under attack, but losing them should hurt because replacing them costs resources and slows the base. Workers are useless in combat and should flee from attackers rather than fight.
 
 The correct balance is:
 
@@ -71,6 +71,7 @@ The game should use strong silhouettes and clear battlefield language.
 At normal zoom, the player should quickly understand:
 
 - this is a worker
+- this worker should be kept away from combat
 - this is the commander
 - this is a soldier
 - this unit works best grouped with others
@@ -161,12 +162,14 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Stratezone is mission RTS first, not survival sandbox first.
 - Each level starts as a fresh scenario, closer to a classic RTS campaign structure than a persistent colony.
 - Workers are expensive recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
+- Workers are useless in combat and flee from attackers.
 - Combat uses individual units with varied cost, strength, and specialty.
 - Some units should be stronger when grouped or supported; expensive specialist units may stand a better chance alone.
 - Resource gathering uses refinery/extractor buildings placed over money-making wells.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
 - The first mission includes an on-map commander troop who must be defended.
-- Fog of war is in scope.
+- The first mission objective is to destroy all enemies on the map.
+- Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.
 - Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
@@ -177,6 +180,5 @@ These are intentionally unresolved:
 
 - Is the world mostly human factions fighting each other, or are non-human factions central?
 - How expensive should a replacement worker be relative to basic combat units?
-- Should workers have light self-defense, no attack, or a weak utility sidearm?
 - Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
 - How many mission archetypes belong in the first campaign slice?

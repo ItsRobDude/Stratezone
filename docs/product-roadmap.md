@@ -35,7 +35,7 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 
 ## Settled Direction
 
-- Workers are important recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
+- Workers are important recruitable units. They are useless in combat, flee from attackers, and replacing them costs resources and slows the outpost.
 - The primary format is mission RTS, not survival sandbox.
 - Each level starts as a fresh scenario, closer to a classic RTS campaign.
 - Combat uses individual units with varied cost, strength, and specialty.
@@ -43,7 +43,7 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 - Resource gathering uses refinery/extractor buildings placed over money-making wells.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
 - The first mission includes an on-map commander troop who must be defended.
-- Fog of war is in scope.
+- Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
 - Ancient tech is out of scope for now.
 - The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
 - Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, or combined fail states.
@@ -51,7 +51,8 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 ## Near-Term Priorities
 
 1. Vision lock
-   - Decide worker replacement cost and whether workers have weak self-defense.
+   - Decide worker replacement cost relative to basic combat units.
+   - Decide first-pass building footprint/buffer values.
    - Decide the first campaign's mission archetypes.
    - Decide how much sci-fi utility tech belongs in the first unit roster.
 
@@ -71,7 +72,7 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
    - Add an enemy infrastructure target.
 
 5. First mission arc
-   - Add objectives and win/loss state.
+   - Add destroy-all-enemies objective and win/loss state.
    - Add one midlevel twist.
    - Add readable HUD warnings.
 
@@ -114,6 +115,7 @@ Systems:
 - extractor/refinery on a resource well
 - construction with recruitable worker units
 - first fog-of-war pass
+- hidden placement spacing/buffer constraints with no visible grid
 
 Exit criteria:
 
@@ -132,8 +134,8 @@ Mission arc:
 3. extend power
 4. extract resources
 5. survive pressure
-6. repair or activate objective
-7. strike enemy infrastructure
+6. scout through black unexplored fog of war
+7. destroy all enemies on the map
 8. win or fail clearly
 
 Systems:
@@ -232,8 +234,7 @@ These are not first-prototype commitments:
 ## Open Decisions
 
 - Godot 4 C# final approval vs another engine path.
-- Grid-based map vs continuous map with tile-aware placement.
-- Worker replacement cost and whether workers have weak self-defense.
-- First fog-of-war implementation shape.
+- Exact building footprint/buffer values for constrained maps.
+- Worker replacement cost relative to basic combat units.
 - First campaign mission archetypes and failure-condition mix.
 - Whether the first public build should be a demo, prototype, or private playtest.

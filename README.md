@@ -28,7 +28,7 @@ You command an expedition on a dangerous frontier world. Each level is a fresh s
 - Build colony structures.
 - Extend power and build radius.
 - Build refineries/extractors on map-controlled resource wells.
-- Protect expensive workers, the on-map commander, and critical infrastructure.
+- Protect expensive workers who flee from combat, the on-map commander, and critical infrastructure.
 - Command individual units, vehicles, artillery, commanders, and units that perform better in groups.
 - Repair after raids, storms, and sabotage.
 - Scout enemy positions and strike weak infrastructure.
@@ -40,7 +40,7 @@ The first playable target is a single fresh-scenario mission, internally called 
 1. Deploy a command crawler into a colony hub.
 2. Build power, an extractor, and basic defenses.
 3. Defend against early enemy or objective pressure.
-4. Repair or activate a mission objective.
-5. Push outward, cut enemy infrastructure, and destroy a forward base.
+4. Build enough force to push outward through fog of war.
+5. Destroy all enemies on the map.
 
 See [docs/product-roadmap.md](docs/product-roadmap.md) for the working roadmap.

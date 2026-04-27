@@ -14,13 +14,13 @@ Keep the base alive, readable, and tactically relevant. Avoid adding deep simula
 
 Current locked vision choices:
 
-- Workers are important recruitable units. They can die like troops, but losing them should hurt because replacing them costs resources.
+- Workers are important recruitable units. They are useless in combat, should flee from attackers, and losing them should hurt because replacing them costs resources.
 - Levels are fresh authored scenarios, closer to a classic RTS campaign than a persistent colony sim.
 - Combat uses individual units with varied strength, specialty, and cost. Some units should perform best in groups; elite or expensive units can stand alone better.
 - Resource gathering uses Dominion-style wells: place a refinery/extractor over a money-making node and protect it.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
 - The first mission has an on-map commander troop who must be defended, and keeping him at home base should be a sensible strategy.
-- Fog of war is in scope.
+- Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud.
 - Ancient-tech mystery is out of scope for now.
 - Visual tone is military-industrial with restrained near-future utility tech.
 - Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, objective timer expired, or combinations of those.
@@ -56,6 +56,8 @@ If this direction changes, update this file and the README in the same pass.
 - Keep colony systems light and legible.
 - Make power/build radius central to base expansion.
 - Make workers valuable as expensive recruitable units, not life-sim colonists.
+- Workers must not be given combat utility in the first prototype; fleeing is their defensive behavior.
+- Building placement should not show a visible grid, but structures need spacing/buffer constraints so small maps cannot be over-crammed.
 - Prefer infrastructure strikes over simple unit-spam victory.
 - Keep factions, lore, and unit rosters small until the core loop is fun.
 - Do not add ancient-tech systems, mystery artifacts, or alien-tech progression unless the user reopens that scope.

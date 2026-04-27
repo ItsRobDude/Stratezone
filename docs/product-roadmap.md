@@ -44,11 +44,14 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
 - The first mission includes an on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
-- First prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery.
+- First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
+- Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they are armed.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls allowed troop count; upgrades unlock new troop purchases.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
+- Pylons link power over long distances.
+- Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Ancient tech is out of scope for now.
 - The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
@@ -72,7 +75,7 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 3. Greybox First Landing
    - Build a rough playable map with placeholder shapes.
    - Implement camera, selection, move commands, and basic construction.
-   - Add Colony Hub, Barracks, Power Plant radius, Extractor/Refinery, fog of war, and one enemy pressure event.
+   - Add Colony Hub, Barracks, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
 
 4. First combat loop
    - Add Worker, Rifleman, Guardian, Rover, Commander, and same-tech human enemy equivalents.
@@ -121,7 +124,9 @@ Systems:
 - Colony Hub unit spawning
 - Barracks troop cap and upgrade unlock path
 - Power Plant radius and underpowered shutoff
+- Pylon long-distance power linking
 - extractor/refinery on a resource well
+- Defense Tower energy wall links
 - construction with recruitable worker units
 - first fog-of-war pass
 - hidden placement spacing/buffer constraints with no visible grid
@@ -141,7 +146,7 @@ Mission arc:
 
 1. land
 2. deploy hub
-3. build power plant and barracks
+3. build power plant, pylons, and barracks
 4. extract resources
 5. survive pressure
 6. scout through black unexplored fog of war
@@ -159,6 +164,7 @@ Systems:
 - at least one non-base-destruction failure criterion
 - on-map commander defend condition
 - enemy rebuild/production from limited resources
+- defense tower wall path-blocking
 - HUD objective tracker
 
 Exit criteria:

@@ -21,11 +21,14 @@ Current locked vision choices:
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
 - The first mission has an on-map commander troop who must be defended. He is a fragile fail-condition unit with a pistol, and keeping him at home base should be a sensible strategy.
 - Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud.
-- First prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery.
+- First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls allowed troop count; upgrading it unlocks new troop purchases.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
+- Pylons link power over long distances.
+- Defense Towers create an energy wall when placed near another compatible Defense Tower, blocking enemy pathing until a tower is destroyed.
+- Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they are armed.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Ancient-tech mystery is out of scope for now.
 - Visual tone is military-industrial with restrained near-future utility tech.
@@ -62,6 +65,8 @@ If this direction changes, update this file and the README in the same pass.
 - Keep colony systems light and legible.
 - Make power/build radius central to base expansion.
 - Underpowered buildings should shut off, not merely lose bonuses.
+- Power Plants generate local power; Pylons extend/link it over long distances.
+- Treat Defense Tower wall links as path-blocking gameplay, not cosmetic VFX.
 - Make workers valuable as expensive recruitable units, not life-sim colonists.
 - Workers must not be given combat utility in the first prototype; fleeing is their defensive behavior.
 - Building placement should not show a visible grid, but structures need spacing/buffer constraints so small maps cannot be over-crammed.

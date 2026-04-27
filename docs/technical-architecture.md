@@ -64,7 +64,8 @@ The architecture is shaped around these realities:
 - resource gathering uses powered refinery/extractor buildings on map-controlled wells, not survival-style hauling
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
-- first prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery
+- first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
+- Gun Tower and Rocket Tower can inherit Defense Tower wall-anchor behavior while adding weapons and higher cost
 - first prototype units are Worker, Rifleman, Guardian, Rover, and Commander
 - enemy bases can rebuild and produce from limited resources
 - debugging must be straightforward enough for future Codex runs to reason about quickly
@@ -125,7 +126,8 @@ Simulation-owned systems:
 - entity identity and lifetime
 - map occupancy and passability
 - resources and extraction
-- power networks and build radius
+- power networks, pylon links, and build radius
+- defense tower wall links and path blocking
 - workers as expensive recruitable units
 - construction and repair
 - unit stats and combat resolution
@@ -196,7 +198,7 @@ Early requirements:
 
 ### Power System
 
-Owns powered territory, power-source links, outage consequences, and build radius.
+Owns powered territory, power-source links, Pylon transmission, outage consequences, and build radius.
 
 Power should be a core identity system, not a decorative requirement.
 
@@ -204,9 +206,23 @@ Early requirements:
 
 - structures can require power
 - power plants generate power in a small radius
+- pylons link power over long distances
 - disconnected buildings lose function or degrade
 - underpowered buildings shut off
 - power overlay is readable
+
+### Defense Wall System
+
+Owns Defense Tower links, wall segments, path blocking, and wall shutdown when an anchor tower is destroyed or unpowered.
+
+Early requirements:
+
+- Defense Towers can link to nearby compatible Defense Towers.
+- A valid Defense Tower pair creates an energy wall segment between them.
+- Energy wall segments block enemy movement/pathing.
+- Destroying or disabling either tower removes the wall segment.
+- Gun Towers and Rocket Towers can use the same wall-anchor behavior while also attacking.
+- Armed tower variants cost more than basic Defense Towers.
 
 ### Economy System
 
@@ -263,7 +279,7 @@ Owns objectives, mission phases, scripted events, fresh-scenario setup, and win/
 Early requirements:
 
 - deploy colony hub
-- build power plant, barracks, and extractor/refinery
+- build power plant, pylons, barracks, extractor/refinery, and defense towers
 - survive raid
 - destroy all enemies on the map
 - defend an on-map commander unit

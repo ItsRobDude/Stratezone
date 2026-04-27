@@ -28,6 +28,8 @@ Stratezone should be a playable, packageable indie strategy game built around:
 - powered expansion networks
 - recruitable workers with meaningful mission and economy value
 - refinery/extractor placement on map-controlled money wells
+- pylon-linked power over long distances
+- defense towers that create energy walls between paired towers
 - individual military units that are commanded directly
 - enemy infrastructure that can be scouted, cut, captured, disabled, or destroyed
 - mission maps that tell small military-industrial war stories through objectives and pressure events
@@ -56,8 +58,9 @@ Stratezone should reward players for understanding how bases work.
 
 Good play should often mean:
 
-- cutting power by destroying or disabling a power plant
+- cutting power by destroying or disabling a power plant or pylon
 - destroying an extractor
+- destroying a defense tower to open an energy wall
 - disabling a radar station
 - capturing a neutral repair platform
 - forcing the enemy to fight without production, vision, or defenses
@@ -80,8 +83,11 @@ At normal zoom, the player should quickly understand:
 - this is artillery
 - this is a generator
 - this is a power plant
+- this is a pylon
+- this is a defense tower wall anchor
 - this is a resource well
 - this line or glow means powered territory
+- this energy wall blocks enemy movement
 
 Small, clear, slightly chunky assets are better than detailed art that collapses into noise.
 
@@ -168,11 +174,14 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Resource gathering uses refinery/extractor buildings placed over money-making wells.
 - The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
 - The first mission includes an on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
-- First prototype buildings are Colony Hub, Barracks, Power Plant, and Extractor/Refinery.
+- First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
+- The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
+- Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they also attack enemies.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls allowed troop count; upgrades unlock new troop purchases.
 - Power Plant generates power in a small radius, and underpowered buildings shut off.
+- Pylons link power over long distances.
 - The first enemy faction should rebuild and produce from limited resources, racing the player for new wells, but slower than usual in Level 1.
 - The first mission objective is to destroy all enemies on the map.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.

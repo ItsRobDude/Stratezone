@@ -112,6 +112,36 @@ Rules:
 - content definitions should be data, not scattered constants across scenes
 - save data should serialize simulation truth, not node paths
 
+## File Size and Module Structure
+
+Stratezone should avoid files that become thousand-line knowledge traps. Large files are hard for humans to review, hard for AI agents to patch safely, and easy places for gameplay rules to drift into the wrong layer.
+
+Default trigger for hand-written code:
+
+- **900 lines:** review trigger. Split the file, or leave a clear reason in the closeout for why it should stay together.
+
+Godot scene scripts should be smaller than simulation files when possible. A scene script should wire nodes, route input, and present state. If it starts owning rules for power, economy, combat, construction, fog, objectives, or AI, move that behavior into the simulation layer.
+
+Preferred split pattern for growing systems:
+
+- `*Definition` or content records for tunable values.
+- `*State` or entity records for saveable runtime state.
+- `*Command` records for player, AI, or mission actions.
+- `*System` classes for rule application.
+- `*Event` records for emitted simulation facts.
+- `*Debug` helpers for inspection surfaces.
+- presentation adapters under `presentation/` for Godot node wiring.
+
+Splitting rules:
+
+- split by reason to change, not by arbitrary line count alone
+- keep public APIs small and explicit
+- avoid `Manager`, `Controller`, or `Utils` files that collect unrelated behavior
+- keep content IDs and data schemas close to content loading/validation, not duplicated across gameplay files
+- do not create one-file-per-method fragmentation; split only when a new file has a clear owner
+
+Exceptions are allowed for generated code, large static tables, serialized data, or temporary migration files. Mark the exception clearly and prefer a follow-up TODO if the file is expected to shrink.
+
 ## Naming Standards
 
 Use names that reveal intent.
@@ -215,6 +245,7 @@ Until then, every implementation closeout should report:
 - behavior verified from the player or simulation perspective
 - known risks or follow-up work
 - assumptions made
+- any hand-written code files left over 900 lines, with the reason they were not split
 
 ## AI-Assisted Development Rules
 

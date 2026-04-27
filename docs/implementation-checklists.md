@@ -23,6 +23,7 @@ Every implementation closeout should report:
 - commands or manual checks not run, with reason
 - behavior verified from the player or simulation perspective
 - known risks, TODOs, or follow-up work
+- any hand-written code files over 900 lines, with the reason they were not split
 
 Do not claim a feature is complete if it was only compiled but not observed.
 
@@ -34,6 +35,7 @@ Before adding a mechanic, tool, dependency, asset pipeline, or content type, con
 - it supports First Landing, the sellable build runway, or an explicitly reopened scope
 - it does not add multiplayer, procedural campaigns, deep colonist simulation, ancient-tech progression, or lore systems by accident
 - it does not require broad refactors unrelated to the task
+- it does not turn an existing file into a catch-all module where separate state, commands, rules, events, or presentation adapters would be clearer
 
 If the behavior is not supported by a doc, stop and update the smallest relevant doc or ask before implementing it.
 

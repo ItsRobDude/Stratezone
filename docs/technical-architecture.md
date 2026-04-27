@@ -125,6 +125,35 @@ content/
 
 Keep paths honest. If the actual Godot layout differs, update this document after the first scaffold.
 
+## System File Shape
+
+Each gameplay domain should grow as a small package of cooperating files instead of one large script. For example, a mature power implementation may include:
+
+```text
+simulation/power/
+  PowerDefinition.cs
+  PowerNodeState.cs
+  PowerCommand.cs
+  PowerSystem.cs
+  PowerEvent.cs
+  PowerDebugSnapshot.cs
+presentation/power/
+  PowerOverlayView.cs
+  PowerNodePresenter.cs
+```
+
+The exact names can change by domain, but the ownership should stay legible:
+
+- definitions describe tunable content
+- state records describe saveable simulation truth
+- commands describe requested actions
+- systems apply rules
+- events describe what happened
+- debug snapshots expose inspectable state
+- presentation adapters turn simulation state into Godot visuals
+
+When a hand-written code file reaches 900 lines, treat that as an architecture review point. Split it if it has more than one reason to change, especially if scene code is starting to own simulation behavior, or document why the file should stay together.
+
 ## Simulation Boundary
 
 The simulation owns all rules that must survive save/load and all decisions the player should be able to trust.

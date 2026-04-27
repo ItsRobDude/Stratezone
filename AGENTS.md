@@ -104,6 +104,16 @@ Avoid burying gameplay rules directly inside scene/UI code. The game should be t
 
 Before adding a new dependency, framework, content pipeline, or tool, check whether it meaningfully improves the first playable mission. If not, document it as a later option instead of adding it now.
 
+## File Size Guardrails
+
+Prevent large catch-all files before they become hard to reason about.
+
+- Prefer small, single-owner files over broad manager files.
+- Treat 900 lines in a hand-written code file as a review trigger: either split the file or explain why it should stay together.
+- Keep Godot scene scripts especially thin: route input, presentation, and node wiring to simulation systems instead of accumulating rules.
+- Split growing systems by stable roles: definitions, state records, commands, system logic, events, debug views, and presentation adapters.
+- Do not hide unrelated features in the same file just because they share a scene or milestone.
+
 ## Documentation Expectations
 
 When adding or changing game direction, update the smallest relevant doc:

@@ -4,13 +4,26 @@ Guidance for Codex and other coding agents working in this repository.
 
 ## Project Identity
 
-Stratezone is a colony RTS, not a pure base-builder and not a pure Command & Conquer clone.
+Stratezone is a mission-first colony RTS, not a pure base-builder and not a pure Command & Conquer clone.
 
 The durable design rule is:
 
 > RimWorld for colony stakes. Dominion/C&C-style RTS for battlefield control.
 
 Keep the base alive, readable, and tactically relevant. Avoid adding deep simulation just because it is interesting.
+
+Current locked vision choices:
+
+- Workers are important recruitable units. They can die like troops, but losing them should hurt because replacing them costs resources.
+- Levels are fresh authored scenarios, closer to a classic RTS campaign than a persistent colony sim.
+- Combat uses individual units with varied strength, specialty, and cost. Some units should perform best in groups; elite or expensive units can stand alone better.
+- Resource gathering uses Dominion-style wells: place a refinery/extractor over a money-making node and protect it.
+- The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
+- The first mission has an on-map commander troop who must be defended, and keeping him at home base should be a sensible strategy.
+- Fog of war is in scope.
+- Ancient-tech mystery is out of scope for now.
+- Visual tone is military-industrial with restrained near-future utility tech.
+- Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, objective timer expired, or combinations of those.
 
 ## Source of Truth
 
@@ -33,7 +46,7 @@ Current likely technical direction:
 - Engine: Godot 4
 - Language: C# if targeting native desktop from the start
 - Target platforms: Windows first, then itch.io/Steam-friendly desktop packaging
-- Visual style: readable 2D top-down or slight-isometric sci-fi
+- Visual style: readable 2D top-down or slight-isometric military-industrial sci-fi
 
 If this direction changes, update this file and the README in the same pass.
 
@@ -42,9 +55,10 @@ If this direction changes, update this file and the README in the same pass.
 - Start with one playable mission, not a full sandbox.
 - Keep colony systems light and legible.
 - Make power/build radius central to base expansion.
-- Make workers valuable without requiring RimWorld-level personal simulation.
+- Make workers valuable as expensive recruitable units, not life-sim colonists.
 - Prefer infrastructure strikes over simple unit-spam victory.
 - Keep factions, lore, and unit rosters small until the core loop is fun.
+- Do not add ancient-tech systems, mystery artifacts, or alien-tech progression unless the user reopens that scope.
 - Do not add multiplayer before the single-player loop is proven.
 - Do not add complex procedural generation before one authored mission works.
 

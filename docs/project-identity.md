@@ -2,15 +2,15 @@
 
 This document is the source of truth for Stratezone's product identity, player promise, and design boundaries.
 
-Stratezone should become a systems-forward colony RTS about turning a fragile off-world landing into a defensible war outpost. It should feel tense, readable, industrial, and a little strange without becoming an opaque sim or a nostalgic clone.
+Stratezone should become a systems-forward mission RTS about turning fragile battlefield landings into defensible war outposts. It should feel tense, readable, military-industrial, and practical without becoming an opaque sim or a nostalgic clone.
 
 The intended player feeling is:
 
 - under pressure, but not overwhelmed
 - clever for cutting enemy infrastructure instead of only brute-forcing fights
-- protective of the outpost and its workers
+- protective of the outpost, its expensive workers, and its commander
 - rewarded for scouting, preparation, and recovery
-- grounded in gritty planetary sci-fi rather than flashy space fantasy
+- grounded in military-industrial near-future warfare rather than flashy space fantasy
 
 ## Documentation Role
 
@@ -26,15 +26,15 @@ Stratezone should be a playable, packageable indie strategy game built around:
 
 - real-time base construction
 - powered expansion networks
-- named or counted workers with meaningful colony value
-- resource extraction from map-controlled wells
-- military units that are commanded directly
+- recruitable workers with meaningful mission and economy value
+- refinery/extractor placement on map-controlled money wells
+- individual military units that are commanded directly
 - enemy infrastructure that can be scouted, cut, captured, disabled, or destroyed
-- mission maps that tell small sci-fi war stories through objectives and pressure events
+- mission maps that tell small military-industrial war stories through objectives and pressure events
 
-The early goal is not a giant sandbox. The early goal is one authored mission that proves the core fantasy:
+The early goal is not a survival game, giant sandbox, or persistent colony sim. The early goal is one authored fresh-scenario mission that proves the core fantasy:
 
-> Keep a fragile colony alive long enough to turn it into a war machine.
+> Defend a fragile outpost long enough to turn it into a war machine.
 
 ## Design Pillars
 
@@ -42,7 +42,7 @@ The early goal is not a giant sandbox. The early goal is one authored mission th
 
 The colony should matter, but the player should still feel like an RTS commander.
 
-Workers, power, supply, repairs, and morale should create pressure. They should not bury the player under life-sim detail.
+Workers, power, production, repairs, and mission objectives should create pressure. Workers are expensive recruitable units: it is normal for them to die if the base is under attack, but losing them should hurt because replacing them costs resources and slows the base.
 
 The correct balance is:
 
@@ -64,14 +64,17 @@ Good play should often mean:
 
 Victory should not only come from making the largest unit blob.
 
-### 3. Readable sci-fi
+### 3. Readable Military-Industrial Sci-Fi
 
 The game should use strong silhouettes and clear battlefield language.
 
 At normal zoom, the player should quickly understand:
 
 - this is a worker
-- this is a soldier squad
+- this is the commander
+- this is a soldier
+- this unit works best grouped with others
+- this elite or expensive unit can hold ground alone
 - this is a rover or tank
 - this is artillery
 - this is a generator
@@ -83,12 +86,12 @@ Small, clear, slightly chunky assets are better than detailed art that collapses
 
 ### 4. Pressure creates decisions
 
-Storms, raids, sabotage, supply failures, and ancient-tech disturbances should make the player choose.
+Storms, raids, sabotage, supply failures, convoy threats, transport objectives, and enemy maneuvers should make the player choose.
 
 Good pressure asks:
 
 - repair now or keep building?
-- defend the extractor or the habitat?
+- defend the refinery/extractor or the commander?
 - expand to the second well or harden the first base?
 - push the enemy before the next storm or wait for artillery?
 
@@ -107,7 +110,7 @@ Authored missions let the game test:
 - enemy infrastructure design
 - environmental twists
 
-Sandbox, procedural generation, and large campaigns can come later if the mission loop earns them.
+Sandbox, procedural generation, persistence, and large campaigns can come later if the mission loop earns them.
 
 ### 6. Maintainable ambition
 
@@ -127,37 +130,53 @@ Stratezone should not become:
 
 - a direct remake of any older RTS
 - a pure RimWorld-style colony simulator
+- a survival game
 - a pure Command & Conquer-style tank-spam game
 - a full 4X game
 - a multiplayer-first RTS
 - a giant procedural sandbox before authored missions work
+- a persistent colony sim before fresh campaign scenarios work
 - an automation game where combat is secondary
 - a lore encyclopedia disguised as a prototype
 - a tech-demo engine project
+- an ancient-artifact mystery game unless that scope is deliberately reopened
 
 It can borrow feelings and lessons from older games. It should not depend on copying their exact factions, units, art, names, maps, or story.
 
 ## Working Tone
 
-The tone should be industrial frontier sci-fi:
+The tone should be military-industrial frontier sci-fi:
 
 - harsh alien terrain
 - modular outpost structures
 - utility vehicles and expedition hardware
 - military logistics under stress
-- ancient buried technology as a pressure source
 - human-scale vulnerability inside a larger war
+- restrained near-future utility technology, such as rocket towers, laser-armed troops, sensors, drones, and powered infrastructure
 
-Avoid making everything too sleek, too magical, or too cosmic. The setting should feel like people landed machinery on a hostile world and now have to survive the consequences.
+Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-driven. The setting should feel like people landed machinery on a hostile world and now have to survive military consequences.
+
+## Settled Vision Choices
+
+- Stratezone is mission RTS first, not survival sandbox first.
+- Each level starts as a fresh scenario, closer to a classic RTS campaign structure than a persistent colony.
+- Workers are expensive recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
+- Combat uses individual units with varied cost, strength, and specialty.
+- Some units should be stronger when grouped or supported; expensive specialist units may stand a better chance alone.
+- Resource gathering uses refinery/extractor buildings placed over money-making wells.
+- The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
+- The first mission includes an on-map commander troop who must be defended.
+- Fog of war is in scope.
+- Ancient tech is omitted for now.
+- The sci-fi tone is military-industrial with restrained future utility tech.
+- Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
 
 ## Open Vision Questions
 
 These are intentionally unresolved:
 
-- Is Stratezone primarily mission-based, campaign-based, or mission-based first with later sandbox?
-- Are workers individually named characters, anonymous worker counts, or a hybrid?
 - Is the world mostly human factions fighting each other, or are non-human factions central?
-- How weird should ancient technology get before it stops feeling grounded?
-- Should the colony persist between missions, or does each mission start fresh?
-- Should combat use individual units, squads, or a mix?
-- Should the midlevel twist usually be environmental, enemy-driven, or ancient-tech-driven?
+- How expensive should a replacement worker be relative to basic combat units?
+- Should workers have light self-defense, no attack, or a weak utility sidearm?
+- Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
+- How many mission archetypes belong in the first campaign slice?

@@ -33,7 +33,7 @@ The current intended path is:
 - **Language:** C# for game logic and larger systems
 - **Target:** native desktop first, Windows as the first practical platform
 - **Distribution direction:** itch.io and Steam-friendly packaged builds
-- **Visual mode:** readable 2D top-down or slight-isometric presentation
+- **Visual mode:** readable 2D top-down or slight-isometric military-industrial presentation
 
 This is a direction, not a final locked stack. If the project pivots to another engine, update this document, `README.md`, and `AGENTS.md` in the same pass.
 
@@ -60,6 +60,9 @@ The architecture is shaped around these realities:
 - the game may eventually be sold as a downloadable desktop indie game
 - art production should assume AI-assisted concepts plus Photoshop cleanup, not a large art team
 - the first playable mission matters more than future-perfect engine abstraction
+- levels are fresh authored scenarios rather than a persistent colony campaign
+- resource gathering uses powered refinery/extractor buildings on map-controlled wells, not survival-style hauling
+- fog of war is in scope
 - debugging must be straightforward enough for future Codex runs to reason about quickly
 
 ## Proposed Repo Shape
@@ -119,12 +122,13 @@ Simulation-owned systems:
 - map occupancy and passability
 - resources and extraction
 - power networks and build radius
-- workers and job queues
+- workers as expensive recruitable units
 - construction and repair
 - unit stats and combat resolution
 - projectiles or hitscan rules, if used
 - enemy raid timing and objective AI
 - mission objectives and win/loss state
+- mission-specific failure criteria
 - environmental events
 - fog/scouting truth
 - saveable game state
@@ -165,7 +169,7 @@ Start simple. Do not introduce a heavyweight ECS unless the project earns it.
 Recommended early model:
 
 - stable entity IDs
-- explicit data records for units, buildings, resources, and map objects
+- explicit data records for individual units, buildings, resources, and map objects
 - small domain services for systems like power, economy, combat, and workers
 - content definitions for base stats and build costs
 
@@ -212,17 +216,18 @@ Early requirements:
 
 ### Worker System
 
-Owns construction, repair, hauling if used, and worker availability.
+Owns recruitable workers, construction, repair, worker availability, and worker consequence tracking.
 
 Early requirements:
 
-- worker count
+- expensive worker units
+- resource-cost replacement
 - build tasks
 - repair tasks
 - worker danger or casualty consequences
 - simple priority rules
 
-Avoid deep personality simulation in the first prototype.
+Avoid deep personality simulation in the first prototype. Workers should behave like costly utility troops: they can die under attack, but losing them is a meaningful economic and tactical setback.
 
 ### Combat System
 
@@ -230,16 +235,19 @@ Owns attack legality, damage, armor if used, range, cooldowns, projectiles, deat
 
 Early requirements:
 
-- infantry/security squad
+- individual infantry/security unit
+- group-benefit behavior for low-cost units where useful
+- higher-cost specialist or heavy unit that can operate with less support
 - scout rover or light vehicle
 - turret
 - enemy attacker
 - building damage
 - enemy infrastructure as valid targets
+- first enemy faction can reuse the player-like technology set with different visuals, costs, timings, or tactical emphasis
 
 ### Mission System
 
-Owns objectives, mission phases, scripted events, and win/loss state.
+Owns objectives, mission phases, scripted events, fresh-scenario setup, and win/loss state.
 
 Early requirements:
 
@@ -248,7 +256,8 @@ Early requirements:
 - survive raid
 - repair/activate objective
 - destroy enemy infrastructure
-- fail if colony hub is destroyed
+- defend an on-map commander unit
+- fail if mission-specific critical conditions are broken, such as colony hub destroyed, commander killed, transport lost, convoy escaped, or objective timer expired
 
 ### Event Director
 
@@ -305,15 +314,18 @@ Save data should include:
 
 - mission ID and version
 - elapsed mission time
-- player resources and supply state
+- player resources
 - entity records and health
 - building status and power links
 - worker/task state
+- commander state when the mission uses an on-map commander
 - objective progress
 - event director state
-- fog/scouting state if implemented
+- fog/scouting state
 
 Save data should not depend on node paths as canonical identity.
+
+Because levels start as fresh scenarios, save/load should prioritize in-mission reliability before cross-mission persistence. Campaign progression can track completed scenarios later without treating the colony as continuous.
 
 ## Input and UI
 
@@ -406,6 +418,6 @@ Browser/web is not the default if Godot C# remains the technical path.
 - Exact repo layout after Godot scaffolding.
 - JSON vs Godot resources for content data.
 - Grid-based movement vs continuous movement with tile-aware placement.
-- Individual units vs squads as the primary combat entity.
-- Whether worker simulation is counted, individual, or hybrid.
+- Worker replacement cost and whether workers have weak self-defense.
+- First fog-of-war implementation shape.
 - Whether to use a third-party pathfinding helper or stay engine-native/simple first.

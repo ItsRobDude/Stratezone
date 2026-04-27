@@ -6,7 +6,7 @@ It should stay practical. The roadmap exists to help Stratezone become playable,
 
 ## Product Definition
 
-Stratezone is a mission-first colony RTS about building and defending a powered expedition outpost on a hostile alien world.
+Stratezone is a mission-first colony RTS about building and defending a powered expedition outpost in fresh military-industrial battlefield scenarios.
 
 The intended product is:
 
@@ -15,6 +15,8 @@ The intended product is:
 - packageable as a desktop indie game
 - scoped around authored missions before sandbox or procedural expansion
 - visually practical for AI-assisted concept art plus Photoshop cleanup
+- grounded in restrained near-future military utility rather than ancient-tech mystery
+- built around RTS-style economy wells, not survival-game resource hauling
 
 ## Current Status
 
@@ -31,12 +33,27 @@ Current docs in place:
 
 No engine project, gameplay code, art pipeline, or build tooling is established yet.
 
+## Settled Direction
+
+- Workers are important recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
+- The primary format is mission RTS, not survival sandbox.
+- Each level starts as a fresh scenario, closer to a classic RTS campaign.
+- Combat uses individual units with varied cost, strength, and specialty.
+- Some units should perform best grouped or supported; elite/expensive units can stand alone better.
+- Resource gathering uses refinery/extractor buildings placed over money-making wells.
+- The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
+- The first mission includes an on-map commander troop who must be defended.
+- Fog of war is in scope.
+- Ancient tech is out of scope for now.
+- The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
+- Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, or combined fail states.
+
 ## Near-Term Priorities
 
 1. Vision lock
-   - Answer the key player-experience questions.
-   - Decide how light or personal worker simulation should be.
-   - Decide whether the first mission starts fresh or implies a persistent expedition.
+   - Decide worker replacement cost and whether workers have weak self-defense.
+   - Decide the first campaign's mission archetypes.
+   - Decide how much sci-fi utility tech belongs in the first unit roster.
 
 2. Engine scaffold
    - Create the Godot 4 project if that stack remains approved.
@@ -46,10 +63,10 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 3. Greybox First Landing
    - Build a rough playable map with placeholder shapes.
    - Implement camera, selection, move commands, and basic construction.
-   - Add power radius, extractor, colony hub, and one enemy pressure event.
+   - Add power radius, extractor/refinery, colony hub, fog of war, and one enemy pressure event.
 
 4. First combat loop
-   - Add one player squad/vehicle and one enemy attacker.
+   - Add one player infantry unit, one worker unit, one support-friendly low-cost unit, one vehicle, and one same-tech human enemy attacker.
    - Add building damage and repair.
    - Add an enemy infrastructure target.
 
@@ -70,6 +87,11 @@ Deliverables:
 - product roadmap
 - stack decision
 - first-mission assumptions
+- worker-importance direction
+- first enemy faction direction
+- commander-as-unit direction
+- refinery/extractor economy direction
+- fresh-scenario campaign direction
 
 Exit criteria:
 
@@ -89,8 +111,9 @@ Systems:
 - simple unit/building entities
 - command crawler or colony hub
 - pylon/power radius
-- extractor/resource well
-- construction with placeholder workers or build progress
+- extractor/refinery on a resource well
+- construction with recruitable worker units
+- first fog-of-war pass
 
 Exit criteria:
 
@@ -121,6 +144,8 @@ Systems:
 - building damage
 - repair
 - win/loss conditions
+- at least one non-base-destruction failure criterion
+- on-map commander defend condition
 - HUD objective tracker
 
 Exit criteria:
@@ -135,7 +160,7 @@ Goal: make the outpost feel alive without becoming a deep colony sim.
 
 Candidate systems:
 
-- worker count and job priorities
+- expensive worker units and replacement cost
 - supply/stability/morale as a compact outpost health layer
 - injuries or repair strain
 - event warnings and consequences
@@ -154,7 +179,7 @@ Goal: make combat and level design about more than direct fights.
 Candidate systems:
 
 - scout unit
-- infantry/security squad
+- infantry/security unit
 - armored vehicle
 - artillery or siege unit
 - engineer/repair/capture unit
@@ -196,7 +221,7 @@ These are not first-prototype commitments:
 - second mission
 - second faction
 - campaign layer
-- persistent expedition progression
+- persistent expedition progression, only if mission-first structure earns it
 - sandbox/skirmish
 - map editor
 - Steam demo
@@ -207,9 +232,8 @@ These are not first-prototype commitments:
 ## Open Decisions
 
 - Godot 4 C# final approval vs another engine path.
-- Individual workers vs worker count vs hybrid named specialists.
 - Grid-based map vs continuous map with tile-aware placement.
-- Squad-based combat vs individual unit control.
-- How personal colonists should feel.
-- How weird ancient technology should get.
+- Worker replacement cost and whether workers have weak self-defense.
+- First fog-of-war implementation shape.
+- First campaign mission archetypes and failure-condition mix.
 - Whether the first public build should be a demo, prototype, or private playtest.

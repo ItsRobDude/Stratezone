@@ -190,11 +190,10 @@ Visual polish and scene wiring can use lighter smoke checks at first, but simula
 Current validation commands:
 
 - `python tools/validate_content.py`
-
-Planned validation commands once Godot .NET and the .NET SDK are installed or available on PATH:
-
 - `dotnet build game/Stratezone.csproj`
-- `godot --headless --path game --quit`
+- `%LOCALAPPDATA%/Microsoft/WinGet/Packages/GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.6.2-stable_mono_win64/Godot_v4.6.2-stable_mono_win64_console.exe --headless --path game --quit`
+
+In a fresh shell, `godot --headless --path game --quit` may work if the WinGet command alias is active. If not, use the explicit Godot console path above.
 
 Later validation should add:
 

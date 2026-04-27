@@ -14,4 +14,4 @@ Current scaffold:
 
 The first scaffold is intentionally tiny. Gameplay rules should grow from `scripts/simulation/` and content data, not from scene-only logic.
 
-`Stratezone.csproj` currently pins `Godot.NET.Sdk/4.4.1`. When Godot .NET is installed locally, verify that this SDK version matches the installed Godot version and update the project file if needed.
+`Stratezone.csproj` currently pins `Godot.NET.Sdk/4.6.2` to match the installed Godot .NET 4.6.2 editor.

@@ -112,7 +112,9 @@ Current validation command:
 
 - `python tools/validate_content.py`
 
-Once Godot .NET and the .NET SDK are installed or available on PATH, expose or document commands for:
+Godot .NET 4.6.2 and .NET SDK 8 are the current local tool targets. If `godot` is not on PATH in the current shell, use the installed Godot console executable directly from the WinGet package folder.
+
+Open/compile validation should use:
 
 - Godot project load or headless sanity check
 - C# build or compile check
@@ -133,6 +135,6 @@ The scaffold is complete when:
 - the first validation commands are documented in `docs/engineering-standards.md`
 - no gameplay rule is forced to live only inside a visual scene script
 
-Current status: the repo scaffold and content validation exist, but Godot/.NET machine setup is still required before the open/compile checks can pass locally.
+Current status: the repo scaffold, content validation, C# compile check, and Godot headless smoke check pass on this machine. The first greybox shell spawns placeholder units from content data and supports camera pan/zoom, click selection, and right-click move.
 
 At that point, implementation should move to the greybox First Landing loop, not more scaffold polishing.

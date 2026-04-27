@@ -37,7 +37,7 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-The initial `game/` project, placeholder content data, and content validation script exist. Godot and the .NET SDK still need to be installed or exposed on PATH before the scaffold can be opened and compiled on this machine.
+The initial `game/` project, placeholder content data, content validation script, and basic greybox unit interaction shell exist. Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. The project compiles and passes a Godot headless smoke check.
 
 The first prototype stack is locked as Godot 4 with C#.
 
@@ -80,14 +80,15 @@ The first prototype stack is locked as Godot 4 with C#.
    - Decide how much sci-fi utility tech belongs in the first unit roster.
 
 2. Engine scaffold
-   - Install or expose Godot .NET and the .NET SDK on the development machine.
-   - Open and verify the Godot 4 C# project.
-   - Compile the minimal C# runtime.
-   - Expand validation commands beyond content data checks.
+   - Keep Godot .NET and .NET SDK versions documented.
+   - Keep the project compiling after each implementation pass.
+   - Keep content validation passing as data grows.
+   - Expand validation commands beyond scaffold smoke checks.
 
 3. Greybox First Landing
    - Build a rough small playable map with placeholder shapes.
-   - Implement camera, selection, move commands, and basic construction.
+   - Expand camera, selection, and move commands from the current placeholder unit shell.
+   - Implement basic construction.
    - Add Colony Hub, Barracks, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
 
 4. First combat loop

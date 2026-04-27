@@ -55,7 +55,7 @@ If code and docs drift, fix the drift deliberately. Do not silently turn current
 
 ## Current Stage
 
-This repo is in pre-production / prototype planning. The first Godot project scaffold exists, but Godot/.NET machine verification is still pending. Prefer small implementation steps until the scaffold opens, compiles, and runs locally.
+This repo is in pre-production / prototype planning. The first Godot project scaffold exists, compiles, and passes a headless smoke check on this machine. Prefer small implementation steps until the first greybox RTS loop is proven end to end.
 
 Locked first prototype technical direction:
 

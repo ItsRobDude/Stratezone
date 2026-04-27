@@ -33,6 +33,7 @@ Current docs in place:
 - `docs/scaffold-plan.md`
 - `docs/first-landing-mission-spec.md`
 - `docs/system-contracts.md`
+- `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
 No engine project, gameplay code, art pipeline, or build tooling is established yet.
@@ -116,6 +117,7 @@ Deliverables:
 - scaffold plan
 - First Landing mission spec
 - system contracts
+- implementation checklists
 - first-mission assumptions
 - worker-importance direction
 - first enemy faction direction

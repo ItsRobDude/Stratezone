@@ -35,6 +35,26 @@ Avoid:
 - dependency sprawl
 - AI-generated code that looks plausible but violates docs
 
+## Anti-Drift Rules
+
+These rules exist to prevent common AI-assisted and vibe-coded failure modes.
+
+- No silent scope expansion. New mechanics, factions, lore systems, dependencies, tools, or content types must map to a current milestone, source doc, or explicit user request.
+- No undocumented gameplay truth. If a behavior cannot be justified from a doc, update the smallest relevant doc before implementing it.
+- No scene-only rules. Godot scenes may present and route commands, but simulation systems must own gameplay outcomes.
+- No unrelated cleanup. Do not mix feature work with broad refactors, formatting churn, or speculative architecture cleanup.
+- No invented finality. Placeholder balance, placeholder assets, and provisional tools must be labeled as such.
+- No hidden failures. If validation cannot run, or only part of a behavior was tested, say that clearly in the closeout.
+
+Practical examples:
+
+- Good: `PowerSystem` decides whether `building_barracks` is powered, and the UI displays that state.
+- Bad: a Barracks scene script disables itself because a sprite is outside a visual radius.
+- Good: `MissionObjectiveSystem` decides win/loss and emits state for the HUD.
+- Bad: a HUD label decides the mission is won.
+- Good: content data uses stable IDs such as `unit_worker` and `building_colony_hub`.
+- Bad: save data depends on display names or Godot node paths as canonical identity.
+
 ## Source of Truth Hierarchy
 
 Follow this order when making decisions:
@@ -45,8 +65,9 @@ Follow this order when making decisions:
 4. `docs/engineering-standards.md`
 5. `docs/first-landing-mission-spec.md`
 6. `docs/product-roadmap.md`
-7. `docs/release-roadmap.md`
-8. implementation code and assets
+7. `docs/implementation-checklists.md`
+8. `docs/release-roadmap.md`
+9. implementation code and assets
 
 If code and docs disagree, do not paper over it. Either update the code or update the docs with a clear reason.
 
@@ -115,6 +136,18 @@ Avoid vague names:
 
 If a name is temporary, mark it as temporary in a doc or TODO with a clear replacement condition.
 
+## Content ID Standards
+
+Use stable lowercase snake_case IDs for content, save references, and tests.
+
+Initial IDs are listed in `docs/implementation-checklists.md`. Use those IDs for first-pass units, buildings, factions, weapons, resources, and `mission_first_landing`.
+
+Rules:
+
+- display names may change without changing IDs
+- save data should store IDs, not node paths or display names
+- broad use of a new ID should be documented before implementation spreads it across code, data, and scenes
+
 ## Dependency Discipline
 
 Every dependency should earn its place.
@@ -171,7 +204,10 @@ Until then, every implementation closeout should report:
 - changed files
 - whether the work is docs-only or code/assets
 - commands run
+- manual tests performed
 - commands not run and why
+- behavior verified from the player or simulation perspective
+- known risks or follow-up work
 - assumptions made
 
 ## AI-Assisted Development Rules
@@ -184,6 +220,7 @@ AI agents should:
 - prefer implementation that matches the existing architecture docs
 - update docs when changing source-of-truth behavior
 - avoid inventing lore or mechanics outside the current scope
+- use `docs/implementation-checklists.md` to decide whether milestone work is actually done
 - report verification honestly
 
 AI agents should not:
@@ -193,6 +230,7 @@ AI agents should not:
 - hide uncertain implementation under confident prose
 - rewrite large docs or code areas unrelated to the request
 - introduce multiplayer, procedural campaign, or deep colonist simulation early
+- claim milestone completion without checklist evidence
 
 ## Git and Change Hygiene
 
@@ -227,6 +265,7 @@ For docs:
 - links point to real files
 - open questions are marked honestly
 - no doc claims implemented behavior that does not exist
+- source-of-truth and checklist docs agree with each other
 
 For code:
 
@@ -234,6 +273,7 @@ For code:
 - validation commands pass or failures are reported honestly
 - core rules live in the right ownership layer
 - the work can be explained from repo evidence
+- stable IDs are used for content and saveable references
 
 For gameplay:
 
@@ -241,3 +281,4 @@ For gameplay:
 - failure states are defined
 - controls and feedback are understandable
 - debug or test coverage exists for risky systems
+- the relevant milestone checklist has evidence, not just intent

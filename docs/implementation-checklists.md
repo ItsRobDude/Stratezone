@@ -1,0 +1,207 @@
+# Stratezone Implementation Checklists
+
+This document turns milestones into concrete acceptance checks.
+
+It exists to prevent vague progress. A feature is not done because it exists in a scene or sounds right in a summary. It is done when the player-facing behavior is observable, the simulation rule is in the right ownership layer, and the repo has evidence that it works.
+
+## Documentation Role
+
+- **Doc role:** Active checklist for implementation acceptance.
+- **Owns:** milestone acceptance checks, work-type done rules, evidence expectations, and baseline content IDs.
+- **Does not own:** product vision, system architecture, final balance, or store-readiness policy.
+- **Read when:** planning implementation, closing out code work, reviewing a milestone, or deciding whether a task is actually done.
+- **Do not read for:** high-level game identity or release platform process.
+
+## Global Closeout Checklist
+
+Every implementation closeout should report:
+
+- files changed
+- whether the work is docs, code, assets, tooling, or mixed
+- commands run
+- manual tests performed
+- commands or manual checks not run, with reason
+- behavior verified from the player or simulation perspective
+- known risks, TODOs, or follow-up work
+
+Do not claim a feature is complete if it was only compiled but not observed.
+
+## Scope Guard
+
+Before adding a mechanic, tool, dependency, asset pipeline, or content type, confirm:
+
+- it maps to a current milestone or documented release gate
+- it supports First Landing, the sellable build runway, or an explicitly reopened scope
+- it does not add multiplayer, procedural campaigns, deep colonist simulation, ancient-tech progression, or lore systems by accident
+- it does not require broad refactors unrelated to the task
+
+If the behavior is not supported by a doc, stop and update the smallest relevant doc or ask before implementing it.
+
+## Content ID Contract
+
+Use stable, boring IDs for data and saveable references.
+
+Initial IDs:
+
+- `mission_first_landing`
+- `faction_player_expedition`
+- `faction_private_military`
+- `unit_worker`
+- `unit_rifleman`
+- `unit_guardian`
+- `unit_rover`
+- `unit_commander`
+- `unit_tank`
+- `building_colony_hub`
+- `building_barracks`
+- `building_power_plant`
+- `building_pylon`
+- `building_extractor_refinery`
+- `building_defense_tower`
+- `building_gun_tower`
+- `building_rocket_tower`
+- `resource_materials`
+- `weapon_pistol`
+- `weapon_rifle`
+- `weapon_guardian_laser`
+- `weapon_rocket`
+
+Rules:
+
+- IDs are lowercase snake_case.
+- Save data should store IDs, not scene paths or display names.
+- Display names may change without changing IDs.
+- New IDs should be added here or to a future content-data spec before broad use.
+
+## Simulation Ownership Examples
+
+Good:
+
+- `PowerSystem` decides whether a building is powered.
+- `MissionObjectiveSystem` decides whether the mission is won or lost.
+- `ResourceSystem` decides extraction, spending, and depletion.
+- UI reads current resource, power, objective, and selection state from simulation.
+- Scene scripts submit commands such as build, move, repair, and attack.
+
+Bad:
+
+- a sprite script decides a building is powered because it is near a visual radius
+- a HUD panel decides the player won because a label changed
+- a scene node directly subtracts resources without a simulation command
+- an animation completion event is the only source of damage truth
+- a Godot node path becomes the canonical save identity for a unit or building
+
+## Milestone 1 Checklist: Greybox Prototype
+
+Acceptance checks:
+
+- camera can pan and zoom
+- player can select one unit
+- player can box-select multiple units, if included in the pass
+- player can right-click move selected units
+- buildings and units have stable IDs
+- player can place a basic building with visible placement feedback
+- blocked placement is rejected
+- a worker can construct a building by command
+- Power Plant powers nearby structures
+- Pylon extends or links power
+- unpowered Barracks visibly stops providing its function
+- Extractor/Refinery generates income only on a resource well
+- Defense Towers can create a blocking wall link
+- fog starts black outside known areas
+
+Evidence:
+
+- simulation/unit tests for power, resource, and placement where available
+- manual run notes showing the outpost can be established
+- screenshots or notes for visible power/fog/build feedback once visuals exist
+
+## Milestone 2 Checklist: First Landing Mission
+
+Acceptance checks:
+
+- mission starts already landed
+- Commander is present, controllable, fragile, and pistol-only
+- Commander death triggers loss
+- player can build power, Barracks, Extractor/Refinery, and defenses
+- central contested well exists
+- enemy is visible at or near fog edge
+- enemy produces or rebuilds only when it has resources
+- enemy pressure is tame but active
+- enemy pylon weak point can disable an enemy tower route
+- Rover scouts but cannot shoot
+- Rover can run over enemy infantry if that behavior is included
+- all required enemy targets destroyed triggers win
+- destroying either Colony Hub reveals a tank without changing win/loss by itself
+
+Evidence:
+
+- one completed mission run
+- one commander-death loss run
+- notes for any missing or intentionally placeholder behavior
+
+## Milestone 3 Checklist: Colony Pressure Pass
+
+Acceptance checks:
+
+- worker loss creates a real resource/time setback
+- worker replacement is possible if affordable
+- pressure warning appears before major danger
+- pressure creates a choice between repair, defense, expansion, or attack
+- pressure does not turn into deep colonist simulation
+- RTS pace remains active during pressure events
+
+Evidence:
+
+- before/after notes showing pressure changed player decisions
+- tests or debug output for event triggers where available
+
+## Milestone 4 Checklist: Tactical Identity Pass
+
+Acceptance checks:
+
+- infrastructure strikes matter in at least one mission route
+- scouting reveals useful tactical information
+- Rifleman, Guardian, Rover, Commander, and tank roles are distinct
+- explosive friendly fire works if explosive units are present
+- normal gunfire does not friendly-fire
+- player can win through something smarter than direct unit spam
+
+Evidence:
+
+- one brute-force route note
+- one infrastructure-strike route note
+- combat/system tests for role-specific rules where practical
+
+## Milestone 5 Checklist: Vertical Slice
+
+Acceptance checks:
+
+- one mission has coherent art direction, sound, UI, and feedback
+- basic settings exist
+- packaged Windows build runs outside the editor
+- known issues are documented
+- build version is visible
+- first 20 minutes communicate Stratezone's identity
+- build is clearly marked prototype, not sellable release
+
+Evidence:
+
+- packaged build smoke notes
+- playtest feedback notes
+- known issues list
+
+## Public Build Checklist
+
+Before any itch.io or Steam-facing build:
+
+- packaged Windows build runs from a clean folder
+- build includes version, channel, and commit or build identifier
+- player can launch, play, restart, quit, and relaunch
+- store/page claims match the actual build
+- credits and license notes exist
+- generated, purchased, or edited assets have provenance notes
+- support/contact path exists
+- release notes or known issues exist
+- upload process is documented or scripted
+

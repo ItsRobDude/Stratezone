@@ -46,8 +46,9 @@ Read the focused docs before making broad changes:
 4. `docs/engineering-standards.md` for coding, validation, and contribution standards.
 5. `docs/first-landing-mission-spec.md` for Level 1 details.
 6. `docs/product-roadmap.md` for milestone direction and unresolved decisions.
-7. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
-8. Code and assets once implementation begins.
+7. `docs/implementation-checklists.md` for acceptance checks, done rules, and baseline content IDs.
+8. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
+9. Code and assets once implementation begins.
 
 If code and docs drift, fix the drift deliberately. Do not silently turn current implementation accidents into product truth.
 
@@ -81,6 +82,15 @@ If this direction changes, update this file and the README in the same pass.
 - Do not add multiplayer before the single-player loop is proven.
 - Do not add complex procedural generation before one authored mission works.
 
+## Anti-Drift Rules
+
+- Do not add mechanics, lore systems, unit types, factions, dependencies, or tooling unless they map to a current milestone, source doc, or explicit user request.
+- Do not turn an open question into implementation truth silently. Update the smallest relevant doc or ask.
+- Do not use scene/UI code as the only source of gameplay truth.
+- Do not do unrelated cleanup or broad refactors while implementing a feature.
+- Do not claim a feature is done without reporting commands, manual checks, and remaining risks.
+- If a behavior cannot be justified from the docs, stop and fix the docs before coding it.
+
 ## Architecture Guardrails
 
 Keep simulation state separate from presentation.
@@ -103,6 +113,7 @@ When adding or changing game direction, update the smallest relevant doc:
 - `docs/scaffold-plan.md` for first Godot scaffold expectations.
 - `docs/first-landing-mission-spec.md` for Level 1 mission changes.
 - `docs/system-contracts.md` for first-pass system behavior changes.
+- `docs/implementation-checklists.md` for acceptance checks, done rules, or content ID changes.
 - `docs/engineering-standards.md` for validation and process changes.
 - `docs/product-roadmap.md` for milestone status and open decisions.
 - `docs/release-roadmap.md` for public-build or storefront-readiness changes.
@@ -116,4 +127,9 @@ Before calling implementation work done, run the relevant project checks once th
 
 - What files changed.
 - Whether the change is docs-only or implementation.
+- Commands run.
+- Manual checks performed.
+- What behavior was verified.
+- What was not checked and why.
+- Known risks or follow-up work.
 - Any assumptions made about engine, scope, or platform.

@@ -27,15 +27,15 @@ If future code disagrees with this document, either align the code or intentiona
 
 ## Current Architecture Decision
 
-The current intended path is:
+The first prototype stack is locked as:
 
 - **Engine:** Godot 4
 - **Language:** C# for game logic and larger systems
 - **Target:** native desktop first, Windows as the first practical platform
 - **Distribution direction:** itch.io and Steam-friendly packaged builds
-- **Visual mode:** readable 2D top-down or slight-isometric military-industrial presentation
+- **Visual mode:** readable 2D top-down military-industrial presentation
 
-This is a direction, not a final locked stack. If the project pivots to another engine, update this document, `README.md`, and `AGENTS.md` in the same pass.
+If the project pivots to another engine, update this document, `README.md`, `AGENTS.md`, and `docs/scaffold-plan.md` in the same pass.
 
 ## Core Philosophy
 
@@ -61,13 +61,15 @@ The architecture is shaped around these realities:
 - art production should assume AI-assisted concepts plus Photoshop cleanup, not a large art team
 - the first playable mission matters more than future-perfect engine abstraction
 - levels are fresh authored scenarios rather than a persistent colony campaign
-- resource gathering uses powered refinery/extractor buildings on map-controlled wells, not survival-style hauling
+- resource gathering uses powered refinery/extractor buildings on scarce limited wells that trickle resources and can deplete, not survival-style hauling
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
 - Gun Tower and Rocket Tower can inherit Defense Tower wall-anchor behavior while adding weapons and higher cost
 - first prototype units are Worker, Rifleman, Guardian, Rover, and Commander
+- Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
+- First Landing is a playable ugly 5-10 minute top-down mission before art direction or cutscenes
 - debugging must be straightforward enough for future Codex runs to reason about quickly
 
 ## Proposed Repo Shape
@@ -83,6 +85,9 @@ Stratezone/
     technical-architecture.md
     engineering-standards.md
     product-roadmap.md
+    scaffold-plan.md
+    first-landing-mission-spec.md
+    system-contracts.md
   game/
     project.godot
     scenes/
@@ -232,6 +237,7 @@ Early requirements:
 
 - resource well extractor
 - material income over time
+- limited well capacity and depletion
 - spend materials on construction and units
 - consequences when extractors are destroyed or unpowered
 - enemy economy uses limited resources and can race the player for unclaimed wells
@@ -248,6 +254,7 @@ Early requirements:
 - repair tasks
 - worker danger or casualty consequences
 - flee behavior when threatened
+- player-commanded construction and repair
 - simple priority rules
 
 Avoid deep personality simulation in the first prototype. Workers should behave like costly utility troops with no combat value: they can die under attack, should flee when threatened, and losing them is a meaningful economic and tactical setback.
@@ -271,6 +278,7 @@ Early requirements:
 - enemy infrastructure as valid targets
 - first enemy faction can reuse the player-like technology set with different visuals, costs, timings, or tactical emphasis
 - enemy production/rebuild behavior with limited resources; Level 1 should run slower than the normal baseline
+- explosive friendly fire; normal gunfire should not cause friendly fire in the first prototype
 
 ### Mission System
 
@@ -278,11 +286,12 @@ Owns objectives, mission phases, scripted events, fresh-scenario setup, and win/
 
 Early requirements:
 
-- deploy colony hub
+- start from an already-landed base in Level 1
 - build power plant, pylons, barracks, extractor/refinery, and defense towers
 - survive raid
 - destroy all enemies on the map
 - defend an on-map commander unit
+- support a Level 1 tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
 - fail if mission-specific critical conditions are broken, such as colony hub destroyed, commander killed, transport lost, convoy escaped, or objective timer expired
 
 ### Event Director
@@ -441,9 +450,8 @@ Browser/web is not the default if Godot C# remains the technical path.
 
 ## Open Architecture Decisions
 
-- Final Godot version and C# setup.
 - Exact repo layout after Godot scaffolding.
 - JSON vs Godot resources for content data.
 - Exact building footprint/buffer values for constrained maps.
-- Worker replacement cost relative to basic combat units.
+- Exact worker replacement cost relative to basic combat units.
 - Whether to use a third-party pathfinding helper or stay engine-native/simple first.

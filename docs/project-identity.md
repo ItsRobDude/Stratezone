@@ -27,7 +27,7 @@ Stratezone should be a playable, packageable indie strategy game built around:
 - real-time base construction
 - powered expansion networks
 - recruitable workers with meaningful mission and economy value
-- refinery/extractor placement on map-controlled money wells
+- refinery/extractor placement on limited resource wells that can run out
 - pylon-linked power over long distances
 - defense towers that create energy walls between paired towers
 - individual military units that are commanded directly
@@ -169,22 +169,26 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Each level starts as a fresh scenario, closer to a classic RTS campaign structure than a persistent colony.
 - Workers are expensive recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
 - Workers are useless in combat and flee from attackers.
+- Workers require player command for construction and repair in the first prototype.
 - Combat uses individual units with varied cost, strength, and specialty.
 - Some units should be stronger when grouped or supported; expensive specialist units may stand a better chance alone.
-- Resource gathering uses refinery/extractor buildings placed over money-making wells.
-- The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
-- The first mission includes an on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
+- The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
+- The first mission includes a controllable on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- The first mission is a small 5-10 minute top-down scenario set in bright readable meadows/fields with light forest.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
 - Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they also attack enemies.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
-- Barracks controls allowed troop count; upgrades unlock new troop purchases.
+- Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Power Plant generates power in a small radius, and underpowered buildings shut off.
 - Pylons link power over long distances.
 - The first enemy faction should rebuild and produce from limited resources, racing the player for new wells, but slower than usual in Level 1.
 - The first mission objective is to destroy all enemies on the map.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
+- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
+- The first playable milestone should be playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until the RTS loop works.
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.
 - Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
@@ -193,8 +197,8 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 
 These are intentionally unresolved:
 
-- Is the world mostly human factions fighting each other, or are non-human factions central?
-- How expensive should a replacement worker be relative to basic combat units?
+- Is the wider world mostly human factions fighting each other, or are non-human factions central later?
+- Exact worker replacement cost relative to basic combat units.
 - Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
 - How many mission archetypes belong in the first campaign slice?
 - Exact Level 1 enemy production speed and resource handicap.

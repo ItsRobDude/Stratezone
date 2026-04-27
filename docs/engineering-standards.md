@@ -41,15 +41,17 @@ Follow this order when making decisions:
 
 1. `docs/project-identity.md`
 2. `docs/technical-architecture.md`
-3. `docs/engineering-standards.md`
-4. `docs/product-roadmap.md`
-5. implementation code and assets
+3. `docs/system-contracts.md`
+4. `docs/engineering-standards.md`
+5. `docs/first-landing-mission-spec.md`
+6. `docs/product-roadmap.md`
+7. implementation code and assets
 
 If code and docs disagree, do not paper over it. Either update the code or update the docs with a clear reason.
 
 ## Current Tool Direction
 
-Current intended stack:
+Locked first prototype stack:
 
 - Godot 4
 - C#

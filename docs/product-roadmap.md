@@ -16,7 +16,7 @@ The intended product is:
 - scoped around authored missions before sandbox or procedural expansion
 - visually practical for AI-assisted concept art plus Photoshop cleanup
 - grounded in restrained near-future military utility rather than ancient-tech mystery
-- built around RTS-style economy wells, not survival-game resource hauling
+- built around limited RTS-style resource wells, not survival-game resource hauling
 
 ## Current Status
 
@@ -30,8 +30,13 @@ Current docs in place:
 - `docs/technical-architecture.md`
 - `docs/engineering-standards.md`
 - `docs/product-roadmap.md`
+- `docs/scaffold-plan.md`
+- `docs/first-landing-mission-spec.md`
+- `docs/system-contracts.md`
 
 No engine project, gameplay code, art pipeline, or build tooling is established yet.
+
+The first prototype stack is locked as Godot 4 with C#.
 
 ## Settled Direction
 
@@ -40,26 +45,30 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
 - Each level starts as a fresh scenario, closer to a classic RTS campaign.
 - Combat uses individual units with varied cost, strength, and specialty.
 - Some units should perform best grouped or supported; elite/expensive units can stand alone better.
-- Resource gathering uses refinery/extractor buildings placed over money-making wells.
-- The first enemy faction is human with similar technology/troops, reskinned and tuned differently.
-- The first mission includes an on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
+- The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
+- The first mission includes a controllable on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- The first mission is a small 5-10 minute top-down RTS scenario in bright readable meadows/fields with light forest.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they are armed.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
-- Barracks controls allowed troop count; upgrades unlock new troop purchases.
+- Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
 - Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
+- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
+- The first playable target is playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until gameplay works.
+- Explosive friendly fire exists; normal gunfire does not.
 - Ancient tech is out of scope for now.
 - The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
 - Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, or combined fail states.
 
 ## Near-Term Priorities
 
-1. Vision lock
+1. Foundation docs
    - Decide worker replacement cost relative to basic combat units.
    - Decide first-pass building footprint/buffer values.
    - Decide first-pass troop cap values and Barracks upgrade unlocks.
@@ -68,12 +77,12 @@ No engine project, gameplay code, art pipeline, or build tooling is established 
    - Decide how much sci-fi utility tech belongs in the first unit roster.
 
 2. Engine scaffold
-   - Create the Godot 4 project if that stack remains approved.
+   - Create the Godot 4 C# project.
    - Add a minimal C# runtime.
    - Establish folder layout and validation commands.
 
 3. Greybox First Landing
-   - Build a rough playable map with placeholder shapes.
+   - Build a rough small playable map with placeholder shapes.
    - Implement camera, selection, move commands, and basic construction.
    - Add Colony Hub, Barracks, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
 
@@ -98,6 +107,9 @@ Deliverables:
 - engineering standards doc
 - product roadmap
 - stack decision
+- scaffold plan
+- First Landing mission spec
+- system contracts
 - first-mission assumptions
 - worker-importance direction
 - first enemy faction direction
@@ -121,8 +133,8 @@ Systems:
 - selection
 - move command
 - simple unit/building entities
-- Colony Hub unit spawning
-- Barracks troop cap and upgrade unlock path
+- Colony Hub spawn location
+- Barracks training rules, troop cap, and upgrade unlock path
 - Power Plant radius and underpowered shutoff
 - Pylon long-distance power linking
 - extractor/refinery on a resource well
@@ -144,8 +156,8 @@ Goal: prove the core mission loop.
 
 Mission arc:
 
-1. land
-2. deploy hub
+1. start already landed
+2. get bearings around the base and commander
 3. build power plant, pylons, and barracks
 4. extract resources
 5. survive pressure
@@ -164,6 +176,9 @@ Systems:
 - at least one non-base-destruction failure criterion
 - on-map commander defend condition
 - enemy rebuild/production from limited resources
+- central contested well
+- enemy pylon weak point that can disable an enemy tower route
+- Colony Hub tank reveal without changing win/loss rules
 - defense tower wall path-blocking
 - HUD objective tracker
 
@@ -250,7 +265,6 @@ These are not first-prototype commitments:
 
 ## Open Decisions
 
-- Godot 4 C# final approval vs another engine path.
 - Exact building footprint/buffer values for constrained maps.
 - Worker replacement cost relative to basic combat units.
 - First campaign mission archetypes and failure-condition mix.

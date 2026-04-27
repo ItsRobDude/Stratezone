@@ -10,24 +10,28 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 - [Technical Architecture](docs/technical-architecture.md): intended stack, system ownership, simulation boundaries, and repo shape.
 - [Engineering Standards](docs/engineering-standards.md): contributor process, code quality rules, validation expectations, and AI-assisted development guardrails.
 - [Product Roadmap](docs/product-roadmap.md): milestone direction and open decisions.
+- [Scaffold Plan](docs/scaffold-plan.md): locked Godot 4 C# scaffold target and repo shape.
+- [First Landing Mission Spec](docs/first-landing-mission-spec.md): Level 1 target, pacing, map beats, objectives, and fail state.
+- [System Contracts](docs/system-contracts.md): first-pass behavior contracts for prototype systems.
 
 ## Current Intent
 
 - Build a playable prototype before chasing full-game scope.
 - Focus on one strong mission-style RTS loop: land, stabilize, expand, survive, strike.
 - Keep colony stakes light enough to support RTS pacing; this is not a survival game.
-- Keep visuals readable and production-friendly: top-down or slight-isometric 2D, simple silhouettes, strong UI, particles, and terrain texture work.
+- Build the first prototype in Godot 4 with C#.
+- Keep visuals readable and production-friendly: top-down 2D, chunky silhouettes, strong UI, particles, and terrain texture work.
 - Prefer systems that can become a real packaged indie game for itch.io or Steam.
 
 ## Core Fantasy
 
-You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable workers, barracks capacity, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
+You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable workers, barracks-controlled training rules, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
 
 ## Primary Player Verbs
 
 - Build colony structures.
 - Extend power and build radius.
-- Build refineries/extractors on map-controlled resource wells.
+- Build refineries/extractors on limited resource wells that can run out.
 - Protect expensive workers who flee from combat, the on-map commander, and critical infrastructure.
 - Command individual units, vehicles, artillery, commanders, and units that perform better in groups.
 - Repair after raids, storms, and sabotage.
@@ -35,18 +39,21 @@ You command an expedition on a dangerous frontier world. Each level is a fresh s
 
 ## Prototype Direction
 
-The first playable target is a single fresh-scenario mission, internally called **First Landing**:
+The first playable target is a small 5-10 minute fresh-scenario mission, internally called **First Landing**:
 
-1. Deploy a command crawler into a colony hub.
+1. Start after landing with a deployed base and fragile on-map commander.
 2. Build a power plant, pylons, barracks, an extractor/refinery, and basic defenses.
-3. Defend against early enemy or objective pressure.
-4. Build enough force to push outward through fog of war.
-5. Destroy all enemies on the map.
+3. Compete for a central resource well and central choke.
+4. Scout through black unexplored fog toward a visible private-military enemy.
+5. Cut weak infrastructure or brute force the enemy base.
+6. Destroy all enemies on the map before the commander is killed.
 
 First prototype roster:
 
 - **Buildings:** Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, Defense Tower.
 - **Defensive variants:** Gun Tower and Rocket Tower can act as Defense Tower wall anchors, but cost more because they are armed.
 - **Units:** Worker, Rifleman, Guardian, Rover, Commander.
+
+For this pass, placeholder shapes are acceptable, art direction can wait until gameplay works, and no story cutscenes are required.
 
 See [docs/product-roadmap.md](docs/product-roadmap.md) for the working roadmap.

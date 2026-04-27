@@ -13,7 +13,7 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 - [Scaffold Plan](docs/scaffold-plan.md): locked Godot 4 C# scaffold target and repo shape.
 - [First Landing Mission Spec](docs/first-landing-mission-spec.md): Level 1 target, pacing, map beats, objectives, and fail state.
 - [System Contracts](docs/system-contracts.md): first-pass behavior contracts for prototype systems.
-- [Content Data Spec](docs/content-data-spec.md): first-pass data shapes for units, buildings, weapons, resources, factions, missions, and events.
+- [Content Data Spec](docs/content-data-spec.md): first-pass data shapes for units, buildings, resources, factions, missions, and events.
 - [Implementation Checklists](docs/implementation-checklists.md): milestone acceptance checks, done rules, and baseline content IDs.
 - [Release Roadmap](docs/release-roadmap.md): path from prototype to itch.io/Steam-ready public builds.
 

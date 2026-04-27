@@ -7,7 +7,14 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "builder_repair",
       "cost": 150,
+      "train_time_seconds": 18,
       "health": 60,
+      "damage_resistances": {
+        "ballistic": 0.0,
+        "energy": 0.0,
+        "explosive": -0.15,
+        "crush": 0.0
+      },
       "movement_speed": 1.0,
       "sight_range": 6,
       "train_requirements": {
@@ -15,7 +22,13 @@
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",
-      "weapon_ids": [],
+      "attack_damage": 0,
+      "attack_range": 0,
+      "attack_cooldown": 0,
+      "damage_type": "none",
+      "area_radius": 0,
+      "friendly_fire": false,
+      "target_filters": [],
       "can_construct": true,
       "can_repair": true,
       "can_attack": false,
@@ -30,7 +43,14 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "basic_infantry",
       "cost": 100,
+      "train_time_seconds": 10,
       "health": 80,
+      "damage_resistances": {
+        "ballistic": 0.0,
+        "energy": 0.0,
+        "explosive": -0.1,
+        "crush": 0.0
+      },
       "movement_speed": 1.1,
       "sight_range": 7,
       "train_requirements": {
@@ -38,7 +58,13 @@
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",
-      "weapon_ids": ["weapon_rifle"],
+      "attack_damage": 14,
+      "attack_range": 6,
+      "attack_cooldown": 0.8,
+      "damage_type": "ballistic",
+      "area_radius": 0,
+      "friendly_fire": false,
+      "target_filters": ["infantry", "vehicle", "building"],
       "can_construct": false,
       "can_repair": false,
       "can_attack": true,
@@ -53,7 +79,14 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "durable_infantry",
       "cost": 140,
+      "train_time_seconds": 14,
       "health": 125,
+      "damage_resistances": {
+        "ballistic": 0.15,
+        "energy": 0.05,
+        "explosive": -0.05,
+        "crush": 0.0
+      },
       "movement_speed": 0.9,
       "sight_range": 7,
       "train_requirements": {
@@ -61,7 +94,13 @@
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",
-      "weapon_ids": ["weapon_guardian_laser"],
+      "attack_damage": 11,
+      "attack_range": 5,
+      "attack_cooldown": 0.9,
+      "damage_type": "energy",
+      "area_radius": 0,
+      "friendly_fire": false,
+      "target_filters": ["infantry", "vehicle", "building"],
       "can_construct": false,
       "can_repair": false,
       "can_attack": true,
@@ -76,7 +115,14 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "scout_vehicle",
       "cost": 175,
+      "train_time_seconds": 20,
       "health": 140,
+      "damage_resistances": {
+        "ballistic": 0.2,
+        "energy": 0.0,
+        "explosive": -0.1,
+        "crush": 0.35
+      },
       "movement_speed": 1.6,
       "sight_range": 11,
       "train_requirements": {
@@ -84,12 +130,20 @@
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",
-      "weapon_ids": [],
+      "attack_damage": 0,
+      "attack_range": 0,
+      "attack_cooldown": 0,
+      "damage_type": "none",
+      "area_radius": 0,
+      "friendly_fire": false,
+      "target_filters": [],
       "can_construct": false,
       "can_repair": false,
       "can_attack": false,
       "can_capture": false,
       "can_run_over_infantry": true,
+      "run_over_damage": 120,
+      "run_over_damage_type": "crush",
       "tags": ["vehicle", "scout", "no_gun"],
       "balance_status": "tunable_placeholder"
     },
@@ -99,7 +153,14 @@
       "faction_availability": ["faction_player_expedition"],
       "role": "mission_critical_vip",
       "cost": 0,
+      "train_time_seconds": 0,
       "health": 45,
+      "damage_resistances": {
+        "ballistic": 0.0,
+        "energy": 0.0,
+        "explosive": -0.15,
+        "crush": 0.0
+      },
       "movement_speed": 0.9,
       "sight_range": 7,
       "train_requirements": {
@@ -107,7 +168,13 @@
         "spawn_building_id": null
       },
       "spawn_rule": "mission_start_only",
-      "weapon_ids": ["weapon_pistol"],
+      "attack_damage": 8,
+      "attack_range": 4,
+      "attack_cooldown": 1.0,
+      "damage_type": "ballistic",
+      "area_radius": 0,
+      "friendly_fire": false,
+      "target_filters": ["infantry", "vehicle"],
       "can_construct": false,
       "can_repair": false,
       "can_attack": true,
@@ -122,7 +189,14 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "heavy_vehicle",
       "cost": 450,
+      "train_time_seconds": 45,
       "health": 450,
+      "damage_resistances": {
+        "ballistic": 0.45,
+        "energy": 0.2,
+        "explosive": 0.15,
+        "crush": 0.5
+      },
       "movement_speed": 0.75,
       "sight_range": 8,
       "train_requirements": {
@@ -130,15 +204,22 @@
         "spawn_building_id": null
       },
       "spawn_rule": "colony_hub_destroyed_reveal",
-      "weapon_ids": ["weapon_rocket"],
+      "attack_damage": 55,
+      "attack_range": 8,
+      "attack_cooldown": 2.4,
+      "damage_type": "explosive",
+      "area_radius": 2,
+      "friendly_fire": true,
+      "target_filters": ["infantry", "vehicle", "building"],
       "can_construct": false,
       "can_repair": false,
       "can_attack": true,
       "can_capture": false,
       "can_run_over_infantry": true,
+      "run_over_damage": 160,
+      "run_over_damage_type": "crush",
       "tags": ["vehicle", "heavy", "level_1_reveal_only"],
       "balance_status": "tunable_placeholder"
     }
   ]
 }
-

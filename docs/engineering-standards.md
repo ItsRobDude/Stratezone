@@ -141,7 +141,7 @@ If a name is temporary, mark it as temporary in a doc or TODO with a clear repla
 
 Use stable lowercase snake_case IDs for content, save references, and tests.
 
-Initial IDs and first-pass content fields are listed in `docs/content-data-spec.md`. Use those IDs for first-pass units, buildings, factions, weapons, resources, and `mission_first_landing`.
+Initial IDs and first-pass content fields are listed in `docs/content-data-spec.md`. Use those IDs for first-pass units, buildings, factions, resources, and `mission_first_landing`.
 
 Rules:
 

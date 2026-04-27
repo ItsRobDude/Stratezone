@@ -65,7 +65,7 @@ The architecture is shaped around these realities:
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
-- Gun Tower and Rocket Tower can inherit Defense Tower wall-anchor behavior while adding weapons and higher cost
+- Gun Tower and Rocket Tower can inherit Defense Tower wall-anchor behavior while adding direct attack stats and higher cost
 - first prototype units are Worker, Rifleman, Guardian, Rover, and Commander
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
@@ -264,7 +264,7 @@ Avoid deep personality simulation in the first prototype. Workers should behave 
 
 ### Combat System
 
-Owns attack legality, damage, armor if used, range, cooldowns, projectiles, death, and target selection.
+Owns attack legality, damage, resistance, range, cooldowns, projectiles if used, death, and target selection.
 
 Early requirements:
 
@@ -282,6 +282,7 @@ Early requirements:
 - first enemy faction can reuse the player-like technology set with different visuals, costs, timings, or tactical emphasis
 - enemy production/rebuild behavior with limited resources; Level 1 should run slower than the normal baseline
 - explosive friendly fire; normal gunfire should not cause friendly fire in the first prototype
+- attack speed, damage, range, resistance, and movement speed live on unit/building content records, not separate weapon equipment records
 
 ### Mission System
 
@@ -329,7 +330,6 @@ Prefer explicit content definitions for:
 
 - units
 - buildings
-- weapons
 - resources
 - events
 - missions

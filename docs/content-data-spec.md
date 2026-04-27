@@ -2,14 +2,14 @@
 
 This document defines the first-pass content data shape for Stratezone.
 
-It exists to keep units, buildings, weapons, factions, resources, missions, and events out of hardcoded scene logic. The exact storage format can be JSON, Godot resources, or another text-reviewable format after the Godot scaffold exists, but the fields and ownership rules should stay stable.
+It exists to keep units, buildings, factions, resources, missions, and events out of hardcoded scene logic. Combat stats live directly on unit and building records for now; Stratezone does not use separate weapon records in the first prototype.
 
 ## Documentation Role
 
 - **Doc role:** Active source of truth for prototype content data shape.
 - **Owns:** stable content IDs, first-pass data categories, required fields, relationships between content records, and validation expectations.
 - **Does not own:** final balance, final file format, scene layout, art production, save-state shape, or release packaging.
-- **Read when:** adding unit/building/weapon/resource/faction/mission data, creating content validation, or deciding whether a value belongs in content data instead of code.
+- **Read when:** adding unit/building/resource/faction/mission data, creating content validation, or deciding whether a value belongs in content data instead of code.
 - **Do not read for:** broad product vision, engine setup, or mission pacing.
 
 ## Core Rules
@@ -17,7 +17,7 @@ It exists to keep units, buildings, weapons, factions, resources, missions, and 
 - Content data defines tunable facts.
 - Simulation systems interpret content data.
 - Presentation displays content data.
-- Scene scripts should not be the source of unit stats, costs, weapon rules, resource behavior, or mission objectives.
+- Scene scripts should not be the source of unit stats, costs, attack rules, resource behavior, or mission objectives.
 - Save data should store stable IDs and current simulation state, not display names or Godot node paths.
 - Placeholder numbers are allowed, but must be labeled as tunable.
 
@@ -37,6 +37,7 @@ Avoid:
 - stats embedded only in `.tscn` scenes
 - display names as identifiers
 - separate data copies for UI and simulation
+- separate weapon records before the game actually needs equipment/modular weapons
 - opaque binary-only data while the schemas are still changing
 
 ## Stable ID Rules
@@ -66,7 +67,6 @@ The first prototype should support these content categories:
 
 - units
 - buildings
-- weapons
 - resources
 - resource wells
 - maps
@@ -86,12 +86,20 @@ Required fields:
 - `faction_availability`
 - `role`
 - `cost`
+- `train_time_seconds`
 - `health`
+- `damage_resistances`
 - `movement_speed`
 - `sight_range`
 - `train_requirements`
 - `spawn_rule`
-- `weapon_ids`
+- `attack_damage`
+- `attack_range`
+- `attack_cooldown`
+- `damage_type`
+- `area_radius`
+- `friendly_fire`
+- `target_filters`
 - `can_construct`
 - `can_repair`
 - `can_attack`
@@ -114,6 +122,9 @@ Prototype rules:
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.
 - `unit_tank` is not normally trainable in Level 1 but may be revealed from a destroyed Colony Hub.
+- Troop training time varies by unit. More expensive or heavier units should generally take longer.
+- Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
+- Units have health and resistances; armor is not a pickup or separate equipment system in the first prototype.
 
 Tunable placeholder example:
 
@@ -122,11 +133,19 @@ id: unit_worker
 display_name: Worker
 role: builder_repair
 cost: 150
+train_time_seconds: 18
 health: 60
+damage_resistances: ballistic 0.0, energy 0.0, explosive -0.15, crush 0.0
 movement_speed: 1.0
 sight_range: 6
 train_requirements: building_barracks allows worker training, spawn at building_colony_hub
-weapon_ids: []
+attack_damage: 0
+attack_range: 0
+attack_cooldown: 0
+damage_type: none
+area_radius: 0
+friendly_fire: false
+target_filters: none
 can_construct: true
 can_repair: true
 can_attack: false
@@ -145,7 +164,9 @@ Required fields:
 - `display_name`
 - `role`
 - `cost`
+- `build_time_seconds`
 - `health`
+- `damage_resistances`
 - `footprint_radius`
 - `placement_buffer`
 - `requires_power`
@@ -157,7 +178,13 @@ Required fields:
 - `provides_resource_extraction`
 - `extractor_resource_id`
 - `wall_anchor`
-- `weapon_ids`
+- `attack_damage`
+- `attack_range`
+- `attack_cooldown`
+- `damage_type`
+- `area_radius`
+- `friendly_fire`
+- `target_filters`
 - `tags`
 
 First-pass building IDs:
@@ -179,6 +206,8 @@ Prototype rules:
 - `building_pylon` extends or links power.
 - `building_extractor_refinery` extracts from a resource well and stops when unpowered, destroyed, or depleted.
 - tower-class buildings can be wall anchors when powered and compatible.
+- Building construction is instant for now: `build_time_seconds` should be `0` for first-pass buildings.
+- Armed tower attack stats live directly on the building record.
 
 Tunable placeholder example:
 
@@ -187,7 +216,9 @@ id: building_barracks
 display_name: Barracks
 role: training_control
 cost: 250
+build_time_seconds: 0
 health: 400
+damage_resistances: ballistic 0.2, energy 0.1, explosive 0.0, crush 0.4
 footprint_radius: 2
 placement_buffer: 1
 requires_power: true
@@ -199,41 +230,17 @@ provides_spawn_location: false
 provides_resource_extraction: false
 extractor_resource_id: none
 wall_anchor: false
-weapon_ids: []
+attack_damage: 0
+attack_range: 0
+attack_cooldown: 0
+damage_type: none
+area_radius: 0
+friendly_fire: false
+target_filters: none
 tags: production, powered
 ```
 
 The example is not final balance.
-
-## Weapon Definition
-
-Required fields:
-
-- `id`
-- `display_name`
-- `damage`
-- `range`
-- `cooldown`
-- `damage_type`
-- `area_radius`
-- `friendly_fire`
-- `target_filters`
-- `projectile_behavior`
-- `tags`
-
-First-pass weapon IDs:
-
-- `weapon_pistol`
-- `weapon_rifle`
-- `weapon_guardian_laser`
-- `weapon_rocket`
-
-Prototype rules:
-
-- normal gunfire should not cause friendly fire.
-- explosive weapons can cause friendly fire.
-- Commander uses `weapon_pistol`.
-- Guardian uses `weapon_guardian_laser`.
 
 ## Resource and Well Definitions
 
@@ -396,7 +403,8 @@ Once content files exist, validation should check:
 - no duplicate IDs exist
 - required fields are present
 - numeric values are in sane ranges
-- no unit references missing weapons
+- no unit or building uses separate `weapon_ids`
+- combat-capable units and armed buildings include direct attack stats
 - no mission references missing factions, objectives, events, resources, or map IDs
 - First Landing includes the required units, buildings, resource rules, commander fail state, and enemy faction
 - placeholder values are clearly marked or tracked until balanced

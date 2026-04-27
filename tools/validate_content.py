@@ -111,13 +111,86 @@ def validate_required_first_landing(records: dict[str, dict[str, Any]]) -> list[
         "building_extractor_refinery",
         "building_defense_tower",
         "resource_materials",
-        "weapon_pistol",
-        "weapon_rifle",
-        "weapon_guardian_laser",
-        "weapon_rocket",
     }
     missing = sorted(required_ids - set(records))
     return [f"missing required prototype id '{record_id}'" for record_id in missing]
+
+
+def validate_no_separate_weapon_layer(records: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    for record_id, record in records.items():
+        if "weapon_ids" in record:
+            errors.append(
+                f"{record['_source_path']}: {record_id} uses weapon_ids; attack stats belong on the unit/building record"
+            )
+        if record_id.startswith("weapon_"):
+            errors.append(
+                f"{record['_source_path']}: {record_id} uses a separate weapon record; use direct attack stats instead"
+            )
+    return errors
+
+
+def validate_unit_and_building_combat_fields(records: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    shared_fields = {
+        "health",
+        "damage_resistances",
+        "movement_speed",
+        "sight_range",
+        "attack_damage",
+        "attack_range",
+        "attack_cooldown",
+        "damage_type",
+        "area_radius",
+        "friendly_fire",
+        "target_filters",
+    }
+    building_fields = {
+        "build_time_seconds",
+        "health",
+        "damage_resistances",
+        "attack_damage",
+        "attack_range",
+        "attack_cooldown",
+        "damage_type",
+        "area_radius",
+        "friendly_fire",
+        "target_filters",
+    }
+
+    for record_id, record in records.items():
+        if record_id.startswith("unit_"):
+            required = shared_fields | {"train_time_seconds"}
+            missing = sorted(field for field in required if field not in record)
+            for field in missing:
+                errors.append(f"{record['_source_path']}: {record_id} missing unit field '{field}'")
+            train_time = record.get("train_time_seconds")
+            if isinstance(train_time, (int, float)) and train_time < 0:
+                errors.append(f"{record['_source_path']}: {record_id} has negative train_time_seconds")
+
+        if record_id.startswith("building_"):
+            missing = sorted(field for field in building_fields if field not in record)
+            for field in missing:
+                errors.append(f"{record['_source_path']}: {record_id} missing building field '{field}'")
+            build_time = record.get("build_time_seconds")
+            if build_time != 0:
+                errors.append(
+                    f"{record['_source_path']}: {record_id} build_time_seconds must be 0 for the first prototype"
+                )
+
+        resistances = record.get("damage_resistances")
+        if record_id.startswith(("unit_", "building_")):
+            if not isinstance(resistances, dict):
+                errors.append(f"{record['_source_path']}: {record_id} damage_resistances must be an object")
+                continue
+            for damage_type in ("ballistic", "energy", "explosive", "crush"):
+                value = resistances.get(damage_type)
+                if not isinstance(value, (int, float)):
+                    errors.append(
+                        f"{record['_source_path']}: {record_id} damage_resistances.{damage_type} must be numeric"
+                    )
+
+    return errors
 
 
 def main() -> int:
@@ -128,6 +201,8 @@ def main() -> int:
     records, errors = load_records()
     errors.extend(validate_references(records))
     errors.extend(validate_required_first_landing(records))
+    errors.extend(validate_no_separate_weapon_layer(records))
+    errors.extend(validate_unit_and_building_combat_fields(records))
 
     if errors:
         print("Content validation failed:")

@@ -39,13 +39,4 @@ public static class ContentIds
     {
         public const string Materials = "resource_materials";
     }
-
-    public static class Weapons
-    {
-        public const string Pistol = "weapon_pistol";
-        public const string Rifle = "weapon_rifle";
-        public const string GuardianLaser = "weapon_guardian_laser";
-        public const string Rocket = "weapon_rocket";
-    }
 }
-

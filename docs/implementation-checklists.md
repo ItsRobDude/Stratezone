@@ -61,11 +61,6 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `building_gun_tower`
 - `building_rocket_tower`
 - `resource_materials`
-- `weapon_pistol`
-- `weapon_rifle`
-- `weapon_guardian_laser`
-- `weapon_rocket`
-
 Rules:
 
 - IDs are lowercase snake_case.
@@ -100,6 +95,9 @@ Acceptance checks:
 - player can box-select multiple units, if included in the pass
 - player can right-click move selected units
 - buildings and units have stable IDs
+- unit attack, movement, health, and resistance values come from content data
+- building health, resistance, and attack values come from content data
+- building `build_time_seconds` is `0` for the first prototype
 - player can place a basic building with visible placement feedback
 - blocked placement is rejected
 - a worker can construct a building by command
@@ -163,6 +161,7 @@ Acceptance checks:
 - infrastructure strikes matter in at least one mission route
 - scouting reveals useful tactical information
 - Rifleman, Guardian, Rover, Commander, and tank roles are distinct
+- troop train times vary by unit, with more expensive or heavier units generally taking longer
 - explosive friendly fire works if explosive units are present
 - normal gunfire does not friendly-fire
 - player can win through something smarter than direct unit spam

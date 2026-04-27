@@ -11,7 +11,7 @@
         "resource_income_multiplier": 1.0
       },
       "production_modifiers": {
-        "build_time_multiplier": 1.0
+        "unit_train_time_multiplier": 1.0
       },
       "ai_profile_id": null,
       "tags": ["player"]
@@ -26,7 +26,7 @@
         "resource_income_multiplier": 0.75
       },
       "production_modifiers": {
-        "build_time_multiplier": 1.25
+        "unit_train_time_multiplier": 1.25
       },
       "ai_profile_id": "ai_profile_level_1_private_military",
       "tags": ["enemy", "level_1_slow"],
@@ -34,4 +34,3 @@
     }
   ]
 }
-

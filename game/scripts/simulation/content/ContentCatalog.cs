@@ -117,7 +117,8 @@ public sealed class ContentCatalog
                 record.GetProperty("pylon_link_range").GetSingle(),
                 record.GetProperty("provides_resource_extraction").GetBoolean(),
                 GetOptionalString(record, "extractor_resource_id"),
-                record.GetProperty("wall_anchor").GetBoolean()
+                record.GetProperty("wall_anchor").GetBoolean(),
+                GetOptionalFloat(record, "wall_link_range")
             );
 
             buildings.Add(building.Id, building);
@@ -195,5 +196,12 @@ public sealed class ContentCatalog
         }
 
         return value.GetString();
+    }
+
+    private static float GetOptionalFloat(JsonElement record, string propertyName)
+    {
+        return record.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number
+            ? value.GetSingle()
+            : 0.0f;
     }
 }

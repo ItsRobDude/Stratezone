@@ -40,7 +40,7 @@ public partial class GreyboxBuilding : Node2D
             return;
         }
 
-        var radius = _state.OccupancyRadius;
+        var radius = _state.FootprintWorldRadius;
         var fill = _state.IsPowered
             ? new Color(0.18f, 0.42f, 0.56f, 0.92f)
             : new Color(0.38f, 0.24f, 0.22f, 0.82f);

@@ -14,5 +14,6 @@ public sealed record BuildingDefinition(
     float PylonLinkRange,
     bool ProvidesResourceExtraction,
     string? ExtractorResourceId,
-    bool WallAnchor
+    bool WallAnchor,
+    float WallLinkRange
 );

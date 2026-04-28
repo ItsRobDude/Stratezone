@@ -189,6 +189,7 @@ Required fields:
 - `provides_power`
 - `power_radius`
 - `pylon_link_range`
+- `wall_link_range`
 - `provides_training_rules`
 - `provides_spawn_location`
 - `provides_resource_extraction`
@@ -240,6 +241,7 @@ Prototype rules:
 - `building_med_hall` heals infantry in a radius, requires power, and spends resources while actively healing.
 - `building_logistics_repair_pad` repairs parked vehicles, requires power, and spends resources while actively repairing.
 - tower-class buildings can be wall anchors when powered and compatible.
+- powered wall anchors create energy wall segments with nearby powered wall anchors within `wall_link_range`.
 - `building_gun_tower` and `building_rocket_tower` should normally be created by upgrading `building_defense_tower` in place and should preserve wall-anchor behavior.
 - `building_artillery_battery` is fragile static siege infrastructure with long range, explosive damage, friendly fire, and a minimum range.
 - Building construction is instant for now: `build_time_seconds` should be `0` for first-pass buildings.
@@ -261,6 +263,7 @@ requires_power: true
 provides_power: false
 power_radius: 0
 pylon_link_range: 0
+wall_link_range: 0
 provides_training_rules: true
 provides_spawn_location: false
 provides_resource_extraction: false
@@ -319,6 +322,7 @@ heavy_armor_capacity_delta: 0
 upgrade_from_building_id: building_defense_tower
 upgrade_preserves_wall_anchor: true
 wall_anchor: true
+wall_link_range: 7
 attack_damage: 80
 damage_type: explosive
 area_radius: 2

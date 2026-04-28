@@ -18,5 +18,6 @@ public sealed class BuildingState
     public string? ResourceWellId { get; }
     public bool IsPowered { get; internal set; }
 
+    public float FootprintWorldRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius);
     public float OccupancyRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius + Definition.PlacementBuffer);
 }

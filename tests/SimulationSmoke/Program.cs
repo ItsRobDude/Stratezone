@@ -28,6 +28,7 @@ var lowBudgetSimulation = new RtsSimulation(catalog, 100, []);
 lowBudgetSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 Assert(!lowBudgetSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).IsLegal, "spending cannot go below zero");
 Assert(!simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(520, 320)).IsLegal, "pylon cannot be placed globally from a power plant");
+Assert(catalog.GetBuilding(ContentIds.Buildings.Pylon).FootprintRadius < catalog.GetBuilding(ContentIds.Buildings.DefenseTower).FootprintRadius, "pylon footprint is smaller than a tower footprint");
 
 var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160));
 Assert(pylon.Success, pylon.Message);
@@ -57,6 +58,18 @@ Assert(startWell.IsDepleted, "well can deplete");
 var materialsAfterDepletion = simulation.Materials;
 simulation.Tick(10.0f);
 Assert(Math.Abs(simulation.Materials - materialsAfterDepletion) < 0.01f, "depleted well stops generating income");
+
+var wallSimulation = new RtsSimulation(catalog, startingMaterials, []);
+wallSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+var wallPower = wallSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
+Assert(wallPower.Success, wallPower.Message);
+var firstTower = wallSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(130, -80));
+Assert(firstTower.Success, firstTower.Message);
+Assert(wallSimulation.EnergyWalls.Count == 0, "one wall anchor does not create a wall segment");
+var secondTower = wallSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(130, 80));
+Assert(secondTower.Success, secondTower.Message);
+Assert(wallSimulation.EnergyWalls.Count == 1, "two nearby powered wall anchors create a wall segment");
+Assert(wallSimulation.IsLineBlockedByEnergyWall(new SimVector2(0, 0), new SimVector2(260, 0)), "energy wall blocks a crossing line");
 
 Console.WriteLine("Simulation smoke checks passed.");
 

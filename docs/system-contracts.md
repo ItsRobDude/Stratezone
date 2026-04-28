@@ -285,7 +285,7 @@ Prototype behavior:
 
 Tunable placeholders:
 
-- wall link range: short enough to require deliberate placement
+- wall link range: content-driven and short enough to require deliberate placement
 - tower cost: meaningful investment
 - wall update cadence: immediate or near-immediate after anchor state changes
 

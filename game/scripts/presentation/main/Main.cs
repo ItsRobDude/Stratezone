@@ -22,6 +22,7 @@ public partial class Main : Node2D
     private Camera2D? _camera;
     private Label? _statusLabel;
     private PlacementGhost? _placementGhost;
+    private EnergyWallView? _energyWallView;
     private Node2D? _worldRoot;
     private GreyboxUnit? _selectedUnit;
     private string? _placementBuildingId;
@@ -37,6 +38,7 @@ public partial class Main : Node2D
         SetupHud();
         SyncWorldViews();
         SpawnGreyboxUnits();
+        SetupEnergyWallView();
         SetupPlacementGhost();
         UpdateHud();
 
@@ -161,6 +163,21 @@ public partial class Main : Node2D
             ZIndex = 3
         };
         _worldRoot.AddChild(_placementGhost);
+    }
+
+    private void SetupEnergyWallView()
+    {
+        if (_worldRoot is null)
+        {
+            return;
+        }
+
+        _energyWallView = new EnergyWallView
+        {
+            Name = "EnergyWallView",
+            ZIndex = -1
+        };
+        _worldRoot.AddChild(_energyWallView);
     }
 
     private void SpawnGreyboxUnits()
@@ -352,6 +369,8 @@ public partial class Main : Node2D
         {
             _resourceWellViews[index].UpdateFromState(_simulation.ResourceWells[index]);
         }
+
+        _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
     }
 
     private void UpdatePlacementGhost()
@@ -390,7 +409,7 @@ public partial class Main : Node2D
 
         var powered = _simulation.Buildings.Count(building => building.IsPowered);
         _statusLabel.Text =
-            $"Materials: {_simulation.Materials:0} | Buildings: {_simulation.Buildings.Count} | Powered: {powered}/{_simulation.Buildings.Count}\n" +
+            $"Materials: {_simulation.Materials:0} | Buildings: {_simulation.Buildings.Count} | Powered: {powered}/{_simulation.Buildings.Count} | Walls: {_simulation.EnergyWalls.Count}\n" +
             $"{placementLine}\n" +
             _lastActionMessage;
     }

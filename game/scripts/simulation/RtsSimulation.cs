@@ -10,6 +10,7 @@ public sealed class RtsSimulation
     private readonly ContentCatalog _catalog;
     private readonly List<BuildingState> _buildings = [];
     private readonly List<ResourceWellState> _resourceWells = [];
+    private readonly List<EnergyWallSegment> _energyWalls = [];
     private int _nextEntityId = 1;
 
     public RtsSimulation(ContentCatalog catalog, int startingMaterials, IEnumerable<(string WellId, SimVector2 Position)> resourceWellPlacements)
@@ -26,6 +27,7 @@ public sealed class RtsSimulation
     public float Materials { get; private set; }
     public IReadOnlyList<BuildingState> Buildings => _buildings;
     public IReadOnlyList<ResourceWellState> ResourceWells => _resourceWells;
+    public IReadOnlyList<EnergyWallSegment> EnergyWalls => _energyWalls;
 
     public static float ToWorldRadius(float contentRadius)
     {
@@ -129,6 +131,11 @@ public sealed class RtsSimulation
         }
     }
 
+    public bool IsLineBlockedByEnergyWall(SimVector2 start, SimVector2 end)
+    {
+        return _energyWalls.Any(wall => LinesIntersect(start, end, wall.Start, wall.End));
+    }
+
     private ResourceWellState? FindCompatibleResourceWell(BuildingDefinition definition, SimVector2 position)
     {
         if (!definition.ProvidesResourceExtraction || definition.ExtractorResourceId is null)
@@ -221,5 +228,48 @@ public sealed class RtsSimulation
                 changed = true;
             }
         }
+
+        RecomputeEnergyWalls();
+    }
+
+    private void RecomputeEnergyWalls()
+    {
+        _energyWalls.Clear();
+
+        var anchors = _buildings
+            .Where(building => building.Definition.WallAnchor && building.IsPowered && building.Definition.WallLinkRange > 0)
+            .OrderBy(building => building.EntityId)
+            .ToArray();
+
+        for (var leftIndex = 0; leftIndex < anchors.Length; leftIndex++)
+        {
+            var left = anchors[leftIndex];
+            var linkRange = ToWorldRadius(left.Definition.WallLinkRange);
+
+            for (var rightIndex = leftIndex + 1; rightIndex < anchors.Length; rightIndex++)
+            {
+                var right = anchors[rightIndex];
+                var maxLinkRange = MathF.Min(linkRange, ToWorldRadius(right.Definition.WallLinkRange));
+                if (left.Position.DistanceTo(right.Position) > maxLinkRange)
+                {
+                    continue;
+                }
+
+                _energyWalls.Add(new EnergyWallSegment(left.EntityId, right.EntityId, left.Position, right.Position));
+            }
+        }
+    }
+
+    private static bool LinesIntersect(SimVector2 a, SimVector2 b, SimVector2 c, SimVector2 d)
+    {
+        var denominator = ((d.Y - c.Y) * (b.X - a.X)) - ((d.X - c.X) * (b.Y - a.Y));
+        if (MathF.Abs(denominator) < 0.0001f)
+        {
+            return false;
+        }
+
+        var ua = (((d.X - c.X) * (a.Y - c.Y)) - ((d.Y - c.Y) * (a.X - c.X))) / denominator;
+        var ub = (((b.X - a.X) * (a.Y - c.Y)) - ((b.Y - a.Y) * (a.X - c.X))) / denominator;
+        return ua is >= 0.0f and <= 1.0f && ub is >= 0.0f and <= 1.0f;
     }
 }

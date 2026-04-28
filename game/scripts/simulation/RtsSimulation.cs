@@ -5,7 +5,7 @@ namespace Stratezone.Simulation;
 public sealed class RtsSimulation
 {
     public const float ContentUnitScale = 24.0f;
-    private const float ResourceWellPlacementRadius = 38.0f;
+    private const float ResourceWellCoreRadius = 28.0f;
 
     private readonly ContentCatalog _catalog;
     private readonly List<BuildingState> _buildings = [];
@@ -140,7 +140,7 @@ public sealed class RtsSimulation
             .Where(well => well.Definition.ResourceId == definition.ExtractorResourceId)
             .Where(well => well.ExtractorEntityId is null)
             .Where(well => !well.IsDepleted)
-            .Where(well => well.Position.DistanceTo(position) <= ResourceWellPlacementRadius)
+            .Where(well => well.Position.DistanceTo(position) <= ResourceWellCoreRadius + ToWorldRadius(definition.FootprintRadius))
             .OrderBy(well => well.Position.DistanceTo(position))
             .FirstOrDefault();
     }

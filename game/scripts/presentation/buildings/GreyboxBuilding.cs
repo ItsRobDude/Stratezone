@@ -25,7 +25,8 @@ public partial class GreyboxBuilding : Node2D
 
         if (_label is not null)
         {
-            _label.Text = ShortName(state.Definition.DisplayName);
+            var powerPrefix = ShouldShowPoweredBolt(state) ? "⚡ " : string.Empty;
+            _label.Text = $"{powerPrefix}{ShortName(state.Definition.DisplayName)}";
             _label.Modulate = state.IsPowered ? Colors.White : new Color(1.0f, 0.45f, 0.35f);
         }
 
@@ -74,5 +75,10 @@ public partial class GreyboxBuilding : Node2D
             .Replace("Extractor/Refinery", "Extractor", StringComparison.Ordinal)
             .Replace("Power Plant", "Power", StringComparison.Ordinal)
             .Replace("Defense Tower", "Wall", StringComparison.Ordinal);
+    }
+
+    private static bool ShouldShowPoweredBolt(BuildingState state)
+    {
+        return state.IsPowered && (state.Definition.RequiresPower || state.Definition.ProvidesPower);
     }
 }

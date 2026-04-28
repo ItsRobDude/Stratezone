@@ -22,8 +22,11 @@ Assert(!simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVecto
 
 var powerPlant = simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40));
 Assert(powerPlant.Success, powerPlant.Message);
-Assert(Math.Abs(simulation.Materials - 470) < 0.01f, "placing buildings spends materials");
-Assert(!simulation.ValidatePlacement(ContentIds.Buildings.ArtilleryBattery, new SimVector2(160, 160)).IsLegal, "spending cannot go below zero");
+Assert(Math.Abs(simulation.Materials - (startingMaterials - catalog.GetBuilding(ContentIds.Buildings.PowerPlant).Cost)) < 0.01f, "placing buildings spends materials");
+
+var lowBudgetSimulation = new RtsSimulation(catalog, 100, []);
+lowBudgetSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+Assert(!lowBudgetSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).IsLegal, "spending cannot go below zero");
 
 var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-350, 50));
 Assert(pylon.Success, pylon.Message);
@@ -33,6 +36,14 @@ Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector
 var extractor = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(-350, 170));
 Assert(extractor.Success, extractor.Message);
 Assert(extractor.Building?.IsPowered == true, "extractor is powered by pylon support");
+
+var overlapSimulation = new RtsSimulation(
+    catalog,
+    startingMaterials,
+    [("well_first_landing_start", new SimVector2(0, 0))]);
+overlapSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+overlapSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-160, 0));
+Assert(overlapSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, new SimVector2(70, 0)).IsLegal, "extractor placement accepts footprint overlap with resource well");
 
 var materialsBeforeIncome = simulation.Materials;
 simulation.Tick(1.0f);

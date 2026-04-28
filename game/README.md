@@ -16,12 +16,14 @@ The first scaffold is intentionally tiny. Gameplay rules should grow from `scrip
 
 `Stratezone.csproj` currently pins `Godot.NET.Sdk/4.6.2` to match the installed Godot .NET 4.6.2 editor.
 
-Current greybox controls:
+Current greybox demo controls:
 
 - Left click selects a unit or places the active building ghost.
 - Right click moves the selected unit, or cancels placement mode.
 - Select the Worker, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
 - Mouse wheel zooms. `WASD` or arrow keys pan.
+- The demo starts with extra materials so the construction loop can be tested without waiting on income.
+- Powered buildings show a small `⚡` prefix in their label.
 
 Current simulation smoke check:
 

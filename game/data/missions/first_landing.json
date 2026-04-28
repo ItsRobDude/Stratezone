@@ -3,7 +3,7 @@
   "records": [
     {
       "id": "mission_first_landing",
-      "display_name": "First Landing",
+      "display_name": "Greybox Demo",
       "target_duration_minutes": {
         "min": 5,
         "max": 10
@@ -42,7 +42,7 @@
         {
           "faction_id": "faction_player_expedition",
           "resource_id": "resource_materials",
-          "amount": 650
+          "amount": 1100
         },
         {
           "faction_id": "faction_private_military",
@@ -60,7 +60,7 @@
         "track_last_known_enemies": false
       },
       "special_rules": ["colony_hub_destroyed_reveals_tank", "barracks_addon_unlocks_enabled"],
-      "tags": ["first_landing", "playable_ugly"],
+      "tags": ["first_landing", "greybox_demo", "playable_ugly"],
       "balance_status": "tunable_placeholder"
     }
   ]

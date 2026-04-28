@@ -17,6 +17,7 @@ Current locked vision choices:
 - Workers are important recruitable units. They are useless in combat, should flee from attackers, and losing them should hurt because replacing them costs resources.
 - Levels are fresh authored scenarios, closer to a classic RTS campaign than a persistent colony sim.
 - Combat uses individual units with varied strength, specialty, and cost. Some units should perform best in groups; elite or expensive units can stand alone better.
+- First-pass combat balance should make basic infantry die fast, make base structures slow to crack with small arms, make armor highly resistant to ballistics, and make explosives the siege lane.
 - Resource gathering uses Dominion-style limited wells: place a refinery/extractor over a resource node, protect it, and expect it to eventually run out.
 - The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
 - The first mission has a controllable on-map commander troop who must be defended. He is a fragile fail-condition unit with a pistol, and keeping him at home base should be a sensible strategy.
@@ -25,10 +26,12 @@ Current locked vision choices:
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
+- Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks, starting with Armory Annex and Vehicle Bay.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
 - Defense Towers create an energy wall when placed near another compatible Defense Tower, blocking enemy pathing until a tower is destroyed.
-- Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they are armed.
+- Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers; they can still act as wall anchors, but cost more because they are armed.
+- Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records, but should only enter missions when their support/siege roles improve tactical clarity.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
@@ -73,7 +76,9 @@ If this direction changes, update this file and the README in the same pass.
 - Make power/build radius central to base expansion.
 - Underpowered buildings should shut off, not merely lose bonuses.
 - Power Plants generate local power; Pylons extend/link it over long distances.
+- Barracks add-ons should require power so expanding production creates new power-network vulnerabilities.
 - Treat Defense Tower wall links as path-blocking gameplay, not cosmetic VFX.
+- Prefer in-place armed tower upgrades from existing Defense Towers so players can establish walls quickly, then invest in weapons without losing the wall role.
 - Make workers valuable as expensive recruitable units, not life-sim colonists.
 - Workers must not be given combat utility in the first prototype; fleeing is their defensive behavior.
 - Building placement should not show a visible grid, but structures need spacing/buffer constraints so small maps cannot be over-crammed.

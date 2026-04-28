@@ -44,7 +44,7 @@
       "role": "basic_infantry",
       "cost": 100,
       "train_time_seconds": 10,
-      "health": 80,
+      "health": 45,
       "damage_resistances": {
         "ballistic": 0.0,
         "energy": 0.0,
@@ -91,6 +91,7 @@
       "sight_range": 7,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
+        "required_addon_building_id": "building_armory_annex",
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",
@@ -127,6 +128,7 @@
       "sight_range": 11,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
+        "required_addon_building_id": "building_vehicle_bay",
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",
@@ -192,7 +194,7 @@
       "train_time_seconds": 45,
       "health": 450,
       "damage_resistances": {
-        "ballistic": 0.45,
+        "ballistic": 0.8,
         "energy": 0.2,
         "explosive": 0.15,
         "crush": 0.5

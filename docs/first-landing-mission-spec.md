@@ -90,6 +90,8 @@ Unit production rule for Level 1:
 
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
+- Barracks add-ons are the preferred unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
+- Current placeholder mission data enables Barracks add-on unlocks. Level data may still start with an add-on prebuilt or simplify the step later if the 5-10 minute pacing gets too crowded.
 
 Workers are expensive, recruitable, non-combat units. They require player command for construction and repair.
 
@@ -103,12 +105,13 @@ Level 1 should use:
 - Pylon
 - Extractor/Refinery
 - Defense Tower
+- Armory Annex or Vehicle Bay only if the first add-on pass fits the pacing
 - Gun Tower, if the first armed-tower pass is ready
 - Rocket Tower, only if explosive friendly-fire behavior is ready
 
 Any tower-class building can act as a wall anchor if the system supports it.
 
-Tower walls should be an investment. In Level 1, the central choke should be blockable with defense towers if the player saves for them.
+Tower walls should be an investment. In Level 1, the central choke should be blockable with Defense Towers if the player saves for them. If armed towers are included, they should be upgraded in place from existing Defense Towers so the wall line can stay active during the investment.
 
 ## Available Units
 
@@ -128,10 +131,11 @@ Level 1 tank rule:
 
 First-pass unit intent:
 
-- Riflemen die quickly and work best with support or numbers.
-- Guardians are beefier than Riflemen but deal slightly less damage.
-- Rovers scout and cannot shoot, but can run over and kill enemy infantry.
+- Riflemen die very quickly and work best with support, numbers, or harassment timing.
+- Guardians are beefier than Riflemen but deal slightly less damage; if Barracks add-ons are active, they require a powered Armory Annex.
+- Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
 - Tanks survive more punishment than infantry but are not part of normal Level 1 production.
+- Tanks should shrug off Rifleman fire; the player should need Guardian energy fire, explosive towers, another tank, or infrastructure play to answer heavy armor cleanly.
 
 Explosive friendly fire exists. Normal gunfire does not cause friendly fire.
 
@@ -208,9 +212,11 @@ These values are tunable placeholders for scaffolding and early tests:
 - target mission length: 5-10 minutes
 - first enemy pressure: after the player has had time to start power and production
 - contested well pressure: visible early, not instantly fatal
-- infantry durability: low
+- infantry durability: meatgrinder-low; Rifleman health starts around 45
 - worker cost: expensive relative to Rifleman
 - tower cost: high enough to make wall placement a choice
+- Barracks add-on cost: meaningful enough to create a power/placement decision, but not enough to stall Level 1
+- Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance so Riflemen alone are slow base-crackers
 - Level 1 enemy economy: slower than normal
 
 Do not treat these as final balance.

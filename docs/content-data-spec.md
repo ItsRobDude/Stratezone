@@ -75,7 +75,7 @@ The first prototype should support these content categories:
 - mission events
 - objectives
 
-Future categories such as campaign progression, achievements, upgrades, and store metadata should wait until the related milestone requires them.
+Future categories such as campaign progression, achievements, abstract upgrade trees, and store metadata should wait until the related milestone requires them. Barracks add-ons and armed tower upgrades should be represented as building records first, because they are physical map objects or in-place building conversions.
 
 ## Unit Definition
 
@@ -107,6 +107,10 @@ Required fields:
 - `can_run_over_infantry`
 - `tags`
 
+Optional train requirement fields:
+
+- `required_addon_building_id`
+
 First-pass unit IDs:
 
 - `unit_worker`
@@ -119,9 +123,12 @@ First-pass unit IDs:
 Prototype rules:
 
 - `unit_worker` is expensive, non-combat, can construct, can repair, and should flee from danger.
+- `unit_rifleman` is intentionally fragile. First-pass health should stay around 40-50 so infantry caught out of position die fast.
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.
-- `unit_tank` is not normally trainable in Level 1 but may be revealed from a destroyed Colony Hub.
+- `unit_guardian` should require `building_armory_annex` where Barracks add-ons are enabled by the mission.
+- `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
+- `unit_tank` is not normally trainable in Level 1 but may be revealed from a destroyed Colony Hub. Its ballistic resistance should be high enough that Riflemen are a bad answer to heavy armor.
 - Troop training time varies by unit. More expensive or heavier units should generally take longer.
 - Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
 - Units have health and resistances; armor is not a pickup or separate equipment system in the first prototype.
@@ -156,6 +163,15 @@ tags: worker, non_combat, flees
 
 The example is not final balance.
 
+First-pass resistance intent:
+
+- Basic infantry should die fast against other infantry.
+- Heavy armor should feel nearly impenetrable to ballistic infantry fire.
+- Buildings should resist casual ballistic damage enough to preserve siege pacing.
+- Buildings should have negative explosive resistance so Rocket Towers, Tanks, and later siege weapons are the base-cracking lane.
+- The Colony Hub should keep its early siege ratio of 1200 health and 0.25 ballistic resistance unless playtests prove the ratio wrong.
+- Rover crush damage should remain high enough to instantly kill basic infantry when the player micros vehicles into exposed infantry.
+
 ## Building Definition
 
 Required fields:
@@ -187,6 +203,15 @@ Required fields:
 - `target_filters`
 - `tags`
 
+Optional relationship fields for physical add-ons and in-place upgrades:
+
+- `requires_adjacent_building_id`
+- `training_unlock_unit_ids`
+- `troop_capacity_delta`
+- `heavy_armor_capacity_delta`
+- `upgrade_from_building_id`
+- `upgrade_preserves_wall_anchor`
+
 First-pass building IDs:
 
 - `building_colony_hub`
@@ -197,15 +222,26 @@ First-pass building IDs:
 - `building_defense_tower`
 - `building_gun_tower`
 - `building_rocket_tower`
+- `building_armory_annex`
+- `building_vehicle_bay`
+- `building_med_hall`
+- `building_logistics_repair_pad`
+- `building_artillery_battery`
 
 Prototype rules:
 
 - `building_colony_hub` is the spawn location for trained units.
 - `building_barracks` controls what can be trained by level, troop capacity, and unlocks.
+- `building_armory_annex` is a powered Barracks add-on that unlocks Guardian training and explosive tech where the mission allows it.
+- `building_vehicle_bay` is a powered Barracks add-on that unlocks Rover training and heavy-armor capacity where the mission allows it.
 - `building_power_plant` provides local power.
 - `building_pylon` extends or links power.
 - `building_extractor_refinery` extracts from a resource well and stops when unpowered, destroyed, or depleted.
+- `building_med_hall` heals infantry in a radius, requires power, and spends resources while actively healing.
+- `building_logistics_repair_pad` repairs parked vehicles, requires power, and spends resources while actively repairing.
 - tower-class buildings can be wall anchors when powered and compatible.
+- `building_gun_tower` and `building_rocket_tower` should normally be created by upgrading `building_defense_tower` in place and should preserve wall-anchor behavior.
+- `building_artillery_battery` is fragile static siege infrastructure with long range, explosive damage, friendly fire, and a minimum range.
 - Building construction is instant for now: `build_time_seconds` should be `0` for first-pass buildings.
 - Armed tower attack stats live directly on the building record.
 
@@ -229,6 +265,12 @@ provides_training_rules: true
 provides_spawn_location: false
 provides_resource_extraction: false
 extractor_resource_id: none
+requires_adjacent_building_id: none
+training_unlock_unit_ids: none
+troop_capacity_delta: 0
+heavy_armor_capacity_delta: 0
+upgrade_from_building_id: none
+upgrade_preserves_wall_anchor: false
 wall_anchor: false
 attack_damage: 0
 attack_range: 0
@@ -241,6 +283,54 @@ tags: production, powered
 ```
 
 The example is not final balance.
+
+Barracks add-on placeholder example:
+
+```text
+id: building_armory_annex
+display_name: Armory Annex
+role: barracks_addon_unlock
+cost: 180
+build_time_seconds: 0
+requires_power: true
+requires_adjacent_building_id: building_barracks
+training_unlock_unit_ids: unit_guardian
+troop_capacity_delta: 0
+heavy_armor_capacity_delta: 0
+upgrade_from_building_id: none
+upgrade_preserves_wall_anchor: false
+wall_anchor: false
+tags: production, addon, powered
+```
+
+In-place tower upgrade placeholder example:
+
+```text
+id: building_rocket_tower
+display_name: Rocket Tower
+role: explosive_wall_anchor
+cost: 320
+build_time_seconds: 0
+requires_power: true
+requires_adjacent_building_id: none
+training_unlock_unit_ids: none
+troop_capacity_delta: 0
+heavy_armor_capacity_delta: 0
+upgrade_from_building_id: building_defense_tower
+upgrade_preserves_wall_anchor: true
+wall_anchor: true
+attack_damage: 80
+damage_type: explosive
+area_radius: 2
+friendly_fire: true
+tags: tower, wall_anchor, armed, explosive, powered, upgrade
+```
+
+Support and siege building placeholder intent:
+
+- `building_med_hall` heals infantry within a radius, slowly spends resources while healing, and requires power.
+- `building_logistics_repair_pad` is a powered platform that repairs mechanical units parked on it, keeping Workers out of front-line vehicle repair when the player plans ahead.
+- `building_artillery_battery` is a fragile, expensive static siege emplacement with long range, explosive damage, friendly fire, and a minimum range that prevents close self-defense.
 
 ## Resource and Well Definitions
 

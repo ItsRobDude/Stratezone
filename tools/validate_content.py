@@ -106,10 +106,15 @@ def validate_required_first_landing(records: dict[str, dict[str, Any]]) -> list[
         "unit_tank",
         "building_colony_hub",
         "building_barracks",
+        "building_armory_annex",
+        "building_vehicle_bay",
         "building_power_plant",
         "building_pylon",
         "building_extractor_refinery",
+        "building_med_hall",
+        "building_logistics_repair_pad",
         "building_defense_tower",
+        "building_artillery_battery",
         "resource_materials",
     }
     missing = sorted(required_ids - set(records))

@@ -54,10 +54,11 @@ The first prototype stack is locked as Godot 4 with C#.
 - The first mission is a small 5-10 minute top-down RTS scenario in bright readable meadows/fields with light forest.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
-- Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they are armed.
+- Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding weaponry and higher cost.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
+- Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. Armory Annex unlocks Guardian/explosive tech. Vehicle Bay unlocks Rover/heavy-armor capacity.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
 - Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
@@ -65,6 +66,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
 - The first playable target is playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until gameplay works.
 - Explosive friendly fire exists; normal gunfire does not.
+- First-pass combat balance should follow the old-school RTS formula: basic infantry die quickly, base structures take a long time to crack with small arms, armor shrugs off ballistics, and explosives are the siege lane.
 - Ancient tech is out of scope for now.
 - The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
 - Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, or combined fail states.
@@ -74,7 +76,8 @@ The first prototype stack is locked as Godot 4 with C#.
 1. Foundation docs
    - Decide worker replacement cost relative to basic combat units.
    - Decide first-pass building footprint/buffer values.
-   - Decide first-pass troop cap values and Barracks upgrade unlocks.
+   - Decide first-pass troop cap values and Barracks add-on unlocks.
+   - Decide whether Level 1 teaches Barracks add-ons directly or starts with one add-on prebuilt.
    - Decide Level 1 enemy production speed and resource handicap.
    - Decide the first campaign's mission archetypes.
    - Decide how much sci-fi utility tech belongs in the first unit roster.
@@ -89,7 +92,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Build a rough small playable map with placeholder shapes.
    - Expand camera, selection, and move commands from the current placeholder unit shell.
    - Implement basic construction.
-   - Add Colony Hub, Barracks, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
+   - Add Colony Hub, Barracks, first Barracks add-on rules, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
 
 4. First combat loop
    - Add Worker, Rifleman, Guardian, Rover, Commander, and same-tech human enemy equivalents.
@@ -146,11 +149,12 @@ Systems:
 - move command
 - simple unit/building entities
 - Colony Hub spawn location
-- Barracks training rules, troop cap, and upgrade unlock path
+- Barracks training rules, troop cap, and powered add-on unlock path
 - Power Plant radius and underpowered shutoff
 - Pylon long-distance power linking
 - extractor/refinery on a resource well
 - Defense Tower energy wall links
+- in-place Defense Tower upgrades into armed tower variants
 - construction with recruitable worker units
 - first fog-of-war pass
 - hidden placement spacing/buffer constraints with no visible grid
@@ -228,6 +232,9 @@ Candidate systems:
 - infantry/security unit
 - armored vehicle
 - artillery or siege unit
+- Med Hall content record for slow infantry healing that spends resources while active
+- Logistics / Repair Pad content record for powered vehicle maintenance
+- Artillery Battery content record as fragile static siege infrastructure with a minimum range
 - engineer/repair/capture unit
 - enemy power dependencies
 - neutral map objects
@@ -406,6 +413,8 @@ These are not first-prototype commitments:
 
 - Exact building footprint/buffer values for constrained maps.
 - Worker replacement cost relative to basic combat units.
+- Exact Level 1 use of Armory Annex and Vehicle Bay.
+- Whether Med Hall, Logistics / Repair Pad, and Artillery Battery should appear in First Landing or wait for a later tactical mission.
 - First campaign mission archetypes and failure-condition mix.
 - Whether the first public build should be a demo, prototype, or private playtest.
 - Whether Steam starts with a demo, playtest, Early Access candidate, or full release candidate.

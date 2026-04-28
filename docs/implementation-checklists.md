@@ -62,6 +62,11 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `building_defense_tower`
 - `building_gun_tower`
 - `building_rocket_tower`
+- `building_armory_annex`
+- `building_vehicle_bay`
+- `building_med_hall`
+- `building_logistics_repair_pad`
+- `building_artillery_battery`
 - `resource_materials`
 Rules:
 
@@ -103,11 +108,14 @@ Acceptance checks:
 - player can place a basic building with visible placement feedback
 - blocked placement is rejected
 - a worker can construct a building by command
+- a worker can construct a powered Barracks add-on adjacent to a Barracks
 - Power Plant powers nearby structures
 - Pylon extends or links power
 - unpowered Barracks visibly stops providing its function
+- unpowered Barracks add-ons visibly stop providing unlock/capacity effects
 - Extractor/Refinery generates income only on a resource well
 - Defense Towers can create a blocking wall link
+- Defense Towers can upgrade in place into Gun/Rocket Tower variants without dropping a powered wall link
 - fog starts black outside known areas
 
 Evidence:
@@ -124,6 +132,7 @@ Acceptance checks:
 - Commander is present, controllable, fragile, and pistol-only
 - Commander death triggers loss
 - player can build power, Barracks, Extractor/Refinery, and defenses
+- player can use or bypass Barracks add-ons according to Level 1 pacing rules
 - central contested well exists
 - enemy is visible at or near fog edge
 - enemy produces or rebuilds only when it has resources
@@ -167,6 +176,9 @@ Acceptance checks:
 - explosive friendly fire works if explosive units are present
 - normal gunfire does not friendly-fire
 - player can win through something smarter than direct unit spam
+- Med Hall heals infantry slowly, requires power, and spends resources only while healing
+- Logistics / Repair Pad repairs parked vehicles, requires power, and spends resources only while repairing
+- Artillery Battery is fragile, long-range, explosive, has a minimum range, and cannot defend itself up close
 
 Evidence:
 

@@ -60,6 +60,7 @@ Good play should often mean:
 
 - cutting power by destroying or disabling a power plant or pylon
 - destroying an extractor
+- unpowering Barracks add-ons to shut off advanced training
 - destroying a defense tower to open an energy wall
 - disabling a radar station
 - capturing a neutral repair platform
@@ -79,6 +80,7 @@ At normal zoom, the player should quickly understand:
 - this is a soldier
 - this unit works best grouped with others
 - this elite or expensive unit can hold ground alone
+- this is a powered Barracks add-on
 - this is a rover or tank
 - this is artillery
 - this is a generator
@@ -178,10 +180,11 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - The first mission is a small 5-10 minute top-down scenario set in bright readable meadows/fields with light forest.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
-- Gun Towers and Rocket Towers can also act as Defense Tower wall anchors, but cost more because they also attack enemies.
+- Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding attacks and higher cost.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
+- Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. The first planned add-ons are Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
 - Power Plant generates power in a small radius, and underpowered buildings shut off.
 - Pylons link power over long distances.
 - The first enemy faction should rebuild and produce from limited resources, racing the player for new wells, but slower than usual in Level 1.
@@ -199,6 +202,7 @@ These are intentionally unresolved:
 
 - Is the wider world mostly human factions fighting each other, or are non-human factions central later?
 - Exact worker replacement cost relative to basic combat units.
+- Exact Level 1 pacing for whether Barracks add-ons are player-built, prebuilt, or deferred until a later mission.
 - Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
 - How many mission archetypes belong in the first campaign slice?
 - Exact Level 1 enemy production speed and resource handicap.

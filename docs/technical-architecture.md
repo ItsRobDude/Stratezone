@@ -65,7 +65,8 @@ The architecture is shaped around these realities:
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
-- Gun Tower and Rocket Tower can inherit Defense Tower wall-anchor behavior while adding direct attack stats and higher cost
+- Armory Annex and Vehicle Bay are planned powered Barracks add-ons built adjacent to the Barracks, not abstract upgrade buttons
+- Gun Tower and Rocket Tower should be modeled as in-place Defense Tower upgrades that keep wall-anchor behavior while adding direct attack stats and higher cost
 - first prototype units are Worker, Rifleman, Guardian, Rover, and Commander
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
@@ -165,6 +166,8 @@ Simulation-owned systems:
 - resources and extraction
 - power networks, pylon links, and build radius
 - defense tower wall links and path blocking
+- Barracks add-on adjacency, power state, and training unlock effects
+- in-place tower upgrade state
 - workers as expensive recruitable units
 - construction and repair
 - unit stats and combat resolution
@@ -228,6 +231,7 @@ Early requirements:
 
 - freeform-feeling placement with hidden footprint/buffer constraints
 - passability checks
+- adjacency checks for Barracks add-ons
 - resource-well positions
 - base start area
 - enemy base area
@@ -250,7 +254,7 @@ Early requirements:
 
 ### Defense Wall System
 
-Owns Defense Tower links, wall segments, path blocking, and wall shutdown when an anchor tower is destroyed or unpowered.
+Owns Defense Tower links, wall segments, path blocking, wall shutdown when an anchor tower is destroyed or unpowered, and wall continuity when a Defense Tower is upgraded in place.
 
 Early requirements:
 
@@ -258,7 +262,8 @@ Early requirements:
 - A valid Defense Tower pair creates an energy wall segment between them.
 - Energy wall segments block enemy movement/pathing.
 - Destroying or disabling either tower removes the wall segment.
-- Gun Towers and Rocket Towers can use the same wall-anchor behavior while also attacking.
+- Gun Towers and Rocket Towers use the same wall-anchor behavior while also attacking.
+- Gun Towers and Rocket Towers should normally be created by upgrading an existing Defense Tower in place, preserving the tower's anchor identity during the transition.
 - Armed tower variants cost more than basic Defense Towers.
 
 ### Economy System
@@ -283,6 +288,8 @@ Early requirements:
 - expensive worker units
 - resource-cost replacement
 - build tasks
+- Barracks add-on construction tasks adjacent to the Barracks
+- tower upgrade tasks that convert Defense Towers into armed variants in place
 - repair tasks
 - worker danger or casualty consequences
 - flee behavior when threatened
@@ -305,12 +312,15 @@ Early requirements:
 - group-benefit behavior for low-cost units where useful
 - higher-cost specialist or heavy unit that can operate with less support
 - turret
+- powered support infrastructure such as Med Hall and Logistics / Repair Pad when the mission needs sustain decisions
+- fragile static siege infrastructure such as Artillery Battery when the mission needs long-range base pressure
 - enemy attacker
 - building damage
 - enemy infrastructure as valid targets
 - first enemy faction can reuse the player-like technology set with different visuals, costs, timings, or tactical emphasis
 - enemy production/rebuild behavior with limited resources; Level 1 should run slower than the normal baseline
 - explosive friendly fire; normal gunfire should not cause friendly fire in the first prototype
+- classic RTS resistance math: basic infantry dies fast, ballistic fire performs poorly against heavy armor, explosives crack structures, and crush damage punishes exposed infantry
 - attack speed, damage, range, resistance, and movement speed live on unit/building content records, not separate weapon equipment records
 
 ### Mission System
@@ -325,6 +335,7 @@ Early requirements:
 - destroy all enemies on the map
 - defend an on-map commander unit
 - support a Level 1 tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
+- support mission data choosing whether Barracks add-ons are player-built, prebuilt, or locked for the mission
 - fail if mission-specific critical conditions are broken, such as colony hub destroyed, commander killed, transport lost, convoy escaped, or objective timer expired
 
 ### Event Director

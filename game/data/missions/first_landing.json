@@ -59,10 +59,9 @@
         "explored_terrain_stays_visible": true,
         "track_last_known_enemies": false
       },
-      "special_rules": ["colony_hub_destroyed_reveals_tank"],
+      "special_rules": ["colony_hub_destroyed_reveals_tank", "barracks_addon_unlocks_enabled"],
       "tags": ["first_landing", "playable_ugly"],
       "balance_status": "tunable_placeholder"
     }
   ]
 }
-

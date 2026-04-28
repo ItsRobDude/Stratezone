@@ -27,12 +27,17 @@ public static class ContentIds
     {
         public const string ColonyHub = "building_colony_hub";
         public const string Barracks = "building_barracks";
+        public const string ArmoryAnnex = "building_armory_annex";
+        public const string VehicleBay = "building_vehicle_bay";
         public const string PowerPlant = "building_power_plant";
         public const string Pylon = "building_pylon";
         public const string ExtractorRefinery = "building_extractor_refinery";
+        public const string MedHall = "building_med_hall";
+        public const string LogisticsRepairPad = "building_logistics_repair_pad";
         public const string DefenseTower = "building_defense_tower";
         public const string GunTower = "building_gun_tower";
         public const string RocketTower = "building_rocket_tower";
+        public const string ArtilleryBattery = "building_artillery_battery";
     }
 
     public static class Resources

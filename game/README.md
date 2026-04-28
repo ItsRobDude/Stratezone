@@ -15,3 +15,16 @@ Current scaffold:
 The first scaffold is intentionally tiny. Gameplay rules should grow from `scripts/simulation/` and content data, not from scene-only logic.
 
 `Stratezone.csproj` currently pins `Godot.NET.Sdk/4.6.2` to match the installed Godot .NET 4.6.2 editor.
+
+Current greybox controls:
+
+- Left click selects a unit or places the active building ghost.
+- Right click moves the selected unit, or cancels placement mode.
+- Select the Worker, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
+- Mouse wheel zooms. `WASD` or arrow keys pan.
+
+Current simulation smoke check:
+
+```powershell
+dotnet run --project tests/SimulationSmoke/SimulationSmoke.csproj
+```

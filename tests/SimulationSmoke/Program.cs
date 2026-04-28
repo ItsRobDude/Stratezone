@@ -27,11 +27,13 @@ Assert(Math.Abs(simulation.Materials - (startingMaterials - catalog.GetBuilding(
 var lowBudgetSimulation = new RtsSimulation(catalog, 100, []);
 lowBudgetSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 Assert(!lowBudgetSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).IsLegal, "spending cannot go below zero");
+Assert(!simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(520, 320)).IsLegal, "pylon cannot be placed globally from a power plant");
 
-var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-350, 50));
+var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160));
 Assert(pylon.Success, pylon.Message);
 Assert(pylon.Building?.IsPowered == true, "pylon is powered by the plant");
-Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(-470, 50)).IsLegal, "pylon extends powered placement");
+Assert(simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-430, 170)).IsLegal, "powered pylons can daisy chain to new pylons");
+Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(-350, 100)).IsLegal, "pylon extends powered placement");
 
 var extractor = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(-350, 170));
 Assert(extractor.Success, extractor.Message);

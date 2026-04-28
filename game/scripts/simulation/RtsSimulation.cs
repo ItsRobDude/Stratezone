@@ -171,13 +171,13 @@ public sealed class RtsSimulation
     {
         foreach (var building in _buildings.Where(building => building.Definition.ProvidesPower && building.IsPowered))
         {
-            if (building.Definition.PowerRadius > 0 &&
-                building.Position.DistanceTo(position) <= ToWorldRadius(building.Definition.PowerRadius) + targetRadius)
+            if (IsInsideLocalPowerField(building, position, targetRadius))
             {
                 return true;
             }
 
-            if (building.Definition.PylonLinkRange > 0 &&
+            if (building.Definition.Id == ContentIds.Buildings.Pylon &&
+                building.Definition.PylonLinkRange > 0 &&
                 building.Position.DistanceTo(position) <= ToWorldRadius(building.Definition.PylonLinkRange))
             {
                 return true;
@@ -185,6 +185,12 @@ public sealed class RtsSimulation
         }
 
         return false;
+    }
+
+    private static bool IsInsideLocalPowerField(BuildingState building, SimVector2 position, float targetRadius)
+    {
+        return building.Definition.PowerRadius > 0 &&
+            building.Position.DistanceTo(position) <= ToWorldRadius(building.Definition.PowerRadius) + targetRadius;
     }
 
     private void RecomputePower()

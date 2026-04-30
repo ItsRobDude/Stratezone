@@ -74,6 +74,7 @@ Rules:
 - Save data should store IDs, not scene paths or display names.
 - Display names may change without changing IDs.
 - New IDs should be added to `docs/content-data-spec.md` before broad use.
+- Player-facing text should use localization keys; `display_name` is fallback only.
 
 ## Simulation Ownership Examples
 
@@ -101,6 +102,7 @@ Acceptance checks:
 - player can select one unit
 - player can box-select multiple units, if included in the pass
 - player can right-click move selected units
+- HUD, command, validation, and objective text added after the i18n foundation uses localization keys
 - buildings and units have stable IDs
 - unit attack, movement, health, and resistance values come from content data
 - building health, resistance, and attack values come from content data
@@ -134,6 +136,8 @@ Acceptance checks:
 - player can build power, Barracks, Extractor/Refinery, and defenses
 - player can use or bypass Barracks add-ons according to Level 1 pacing rules
 - central contested well exists
+- mission setup uses authored data for starting entities, wells, and enemy AI build slots
+- enemy pressure pacing comes from a mission AI profile rather than scene-only timing
 - enemy is visible at or near fog edge
 - enemy produces or rebuilds only when it has resources
 - enemy pressure is tame but active
@@ -148,6 +152,7 @@ Evidence:
 - one completed mission run
 - one commander-death loss run
 - notes for any missing or intentionally placeholder behavior
+- localization key coverage for mission result, objective, command, and blocked-action text
 
 ## Milestone 3 Checklist: Colony Pressure Pass
 
@@ -212,6 +217,7 @@ Before any itch.io or Steam-facing build:
 - build includes version, channel, and commit or build identifier
 - player can launch, play, restart, quit, and relaunch
 - store/page claims match the actual build
+- player-facing strings needed for the build exist in localization data
 - credits and license notes exist
 - generated, purchased, or edited assets have provenance notes
 - support/contact path exists

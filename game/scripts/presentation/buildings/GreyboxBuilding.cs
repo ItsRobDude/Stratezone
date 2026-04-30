@@ -51,27 +51,12 @@ public partial class GreyboxBuilding : Node2D
         }
 
         var radius = _state.FootprintWorldRadius;
-        var fill = _state.IsPowered
-            ? new Color(0.18f, 0.42f, 0.56f, 0.92f)
-            : new Color(0.38f, 0.24f, 0.22f, 0.82f);
-
-        if (_state.IsDestroyed)
-        {
-            fill = new Color(0.18f, 0.18f, 0.18f, 0.75f);
-        }
-        else if (_state.FactionId == ContentIds.Factions.PrivateMilitary)
-        {
-            fill = _state.IsPowered
-                ? new Color(0.58f, 0.22f, 0.2f, 0.9f)
-                : new Color(0.36f, 0.2f, 0.18f, 0.82f);
-        }
-        else if (!_state.Definition.RequiresPower)
-        {
-            fill = new Color(0.28f, 0.42f, 0.32f, 0.92f);
-        }
-
-        DrawRect(new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f)), fill);
-        DrawRect(new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f)), new Color(0.05f, 0.08f, 0.1f), false, 3.0f);
+        var fill = GetBodyFill(_state);
+        var outline = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.18f, 0.04f, 0.04f)
+            : new Color(0.05f, 0.12f, 0.16f);
+        DrawFootprintOutline(radius, _state);
+        DrawBuildingSilhouette(_state, fill, outline);
 
         if (!_state.IsDestroyed && _state.Definition.ProvidesPower && _state.IsPowered && _state.Definition.PowerRadius > 0)
         {
@@ -87,6 +72,188 @@ public partial class GreyboxBuilding : Node2D
         {
             DrawArc(Vector2.Zero, radius + 10.0f, 0, Mathf.Tau, 72, new Color(1.0f, 0.95f, 0.25f), 4.0f);
         }
+    }
+
+    private void DrawFootprintOutline(float radius, BuildingState state)
+    {
+        var color = state.IsPowered || !state.Definition.RequiresPower
+            ? new Color(0.55f, 0.9f, 1.0f, 0.34f)
+            : new Color(1.0f, 0.38f, 0.24f, 0.42f);
+        if (state.FactionId == ContentIds.Factions.PrivateMilitary)
+        {
+            color = new Color(1.0f, 0.42f, 0.34f, 0.34f);
+        }
+
+        var rect = new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f));
+        DrawRect(rect, color, false, 2.0f);
+    }
+
+    private void DrawBuildingSilhouette(BuildingState state, Color fill, Color outline)
+    {
+        switch (state.Definition.Id)
+        {
+            case ContentIds.Buildings.ColonyHub:
+                DrawColonyHub(fill, outline);
+                break;
+            case ContentIds.Buildings.Barracks:
+                DrawBarracks(fill, outline);
+                break;
+            case ContentIds.Buildings.ArmoryAnnex:
+                DrawArmoryAnnex(fill, outline);
+                break;
+            case ContentIds.Buildings.VehicleBay:
+                DrawVehicleBay(fill, outline);
+                break;
+            case ContentIds.Buildings.PowerPlant:
+                DrawPowerPlant(fill, outline);
+                break;
+            case ContentIds.Buildings.Pylon:
+                DrawPylon(fill, outline);
+                break;
+            case ContentIds.Buildings.ExtractorRefinery:
+                DrawExtractor(fill, outline);
+                break;
+            case ContentIds.Buildings.DefenseTower:
+            case ContentIds.Buildings.GunTower:
+            case ContentIds.Buildings.RocketTower:
+                DrawTower(state.Definition.Id, fill, outline);
+                break;
+            default:
+                DrawGenericBuilding(fill, outline);
+                break;
+        }
+    }
+
+    private void DrawColonyHub(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-42, -30), new Vector2(84, 60)), fill);
+        DrawRect(new Rect2(new Vector2(-42, -30), new Vector2(84, 60)), outline, false, 3.0f);
+        DrawRect(new Rect2(new Vector2(-22, -43), new Vector2(44, 18)), new Color(0.22f, 0.34f, 0.36f));
+        DrawRect(new Rect2(new Vector2(-22, -43), new Vector2(44, 18)), outline, false, 2.0f);
+        DrawLine(new Vector2(-28, 0), new Vector2(28, 0), new Color(0.76f, 0.92f, 0.95f), 2.0f);
+        DrawLine(new Vector2(0, -22), new Vector2(0, 22), new Color(0.76f, 0.92f, 0.95f), 2.0f);
+    }
+
+    private void DrawBarracks(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-38, -23), new Vector2(76, 46)), fill);
+        DrawRect(new Rect2(new Vector2(-38, -23), new Vector2(76, 46)), outline, false, 3.0f);
+        for (var x = -24; x <= 24; x += 16)
+        {
+            DrawLine(new Vector2(x, -21), new Vector2(x, 21), new Color(0.78f, 0.84f, 0.78f), 1.5f);
+        }
+
+        DrawRect(new Rect2(new Vector2(-11, 6), new Vector2(22, 17)), new Color(0.12f, 0.17f, 0.18f));
+    }
+
+    private void DrawArmoryAnnex(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-28, -24), new Vector2(56, 48)), fill);
+        DrawRect(new Rect2(new Vector2(-28, -24), new Vector2(56, 48)), outline, false, 3.0f);
+        DrawLine(new Vector2(-18, 10), new Vector2(18, -12), new Color(0.95f, 0.82f, 0.36f), 4.0f);
+        DrawLine(new Vector2(-18, -12), new Vector2(18, 10), new Color(0.95f, 0.82f, 0.36f), 4.0f);
+        DrawCircle(Vector2.Zero, 7.0f, new Color(0.14f, 0.18f, 0.18f));
+    }
+
+    private void DrawVehicleBay(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-36, -26), new Vector2(72, 52)), fill);
+        DrawRect(new Rect2(new Vector2(-36, -26), new Vector2(72, 52)), outline, false, 3.0f);
+        DrawRect(new Rect2(new Vector2(-22, -10), new Vector2(44, 26)), new Color(0.16f, 0.2f, 0.18f));
+        DrawLine(new Vector2(-28, 22), new Vector2(28, 22), new Color(0.95f, 0.82f, 0.36f), 4.0f);
+        DrawLine(new Vector2(-26, -18), new Vector2(26, -18), new Color(0.74f, 0.86f, 0.9f), 2.0f);
+    }
+
+    private void DrawPowerPlant(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-32, -25), new Vector2(64, 50)), fill);
+        DrawRect(new Rect2(new Vector2(-32, -25), new Vector2(64, 50)), outline, false, 3.0f);
+        DrawCircle(new Vector2(-18, -4), 11.0f, new Color(0.22f, 0.34f, 0.36f));
+        DrawCircle(new Vector2(18, -4), 11.0f, new Color(0.22f, 0.34f, 0.36f));
+        DrawLine(new Vector2(4, -16), new Vector2(-7, 2), new Color(0.55f, 0.92f, 1.0f), 3.0f);
+        DrawLine(new Vector2(-7, 2), new Vector2(8, 2), new Color(0.55f, 0.92f, 1.0f), 3.0f);
+        DrawLine(new Vector2(8, 2), new Vector2(-4, 18), new Color(0.55f, 0.92f, 1.0f), 3.0f);
+    }
+
+    private void DrawPylon(Color fill, Color outline)
+    {
+        DrawPolygon(
+            [new Vector2(0, -28), new Vector2(20, 18), new Vector2(-20, 18)],
+            [fill]);
+        DrawPolyline(
+            [new Vector2(0, -28), new Vector2(20, 18), new Vector2(-20, 18), new Vector2(0, -28)],
+            outline,
+            3.0f);
+        DrawLine(new Vector2(0, -18), new Vector2(0, 17), new Color(0.55f, 0.92f, 1.0f), 2.0f);
+        DrawLine(new Vector2(-10, 4), new Vector2(10, 4), new Color(0.55f, 0.92f, 1.0f), 2.0f);
+    }
+
+    private void DrawExtractor(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-34, -22), new Vector2(68, 44)), fill);
+        DrawRect(new Rect2(new Vector2(-34, -22), new Vector2(68, 44)), outline, false, 3.0f);
+        DrawCircle(Vector2.Zero, 15.0f, new Color(0.12f, 0.18f, 0.18f));
+        DrawArc(Vector2.Zero, 22.0f, 0, Mathf.Tau, 32, new Color(0.98f, 0.78f, 0.24f), 3.0f);
+        DrawLine(new Vector2(-26, -16), new Vector2(-9, -4), new Color(0.98f, 0.78f, 0.24f), 3.0f);
+        DrawLine(new Vector2(9, 4), new Vector2(26, 16), new Color(0.98f, 0.78f, 0.24f), 3.0f);
+    }
+
+    private void DrawTower(string buildingId, Color fill, Color outline)
+    {
+        DrawPolygon(
+            [new Vector2(0, -34), new Vector2(28, -10), new Vector2(20, 28), new Vector2(-20, 28), new Vector2(-28, -10)],
+            [fill]);
+        DrawPolyline(
+            [new Vector2(0, -34), new Vector2(28, -10), new Vector2(20, 28), new Vector2(-20, 28), new Vector2(-28, -10), new Vector2(0, -34)],
+            outline,
+            3.0f);
+        DrawCircle(Vector2.Zero, 9.0f, new Color(0.16f, 0.2f, 0.2f));
+
+        if (buildingId == ContentIds.Buildings.GunTower)
+        {
+            DrawLine(Vector2.Zero, new Vector2(30, -8), outline, 5.0f);
+        }
+        else if (buildingId == ContentIds.Buildings.RocketTower)
+        {
+            DrawLine(new Vector2(-4, -4), new Vector2(27, -15), new Color(0.95f, 0.82f, 0.36f), 4.0f);
+            DrawLine(new Vector2(4, 4), new Vector2(31, 1), new Color(0.95f, 0.82f, 0.36f), 4.0f);
+        }
+        else
+        {
+            DrawArc(Vector2.Zero, 18.0f, 0, Mathf.Tau, 36, new Color(0.62f, 0.9f, 1.0f), 2.0f);
+        }
+    }
+
+    private void DrawGenericBuilding(Color fill, Color outline)
+    {
+        DrawRect(new Rect2(new Vector2(-30, -24), new Vector2(60, 48)), fill);
+        DrawRect(new Rect2(new Vector2(-30, -24), new Vector2(60, 48)), outline, false, 3.0f);
+        DrawLine(new Vector2(-20, -10), new Vector2(20, -10), new Color(0.76f, 0.86f, 0.86f), 2.0f);
+        DrawLine(new Vector2(-20, 8), new Vector2(20, 8), new Color(0.76f, 0.86f, 0.86f), 2.0f);
+    }
+
+    private static Color GetBodyFill(BuildingState state)
+    {
+        if (state.IsDestroyed)
+        {
+            return new Color(0.18f, 0.18f, 0.18f, 0.75f);
+        }
+
+        if (state.FactionId == ContentIds.Factions.PrivateMilitary)
+        {
+            return state.IsPowered || !state.Definition.RequiresPower
+                ? new Color(0.58f, 0.22f, 0.2f, 0.92f)
+                : new Color(0.36f, 0.2f, 0.18f, 0.82f);
+        }
+
+        if (!state.Definition.RequiresPower)
+        {
+            return new Color(0.28f, 0.42f, 0.32f, 0.92f);
+        }
+
+        return state.IsPowered
+            ? new Color(0.18f, 0.42f, 0.56f, 0.92f)
+            : new Color(0.38f, 0.24f, 0.22f, 0.82f);
     }
 
     private static Vector2 ToGodot(SimVector2 vector)

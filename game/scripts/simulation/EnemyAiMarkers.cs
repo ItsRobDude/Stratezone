@@ -1,6 +1,6 @@
 namespace Stratezone.Simulation;
 
-internal sealed record EnemyAiMarkers(
+public sealed record EnemyAiMarkers(
     SimVector2 HubPosition,
     SimVector2 PowerPlantPosition,
     SimVector2 BarracksPosition,
@@ -14,4 +14,21 @@ internal sealed record EnemyAiMarkers(
         new SimVector2(500, -80),
         new SimVector2(220, 30),
         new SimVector2(340, -70));
+
+    public static EnemyAiMarkers FromMission(Content.MissionDefinition mission)
+    {
+        var markers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
+        var profile = mission.EnemyAiProfile;
+        return new EnemyAiMarkers(
+            GetMarker(markers, profile.HubMarkerId, FirstLanding.HubPosition),
+            GetMarker(markers, profile.PowerPlantMarkerId, FirstLanding.PowerPlantPosition),
+            GetMarker(markers, profile.BarracksMarkerId, FirstLanding.BarracksPosition),
+            GetMarker(markers, profile.ExtractorMarkerId, FirstLanding.ExtractorPosition),
+            GetMarker(markers, profile.DefenseTowerMarkerId, FirstLanding.DefenseTowerPosition));
+    }
+
+    private static SimVector2 GetMarker(IReadOnlyDictionary<string, SimVector2> markers, string id, SimVector2 fallback)
+    {
+        return markers.TryGetValue(id, out var position) ? position : fallback;
+    }
 }

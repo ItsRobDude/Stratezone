@@ -32,10 +32,12 @@ public partial class PlacementGhost : Node2D
 
         var radius = RtsSimulation.ToWorldRadius(_definition.FootprintRadius + _definition.PlacementBuffer);
         var color = _isLegal
-            ? new Color(0.25f, 1.0f, 0.45f, 0.32f)
-            : new Color(1.0f, 0.24f, 0.18f, 0.32f);
+            ? new Color(0.25f, 1.0f, 0.45f, 0.9f)
+            : new Color(1.0f, 0.24f, 0.18f, 0.9f);
 
-        DrawRect(new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f)), color);
-        DrawRect(new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f)), color with { A = 0.85f }, false, 3.0f);
+        var footprint = new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f));
+        DrawRect(footprint, color, false, 3.0f);
+        DrawRect(new Rect2(new Vector2(-18, -14), new Vector2(36, 28)), color with { A = 0.18f });
+        DrawRect(new Rect2(new Vector2(-18, -14), new Vector2(36, 28)), color, false, 2.0f);
     }
 }

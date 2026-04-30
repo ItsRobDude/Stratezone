@@ -4,6 +4,8 @@ namespace Stratezone.Simulation;
 
 public sealed class UnitState
 {
+    private readonly List<SimVector2> _pathWaypoints = [];
+
     public UnitState(int entityId, UnitDefinition definition, string factionId, SimVector2 position)
     {
         EntityId = entityId;
@@ -20,10 +22,54 @@ public sealed class UnitState
     public float Health { get; private set; }
     public float AttackCooldownRemaining { get; internal set; }
     public SimVector2? MoveTarget { get; internal set; }
+    public IReadOnlyList<SimVector2> PathWaypoints => _pathWaypoints;
+    public int CurrentWaypointIndex { get; private set; }
+    public bool IsPathBlocked { get; private set; }
+    public string? PathBlockedReason { get; private set; }
     public int? TargetUnitEntityId { get; internal set; }
     public int? TargetBuildingEntityId { get; internal set; }
     public bool IsBlockedByEnergyWall { get; internal set; }
     public bool IsDestroyed => Health <= 0.0f;
+
+    internal SimVector2? CurrentWaypoint => CurrentWaypointIndex < _pathWaypoints.Count
+        ? _pathWaypoints[CurrentWaypointIndex]
+        : null;
+
+    internal void SetPath(SimVector2 destination, IReadOnlyList<SimVector2> waypoints)
+    {
+        MoveTarget = destination;
+        _pathWaypoints.Clear();
+        _pathWaypoints.AddRange(waypoints);
+        CurrentWaypointIndex = 0;
+        IsPathBlocked = false;
+        PathBlockedReason = null;
+    }
+
+    internal void SetPathBlocked(SimVector2 destination, string reason)
+    {
+        MoveTarget = destination;
+        _pathWaypoints.Clear();
+        CurrentWaypointIndex = 0;
+        IsPathBlocked = true;
+        PathBlockedReason = reason;
+    }
+
+    internal void ClearPath()
+    {
+        MoveTarget = null;
+        _pathWaypoints.Clear();
+        CurrentWaypointIndex = 0;
+        IsPathBlocked = false;
+        PathBlockedReason = null;
+    }
+
+    internal void AdvanceWaypoint()
+    {
+        if (CurrentWaypointIndex < _pathWaypoints.Count)
+        {
+            CurrentWaypointIndex++;
+        }
+    }
 
     public void ApplyDamage(float rawDamage, string damageType)
     {

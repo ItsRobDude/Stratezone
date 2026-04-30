@@ -26,15 +26,23 @@ public sealed partial class RtsSimulation
     private readonly FogOfWarState _playerFog = new(-760, 940, -420, 420, FogCellSize);
     private readonly FogOfWarState _enemyFog = new(-760, 940, -420, 420, FogCellSize);
     private readonly HashSet<int> _hubTankReveals = [];
-    private readonly EnemyAiSystem _enemyAi = new(EnemyAiMarkers.FirstLanding);
+    private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives = new();
+    private float _elapsedSeconds;
     private int _nextEntityId = 1;
 
-    public RtsSimulation(ContentCatalog catalog, int startingMaterials, IEnumerable<(string WellId, SimVector2 Position)> resourceWellPlacements, int enemyStartingMaterials = 0)
+    public RtsSimulation(
+        ContentCatalog catalog,
+        int startingMaterials,
+        IEnumerable<(string WellId, SimVector2 Position)> resourceWellPlacements,
+        int enemyStartingMaterials = 0,
+        EnemyAiMarkers? enemyAiMarkers = null,
+        EnemyAiProfileDefinition? enemyAiProfile = null)
     {
         _catalog = catalog;
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
+        _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
 
         foreach (var placement in resourceWellPlacements)
         {
@@ -51,6 +59,8 @@ public sealed partial class RtsSimulation
     public IReadOnlyList<EnergyWallSegment> EnergyWalls => _energyWalls;
     public FogOfWarState PlayerFog => _playerFog;
     public MissionState MissionState { get; private set; } = new(MissionStatus.Active, "Objective: establish the outpost.");
+    public float ElapsedSeconds => _elapsedSeconds;
+    public EnemyAiProfileDefinition EnemyAiProfile => _enemyAi.Profile;
     public bool EnemyProductionOnline => HasPoweredBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.Barracks) &&
         HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub);
 
@@ -85,7 +95,12 @@ public sealed partial class RtsSimulation
 
         if (availableMaterials < definition.Cost)
         {
-            return new PlacementValidation(false, $"Need {definition.Cost:0} materials.");
+            return new PlacementValidation(
+                false,
+                $"Need {definition.Cost:0} materials.",
+                null,
+                "sim.need_materials",
+                SimulationMessage.Args(("amount", definition.Cost)));
         }
 
         foreach (var building in _buildings)
@@ -98,28 +113,42 @@ public sealed partial class RtsSimulation
             var requiredDistance = building.OccupancyRadius + ToWorldRadius(definition.FootprintRadius + definition.PlacementBuffer);
             if (building.Position.DistanceTo(position) < requiredDistance)
             {
-                return new PlacementValidation(false, $"Blocked by {building.Definition.DisplayName}.");
+                return new PlacementValidation(
+                    false,
+                    $"Blocked by {building.Definition.DisplayName}.",
+                    null,
+                    "sim.placement.blocked_by_building",
+                    SimulationMessage.Args(("buildingId", building.Definition.Id), ("building", building.Definition.DisplayName)));
             }
         }
 
         var targetWell = FindCompatibleResourceWell(definition, position);
         if (definition.ProvidesResourceExtraction && targetWell is null)
         {
-            return new PlacementValidation(false, "Extractor must be placed on an open resource well.");
+            return new PlacementValidation(false, "Extractor must be placed on an open resource well.", null, "sim.placement.extractor_requires_well");
         }
 
         if (!IsAdjacentRequirementMet(factionId, definition, position))
         {
             var required = _catalog.GetBuilding(definition.RequiresAdjacentBuildingId!);
-            return new PlacementValidation(false, $"{definition.DisplayName} must be built adjacent to {required.DisplayName}.");
+            return new PlacementValidation(
+                false,
+                $"{definition.DisplayName} must be built adjacent to {required.DisplayName}.",
+                null,
+                "sim.placement.requires_adjacent_building",
+                SimulationMessage.Args(
+                    ("buildingId", definition.Id),
+                    ("building", definition.DisplayName),
+                    ("requiredBuildingId", required.Id),
+                    ("requiredBuilding", required.DisplayName)));
         }
 
         if (definition.RequiresPower && !WouldBePowered(factionId, definition, position))
         {
-            return new PlacementValidation(false, "Must be placed inside powered support.");
+            return new PlacementValidation(false, "Must be placed inside powered support.", null, "sim.placement.requires_powered_support");
         }
 
-        return new PlacementValidation(true, "Placement legal.", targetWell?.Definition.Id);
+        return new PlacementValidation(true, "Placement legal.", targetWell?.Definition.Id, "sim.placement.legal");
     }
 
     public PlacementResult TryPlaceBuilding(string buildingId, SimVector2 position)
@@ -133,7 +162,7 @@ public sealed partial class RtsSimulation
         var validation = ValidatePlacementForFaction(factionId, buildingId, position, availableMaterials);
         if (!validation.IsLegal)
         {
-            return new PlacementResult(false, validation.Reason);
+            return new PlacementResult(false, validation.Reason, null, validation.MessageKey, validation.MessageArgs);
         }
 
         var definition = _catalog.GetBuilding(buildingId);
@@ -151,13 +180,19 @@ public sealed partial class RtsSimulation
         RecomputePower();
         RecomputeFog();
         UpdateMissionState();
-        return new PlacementResult(true, $"Placed {definition.DisplayName}.", building);
+        return new PlacementResult(
+            true,
+            $"Placed {definition.DisplayName}.",
+            building,
+            "sim.placement.placed",
+            SimulationMessage.Args(("buildingId", definition.Id), ("building", definition.DisplayName)));
     }
 
     public void Tick(float deltaSeconds)
     {
+        _elapsedSeconds += deltaSeconds;
         RecomputePower();
-        _enemyAi.Tick(this);
+        _enemyAi.Tick(this, deltaSeconds);
         TickProduction(deltaSeconds);
         TickEnemyPressure(deltaSeconds);
         TickBuildingAttacks(deltaSeconds);
@@ -214,10 +249,9 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        unit.MoveTarget = position;
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = null;
-        unit.IsBlockedByEnergyWall = false;
+        SetUnitPathTo(unit, position);
     }
 
     public void CommandUnitAttackUnit(int unitEntityId, int targetUnitEntityId)
@@ -229,7 +263,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        unit.MoveTarget = null;
+        unit.ClearPath();
         unit.TargetUnitEntityId = target.EntityId;
         unit.TargetBuildingEntityId = null;
     }
@@ -243,7 +277,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        unit.MoveTarget = null;
+        unit.ClearPath();
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = target.EntityId;
     }
@@ -272,7 +306,12 @@ public sealed partial class RtsSimulation
         RecomputePower();
         RecomputeFog();
         UpdateMissionState();
-        return new UpgradeResult(true, $"Upgraded to {upgrade.DisplayName}.", validation.Building);
+        return new UpgradeResult(
+            true,
+            $"Upgraded to {upgrade.DisplayName}.",
+            validation.Building,
+            "sim.upgrade.upgraded",
+            SimulationMessage.Args(("buildingId", upgrade.Id), ("building", upgrade.DisplayName)));
     }
 
     private UpgradeResult ValidateBuildingUpgradeForFaction(string factionId, int buildingEntityId, string upgradeBuildingId)
@@ -280,156 +319,50 @@ public sealed partial class RtsSimulation
         var building = FindLiveBuilding(buildingEntityId);
         if (building is null || building.FactionId != factionId)
         {
-            return new UpgradeResult(false, "Select a live friendly building.");
+            return new UpgradeResult(false, "Select a live friendly building.", null, "sim.upgrade.select_live_friendly");
         }
 
         var upgrade = _catalog.GetBuilding(upgradeBuildingId);
         if (upgrade.UpgradeFromBuildingId != building.Definition.Id)
         {
-            return new UpgradeResult(false, $"{building.Definition.DisplayName} cannot upgrade into {upgrade.DisplayName}.");
+            return new UpgradeResult(
+                false,
+                $"{building.Definition.DisplayName} cannot upgrade into {upgrade.DisplayName}.",
+                null,
+                "sim.upgrade.invalid_target",
+                SimulationMessage.Args(
+                    ("buildingId", building.Definition.Id),
+                    ("building", building.Definition.DisplayName),
+                    ("upgradeBuildingId", upgrade.Id),
+                    ("upgradeBuilding", upgrade.DisplayName)));
         }
 
         if (upgrade.RequiresPower && !building.IsPowered)
         {
-            return new UpgradeResult(false, $"{building.Definition.DisplayName} is unpowered.");
+            return new UpgradeResult(
+                false,
+                $"{building.Definition.DisplayName} is unpowered.",
+                null,
+                "sim.upgrade.unpowered",
+                SimulationMessage.Args(("buildingId", building.Definition.Id), ("building", building.Definition.DisplayName)));
         }
 
         if (GetMaterialsForFaction(factionId) < upgrade.Cost)
         {
-            return new UpgradeResult(false, $"Need {upgrade.Cost:0} materials.");
+            return new UpgradeResult(false, $"Need {upgrade.Cost:0} materials.", null, "sim.need_materials", SimulationMessage.Args(("amount", upgrade.Cost)));
         }
 
-        return new UpgradeResult(true, $"Can upgrade to {upgrade.DisplayName}.", building);
+        return new UpgradeResult(
+            true,
+            $"Can upgrade to {upgrade.DisplayName}.",
+            building,
+            "sim.upgrade.can_upgrade",
+            SimulationMessage.Args(("buildingId", upgrade.Id), ("building", upgrade.DisplayName)));
     }
 
     public bool IsLineBlockedByEnergyWall(SimVector2 start, SimVector2 end)
     {
         return _energyWalls.Any(wall => LinesIntersect(start, end, wall.Start, wall.End));
-    }
-
-    public ProductionValidation ValidateUnitProduction(string unitId, int? producerBuildingEntityId = null)
-    {
-        return ValidateUnitProductionForFaction(ContentIds.Factions.PlayerExpedition, unitId, producerBuildingEntityId, Materials);
-    }
-
-    public ProductionResult TryQueueUnit(string unitId, int? producerBuildingEntityId = null)
-    {
-        return TryQueueUnitForFaction(ContentIds.Factions.PlayerExpedition, unitId, producerBuildingEntityId, 1.0f);
-    }
-
-    internal ProductionResult TryQueueUnitForFaction(string factionId, string unitId, int? producerBuildingEntityId, float trainTimeMultiplier)
-    {
-        var validation = ValidateUnitProductionForFaction(factionId, unitId, producerBuildingEntityId, GetMaterialsForFaction(factionId));
-        if (!validation.CanQueue || validation.Producer is null)
-        {
-            return new ProductionResult(false, validation.Reason);
-        }
-
-        var unit = _catalog.GetUnit(unitId);
-        SpendMaterialsForFaction(factionId, unit.Cost);
-        var order = new ProductionOrderState(
-            unit.Id,
-            factionId,
-            validation.Producer.EntityId,
-            MathF.Max(0.1f, unit.TrainTimeSeconds * trainTimeMultiplier));
-        _productionOrders.Add(order);
-        return new ProductionResult(true, $"Queued {unit.DisplayName}.", order);
-    }
-
-    private ProductionValidation ValidateUnitProductionForFaction(string factionId, string unitId, int? producerBuildingEntityId, float availableMaterials)
-    {
-        var unit = _catalog.GetUnit(unitId);
-
-        if (unit.AllowedByBuildingId is null || unit.SpawnBuildingId is null)
-        {
-            return new ProductionValidation(false, $"{unit.DisplayName} cannot be trained in this mission.");
-        }
-
-        if (availableMaterials < unit.Cost)
-        {
-            return new ProductionValidation(false, $"Need {unit.Cost:0} materials.");
-        }
-
-        if (_productionOrders.Any(order => order.FactionId == factionId))
-        {
-            return new ProductionValidation(false, "Training queue is busy.");
-        }
-
-        var spawn = _buildings.FirstOrDefault(building =>
-            building.FactionId == factionId &&
-            building.Definition.Id == unit.SpawnBuildingId &&
-            !building.IsDestroyed);
-        if (spawn is null)
-        {
-            var spawnDefinition = _catalog.GetBuilding(unit.SpawnBuildingId);
-            return new ProductionValidation(false, $"Requires live {spawnDefinition.DisplayName}.");
-        }
-
-        var producer = producerBuildingEntityId is null
-            ? _buildings.FirstOrDefault(building =>
-                building.FactionId == factionId &&
-                building.Definition.Id == unit.AllowedByBuildingId &&
-                building.IsPowered &&
-                !building.IsDestroyed)
-            : _buildings.FirstOrDefault(building =>
-                building.EntityId == producerBuildingEntityId.Value &&
-                building.FactionId == factionId &&
-                building.Definition.Id == unit.AllowedByBuildingId &&
-                !building.IsDestroyed);
-
-        if (producer is null)
-        {
-            var producerDefinition = _catalog.GetBuilding(unit.AllowedByBuildingId);
-            return new ProductionValidation(false, $"Requires live {producerDefinition.DisplayName}.");
-        }
-
-        if (!producer.IsPowered)
-        {
-            return new ProductionValidation(false, $"{producer.Definition.DisplayName} is unpowered.");
-        }
-
-        if (unit.RequiredAddonBuildingId is not null &&
-            !HasPoweredBuilding(factionId, unit.RequiredAddonBuildingId))
-        {
-            var addon = _catalog.GetBuilding(unit.RequiredAddonBuildingId);
-            return new ProductionValidation(false, $"Requires powered {addon.DisplayName}.");
-        }
-
-        return new ProductionValidation(true, $"Can train {unit.DisplayName}.", null, producer);
-    }
-
-    private void TickProduction(float deltaSeconds)
-    {
-        for (var index = _productionOrders.Count - 1; index >= 0; index--)
-        {
-            var order = _productionOrders[index];
-            order.RemainingSeconds -= deltaSeconds;
-            if (order.RemainingSeconds > 0.0f)
-            {
-                continue;
-            }
-
-            CompleteProductionOrder(order);
-            _productionOrders.RemoveAt(index);
-        }
-    }
-
-    private void CompleteProductionOrder(ProductionOrderState order)
-    {
-        var hub = _buildings.FirstOrDefault(building =>
-            building.FactionId == order.FactionId &&
-            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
-            !building.IsDestroyed);
-
-        if (hub is null)
-        {
-            return;
-        }
-
-        var spawnOffset = order.FactionId == ContentIds.Factions.PrivateMilitary
-            ? new SimVector2(-70, 0)
-            : new SimVector2(70, 0);
-        AddUnit(order.UnitId, order.FactionId, hub.Position + spawnOffset);
     }
 
     private void TickEnemyPressure(float deltaSeconds)
@@ -440,13 +373,25 @@ public sealed partial class RtsSimulation
 
             if (unit.FactionId == ContentIds.Factions.PrivateMilitary)
             {
-                TickEnemyUnit(unit, deltaSeconds);
+                if (_elapsedSeconds >= _enemyAi.Profile.FirstAttackDelaySeconds &&
+                    CountEnemyCombatUnits() >= _enemyAi.Profile.AttackGroupSize)
+                {
+                    TickEnemyUnit(unit, deltaSeconds * _enemyAi.Profile.PressureSlowdownMultiplier);
+                }
             }
             else
             {
                 TickPlayerUnit(unit, deltaSeconds);
             }
         }
+    }
+
+    private int CountEnemyCombatUnits()
+    {
+        return _units.Count(unit =>
+            unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+            !unit.IsDestroyed &&
+            unit.Definition.CanAttack);
     }
 
     private void TickBuildingAttacks(float deltaSeconds)
@@ -564,12 +509,34 @@ public sealed partial class RtsSimulation
 
     private void MoveUnitToward(UnitState unit, SimVector2 target, float deltaSeconds)
     {
-        var direction = target - unit.Position;
+        if (NeedsNewPath(unit, target))
+        {
+            SetUnitPathTo(unit, target);
+        }
+
+        if (unit.IsPathBlocked)
+        {
+            return;
+        }
+
+        var waypoint = unit.CurrentWaypoint;
+        if (waypoint is null)
+        {
+            unit.ClearPath();
+            return;
+        }
+
+        var direction = waypoint.Value - unit.Position;
         var distance = direction.Length();
         if (distance <= 4.0f)
         {
-            unit.Position = target;
-            unit.MoveTarget = null;
+            unit.Position = waypoint.Value;
+            unit.AdvanceWaypoint();
+            if (unit.CurrentWaypoint is null)
+            {
+                unit.ClearPath();
+            }
+
             return;
         }
 
@@ -577,6 +544,40 @@ public sealed partial class RtsSimulation
         var start = unit.Position;
         unit.Position += direction.Normalized() * MathF.Min(stepDistance, distance);
         CombatResolver.TryCrushInfantry(unit, start, unit.Position, _units);
+    }
+
+    private void SetUnitPathTo(UnitState unit, SimVector2 target)
+    {
+        var path = PathfindingSystem.FindPath(
+            unit.Position,
+            target,
+            _buildings,
+            GetBlockingEnergyWallsForFaction(unit.FactionId));
+
+        if (path.Success)
+        {
+            unit.SetPath(path.Destination, path.Waypoints);
+            unit.IsBlockedByEnergyWall = false;
+            return;
+        }
+
+        unit.SetPathBlocked(target, path.Message);
+        unit.IsBlockedByEnergyWall = FindBlockingEnergyWallForFaction(unit.FactionId, unit.Position, target) is not null;
+    }
+
+    private static bool NeedsNewPath(UnitState unit, SimVector2 target)
+    {
+        if (unit.MoveTarget is null)
+        {
+            return true;
+        }
+
+        if (unit.IsPathBlocked)
+        {
+            return true;
+        }
+
+        return unit.PathWaypoints.Count == 0 || unit.MoveTarget.Value.DistanceTo(target) > 32.0f;
     }
 
     private BuildingState? GetEnemyTargetBuilding(UnitState unit)
@@ -591,7 +592,7 @@ public sealed partial class RtsSimulation
             return null;
         }
 
-        var blockingWall = FindBlockingEnergyWall(unit.Position, hub.Position);
+        var blockingWall = FindBlockingEnergyWallForFaction(unit.FactionId, unit.Position, hub.Position);
         unit.IsBlockedByEnergyWall = blockingWall is not null;
         if (blockingWall is null)
         {
@@ -674,6 +675,23 @@ public sealed partial class RtsSimulation
     private EnergyWallSegment? FindBlockingEnergyWall(SimVector2 start, SimVector2 end)
     {
         return _energyWalls.FirstOrDefault(wall => LinesIntersect(start, end, wall.Start, wall.End));
+    }
+
+    private EnergyWallSegment? FindBlockingEnergyWallForFaction(string factionId, SimVector2 start, SimVector2 end)
+    {
+        return GetBlockingEnergyWallsForFaction(factionId)
+            .FirstOrDefault(wall => LinesIntersect(start, end, wall.Start, wall.End));
+    }
+
+    private IReadOnlyList<EnergyWallSegment> GetBlockingEnergyWallsForFaction(string factionId)
+    {
+        return _energyWalls
+            .Where(wall =>
+            {
+                var startAnchor = FindLiveBuilding(wall.StartAnchorEntityId);
+                return startAnchor is not null && startAnchor.FactionId != factionId;
+            })
+            .ToArray();
     }
 
     private BuildingState? FindLiveBuilding(int entityId)

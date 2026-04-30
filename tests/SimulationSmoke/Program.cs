@@ -1,11 +1,17 @@
 using Stratezone.Simulation;
 using Stratezone.Simulation.Content;
+using Stratezone.Localization;
 
 var repoRoot = FindRepoRoot();
 var gameRoot = Path.Combine(repoRoot, "game");
 var catalog = ContentCatalog.LoadFromGameData(gameRoot);
+var localization = LocalizationCatalog.LoadFromGameData(gameRoot);
 var mission = catalog.GetMission(ContentIds.Missions.FirstLanding);
 var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Materials];
+
+Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
+Assert(localization.Translate("missing.test.key") == "[[missing.test.key]]", "missing localization keys are obvious");
+Assert(localization.ContentName(ContentIds.Units.Worker) == "Worker", "content name localization keys resolve stable content ids");
 
 var simulation = new RtsSimulation(
     catalog,
@@ -19,6 +25,7 @@ simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-3
 
 Assert(!simulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-300, -140)).IsLegal, "overlapping building placement is rejected");
 Assert(!simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(120, 160)).IsLegal, "powered buildings cannot be placed outside powered support");
+Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(120, 160)).MessageKey == "sim.placement.requires_powered_support", "placement validation returns a stable message key");
 
 var powerPlant = simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40));
 Assert(powerPlant.Success, powerPlant.Message);
@@ -83,6 +90,45 @@ openPressureSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.Pr
 TickFor(openPressureSimulation, 20.0f);
 Assert(openHub.Health < openHub.Definition.Health, "enemy pressure damages the Colony Hub when no wall blocks the route");
 
+var pathSimulation = new RtsSimulation(catalog, startingMaterials, []);
+pathSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(0, 0));
+var pathUnit = pathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-260, 0));
+pathSimulation.CommandUnitMove(pathUnit.EntityId, new SimVector2(260, 0));
+Assert(pathUnit.PathWaypoints.Any(point => Math.Abs(point.Y) > 20.0f), "unit movement path routes around building blockers");
+TickFor(pathSimulation, 7.0f);
+Assert(pathUnit.Position.DistanceTo(new SimVector2(260, 0)) < 12.0f, "unit reaches routed move destination");
+
+var fallbackPathSimulation = new RtsSimulation(catalog, startingMaterials, []);
+fallbackPathSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(0, 0));
+var fallbackUnit = fallbackPathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-260, 0));
+fallbackPathSimulation.CommandUnitMove(fallbackUnit.EntityId, new SimVector2(0, 0));
+Assert(!fallbackUnit.IsPathBlocked, "pathfinding finds a fallback when the exact destination is inside a building footprint");
+Assert(fallbackUnit.MoveTarget is not null && fallbackUnit.MoveTarget.Value.DistanceTo(new SimVector2(0, 0)) > 40.0f, "blocked destination fallback redirects to a nearby reachable point");
+TickFor(fallbackPathSimulation, 7.0f);
+Assert(fallbackUnit.Position.DistanceTo(fallbackUnit.MoveTarget ?? fallbackUnit.Position) < 12.0f, "unit reaches fallback destination near blocked target");
+
+var wallPathSimulation = new RtsSimulation(catalog, startingMaterials, []);
+wallPathSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+Assert(wallPathSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0)).Success, "wall path test places power");
+Assert(wallPathSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(130, -80)).Success, "wall path test places first tower");
+Assert(wallPathSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(130, 80)).Success, "wall path test places second tower");
+var hostileWallRunner = wallPathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(260, 0));
+wallPathSimulation.CommandUnitMove(hostileWallRunner.EntityId, new SimVector2(0, 0));
+Assert(!hostileWallRunner.IsPathBlocked, "hostile unit can route around a finite energy wall segment");
+Assert(hostileWallRunner.PathWaypoints.Any(point => Math.Abs(point.Y) > 90.0f), "hostile unit path detours around enemy energy wall segment");
+var friendlyWallRunner = wallPathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(260, 0));
+wallPathSimulation.CommandUnitMove(friendlyWallRunner.EntityId, new SimVector2(0, 0));
+Assert(!friendlyWallRunner.IsPathBlocked, "friendly energy wall does not block allied movement");
+Assert(!friendlyWallRunner.PathWaypoints.Any(point => Math.Abs(point.Y) > 90.0f), "friendly unit path does not detour around allied energy wall segment");
+
+var pursuitPathSimulation = new RtsSimulation(catalog, startingMaterials, []);
+pursuitPathSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(0, 0));
+var pursuingRifleman = pursuitPathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-260, 0));
+var pursuedRifleman = pursuitPathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(260, 0));
+pursuitPathSimulation.CommandUnitAttackUnit(pursuingRifleman.EntityId, pursuedRifleman.EntityId);
+TickFor(pursuitPathSimulation, 7.0f);
+Assert(pursuedRifleman.Health < pursuedRifleman.Definition.Health, "attack pursuit uses routed movement around blockers");
+
 var enemyBaseSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
@@ -102,6 +148,7 @@ Assert(playerBarracks.Success, playerBarracks.Message);
 var materialsBeforeTraining = playerProductionSimulation.Materials;
 var riflemanQueue = playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building!.EntityId);
 Assert(riflemanQueue.Success, riflemanQueue.Message);
+Assert(riflemanQueue.MessageKey == "sim.production.queued", "production result returns a stable message key");
 Assert(playerProductionSimulation.Materials < materialsBeforeTraining, "player training spends materials immediately");
 TickFor(playerProductionSimulation, 11.0f);
 Assert(playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Rifleman), "player production spawns trained units from the Colony Hub");
@@ -162,6 +209,7 @@ var wallTowerB = towerUpgradeSimulation.TryPlaceBuilding(ContentIds.Buildings.De
 Assert(wallTowerA.Success && wallTowerB.Success, "tower upgrade test places wall anchors");
 Assert(towerUpgradeSimulation.EnergyWalls.Count == 1, "wall link exists before tower upgrade");
 Assert(towerUpgradeSimulation.TryUpgradeBuilding(wallTowerA.Building!.EntityId, ContentIds.Buildings.GunTower).Success, "Defense Tower upgrades into Gun Tower");
+Assert(towerUpgradeSimulation.ValidateBuildingUpgrade(wallTowerB.Building!.EntityId, ContentIds.Buildings.RocketTower).MessageKey == "sim.upgrade.can_upgrade", "upgrade validation returns a stable message key");
 Assert(towerUpgradeSimulation.EnergyWalls.Count == 1, "tower upgrade preserves wall link");
 var towerTarget = towerUpgradeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(260, -80));
 TickFor(towerUpgradeSimulation, 1.0f);
@@ -212,12 +260,45 @@ var scout = fogSimulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.Pl
 var hiddenEnemy = fogSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(620, 260), ContentIds.Factions.PrivateMilitary);
 Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "distant enemy starts hidden by fog");
 fogSimulation.CommandUnitMove(scout.EntityId, new SimVector2(600, 240));
-TickFor(fogSimulation, 8.0f);
+TickFor(fogSimulation, 12.0f);
 Assert(fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "Rover scouting reveals enemy");
 fogSimulation.CommandUnitMove(scout.EntityId, new SimVector2(-450, 0));
-TickFor(fogSimulation, 8.0f);
+TickFor(fogSimulation, 12.0f);
 Assert(fogSimulation.IsExploredByFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "scouted terrain remains explored");
 Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "enemy outside current vision is hidden again");
+
+var missionMarkers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
+Assert(mission.ResourceWellPlacements.Count == 2, "mission data owns resource well placements");
+Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Units.Worker), "mission data owns starting player units");
+var missionWellPlacements = mission.ResourceWellPlacements
+    .Select(placement => (placement.WellId, missionMarkers[placement.MarkerId] + placement.Offset))
+    .ToArray();
+var pacedMissionSimulation = new RtsSimulation(
+    catalog,
+    startingMaterials,
+    missionWellPlacements,
+    mission.EnemyStartingResources[ContentIds.Resources.Materials],
+    EnemyAiMarkers.FromMission(mission),
+    mission.EnemyAiProfile);
+foreach (var entity in mission.StartingEntities)
+{
+    var position = missionMarkers[entity.MarkerId] + entity.Offset;
+    if (entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
+    {
+        pacedMissionSimulation.AddStartingBuilding(entity.ContentId, position, entity.FactionId);
+    }
+    else if (entity.ContentId.StartsWith("unit_", StringComparison.Ordinal))
+    {
+        pacedMissionSimulation.AddUnit(entity.ContentId, entity.FactionId, position);
+    }
+}
+
+TickFor(pacedMissionSimulation, mission.EnemyAiProfile.FirstAttackDelaySeconds - 5.0f);
+Assert(!pacedMissionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.TargetBuildingEntityId is not null), "mission AI profile delays first enemy pressure");
+TickFor(pacedMissionSimulation, 20.0f);
+Assert(pacedMissionSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary) ||
+    pacedMissionSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman) > 0,
+    "mission AI profile starts paced enemy production after delay");
 
 Console.WriteLine("Simulation smoke checks passed.");
 

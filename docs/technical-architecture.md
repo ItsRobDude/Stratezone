@@ -194,6 +194,20 @@ Presentation-owned systems:
 
 Presentation may ask the simulation to do things. Presentation should not directly mutate game truth without going through a command/action layer.
 
+## Localization Boundary
+
+Player-facing text is a presentation concern, not simulation truth.
+
+Rules:
+
+- simulation systems return message keys and argument values for blocked actions, objectives, and mission state
+- presentation/UI resolves those keys through localization data under `game/data/i18n/`
+- content IDs remain stable identifiers and must not be translated
+- `display_name` fields remain English fallback/readability aids during the prototype
+- save data, tests, and gameplay rules must never depend on localized strings
+
+The first implementation uses a small text-reviewable English catalog. Additional locales can be added later without changing simulation rules.
+
 ## Game Loop Direction
 
 Use a deterministic or mostly deterministic simulation tick where practical.
@@ -473,6 +487,7 @@ Early rules:
 - keep UI updates tied to state changes where practical
 - keep particles bounded
 - keep pathfinding simple and visible before scaling unit counts
+- first-pass pathfinding stays engine-native/simple: simulation-owned coarse grid routing, no third-party pathfinding dependency yet
 
 The first playable mission does not need hundreds of units. It needs clear systems and satisfying pressure.
 
@@ -497,4 +512,4 @@ Browser/web is not the default if Godot C# remains the technical path.
 - Whether JSON remains the long-term content data format or Godot resources earn their place later.
 - Exact building footprint/buffer values for constrained maps.
 - Exact worker replacement cost relative to basic combat units.
-- Whether to use a third-party pathfinding helper or stay engine-native/simple first.
+- Whether the first-pass simulation grid should later be replaced by Godot navigation, a flow-field layer, or a dedicated RTS pathfinding helper.

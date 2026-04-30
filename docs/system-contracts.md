@@ -280,6 +280,8 @@ Prototype behavior:
 - Gun Towers and Rocket Towers are normally created by upgrading an existing Defense Tower in place
 - upgrading a Defense Tower preserves its wall-anchor identity while the upgrade is underway, unless the tower is destroyed or unpowered
 - tower walls block enemy pathing
+- first-pass pathing uses a coarse simulation grid around live building footprints and hostile wall segments
+- units that start inside a friendly spawn-building clearance can path outward instead of being trapped by the spawn footprint
 - tower placement should be expensive enough to matter
 - Level 1 central choke can be blocked by tower-wall play
 

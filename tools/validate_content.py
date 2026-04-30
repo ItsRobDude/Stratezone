@@ -12,8 +12,74 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = ROOT / "game" / "data"
+I18N_ROOT = DATA_ROOT / "i18n"
 ID_PATTERN = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
 REFERENCE_KEY_PATTERN = re.compile(r".*_ids?$")
+REQUIRED_I18N_KEYS = {
+    "mission.objective.establish_outpost",
+    "mission.objective.eliminate_enemy_force",
+    "mission.won.enemy_force_eliminated",
+    "mission.lost.commander_killed",
+    "sim.need_materials",
+    "sim.placement.blocked_by_building",
+    "sim.placement.extractor_requires_well",
+    "sim.placement.requires_adjacent_building",
+    "sim.placement.requires_powered_support",
+    "sim.placement.legal",
+    "sim.placement.placed",
+    "sim.upgrade.upgraded",
+    "sim.upgrade.select_live_friendly",
+    "sim.upgrade.invalid_target",
+    "sim.upgrade.unpowered",
+    "sim.upgrade.can_upgrade",
+    "sim.production.queued",
+    "sim.production.not_trainable",
+    "sim.production.queue_busy",
+    "sim.production.requires_live_building",
+    "sim.production.producer_unpowered",
+    "sim.production.requires_powered_addon",
+    "sim.production.can_train",
+    "ui.action.initial_hint",
+    "ui.action.select_barracks_before_training",
+    "ui.action.select_tower_before_upgrading",
+    "ui.action.ui_scale_set",
+    "ui.action.select_worker_before_building",
+    "ui.action.placing_building",
+    "ui.action.placement_cancelled",
+    "ui.action.selected_unit",
+    "ui.action.selected_building",
+    "ui.action.no_selectable",
+    "ui.action.selected_units",
+    "ui.action.no_units_in_box",
+    "ui.action.no_unit_selected",
+    "ui.action.units_attacking_unit",
+    "ui.action.units_attacking_building",
+    "ui.action.selected_units_cannot_attack",
+    "ui.action.moving_units",
+    "ui.hud.build_line",
+    "ui.hud.placing_line",
+    "ui.hud.status_line",
+    "ui.hud.mission_line",
+    "ui.hud.scale_line",
+    "ui.selection.units_with_builders",
+    "ui.selection.units_combat",
+    "ui.selection.no_selection_training_hint",
+    "ui.selection.barracks",
+    "ui.selection.defense_tower",
+    "ui.selection.building",
+    "ui.command.place_building",
+    "ui.command.requires_worker",
+    "ui.command.unit_selection_title",
+    "ui.command.worker_selection_hint",
+    "ui.command.combat_selection_hint",
+    "ui.command.barracks_hint",
+    "ui.command.defense_tower_hint",
+    "ui.command.no_direct_commands",
+    "ui.command.no_selection_title",
+    "ui.command.no_selection_hint",
+    "ui.mission_result.won_title",
+    "ui.mission_result.lost_title",
+}
 
 
 def load_records() -> tuple[dict[str, dict[str, Any]], list[str]]:
@@ -21,6 +87,9 @@ def load_records() -> tuple[dict[str, dict[str, Any]], list[str]]:
     errors: list[str] = []
 
     for path in sorted(DATA_ROOT.rglob("*.json")):
+        if I18N_ROOT in path.parents:
+            continue
+
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
@@ -198,6 +267,39 @@ def validate_unit_and_building_combat_fields(records: dict[str, dict[str, Any]])
     return errors
 
 
+def i18n_key_for_record(record_id: str) -> str:
+    prefix = record_id.split("_", 1)[0]
+    return f"{prefix}.{record_id}.name"
+
+
+def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    path = I18N_ROOT / "en.json"
+    if not path.exists():
+        return [f"missing localization file '{path.relative_to(ROOT)}'"]
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [f"{path.relative_to(ROOT)}: invalid JSON: {exc}"]
+
+    strings = payload.get("strings")
+    if not isinstance(strings, dict):
+        return [f"{path.relative_to(ROOT)}: expected top-level 'strings' object"]
+
+    required_keys = set(REQUIRED_I18N_KEYS)
+    for record_id, record in records.items():
+        if isinstance(record.get("display_name"), str):
+            required_keys.add(i18n_key_for_record(record_id))
+
+    for key in sorted(required_keys):
+        value = strings.get(key)
+        if not isinstance(value, str) or not value:
+            errors.append(f"{path.relative_to(ROOT)}: missing localization key '{key}'")
+
+    return errors
+
+
 def main() -> int:
     if not DATA_ROOT.exists():
         print(f"Missing data directory: {DATA_ROOT}", file=sys.stderr)
@@ -208,6 +310,7 @@ def main() -> int:
     errors.extend(validate_required_first_landing(records))
     errors.extend(validate_no_separate_weapon_layer(records))
     errors.extend(validate_unit_and_building_combat_fields(records))
+    errors.extend(validate_i18n(records))
 
     if errors:
         print("Content validation failed:")

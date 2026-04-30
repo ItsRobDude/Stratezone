@@ -8,5 +8,6 @@
 
   <ItemGroup>
     <Compile Include="..\..\game\scripts\simulation\**\*.cs" LinkBase="Simulation" />
+    <Compile Include="..\..\game\scripts\localization\**\*.cs" LinkBase="Localization" />
   </ItemGroup>
 </Project>

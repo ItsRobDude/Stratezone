@@ -20,7 +20,7 @@ Current greybox demo controls:
 
 - Left click selects a unit/building or places the active building ghost.
 - Drag with left mouse selects multiple visible friendly units.
-- Right click moves selected units, or cancels placement mode.
+- Right click moves selected units with a small formation spread, or cancels placement mode.
 - Right click an enemy unit or building with selected combat units to attack it.
 - Select one or more Workers, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
 - Select a powered Barracks, then press `Q` Worker, `W` Rifleman, `E` Guardian, or `R` Rover to queue training.
@@ -34,6 +34,7 @@ Current greybox demo controls:
 - The enemy construction planner can spend enemy materials to build or replace basic infrastructure from authored slots.
 - Enemy units spend enemy materials, train from the enemy base, and then move toward the Colony Hub.
 - Energy walls force the enemy to attack a nearby wall anchor before it can continue toward the Hub.
+- Unit movement uses first-pass grid pathfinding around live building footprints and hostile energy wall segments.
 - Fog starts black outside explored cells; scouted terrain stays revealed, but enemies only render while currently visible.
 - Mission state is simulation-owned: Commander death loses, and destroying all enemy targets wins.
 - Rocket/Tank explosive attacks use simple full-strength splash. Friendly-fire explosives can hurt allied units.

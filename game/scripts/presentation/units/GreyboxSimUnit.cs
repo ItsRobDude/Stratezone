@@ -35,7 +35,7 @@ public partial class GreyboxSimUnit : Node2D
 
         if (_label is not null)
         {
-            var status = state.IsBlockedByEnergyWall ? "BLOCKED " : string.Empty;
+            var status = state.IsBlockedByEnergyWall || state.IsPathBlocked ? "BLOCKED " : string.Empty;
             _label.Text = $"{status}{state.Definition.DisplayName} {HealthPercent(state):0}%";
             _label.Modulate = state.IsDestroyed
                 ? new Color(0.55f, 0.55f, 0.55f)
@@ -81,7 +81,7 @@ public partial class GreyboxSimUnit : Node2D
             outline,
             3.0f);
 
-        if (_state.IsBlockedByEnergyWall)
+        if (_state.IsBlockedByEnergyWall || _state.IsPathBlocked)
         {
             DrawArc(Vector2.Zero, 24.0f, 0, Mathf.Tau, 48, outline, 2.0f);
         }
@@ -93,7 +93,35 @@ public partial class GreyboxSimUnit : Node2D
 
         if (_state.MoveTarget is not null)
         {
-            DrawLine(Vector2.Zero, ToLocal(new Vector2(_state.MoveTarget.Value.X, _state.MoveTarget.Value.Y)), new Color(0.75f, 0.95f, 1.0f), 1.5f);
+            DrawPathDebug();
+        }
+    }
+
+    private void DrawPathDebug()
+    {
+        if (_state is null)
+        {
+            return;
+        }
+
+        var color = _state.IsPathBlocked
+            ? new Color(1.0f, 0.35f, 0.28f)
+            : new Color(0.75f, 0.95f, 1.0f);
+        var previous = Vector2.Zero;
+        var drawn = 0;
+
+        for (var index = _state.CurrentWaypointIndex; index < _state.PathWaypoints.Count && drawn < 8; index++, drawn++)
+        {
+            var waypoint = _state.PathWaypoints[index];
+            var localWaypoint = ToLocal(new Vector2(waypoint.X, waypoint.Y));
+            DrawLine(previous, localWaypoint, color, 1.5f);
+            DrawCircle(localWaypoint, 3.0f, color);
+            previous = localWaypoint;
+        }
+
+        if (drawn == 0 && _state.MoveTarget is not null)
+        {
+            DrawLine(previous, ToLocal(new Vector2(_state.MoveTarget.Value.X, _state.MoveTarget.Value.Y)), color, 1.5f);
         }
     }
 

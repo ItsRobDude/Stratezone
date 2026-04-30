@@ -179,6 +179,19 @@ Rules:
 - save data should store IDs, not node paths or display names
 - broad use of a new ID should be documented before implementation spreads it across code, data, and scenes
 
+## Localization Standards
+
+Treat localization as an early architecture boundary, even while English is the only supported language.
+
+Rules:
+
+- player-facing strings belong in localization data, not scattered through simulation and scene code
+- simulation should return stable message keys plus arguments, with English fallback text only for debugging and migration safety
+- presentation resolves message keys into UI text
+- content `display_name` values are fallback/readability aids, not canonical player text
+- debug-only logs, node names, and test assertion messages may remain English
+- implementation closeouts should mention any new player-facing strings and whether they use localization keys
+
 ## Dependency Discipline
 
 Every dependency should earn its place.
@@ -223,6 +236,8 @@ Current validation commands:
 - `dotnet build game/Stratezone.csproj`
 - `%LOCALAPPDATA%/Microsoft/WinGet/Packages/GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.6.2-stable_mono_win64/Godot_v4.6.2-stable_mono_win64_console.exe --headless --path game --quit`
 
+`tools/validate_content.py` also validates the first-pass English localization catalog under `game/data/i18n/en.json`.
+
 In a fresh shell, `godot --headless --path game --quit` may work if the WinGet command alias is active. If not, use the explicit Godot console path above.
 
 Later validation should add:
@@ -245,6 +260,7 @@ Until then, every implementation closeout should report:
 - behavior verified from the player or simulation perspective
 - known risks or follow-up work
 - assumptions made
+- player-facing strings added and whether they are localizable
 - any hand-written code files left over 900 lines, with the reason they were not split
 
 ## AI-Assisted Development Rules

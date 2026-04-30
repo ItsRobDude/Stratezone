@@ -1,4 +1,5 @@
 using Godot;
+using Stratezone.Localization;
 using Stratezone.Simulation;
 using Stratezone.Simulation.Content;
 
@@ -31,11 +32,14 @@ public partial class Main : Node2D
     private readonly List<ResourceWellView> _resourceWellViews = [];
 
     private ContentCatalog? _catalog;
+    private LocalizationCatalog? _localization;
     private RtsSimulation? _simulation;
     private Camera2D? _camera;
     private Panel? _statusPanel;
     private Label? _statusLabel;
     private CommandPanelView? _commandPanel;
+    private Panel? _missionResultPanel;
+    private Label? _missionResultLabel;
     private PlacementGhost? _placementGhost;
     private EnergyWallView? _energyWallView;
     private FogOfWarView? _fogOfWarView;
@@ -51,12 +55,16 @@ public partial class Main : Node2D
 
     public override void _Ready()
     {
-        _catalog = ContentCatalog.LoadFromGameData(ProjectSettings.GlobalizePath("res://"));
+        var gameRoot = ProjectSettings.GlobalizePath("res://");
+        _catalog = ContentCatalog.LoadFromGameData(gameRoot);
+        _localization = LocalizationCatalog.LoadFromGameData(gameRoot);
+        _lastActionMessage = L("ui.action.initial_hint");
         _worldRoot = GetNode<Node2D>("WorldRoot");
 
         SetupSimulation();
         SetupCamera();
         SetupHud();
+        SetupMissionResultOverlay();
         SyncWorldViews();
         SetupEnergyWallView();
         SetupFogOfWarView();
@@ -170,22 +178,42 @@ public partial class Main : Node2D
             ? enemyMaterials
             : 0;
 
-        var wellPlacements = new List<(string, SimVector2)>
-        {
-            ("well_first_landing_start", new SimVector2(-350, 170)),
-            ("well_first_landing_central", new SimVector2(220, 30))
-        };
+        var markers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
+        var wellPlacements = mission.ResourceWellPlacements.Count > 0
+            ? mission.ResourceWellPlacements
+                .Select(placement => (placement.WellId, ResolveMissionPosition(markers, placement.MarkerId, placement.Offset)))
+                .ToArray()
+            : mission.ResourceWellIds
+                .Select((wellId, index) => (wellId, index == 0 ? new SimVector2(-350, 170) : new SimVector2(220, 30)))
+                .ToArray();
 
-        _simulation = new RtsSimulation(_catalog, startingMaterials, wellPlacements, enemyStartingMaterials);
-        _simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-        _simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-        _simulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
-        _simulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
-        _simulation.AddUnit(ContentIds.Units.Worker, ContentIds.Factions.PlayerExpedition, new SimVector2(-180, -60));
-        _simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-110, -25));
-        _simulation.AddUnit(ContentIds.Units.Guardian, ContentIds.Factions.PlayerExpedition, new SimVector2(-40, 15));
-        _simulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.PlayerExpedition, new SimVector2(-10, 90));
-        _simulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(-210, 40));
+        _simulation = new RtsSimulation(
+            _catalog,
+            startingMaterials,
+            wellPlacements,
+            enemyStartingMaterials,
+            EnemyAiMarkers.FromMission(mission),
+            mission.EnemyAiProfile);
+
+        foreach (var entity in mission.StartingEntities)
+        {
+            var position = ResolveMissionPosition(markers, entity.MarkerId, entity.Offset);
+            if (entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
+            {
+                _simulation.AddStartingBuilding(entity.ContentId, position, entity.FactionId);
+            }
+            else if (entity.ContentId.StartsWith("unit_", StringComparison.Ordinal))
+            {
+                _simulation.AddUnit(entity.ContentId, entity.FactionId, position);
+            }
+        }
+    }
+
+    private static SimVector2 ResolveMissionPosition(IReadOnlyDictionary<string, SimVector2> markers, string markerId, SimVector2 offset)
+    {
+        return markers.TryGetValue(markerId, out var marker)
+            ? marker + offset
+            : offset;
     }
 
     private void SetupCamera()
@@ -353,13 +381,13 @@ public partial class Main : Node2D
 
         if (_simulation is null || _selectedBuildingEntityId is null)
         {
-            _lastActionMessage = "Select a Barracks before training units.";
+            _lastActionMessage = L("ui.action.select_barracks_before_training");
             return true;
         }
 
         var unitId = TrainHotkeyOrder[index];
         var result = _simulation.TryQueueUnit(unitId, _selectedBuildingEntityId.Value);
-        _lastActionMessage = result.Message;
+        _lastActionMessage = LocalizedProduction(result);
         return true;
     }
 
@@ -379,12 +407,12 @@ public partial class Main : Node2D
 
         if (_simulation is null || _selectedBuildingEntityId is null)
         {
-            _lastActionMessage = "Select a Defense Tower before upgrading.";
+            _lastActionMessage = L("ui.action.select_tower_before_upgrading");
             return true;
         }
 
         var result = _simulation.TryUpgradeBuilding(_selectedBuildingEntityId.Value, upgradeId);
-        _lastActionMessage = result.Message;
+        _lastActionMessage = LocalizedUpgrade(result);
         return true;
     }
 
@@ -392,7 +420,7 @@ public partial class Main : Node2D
     {
         _uiScale = Mathf.Clamp(scale, MinUiScale, MaxUiScale);
         ApplyUiScale();
-        _lastActionMessage = $"UI scale set to {_uiScale:0.0}x.";
+        _lastActionMessage = L("ui.action.ui_scale_set", SimulationMessage.Args(("scale", $"{_uiScale:0.0}")));
     }
 
     private void ApplyUiScale()
@@ -410,6 +438,8 @@ public partial class Main : Node2D
             _commandPanel.Position = new Vector2(16, 262) * _uiScale;
             _commandPanel.ApplyUiScale(_uiScale, HudBaseFontSize);
         }
+
+        ApplyMissionResultScale();
     }
 
     private void EnterPlacementMode(string buildingId)
@@ -421,20 +451,22 @@ public partial class Main : Node2D
 
         if (!SelectedUnits().Any(unit => unit.Definition.CanConstruct))
         {
-            _lastActionMessage = "Select a Worker before building.";
+            _lastActionMessage = L("ui.action.select_worker_before_building");
             return;
         }
 
         var definition = _catalog.GetBuilding(buildingId);
         _placementBuildingId = buildingId;
-        _lastActionMessage = $"Placing {definition.DisplayName}. Left click to place, right click to cancel.";
+        _lastActionMessage = L(
+            "ui.action.placing_building",
+            SimulationMessage.Args(("building", BuildingName(definition))));
     }
 
     private void CancelPlacementMode()
     {
         _placementBuildingId = null;
         _placementGhost?.Clear();
-        _lastActionMessage = "Placement cancelled.";
+        _lastActionMessage = L("ui.action.placement_cancelled");
     }
 
     private void TryPlaceSelectedBuilding(Vector2 worldPosition)
@@ -446,12 +478,12 @@ public partial class Main : Node2D
 
         if (!SelectedUnits().Any(unit => unit.Definition.CanConstruct))
         {
-            _lastActionMessage = "Select a Worker before building.";
+            _lastActionMessage = L("ui.action.select_worker_before_building");
             return;
         }
 
         var result = _simulation.TryPlaceBuilding(_placementBuildingId, ToSim(worldPosition));
-        _lastActionMessage = result.Message;
+        _lastActionMessage = LocalizedPlacement(result);
 
         if (result.Success)
         {
@@ -563,24 +595,37 @@ public partial class Main : Node2D
             return;
         }
 
-        var placementLine = "Build: 1 Power | 2 Pylon | 3 Barracks | 4 Extractor | 5 Wall";
+        var placementLine = L("ui.hud.build_line");
         if (_placementBuildingId is not null && _catalog is not null)
         {
             var definition = _catalog.GetBuilding(_placementBuildingId);
             var validation = _simulation.ValidatePlacement(_placementBuildingId, ToSim(GetGlobalMousePosition()));
-            placementLine = $"Placing {definition.DisplayName} ({definition.Cost} materials): {validation.Reason}";
+            placementLine = L(
+                "ui.hud.placing_line",
+                SimulationMessage.Args(
+                    ("building", BuildingName(definition)),
+                    ("cost", definition.Cost),
+                    ("reason", LocalizedPlacement(validation))));
         }
 
         var powered = _simulation.Buildings.Count(building => building.IsPowered);
         var selectionLine = GetSelectionHudLine();
         _statusLabel.Text =
-            $"Materials: {_simulation.Materials:0} | Enemy: {_simulation.EnemyMaterials:0} | Buildings: {_simulation.Buildings.Count} | Powered: {powered}/{_simulation.Buildings.Count} | Walls: {_simulation.EnergyWalls.Count}\n" +
-            $"{_simulation.MissionState.Status}: {_simulation.MissionState.PrimaryText}\n" +
+            L(
+                "ui.hud.status_line",
+                SimulationMessage.Args(
+                    ("materials", $"{_simulation.Materials:0}"),
+                    ("enemyMaterials", $"{_simulation.EnemyMaterials:0}"),
+                    ("buildings", _simulation.Buildings.Count),
+                    ("powered", powered),
+                    ("walls", _simulation.EnergyWalls.Count))) + "\n" +
+            L("ui.hud.mission_line", SimulationMessage.Args(("status", _simulation.MissionState.Status), ("objective", LocalizedMissionText(_simulation.MissionState)))) + "\n" +
             $"{placementLine}\n" +
             $"{selectionLine}\n" +
-            $"UI: F9 smaller | F10 larger | F8 reset ({_uiScale:0.0}x)\n" +
+            L("ui.hud.scale_line", SimulationMessage.Args(("scale", $"{_uiScale:0.0}"))) + "\n" +
             _lastActionMessage;
         UpdateCommandPanel();
+        UpdateMissionResultOverlay();
     }
 
     private void UpdateCommandPanel()
@@ -598,15 +643,17 @@ public partial class Main : Node2D
                 .Select((buildingId, index) =>
                 {
                     var definition = _catalog.GetBuilding(buildingId);
-                    var label = $"{index + 1} {ShortCommandName(definition.DisplayName)}";
-                    var hint = hasBuilder ? $"Place {definition.DisplayName}" : "Requires selected Worker.";
+                    var label = $"{index + 1} {ShortCommandName(BuildingName(definition))}";
+                    var hint = hasBuilder
+                        ? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))))
+                        : L("ui.command.requires_worker");
                     return new CommandPanelAction(label, hint, hasBuilder, () => EnterPlacementMode(buildingId));
                 })
                 .ToArray();
             _commandPanel.UpdateActions(
-                $"{selectedUnits.Length} Unit Selection",
+                L("ui.command.unit_selection_title", SimulationMessage.Args(("count", selectedUnits.Length))),
                 actions,
-                hasBuilder ? "Worker builds with 1-5. Right click moves selected units." : "Right click moves selected units or attacks visible enemies.");
+                hasBuilder ? L("ui.command.worker_selection_hint") : L("ui.command.combat_selection_hint"));
             return;
         }
 
@@ -622,17 +669,17 @@ public partial class Main : Node2D
                         var key = index switch { 0 => "Q", 1 => "W", 2 => "E", _ => "R" };
                         var validation = _simulation.ValidateUnitProduction(unitId, building.EntityId);
                         return new CommandPanelAction(
-                            $"{key} {ShortCommandName(unit.DisplayName)}",
-                            validation.Reason,
+                            $"{key} {ShortCommandName(UnitName(unit))}",
+                            LocalizedProduction(validation),
                             validation.CanQueue,
                             () =>
                             {
                                 var result = _simulation.TryQueueUnit(unitId, building.EntityId);
-                                _lastActionMessage = result.Message;
+                                _lastActionMessage = LocalizedProduction(result);
                             });
                     })
                     .ToArray();
-                _commandPanel.UpdateActions("Barracks", actions, "Train units from the Colony Hub. Disabled buttons show the blocked reason on hover.");
+                _commandPanel.UpdateActions(BuildingName(building.Definition), actions, L("ui.command.barracks_hint"));
                 return;
             }
 
@@ -646,28 +693,28 @@ public partial class Main : Node2D
                         var key = upgradeId == ContentIds.Buildings.GunTower ? "G" : "T";
                         var validation = _simulation.ValidateBuildingUpgrade(building.EntityId, upgradeId);
                         return new CommandPanelAction(
-                            $"{key} {ShortCommandName(upgrade.DisplayName)}",
-                            validation.Message,
+                            $"{key} {ShortCommandName(BuildingName(upgrade))}",
+                            LocalizedUpgrade(validation),
                             validation.Success,
                             () =>
                             {
                                 var result = _simulation.TryUpgradeBuilding(building.EntityId, upgradeId);
-                                _lastActionMessage = result.Message;
+                                _lastActionMessage = LocalizedUpgrade(result);
                             });
                     })
                     .ToArray();
-                _commandPanel.UpdateActions("Defense Tower", actions, "Upgrade in place without dropping the wall link while powered.");
+                _commandPanel.UpdateActions(BuildingName(building.Definition), actions, L("ui.command.defense_tower_hint"));
                 return;
             }
 
             if (building is not null)
             {
-                _commandPanel.UpdateActions(building.Definition.DisplayName, [], "No direct commands for this building yet.");
+                _commandPanel.UpdateActions(BuildingName(building.Definition), [], L("ui.command.no_direct_commands"));
                 return;
             }
         }
 
-        _commandPanel.UpdateActions("No Selection", [], "Select units, a Barracks, or a Defense Tower.");
+        _commandPanel.UpdateActions(L("ui.command.no_selection_title"), [], L("ui.command.no_selection_hint"));
     }
 
     private string GetSelectionHudLine()
@@ -683,13 +730,13 @@ public partial class Main : Node2D
             var builders = selectedUnits.Count(unit => unit.Definition.CanConstruct);
             var combat = selectedUnits.Count(unit => unit.Definition.CanAttack);
             return builders > 0
-                ? $"{selectedUnits.Length} selected | {builders} builder | {combat} combat | build with 1-5."
-                : $"{selectedUnits.Length} selected | {combat} combat | right click ground/enemy.";
+                ? L("ui.selection.units_with_builders", SimulationMessage.Args(("count", selectedUnits.Length), ("builders", builders), ("combat", combat)))
+                : L("ui.selection.units_combat", SimulationMessage.Args(("count", selectedUnits.Length), ("combat", combat)));
         }
 
         if (_selectedBuildingEntityId is null)
         {
-            return "Select Barracks to train: Q Worker | W Rifleman | E Guardian | R Rover.";
+            return L("ui.selection.no_selection_training_hint");
         }
 
         var building = _simulation.Buildings.FirstOrDefault(item => item.EntityId == _selectedBuildingEntityId.Value);
@@ -700,16 +747,16 @@ public partial class Main : Node2D
 
         if (building.Definition.Id == ContentIds.Buildings.Barracks)
         {
-            var worker = _simulation.ValidateUnitProduction(ContentIds.Units.Worker, building.EntityId).Reason;
-            return $"Barracks: Q Worker | W Rifleman | E Guardian | R Rover ({worker})";
+            var worker = LocalizedProduction(_simulation.ValidateUnitProduction(ContentIds.Units.Worker, building.EntityId));
+            return L("ui.selection.barracks", SimulationMessage.Args(("workerReason", worker)));
         }
 
         if (building.Definition.Id == ContentIds.Buildings.DefenseTower)
         {
-            return "Defense Tower: G Gun Tower | T Rocket Tower.";
+            return L("ui.selection.defense_tower");
         }
 
-        return $"Selected: {building.Definition.DisplayName}.";
+        return L("ui.selection.building", SimulationMessage.Args(("building", BuildingName(building.Definition))));
     }
 
     private static string ShortCommandName(string displayName)

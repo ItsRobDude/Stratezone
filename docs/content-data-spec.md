@@ -20,6 +20,7 @@ It exists to keep units, buildings, factions, resources, missions, and events ou
 - Scene scripts should not be the source of unit stats, costs, attack rules, resource behavior, or mission objectives.
 - Save data should store stable IDs and current simulation state, not display names or Godot node paths.
 - Placeholder numbers are allowed, but must be labeled as tunable.
+- Player-facing names and UI copy should resolve through localization keys; `display_name` is English fallback only.
 
 ## Storage Direction
 
@@ -39,6 +40,22 @@ Avoid:
 - separate data copies for UI and simulation
 - separate weapon records before the game actually needs equipment/modular weapons
 - opaque binary-only data while the schemas are still changing
+
+## Localization Data
+
+First-pass localization lives under `game/data/i18n/`.
+
+Current file:
+
+- `game/data/i18n/en.json`
+
+Rules:
+
+- content name keys are derived from stable IDs, such as `unit.unit_worker.name`, `building.building_power_plant.name`, `resource.resource_materials.name`, and `faction.faction_private_military.name`
+- mission, objective, command, HUD, warning, validation, and result text should use explicit localization keys
+- localized strings must not be used as save IDs, content references, test identity, or gameplay rule inputs
+- existing `display_name` fields remain English fallback during the prototype
+- missing player-facing keys should be treated as validation failures once a surface is wired to localization
 
 ## Stable ID Rules
 
@@ -444,6 +461,8 @@ Prototype rules:
 - includes one contested central well
 - includes a central choke that can be blocked with tower-wall play
 - includes an enemy pylon weak point that can disable an enemy tower route
+- includes authored mission markers for base positions, wells, AI build slots, rally points, and choke points
+- includes an enemy AI profile for first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, pressure slowdown, and train-time multiplier
 - wins by destroying all required enemy targets
 - loses if the Commander dies
 - destroying either Colony Hub reveals a tank without changing win/loss by itself
@@ -495,6 +514,7 @@ Once content files exist, validation should check:
 - all IDs are lowercase snake_case
 - all referenced IDs exist
 - no duplicate IDs exist
+- required English localization keys exist
 - required fields are present
 - numeric values are in sane ranges
 - no unit or building uses separate `weapon_ids`

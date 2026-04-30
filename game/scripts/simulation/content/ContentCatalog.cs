@@ -211,19 +211,105 @@ public sealed class ContentCatalog
                 .Select(well => well.GetString() ?? string.Empty)
                 .Where(id => id.Length > 0)
                 .ToArray();
+            var markers = LoadMissionMarkers(record);
+            var startingEntities = LoadMissionStartingEntities(record);
+            var wellPlacements = LoadMissionResourceWellPlacements(record);
+            var enemyAiProfile = LoadEnemyAiProfile(record);
 
             var mission = new MissionDefinition(
                 record.GetProperty("id").GetString() ?? string.Empty,
                 record.GetProperty("display_name").GetString() ?? string.Empty,
                 startingResources,
                 enemyStartingResources,
-                wellIds
+                wellIds,
+                markers,
+                startingEntities,
+                wellPlacements,
+                enemyAiProfile
             );
 
             missions.Add(mission.Id, mission);
         }
 
         return missions;
+    }
+
+    private static IReadOnlyList<MissionMarkerDefinition> LoadMissionMarkers(JsonElement record)
+    {
+        if (!record.TryGetProperty("mission_markers", out var markers) || markers.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return markers.EnumerateArray()
+            .Select(marker => new MissionMarkerDefinition(
+                marker.GetProperty("id").GetString() ?? string.Empty,
+                LoadVector(marker.GetProperty("position"))))
+            .Where(marker => marker.Id.Length > 0)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<MissionStartingEntityDefinition> LoadMissionStartingEntities(JsonElement record)
+    {
+        if (!record.TryGetProperty("starting_entities", out var entities) || entities.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return entities.EnumerateArray()
+            .Select(entity => new MissionStartingEntityDefinition(
+                entity.GetProperty("content_id").GetString() ?? string.Empty,
+                entity.GetProperty("faction_id").GetString() ?? string.Empty,
+                entity.GetProperty("marker").GetString() ?? string.Empty,
+                entity.TryGetProperty("offset", out var offset) ? LoadVector(offset) : new SimVector2(0, 0)))
+            .Where(entity => entity.ContentId.Length > 0 && entity.FactionId.Length > 0 && entity.MarkerId.Length > 0)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<MissionResourceWellPlacementDefinition> LoadMissionResourceWellPlacements(JsonElement record)
+    {
+        if (!record.TryGetProperty("resource_well_placements", out var placements) || placements.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return placements.EnumerateArray()
+            .Select(placement => new MissionResourceWellPlacementDefinition(
+                placement.GetProperty("well_id").GetString() ?? string.Empty,
+                placement.GetProperty("marker").GetString() ?? string.Empty,
+                placement.TryGetProperty("offset", out var offset) ? LoadVector(offset) : new SimVector2(0, 0)))
+            .Where(placement => placement.WellId.Length > 0 && placement.MarkerId.Length > 0)
+            .ToArray();
+    }
+
+    private static EnemyAiProfileDefinition LoadEnemyAiProfile(JsonElement record)
+    {
+        if (!record.TryGetProperty("enemy_ai_profile", out var profile) || profile.ValueKind != JsonValueKind.Object)
+        {
+            return EnemyAiProfileDefinition.Default;
+        }
+
+        return new EnemyAiProfileDefinition(
+            profile.GetProperty("id").GetString() ?? EnemyAiProfileDefinition.Default.Id,
+            GetOptionalFloat(profile, "first_attack_delay_seconds"),
+            GetOptionalFloat(profile, "rebuild_cooldown_seconds"),
+            GetOptionalFloat(profile, "production_cooldown_seconds"),
+            profile.TryGetProperty("attack_group_size", out var attackGroupSize) ? attackGroupSize.GetInt32() : 1,
+            GetOptionalFloat(profile, "central_well_interest"),
+            profile.TryGetProperty("pressure_slowdown_multiplier", out var slowdown) ? slowdown.GetSingle() : 1.0f,
+            profile.TryGetProperty("train_time_multiplier", out var trainTime) ? trainTime.GetSingle() : RtsSimulation.EnemyTrainTimeMultiplier,
+            GetOptionalString(profile, "hub_marker") ?? EnemyAiProfileDefinition.Default.HubMarkerId,
+            GetOptionalString(profile, "power_plant_marker") ?? EnemyAiProfileDefinition.Default.PowerPlantMarkerId,
+            GetOptionalString(profile, "barracks_marker") ?? EnemyAiProfileDefinition.Default.BarracksMarkerId,
+            GetOptionalString(profile, "extractor_marker") ?? EnemyAiProfileDefinition.Default.ExtractorMarkerId,
+            GetOptionalString(profile, "defense_tower_marker") ?? EnemyAiProfileDefinition.Default.DefenseTowerMarkerId);
+    }
+
+    private static SimVector2 LoadVector(JsonElement record)
+    {
+        return new SimVector2(
+            record.GetProperty("x").GetSingle(),
+            record.GetProperty("y").GetSingle());
     }
 
     private static string? GetOptionalString(JsonElement record, string propertyName)

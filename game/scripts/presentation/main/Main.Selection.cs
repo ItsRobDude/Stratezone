@@ -39,7 +39,13 @@ public partial class Main
         {
             SelectUnitView(nearestSimUnit);
             var simDefinition = nearestSimUnit.State.Definition;
-            _lastActionMessage = $"Selected {simDefinition.DisplayName} ({simDefinition.Id}) | HP {nearestSimUnit.State.Health:0}/{simDefinition.Health}";
+            _lastActionMessage = L(
+                "ui.action.selected_unit",
+                SimulationMessage.Args(
+                    ("unit", UnitName(simDefinition)),
+                    ("id", simDefinition.Id),
+                    ("health", $"{nearestSimUnit.State.Health:0}"),
+                    ("maxHealth", simDefinition.Health)));
             return;
         }
 
@@ -52,11 +58,16 @@ public partial class Main
                 view.SetSelected(true);
             }
 
-            _lastActionMessage = $"Selected {building.Definition.DisplayName} | HP {building.Health:0}/{building.Definition.Health}";
+            _lastActionMessage = L(
+                "ui.action.selected_building",
+                SimulationMessage.Args(
+                    ("building", BuildingName(building.Definition)),
+                    ("health", $"{building.Health:0}"),
+                    ("maxHealth", building.Definition.Health)));
             return;
         }
 
-        _lastActionMessage = "No unit or building selected.";
+        _lastActionMessage = L("ui.action.no_selectable");
     }
 
     private void SelectUnitsInBox(Rect2 box)
@@ -78,8 +89,8 @@ public partial class Main
         }
 
         _lastActionMessage = _selectedUnitEntityIds.Count > 0
-            ? $"Selected {_selectedUnitEntityIds.Count} units."
-            : "No units in selection box.";
+            ? L("ui.action.selected_units", SimulationMessage.Args(("count", _selectedUnitEntityIds.Count)))
+            : L("ui.action.no_units_in_box");
     }
 
     private void SelectUnitView(GreyboxSimUnit unit)
@@ -117,7 +128,7 @@ public partial class Main
         var selectedUnits = SelectedUnits().ToArray();
         if (selectedUnits.Length == 0)
         {
-            _lastActionMessage = "No unit selected. Left click a unit first.";
+            _lastActionMessage = L("ui.action.no_unit_selected");
             return;
         }
 
@@ -137,8 +148,8 @@ public partial class Main
             }
 
             _lastActionMessage = attackers > 0
-                ? $"{attackers} units attacking {enemyUnit.Definition.DisplayName}."
-                : "Selected units cannot attack.";
+                ? L("ui.action.units_attacking_unit", SimulationMessage.Args(("count", attackers), ("unit", UnitName(enemyUnit.Definition))))
+                : L("ui.action.selected_units_cannot_attack");
             return;
         }
 
@@ -153,17 +164,37 @@ public partial class Main
             }
 
             _lastActionMessage = attackers > 0
-                ? $"{attackers} units attacking {enemyBuilding.Definition.DisplayName}."
-                : "Selected units cannot attack.";
+                ? L("ui.action.units_attacking_building", SimulationMessage.Args(("count", attackers), ("building", BuildingName(enemyBuilding.Definition))))
+                : L("ui.action.selected_units_cannot_attack");
             return;
         }
 
-        foreach (var unit in selectedUnits)
+        for (var index = 0; index < selectedUnits.Length; index++)
         {
-            _simulation.CommandUnitMove(unit.EntityId, ToSim(worldPosition));
+            _simulation.CommandUnitMove(selectedUnits[index].EntityId, ToSim(GetGroupDestination(worldPosition, index, selectedUnits.Length)));
         }
 
-        _lastActionMessage = $"Moving {selectedUnits.Length} units to {worldPosition.X:0}, {worldPosition.Y:0}";
+        _lastActionMessage = L(
+            "ui.action.moving_units",
+            SimulationMessage.Args(("count", selectedUnits.Length), ("x", $"{worldPosition.X:0}"), ("y", $"{worldPosition.Y:0}")));
+    }
+
+    private static Vector2 GetGroupDestination(Vector2 center, int index, int count)
+    {
+        if (count <= 1)
+        {
+            return center;
+        }
+
+        const float spacing = 40.0f;
+        var columns = Mathf.CeilToInt(Mathf.Sqrt(count));
+        var rows = Mathf.CeilToInt(count / (float)columns);
+        var column = index % columns;
+        var row = index / columns;
+        var offset = new Vector2(
+            (column - ((columns - 1) * 0.5f)) * spacing,
+            (row - ((rows - 1) * 0.5f)) * spacing);
+        return center + offset;
     }
 
     private IEnumerable<UnitState> SelectedUnits()

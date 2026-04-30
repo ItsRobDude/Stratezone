@@ -97,6 +97,15 @@ If this direction changes, update this file and the README in the same pass.
 - Do not claim a feature is done without reporting commands, manual checks, and remaining risks.
 - If a behavior cannot be justified from the docs, stop and fix the docs before coding it.
 
+## i18n Guardrails
+
+- Do not add new player-facing English strings directly inside simulation rule code.
+- Simulation results should expose stable message keys plus arguments; presentation localizes them.
+- Content IDs are never player text, save identity, or translated values.
+- `display_name` is an English prototype fallback only. Prefer localization keys such as `unit.unit_worker.name`.
+- New HUD, command, objective, warning, tooltip, validation, or mission-result text must be localizable.
+- Debug-only labels and developer logs may stay English if they are not shown as player-facing copy.
+
 ## Architecture Guardrails
 
 Keep simulation state separate from presentation.

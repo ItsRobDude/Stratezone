@@ -5,6 +5,7 @@ public partial class GreyboxBuilding : Node2D
 {
     private BuildingState? _state;
     private Label? _label;
+    private bool _selected;
 
     public void Initialize(BuildingState state)
     {
@@ -33,6 +34,12 @@ public partial class GreyboxBuilding : Node2D
                 : state.IsPowered ? Colors.White : new Color(1.0f, 0.45f, 0.35f);
         }
 
+        QueueRedraw();
+    }
+
+    public void SetSelected(bool selected)
+    {
+        _selected = selected;
         QueueRedraw();
     }
 
@@ -74,6 +81,11 @@ public partial class GreyboxBuilding : Node2D
         if (_state.Definition.WallAnchor)
         {
             DrawCircle(Vector2.Zero, 6.0f, new Color(0.8f, 0.95f, 1.0f));
+        }
+
+        if (_selected)
+        {
+            DrawArc(Vector2.Zero, radius + 10.0f, 0, Mathf.Tau, 72, new Color(1.0f, 0.95f, 0.25f), 4.0f);
         }
     }
 

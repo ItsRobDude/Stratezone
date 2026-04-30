@@ -18,10 +18,12 @@ The first scaffold is intentionally tiny. Gameplay rules should grow from `scrip
 
 Current greybox demo controls:
 
-- Left click selects a unit or places the active building ghost.
+- Left click selects a unit/building or places the active building ghost.
 - Right click moves the selected unit, or cancels placement mode.
 - Right click an enemy unit or building with a selected combat unit to attack it.
 - Select the Worker, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
+- Select a powered Barracks, then press `Q` Worker, `W` Rifleman, `E` Guardian, or `R` Rover to queue training.
+- Select a Defense Tower, then press `G` Gun Tower or `T` Rocket Tower to upgrade in place.
 - Mouse wheel zooms. `WASD` or arrow keys pan.
 - `F9` decreases debug UI scale, `F10` increases it, and `F8` resets it.
 - The demo starts with extra materials so the construction loop can be tested without waiting on income.
@@ -30,6 +32,8 @@ Current greybox demo controls:
 - The enemy construction planner can spend enemy materials to build or replace basic infrastructure from authored slots.
 - Enemy units spend enemy materials, train from the enemy base, and then move toward the Colony Hub.
 - Energy walls force the enemy to attack a nearby wall anchor before it can continue toward the Hub.
+- Fog starts black outside explored cells; scouted terrain stays revealed, but enemies only render while currently visible.
+- Mission state is simulation-owned: Commander death loses, and destroying all enemy targets wins.
 
 Current simulation smoke check:
 

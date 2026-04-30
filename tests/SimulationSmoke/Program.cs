@@ -94,6 +94,26 @@ Assert(enemyBaseSimulation.EnemyMaterials <= 350, "enemy production and construc
 TickFor(enemyBaseSimulation, 13.0f);
 Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman), "enemy production spawns trained units from its base");
 
+var playerProductionSimulation = new RtsSimulation(catalog, 2000, []);
+playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+Assert(playerProductionSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-220, 0)).Success, "player production test places power");
+var playerBarracks = playerProductionSimulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, new SimVector2(-20, 0));
+Assert(playerBarracks.Success, playerBarracks.Message);
+var materialsBeforeTraining = playerProductionSimulation.Materials;
+var riflemanQueue = playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building!.EntityId);
+Assert(riflemanQueue.Success, riflemanQueue.Message);
+Assert(playerProductionSimulation.Materials < materialsBeforeTraining, "player training spends materials immediately");
+TickFor(playerProductionSimulation, 11.0f);
+Assert(playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Rifleman), "player production spawns trained units from the Colony Hub");
+Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "Guardian training requires powered Armory Annex");
+playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));
+Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "powered Armory Annex unlocks Guardian training");
+
+var unpoweredProductionSimulation = new RtsSimulation(catalog, 1000, []);
+unpoweredProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+var unpoweredBarracks = unpoweredProductionSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(0, 0));
+Assert(!unpoweredProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, unpoweredBarracks.EntityId).Success, "unpowered Barracks cannot train units");
+
 var enemyConstructionSimulation = new RtsSimulation(
     catalog,
     startingMaterials,
@@ -119,6 +139,50 @@ var enemyBuilding = playerCombatSimulation.AddStartingBuilding(ContentIds.Buildi
 playerCombatSimulation.CommandUnitAttackBuilding(playerRifleman.EntityId, enemyBuilding.EntityId);
 TickFor(playerCombatSimulation, 3.0f);
 Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
+
+var missionLossSimulation = new RtsSimulation(catalog, startingMaterials, []);
+missionLossSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var commander = missionLossSimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+commander.ApplyDamage(999, "ballistic");
+missionLossSimulation.Tick(0.1f);
+Assert(missionLossSimulation.MissionState.Status == MissionStatus.Lost, "commander death triggers mission loss");
+
+var missionWinSimulation = new RtsSimulation(catalog, startingMaterials, []);
+missionWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var finalEnemy = missionWinSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(90, 0));
+finalEnemy.ApplyDamage(999, "ballistic");
+missionWinSimulation.Tick(0.1f);
+Assert(missionWinSimulation.MissionState.Status == MissionStatus.Won, "destroying all enemy targets triggers mission win");
+
+var towerUpgradeSimulation = new RtsSimulation(catalog, 3000, []);
+towerUpgradeSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+Assert(towerUpgradeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0)).Success, "tower upgrade test places power");
+var wallTowerA = towerUpgradeSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(130, -80));
+var wallTowerB = towerUpgradeSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(130, 80));
+Assert(wallTowerA.Success && wallTowerB.Success, "tower upgrade test places wall anchors");
+Assert(towerUpgradeSimulation.EnergyWalls.Count == 1, "wall link exists before tower upgrade");
+Assert(towerUpgradeSimulation.TryUpgradeBuilding(wallTowerA.Building!.EntityId, ContentIds.Buildings.GunTower).Success, "Defense Tower upgrades into Gun Tower");
+Assert(towerUpgradeSimulation.EnergyWalls.Count == 1, "tower upgrade preserves wall link");
+var towerTarget = towerUpgradeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(260, -80));
+TickFor(towerUpgradeSimulation, 1.0f);
+Assert(towerTarget.Health < towerTarget.Definition.Health, "powered Gun Tower fires at enemies");
+Assert(towerUpgradeSimulation.TryUpgradeBuilding(wallTowerB.Building!.EntityId, ContentIds.Buildings.RocketTower).Success, "Defense Tower upgrades into Rocket Tower");
+var towerBuildingTarget = towerUpgradeSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(280, 80), ContentIds.Factions.PrivateMilitary);
+TickFor(towerUpgradeSimulation, 3.0f);
+Assert(towerBuildingTarget.Health < towerBuildingTarget.Definition.Health, "powered Rocket Tower damages enemy buildings");
+
+var fogSimulation = new RtsSimulation(catalog, startingMaterials, []);
+fogSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+var scout = fogSimulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.PlayerExpedition, new SimVector2(-450, 0));
+var hiddenEnemy = fogSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(620, 260), ContentIds.Factions.PrivateMilitary);
+Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "distant enemy starts hidden by fog");
+fogSimulation.CommandUnitMove(scout.EntityId, new SimVector2(600, 240));
+TickFor(fogSimulation, 8.0f);
+Assert(fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "Rover scouting reveals enemy");
+fogSimulation.CommandUnitMove(scout.EntityId, new SimVector2(-450, 0));
+TickFor(fogSimulation, 8.0f);
+Assert(fogSimulation.IsExploredByFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "scouted terrain remains explored");
+Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "enemy outside current vision is hidden again");
 
 Console.WriteLine("Simulation smoke checks passed.");
 

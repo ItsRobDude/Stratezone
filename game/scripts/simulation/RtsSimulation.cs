@@ -8,13 +8,14 @@ public sealed class RtsSimulation
     private const float ResourceWellCoreRadius = 28.0f;
     private const float CombatMovementScale = 95.0f;
     private const float EnemyIncomeMultiplier = 0.75f;
-    private const float EnemyTrainTimeMultiplier = 1.25f;
+    internal const float EnemyTrainTimeMultiplier = 1.25f;
+    private const float FogCellSize = 64.0f;
 
-    public static SimVector2 EnemyHubPosition => new(620, 120);
-    public static SimVector2 EnemyPowerPlantPosition => new(380, 120);
-    public static SimVector2 EnemyBarracksPosition => new(500, -80);
-    public static SimVector2 EnemyExtractorPosition => new(220, 30);
-    public static SimVector2 EnemyDefenseTowerPosition => new(340, -70);
+    public static SimVector2 EnemyHubPosition => EnemyAiMarkers.FirstLanding.HubPosition;
+    public static SimVector2 EnemyPowerPlantPosition => EnemyAiMarkers.FirstLanding.PowerPlantPosition;
+    public static SimVector2 EnemyBarracksPosition => EnemyAiMarkers.FirstLanding.BarracksPosition;
+    public static SimVector2 EnemyExtractorPosition => EnemyAiMarkers.FirstLanding.ExtractorPosition;
+    public static SimVector2 EnemyDefenseTowerPosition => EnemyAiMarkers.FirstLanding.DefenseTowerPosition;
 
     private readonly ContentCatalog _catalog;
     private readonly List<BuildingState> _buildings = [];
@@ -22,6 +23,11 @@ public sealed class RtsSimulation
     private readonly List<ProductionOrderState> _productionOrders = [];
     private readonly List<ResourceWellState> _resourceWells = [];
     private readonly List<EnergyWallSegment> _energyWalls = [];
+    private readonly FogOfWarState _playerFog = new(-760, 940, -420, 420, FogCellSize);
+    private readonly FogOfWarState _enemyFog = new(-760, 940, -420, 420, FogCellSize);
+    private readonly HashSet<int> _hubTankReveals = [];
+    private readonly EnemyAiSystem _enemyAi = new(EnemyAiMarkers.FirstLanding);
+    private readonly MissionObjectiveSystem _missionObjectives = new();
     private int _nextEntityId = 1;
 
     public RtsSimulation(ContentCatalog catalog, int startingMaterials, IEnumerable<(string WellId, SimVector2 Position)> resourceWellPlacements, int enemyStartingMaterials = 0)
@@ -43,28 +49,10 @@ public sealed class RtsSimulation
     public IReadOnlyList<ProductionOrderState> ProductionOrders => _productionOrders;
     public IReadOnlyList<ResourceWellState> ResourceWells => _resourceWells;
     public IReadOnlyList<EnergyWallSegment> EnergyWalls => _energyWalls;
-    public bool ColonyHubDestroyed => _buildings.Any(building => building.FactionId == ContentIds.Factions.PlayerExpedition && building.Definition.Id == ContentIds.Buildings.ColonyHub && building.IsDestroyed);
+    public FogOfWarState PlayerFog => _playerFog;
+    public MissionState MissionState { get; private set; } = new(MissionStatus.Active, "Objective: establish the outpost.");
     public bool EnemyProductionOnline => HasPoweredBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.Barracks) &&
         HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub);
-    public string ObjectiveText
-    {
-        get
-        {
-            if (ColonyHubDestroyed)
-            {
-                return "Objective failed: Colony Hub destroyed.";
-            }
-
-            if (Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && !unit.IsDestroyed))
-            {
-                return "Objective: defend the Colony Hub from produced enemy units.";
-            }
-
-            return EnemyProductionOnline
-                ? "Objective: enemy Barracks is producing from limited resources."
-                : "Objective: scout and disrupt the enemy base.";
-        }
-    }
 
     public static float ToWorldRadius(float contentRadius)
     {
@@ -81,6 +69,8 @@ public sealed class RtsSimulation
 
         _buildings.Add(building);
         RecomputePower();
+        RecomputeFog();
+        UpdateMissionState();
         return building;
     }
 
@@ -118,6 +108,12 @@ public sealed class RtsSimulation
             return new PlacementValidation(false, "Extractor must be placed on an open resource well.");
         }
 
+        if (!IsAdjacentRequirementMet(factionId, definition, position))
+        {
+            var required = _catalog.GetBuilding(definition.RequiresAdjacentBuildingId!);
+            return new PlacementValidation(false, $"{definition.DisplayName} must be built adjacent to {required.DisplayName}.");
+        }
+
         if (definition.RequiresPower && !WouldBePowered(factionId, definition, position))
         {
             return new PlacementValidation(false, "Must be placed inside powered support.");
@@ -131,7 +127,7 @@ public sealed class RtsSimulation
         return TryPlaceBuildingForFaction(ContentIds.Factions.PlayerExpedition, buildingId, position);
     }
 
-    private PlacementResult TryPlaceBuildingForFaction(string factionId, string buildingId, SimVector2 position)
+    internal PlacementResult TryPlaceBuildingForFaction(string factionId, string buildingId, SimVector2 position)
     {
         var availableMaterials = GetMaterialsForFaction(factionId);
         var validation = ValidatePlacementForFaction(factionId, buildingId, position, availableMaterials);
@@ -153,15 +149,18 @@ public sealed class RtsSimulation
         }
 
         RecomputePower();
+        RecomputeFog();
+        UpdateMissionState();
         return new PlacementResult(true, $"Placed {definition.DisplayName}.", building);
     }
 
     public void Tick(float deltaSeconds)
     {
         RecomputePower();
-        TickEnemyConstructionPlanner();
-        TickEnemyProduction(deltaSeconds);
+        _enemyAi.Tick(this);
+        TickProduction(deltaSeconds);
         TickEnemyPressure(deltaSeconds);
+        TickBuildingAttacks(deltaSeconds);
 
         foreach (var extractor in _buildings.Where(building => building.Definition.ProvidesResourceExtraction && building.IsPowered && !building.IsDestroyed))
         {
@@ -192,12 +191,18 @@ public sealed class RtsSimulation
                 Materials += extracted;
             }
         }
+
+        RevealTanksForDestroyedHubs();
+        RecomputeFog();
+        UpdateMissionState();
     }
 
     public UnitState AddUnit(string unitId, string factionId, SimVector2 position)
     {
         var unit = new UnitState(_nextEntityId++, _catalog.GetUnit(unitId), factionId, position);
         _units.Add(unit);
+        RecomputeFog();
+        UpdateMissionState();
         return unit;
     }
 
@@ -243,35 +248,140 @@ public sealed class RtsSimulation
         unit.TargetBuildingEntityId = target.EntityId;
     }
 
+    public UpgradeResult TryUpgradeBuilding(int buildingEntityId, string upgradeBuildingId)
+    {
+        return TryUpgradeBuildingForFaction(ContentIds.Factions.PlayerExpedition, buildingEntityId, upgradeBuildingId);
+    }
+
+    internal UpgradeResult TryUpgradeBuildingForFaction(string factionId, int buildingEntityId, string upgradeBuildingId)
+    {
+        var building = FindLiveBuilding(buildingEntityId);
+        if (building is null || building.FactionId != factionId)
+        {
+            return new UpgradeResult(false, "Select a live friendly building.");
+        }
+
+        var upgrade = _catalog.GetBuilding(upgradeBuildingId);
+        if (upgrade.UpgradeFromBuildingId != building.Definition.Id)
+        {
+            return new UpgradeResult(false, $"{building.Definition.DisplayName} cannot upgrade into {upgrade.DisplayName}.");
+        }
+
+        if (upgrade.RequiresPower && !building.IsPowered)
+        {
+            return new UpgradeResult(false, $"{building.Definition.DisplayName} is unpowered.");
+        }
+
+        if (GetMaterialsForFaction(factionId) < upgrade.Cost)
+        {
+            return new UpgradeResult(false, $"Need {upgrade.Cost:0} materials.");
+        }
+
+        SpendMaterialsForFaction(factionId, upgrade.Cost);
+        building.UpgradeTo(upgrade);
+        RecomputePower();
+        RecomputeFog();
+        UpdateMissionState();
+        return new UpgradeResult(true, $"Upgraded to {upgrade.DisplayName}.", building);
+    }
+
     public bool IsLineBlockedByEnergyWall(SimVector2 start, SimVector2 end)
     {
         return _energyWalls.Any(wall => LinesIntersect(start, end, wall.Start, wall.End));
     }
 
-    private void TickEnemyConstructionPlanner()
+    public ProductionValidation ValidateUnitProduction(string unitId, int? producerBuildingEntityId = null)
     {
-        if (!HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub))
-        {
-            return;
-        }
-
-        TryEnsureEnemyBuilding(ContentIds.Buildings.PowerPlant, EnemyPowerPlantPosition);
-        TryEnsureEnemyBuilding(ContentIds.Buildings.Barracks, EnemyBarracksPosition);
-        TryEnsureEnemyBuilding(ContentIds.Buildings.ExtractorRefinery, EnemyExtractorPosition);
-        TryEnsureEnemyBuilding(ContentIds.Buildings.DefenseTower, EnemyDefenseTowerPosition);
+        return ValidateUnitProductionForFaction(ContentIds.Factions.PlayerExpedition, unitId, producerBuildingEntityId, Materials);
     }
 
-    private void TryEnsureEnemyBuilding(string buildingId, SimVector2 position)
+    public ProductionResult TryQueueUnit(string unitId, int? producerBuildingEntityId = null)
     {
-        if (HasLiveBuilding(ContentIds.Factions.PrivateMilitary, buildingId))
-        {
-            return;
-        }
-
-        TryPlaceBuildingForFaction(ContentIds.Factions.PrivateMilitary, buildingId, position);
+        return TryQueueUnitForFaction(ContentIds.Factions.PlayerExpedition, unitId, producerBuildingEntityId, 1.0f);
     }
 
-    private void TickEnemyProduction(float deltaSeconds)
+    internal ProductionResult TryQueueUnitForFaction(string factionId, string unitId, int? producerBuildingEntityId, float trainTimeMultiplier)
+    {
+        var validation = ValidateUnitProductionForFaction(factionId, unitId, producerBuildingEntityId, GetMaterialsForFaction(factionId));
+        if (!validation.CanQueue || validation.Producer is null)
+        {
+            return new ProductionResult(false, validation.Reason);
+        }
+
+        var unit = _catalog.GetUnit(unitId);
+        SpendMaterialsForFaction(factionId, unit.Cost);
+        var order = new ProductionOrderState(
+            unit.Id,
+            factionId,
+            validation.Producer.EntityId,
+            MathF.Max(0.1f, unit.TrainTimeSeconds * trainTimeMultiplier));
+        _productionOrders.Add(order);
+        return new ProductionResult(true, $"Queued {unit.DisplayName}.", order);
+    }
+
+    private ProductionValidation ValidateUnitProductionForFaction(string factionId, string unitId, int? producerBuildingEntityId, float availableMaterials)
+    {
+        var unit = _catalog.GetUnit(unitId);
+
+        if (unit.AllowedByBuildingId is null || unit.SpawnBuildingId is null)
+        {
+            return new ProductionValidation(false, $"{unit.DisplayName} cannot be trained in this mission.");
+        }
+
+        if (availableMaterials < unit.Cost)
+        {
+            return new ProductionValidation(false, $"Need {unit.Cost:0} materials.");
+        }
+
+        if (_productionOrders.Any(order => order.FactionId == factionId))
+        {
+            return new ProductionValidation(false, "Training queue is busy.");
+        }
+
+        var spawn = _buildings.FirstOrDefault(building =>
+            building.FactionId == factionId &&
+            building.Definition.Id == unit.SpawnBuildingId &&
+            !building.IsDestroyed);
+        if (spawn is null)
+        {
+            var spawnDefinition = _catalog.GetBuilding(unit.SpawnBuildingId);
+            return new ProductionValidation(false, $"Requires live {spawnDefinition.DisplayName}.");
+        }
+
+        var producer = producerBuildingEntityId is null
+            ? _buildings.FirstOrDefault(building =>
+                building.FactionId == factionId &&
+                building.Definition.Id == unit.AllowedByBuildingId &&
+                building.IsPowered &&
+                !building.IsDestroyed)
+            : _buildings.FirstOrDefault(building =>
+                building.EntityId == producerBuildingEntityId.Value &&
+                building.FactionId == factionId &&
+                building.Definition.Id == unit.AllowedByBuildingId &&
+                !building.IsDestroyed);
+
+        if (producer is null)
+        {
+            var producerDefinition = _catalog.GetBuilding(unit.AllowedByBuildingId);
+            return new ProductionValidation(false, $"Requires live {producerDefinition.DisplayName}.");
+        }
+
+        if (!producer.IsPowered)
+        {
+            return new ProductionValidation(false, $"{producer.Definition.DisplayName} is unpowered.");
+        }
+
+        if (unit.RequiredAddonBuildingId is not null &&
+            !HasPoweredBuilding(factionId, unit.RequiredAddonBuildingId))
+        {
+            var addon = _catalog.GetBuilding(unit.RequiredAddonBuildingId);
+            return new ProductionValidation(false, $"Requires powered {addon.DisplayName}.");
+        }
+
+        return new ProductionValidation(true, $"Can train {unit.DisplayName}.", null, producer);
+    }
+
+    private void TickProduction(float deltaSeconds)
     {
         for (var index = _productionOrders.Count - 1; index >= 0; index--)
         {
@@ -285,33 +395,6 @@ public sealed class RtsSimulation
             CompleteProductionOrder(order);
             _productionOrders.RemoveAt(index);
         }
-
-        TryStartEnemyProduction();
-    }
-
-    private void TryStartEnemyProduction()
-    {
-        if (_productionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary))
-        {
-            return;
-        }
-
-        if (!EnemyProductionOnline)
-        {
-            return;
-        }
-
-        var rifleman = _catalog.GetUnit(ContentIds.Units.Rifleman);
-        if (EnemyMaterials < rifleman.Cost)
-        {
-            return;
-        }
-
-        EnemyMaterials -= rifleman.Cost;
-        _productionOrders.Add(new ProductionOrderState(
-            rifleman.Id,
-            ContentIds.Factions.PrivateMilitary,
-            rifleman.TrainTimeSeconds * EnemyTrainTimeMultiplier));
     }
 
     private void CompleteProductionOrder(ProductionOrderState order)
@@ -326,7 +409,10 @@ public sealed class RtsSimulation
             return;
         }
 
-        AddUnit(order.UnitId, order.FactionId, hub.Position + new SimVector2(-70, 0));
+        var spawnOffset = order.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new SimVector2(-70, 0)
+            : new SimVector2(70, 0);
+        AddUnit(order.UnitId, order.FactionId, hub.Position + spawnOffset);
     }
 
     private void TickEnemyPressure(float deltaSeconds)
@@ -343,6 +429,44 @@ public sealed class RtsSimulation
             {
                 TickPlayerUnit(unit, deltaSeconds);
             }
+        }
+    }
+
+    private void TickBuildingAttacks(float deltaSeconds)
+    {
+        foreach (var building in _buildings.Where(building => !building.IsDestroyed))
+        {
+            building.AttackCooldownRemaining = MathF.Max(0.0f, building.AttackCooldownRemaining - deltaSeconds);
+            if (!building.IsPowered ||
+                building.Definition.AttackDamage <= 0.0f ||
+                building.Definition.AttackRange <= 0.0f ||
+                building.AttackCooldownRemaining > 0.0f)
+            {
+                continue;
+            }
+
+            var targetUnit = FindNearestHostileUnitForBuilding(building);
+            if (targetUnit is not null)
+            {
+                targetUnit.ApplyDamage(building.Definition.AttackDamage, building.Definition.DamageType);
+                building.AttackCooldownRemaining = MathF.Max(0.05f, building.Definition.AttackCooldown);
+                continue;
+            }
+
+            if (!building.Definition.TargetFilters.Contains("building", StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            var targetBuilding = FindNearestHostileBuildingForBuilding(building);
+            if (targetBuilding is null)
+            {
+                continue;
+            }
+
+            targetBuilding.ApplyDamage(building.Definition.AttackDamage, building.Definition.DamageType);
+            building.AttackCooldownRemaining = MathF.Max(0.05f, building.Definition.AttackCooldown);
+            RecomputePower();
         }
     }
 
@@ -499,8 +623,34 @@ public sealed class RtsSimulation
         var range = ToWorldRadius(unit.Definition.AttackRange);
         return _units
             .Where(candidate => candidate.FactionId != unit.FactionId && !candidate.IsDestroyed)
+            .Where(candidate => unit.FactionId != ContentIds.Factions.PlayerExpedition ||
+                IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, candidate.Position))
             .Where(candidate => candidate.Position.DistanceTo(unit.Position) <= range)
             .OrderBy(candidate => candidate.Position.DistanceTo(unit.Position))
+            .FirstOrDefault();
+    }
+
+    private UnitState? FindNearestHostileUnitForBuilding(BuildingState building)
+    {
+        var range = ToWorldRadius(building.Definition.AttackRange) + building.FootprintWorldRadius;
+        return _units
+            .Where(candidate => candidate.FactionId != building.FactionId && !candidate.IsDestroyed)
+            .Where(candidate => building.FactionId != ContentIds.Factions.PlayerExpedition ||
+                IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, candidate.Position))
+            .Where(candidate => candidate.Position.DistanceTo(building.Position) <= range)
+            .OrderBy(candidate => candidate.Position.DistanceTo(building.Position))
+            .FirstOrDefault();
+    }
+
+    private BuildingState? FindNearestHostileBuildingForBuilding(BuildingState building)
+    {
+        var range = ToWorldRadius(building.Definition.AttackRange) + building.FootprintWorldRadius;
+        return _buildings
+            .Where(candidate => candidate.FactionId != building.FactionId && !candidate.IsDestroyed)
+            .Where(candidate => building.FactionId != ContentIds.Factions.PlayerExpedition ||
+                IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, candidate.Position))
+            .Where(candidate => candidate.Position.DistanceTo(building.Position) <= range + candidate.FootprintWorldRadius)
+            .OrderBy(candidate => candidate.Position.DistanceTo(building.Position))
             .FirstOrDefault();
     }
 
@@ -528,7 +678,7 @@ public sealed class RtsSimulation
             !building.IsDestroyed);
     }
 
-    private bool HasLiveBuilding(string factionId, string buildingId)
+    internal bool HasLiveBuilding(string factionId, string buildingId)
     {
         return _buildings.Any(building =>
             building.FactionId == factionId &&
@@ -550,6 +700,52 @@ public sealed class RtsSimulation
             .Where(well => well.Position.DistanceTo(position) <= ResourceWellCoreRadius + ToWorldRadius(definition.FootprintRadius))
             .OrderBy(well => well.Position.DistanceTo(position))
             .FirstOrDefault();
+    }
+
+    private bool IsAdjacentRequirementMet(string factionId, BuildingDefinition definition, SimVector2 position)
+    {
+        if (definition.RequiresAdjacentBuildingId is null)
+        {
+            return true;
+        }
+
+        return _buildings.Any(building =>
+            building.FactionId == factionId &&
+            building.Definition.Id == definition.RequiresAdjacentBuildingId &&
+            !building.IsDestroyed &&
+            building.Position.DistanceTo(position) <= building.OccupancyRadius + ToWorldRadius(definition.FootprintRadius + definition.PlacementBuffer + 1.5f));
+    }
+
+    public bool IsVisibleToFaction(string factionId, SimVector2 position)
+    {
+        return (factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog).IsVisible(position);
+    }
+
+    public bool IsExploredByFaction(string factionId, SimVector2 position)
+    {
+        return (factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog).IsExplored(position);
+    }
+
+    private void RecomputeFog()
+    {
+        FogOfWarSystem.Recompute(_playerFog, _enemyFog, _buildings, _units);
+    }
+
+    private void RevealTanksForDestroyedHubs()
+    {
+        foreach (var hub in _buildings.Where(building =>
+            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
+            building.IsDestroyed &&
+            !_hubTankReveals.Contains(building.EntityId)).ToArray())
+        {
+            _hubTankReveals.Add(hub.EntityId);
+            AddUnit(ContentIds.Units.Tank, hub.FactionId, hub.Position + new SimVector2(85, 45));
+        }
+    }
+
+    private void UpdateMissionState()
+    {
+        MissionState = _missionObjectives.Evaluate(_units, _buildings);
     }
 
     private float GetMaterialsForFaction(string factionId)

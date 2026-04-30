@@ -18,10 +18,17 @@ public partial class Main : Node2D
         ContentIds.Buildings.DefenseTower
     ];
 
+    private static readonly string[] TrainHotkeyOrder =
+    [
+        ContentIds.Units.Worker,
+        ContentIds.Units.Rifleman,
+        ContentIds.Units.Guardian,
+        ContentIds.Units.Rover
+    ];
+
     private readonly Dictionary<int, GreyboxBuilding> _buildingViews = [];
     private readonly Dictionary<int, GreyboxSimUnit> _simUnitViews = [];
     private readonly List<ResourceWellView> _resourceWellViews = [];
-    private readonly List<GreyboxUnit> _units = [];
 
     private ContentCatalog? _catalog;
     private RtsSimulation? _simulation;
@@ -30,12 +37,13 @@ public partial class Main : Node2D
     private Label? _statusLabel;
     private PlacementGhost? _placementGhost;
     private EnergyWallView? _energyWallView;
+    private FogOfWarView? _fogOfWarView;
     private Node2D? _worldRoot;
-    private GreyboxUnit? _selectedUnit;
     private GreyboxSimUnit? _selectedSimUnit;
+    private int? _selectedBuildingEntityId;
     private string? _placementBuildingId;
     private float _uiScale = DefaultUiScale;
-    private string _lastActionMessage = "Left click a unit. Select Worker, then press 1-5 to build.";
+    private string _lastActionMessage = "Left click Worker or a building. Worker builds with 1-5.";
 
     public override void _Ready()
     {
@@ -46,8 +54,8 @@ public partial class Main : Node2D
         SetupCamera();
         SetupHud();
         SyncWorldViews();
-        SpawnGreyboxUnits();
         SetupEnergyWallView();
+        SetupFogOfWarView();
         SetupPlacementGhost();
         UpdateHud();
 
@@ -73,6 +81,16 @@ public partial class Main : Node2D
         if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
             if (HandleUiScaleHotkey(keyEvent.Keycode))
+            {
+                return;
+            }
+
+            if (HandleProductionHotkey(keyEvent.Keycode))
+            {
+                return;
+            }
+
+            if (HandleUpgradeHotkey(keyEvent.Keycode))
             {
                 return;
             }
@@ -142,6 +160,7 @@ public partial class Main : Node2D
         _simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
         _simulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
         _simulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+        _simulation.AddUnit(ContentIds.Units.Worker, ContentIds.Factions.PlayerExpedition, new SimVector2(-180, -60));
         _simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-110, -25));
         _simulation.AddUnit(ContentIds.Units.Guardian, ContentIds.Factions.PlayerExpedition, new SimVector2(-40, 15));
         _simulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.PlayerExpedition, new SimVector2(-10, 90));
@@ -214,31 +233,19 @@ public partial class Main : Node2D
         _worldRoot.AddChild(_energyWallView);
     }
 
-    private void SpawnGreyboxUnits()
+    private void SetupFogOfWarView()
     {
-        if (_catalog is null || _worldRoot is null)
+        if (_worldRoot is null)
         {
             return;
         }
 
-        AddUnit(_worldRoot, ContentIds.Units.Worker, new Vector2(-180, -60), new Color(0.24f, 0.7f, 0.35f));
-    }
-
-    private void AddUnit(Node parent, string unitId, Vector2 position, Color color)
-    {
-        if (_catalog is null)
+        _fogOfWarView = new FogOfWarView
         {
-            return;
-        }
-
-        var unit = new GreyboxUnit
-        {
-            Name = unitId,
-            ZIndex = 1
+            Name = "FogOfWarView",
+            ZIndex = 20
         };
-        unit.Initialize(_catalog.GetUnit(unitId), position, color);
-        parent.AddChild(unit);
-        _units.Add(unit);
+        _worldRoot.AddChild(_fogOfWarView);
     }
 
     private void HandleBuildHotkey(Key keycode)
@@ -284,6 +291,59 @@ public partial class Main : Node2D
         return false;
     }
 
+    private bool HandleProductionHotkey(Key keycode)
+    {
+        var index = keycode switch
+        {
+            Key.Q => 0,
+            Key.W => 1,
+            Key.E => 2,
+            Key.R => 3,
+            _ => -1
+        };
+
+        if (index < 0)
+        {
+            return false;
+        }
+
+        if (_simulation is null || _selectedBuildingEntityId is null)
+        {
+            _lastActionMessage = "Select a Barracks before training units.";
+            return true;
+        }
+
+        var unitId = TrainHotkeyOrder[index];
+        var result = _simulation.TryQueueUnit(unitId, _selectedBuildingEntityId.Value);
+        _lastActionMessage = result.Message;
+        return true;
+    }
+
+    private bool HandleUpgradeHotkey(Key keycode)
+    {
+        var upgradeId = keycode switch
+        {
+            Key.G => ContentIds.Buildings.GunTower,
+            Key.T => ContentIds.Buildings.RocketTower,
+            _ => null
+        };
+
+        if (upgradeId is null)
+        {
+            return false;
+        }
+
+        if (_simulation is null || _selectedBuildingEntityId is null)
+        {
+            _lastActionMessage = "Select a Defense Tower before upgrading.";
+            return true;
+        }
+
+        var result = _simulation.TryUpgradeBuilding(_selectedBuildingEntityId.Value, upgradeId);
+        _lastActionMessage = result.Message;
+        return true;
+    }
+
     private void SetUiScale(float scale)
     {
         _uiScale = Mathf.Clamp(scale, MinUiScale, MaxUiScale);
@@ -310,7 +370,7 @@ public partial class Main : Node2D
             return;
         }
 
-        if (_selectedUnit is null || !_selectedUnit.Definition.CanConstruct)
+        if (_selectedSimUnit is null || !_selectedSimUnit.State.Definition.CanConstruct)
         {
             _lastActionMessage = "Select a Worker before building.";
             return;
@@ -335,7 +395,7 @@ public partial class Main : Node2D
             return;
         }
 
-        if (_selectedUnit is null || !_selectedUnit.Definition.CanConstruct)
+        if (_selectedSimUnit is null || !_selectedSimUnit.State.Definition.CanConstruct)
         {
             _lastActionMessage = "Select a Worker before building.";
             return;
@@ -359,29 +419,11 @@ public partial class Main : Node2D
             _selectedSimUnit.SetSelected(false);
             _selectedSimUnit = null;
         }
-
-        GreyboxUnit? nearest = null;
-        var nearestDistance = float.MaxValue;
-
-        foreach (var unit in _units)
-        {
-            var distance = unit.GlobalPosition.DistanceTo(worldPosition);
-            if (distance <= unit.SelectionRadius && distance < nearestDistance)
-            {
-                nearest = unit;
-                nearestDistance = distance;
-            }
-        }
+        ClearSelectedBuilding();
 
         var nearestSimUnit = FindSelectableSimUnitAt(worldPosition);
         if (nearestSimUnit is not null)
         {
-            if (_selectedUnit is not null)
-            {
-                _selectedUnit.SetSelected(false);
-                _selectedUnit = null;
-            }
-
             _selectedSimUnit = nearestSimUnit;
             _selectedSimUnit.SetSelected(true);
             var simDefinition = _selectedSimUnit.State.Definition;
@@ -389,33 +431,31 @@ public partial class Main : Node2D
             return;
         }
 
-        if (_selectedUnit is not null)
+        var building = FindSelectablePlayerBuildingAt(worldPosition);
+        if (building is not null)
         {
-            _selectedUnit.SetSelected(false);
-        }
+            _selectedBuildingEntityId = building.EntityId;
+            if (_buildingViews.TryGetValue(building.EntityId, out var view))
+            {
+                view.SetSelected(true);
+            }
 
-        _selectedUnit = nearest;
-
-        if (_selectedUnit is null)
-        {
-            _lastActionMessage = "No unit selected.";
+            _lastActionMessage = $"Selected {building.Definition.DisplayName} | HP {building.Health:0}/{building.Definition.Health}";
             return;
         }
 
-        _selectedUnit.SetSelected(true);
-        var definition = _selectedUnit.Definition;
-        _lastActionMessage = $"Selected {definition.DisplayName} ({definition.Id}) | HP {definition.Health} | Speed {definition.MovementSpeed:0.00}";
+        _lastActionMessage = "No unit or building selected.";
     }
 
     private void MoveSelectedUnit(Vector2 worldPosition)
     {
-        if (_selectedUnit is null && _selectedSimUnit is null)
+        if (_selectedSimUnit is null)
         {
             _lastActionMessage = "No unit selected. Left click a unit first.";
             return;
         }
 
-        if (_selectedSimUnit is not null && _simulation is not null)
+        if (_simulation is not null)
         {
             var unit = _selectedSimUnit.State;
             var enemyUnit = FindEnemyUnitAt(worldPosition);
@@ -438,15 +478,6 @@ public partial class Main : Node2D
             _lastActionMessage = $"Moving {unit.Definition.DisplayName} to {worldPosition.X:0}, {worldPosition.Y:0}";
             return;
         }
-
-        if (_selectedUnit is null)
-        {
-            return;
-        }
-
-        _selectedUnit.SetMoveTarget(worldPosition);
-        var definition = _selectedUnit.Definition;
-        _lastActionMessage = $"Moving {definition.DisplayName} to {worldPosition.X:0}, {worldPosition.Y:0}";
     }
 
     private void SyncWorldViews()
@@ -473,6 +504,9 @@ public partial class Main : Node2D
             {
                 view.UpdateFromState(building);
             }
+
+            view.Visible = building.FactionId != ContentIds.Factions.PrivateMilitary ||
+                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position);
         }
 
         while (_resourceWellViews.Count < _simulation.ResourceWells.Count)
@@ -510,9 +544,14 @@ public partial class Main : Node2D
             {
                 view.UpdateFromState(unit);
             }
+
+            view.Visible = !unit.IsDestroyed &&
+                (unit.FactionId != ContentIds.Factions.PrivateMilitary ||
+                    _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position));
         }
 
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
+        _fogOfWarView?.UpdateFromState(_simulation.PlayerFog);
     }
 
     private GreyboxSimUnit? FindSelectableSimUnitAt(Vector2 worldPosition)
@@ -538,6 +577,31 @@ public partial class Main : Node2D
         return nearest;
     }
 
+    private BuildingState? FindSelectablePlayerBuildingAt(Vector2 worldPosition)
+    {
+        if (_simulation is null)
+        {
+            return null;
+        }
+
+        return _simulation.Buildings
+            .Where(building => building.FactionId == ContentIds.Factions.PlayerExpedition && !building.IsDestroyed)
+            .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
+            .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
+            .FirstOrDefault();
+    }
+
+    private void ClearSelectedBuilding()
+    {
+        if (_selectedBuildingEntityId is not null &&
+            _buildingViews.TryGetValue(_selectedBuildingEntityId.Value, out var selectedView))
+        {
+            selectedView.SetSelected(false);
+        }
+
+        _selectedBuildingEntityId = null;
+    }
+
     private UnitState? FindEnemyUnitAt(Vector2 worldPosition)
     {
         if (_simulation is null)
@@ -547,6 +611,7 @@ public partial class Main : Node2D
 
         return _simulation.Units
             .Where(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && !unit.IsDestroyed)
+            .Where(unit => _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position))
             .Where(unit => new Vector2(unit.Position.X, unit.Position.Y).DistanceTo(worldPosition) <= 22.0f)
             .OrderBy(unit => new Vector2(unit.Position.X, unit.Position.Y).DistanceTo(worldPosition))
             .FirstOrDefault();
@@ -561,6 +626,7 @@ public partial class Main : Node2D
 
         return _simulation.Buildings
             .Where(building => building.FactionId == ContentIds.Factions.PrivateMilitary && !building.IsDestroyed)
+            .Where(building => _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position))
             .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
             .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
             .FirstOrDefault();
@@ -601,12 +667,53 @@ public partial class Main : Node2D
         }
 
         var powered = _simulation.Buildings.Count(building => building.IsPowered);
+        var selectionLine = GetSelectionHudLine();
         _statusLabel.Text =
             $"Materials: {_simulation.Materials:0} | Enemy: {_simulation.EnemyMaterials:0} | Buildings: {_simulation.Buildings.Count} | Powered: {powered}/{_simulation.Buildings.Count} | Walls: {_simulation.EnergyWalls.Count}\n" +
-            $"{_simulation.ObjectiveText}\n" +
+            $"{_simulation.MissionState.Status}: {_simulation.MissionState.PrimaryText}\n" +
             $"{placementLine}\n" +
+            $"{selectionLine}\n" +
             $"UI: F9 smaller | F10 larger | F8 reset ({_uiScale:0.0}x)\n" +
             _lastActionMessage;
+    }
+
+    private string GetSelectionHudLine()
+    {
+        if (_simulation is null || _catalog is null)
+        {
+            return string.Empty;
+        }
+
+        if (_selectedSimUnit is not null)
+        {
+            return _selectedSimUnit.State.Definition.CanConstruct
+                ? "Worker selected: build with 1-5."
+                : "Unit selected: right click ground to move, enemy to attack.";
+        }
+
+        if (_selectedBuildingEntityId is null)
+        {
+            return "Select Barracks to train: Q Worker | W Rifleman | E Guardian | R Rover.";
+        }
+
+        var building = _simulation.Buildings.FirstOrDefault(item => item.EntityId == _selectedBuildingEntityId.Value);
+        if (building is null)
+        {
+            return string.Empty;
+        }
+
+        if (building.Definition.Id == ContentIds.Buildings.Barracks)
+        {
+            var worker = _simulation.ValidateUnitProduction(ContentIds.Units.Worker, building.EntityId).Reason;
+            return $"Barracks: Q Worker | W Rifleman | E Guardian | R Rover ({worker})";
+        }
+
+        if (building.Definition.Id == ContentIds.Buildings.DefenseTower)
+        {
+            return "Defense Tower: G Gun Tower | T Rocket Tower.";
+        }
+
+        return $"Selected: {building.Definition.DisplayName}.";
     }
 
     private void HandleCameraPan(double delta)

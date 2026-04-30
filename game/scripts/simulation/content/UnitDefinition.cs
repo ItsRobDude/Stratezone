@@ -8,13 +8,21 @@ public sealed record UnitDefinition(
     float TrainTimeSeconds,
     IReadOnlyDictionary<string, float> DamageResistances,
     float MovementSpeed,
+    float SightRange,
+    string? AllowedByBuildingId,
+    string? RequiredAddonBuildingId,
+    string? SpawnBuildingId,
     int Health,
     float AttackDamage,
     float AttackRange,
     float AttackCooldown,
     string DamageType,
+    float AreaRadius,
+    bool FriendlyFire,
+    IReadOnlyList<string> TargetFilters,
     bool CanAttack,
     bool CanConstruct,
     bool CanRepair,
-    bool CanRunOverInfantry
+    bool CanRunOverInfantry,
+    IReadOnlyList<string> Tags
 );

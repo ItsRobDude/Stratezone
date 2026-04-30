@@ -85,15 +85,23 @@ public sealed class ContentCatalog
                 record.GetProperty("train_time_seconds").GetSingle(),
                 LoadResistances(record),
                 record.GetProperty("movement_speed").GetSingle(),
+                record.GetProperty("sight_range").GetSingle(),
+                GetOptionalTrainRequirement(record, "allowed_by_building_id"),
+                GetOptionalTrainRequirement(record, "required_addon_building_id"),
+                GetOptionalTrainRequirement(record, "spawn_building_id"),
                 record.GetProperty("health").GetInt32(),
                 record.GetProperty("attack_damage").GetSingle(),
                 record.GetProperty("attack_range").GetSingle(),
                 record.GetProperty("attack_cooldown").GetSingle(),
                 record.GetProperty("damage_type").GetString() ?? "none",
+                record.GetProperty("area_radius").GetSingle(),
+                record.GetProperty("friendly_fire").GetBoolean(),
+                LoadStringArray(record, "target_filters"),
                 record.GetProperty("can_attack").GetBoolean(),
                 record.GetProperty("can_construct").GetBoolean(),
                 record.GetProperty("can_repair").GetBoolean(),
-                record.GetProperty("can_run_over_infantry").GetBoolean()
+                record.GetProperty("can_run_over_infantry").GetBoolean(),
+                LoadStringArray(record, "tags")
             );
 
             units.Add(unit.Id, unit);
@@ -125,8 +133,21 @@ public sealed class ContentCatalog
                 record.GetProperty("pylon_link_range").GetSingle(),
                 record.GetProperty("provides_resource_extraction").GetBoolean(),
                 GetOptionalString(record, "extractor_resource_id"),
+                GetOptionalString(record, "requires_adjacent_building_id"),
+                LoadStringArray(record, "training_unlock_unit_ids"),
                 record.GetProperty("wall_anchor").GetBoolean(),
-                GetOptionalFloat(record, "wall_link_range")
+                GetOptionalFloat(record, "wall_link_range"),
+                record.GetProperty("attack_damage").GetSingle(),
+                record.GetProperty("attack_range").GetSingle(),
+                record.GetProperty("attack_cooldown").GetSingle(),
+                record.GetProperty("damage_type").GetString() ?? "none",
+                record.GetProperty("area_radius").GetSingle(),
+                record.GetProperty("friendly_fire").GetBoolean(),
+                LoadStringArray(record, "target_filters"),
+                GetOptionalString(record, "upgrade_from_building_id"),
+                GetOptionalBool(record, "upgrade_preserves_wall_anchor"),
+                GetOptionalFloat(record, "sight_range"),
+                LoadStringArray(record, "tags")
             );
 
             buildings.Add(building.Id, building);
@@ -213,11 +234,41 @@ public sealed class ContentCatalog
         return value.GetString();
     }
 
+    private static string? GetOptionalTrainRequirement(JsonElement record, string propertyName)
+    {
+        if (!record.TryGetProperty("train_requirements", out var requirements) ||
+            requirements.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        return GetOptionalString(requirements, propertyName);
+    }
+
     private static float GetOptionalFloat(JsonElement record, string propertyName)
     {
         return record.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number
             ? value.GetSingle()
             : 0.0f;
+    }
+
+    private static bool GetOptionalBool(JsonElement record, string propertyName)
+    {
+        return record.TryGetProperty(propertyName, out var value) &&
+            value.ValueKind == JsonValueKind.True;
+    }
+
+    private static IReadOnlyList<string> LoadStringArray(JsonElement record, string propertyName)
+    {
+        if (!record.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return value.EnumerateArray()
+            .Select(item => item.GetString() ?? string.Empty)
+            .Where(item => item.Length > 0)
+            .ToArray();
     }
 
     private static IReadOnlyDictionary<string, float> LoadResistances(JsonElement record)

@@ -15,6 +15,19 @@ public sealed record BuildingDefinition(
     float PylonLinkRange,
     bool ProvidesResourceExtraction,
     string? ExtractorResourceId,
+    string? RequiresAdjacentBuildingId,
+    IReadOnlyList<string> TrainingUnlockUnitIds,
     bool WallAnchor,
-    float WallLinkRange
+    float WallLinkRange,
+    float AttackDamage,
+    float AttackRange,
+    float AttackCooldown,
+    string DamageType,
+    float AreaRadius,
+    bool FriendlyFire,
+    IReadOnlyList<string> TargetFilters,
+    string? UpgradeFromBuildingId,
+    bool UpgradePreservesWallAnchor,
+    float SightRange,
+    IReadOnlyList<string> Tags
 );

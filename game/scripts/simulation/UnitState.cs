@@ -19,6 +19,8 @@ public sealed class UnitState
     public SimVector2 Position { get; internal set; }
     public float Health { get; private set; }
     public float AttackCooldownRemaining { get; internal set; }
+    public SimVector2? MoveTarget { get; internal set; }
+    public int? TargetUnitEntityId { get; internal set; }
     public int? TargetBuildingEntityId { get; internal set; }
     public bool IsBlockedByEnergyWall { get; internal set; }
     public bool IsDestroyed => Health <= 0.0f;

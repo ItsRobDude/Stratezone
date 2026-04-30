@@ -32,6 +32,7 @@ public partial class Main : Node2D
     private EnergyWallView? _energyWallView;
     private Node2D? _worldRoot;
     private GreyboxUnit? _selectedUnit;
+    private GreyboxSimUnit? _selectedSimUnit;
     private string? _placementBuildingId;
     private float _uiScale = DefaultUiScale;
     private string _lastActionMessage = "Left click a unit. Select Worker, then press 1-5 to build.";
@@ -141,6 +142,10 @@ public partial class Main : Node2D
         _simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
         _simulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
         _simulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+        _simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-110, -25));
+        _simulation.AddUnit(ContentIds.Units.Guardian, ContentIds.Factions.PlayerExpedition, new SimVector2(-40, 15));
+        _simulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.PlayerExpedition, new SimVector2(-10, 90));
+        _simulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(-210, 40));
     }
 
     private void SetupCamera()
@@ -148,11 +153,12 @@ public partial class Main : Node2D
         _camera = new Camera2D
         {
             Name = "GreyboxCamera",
-            Position = new Vector2(0, 0),
+            Position = new Vector2(140, 20),
             Zoom = new Vector2(1.0f, 1.0f),
             Enabled = true
         };
         AddChild(_camera);
+        _camera.MakeCurrent();
     }
 
     private void SetupHud()
@@ -216,10 +222,6 @@ public partial class Main : Node2D
         }
 
         AddUnit(_worldRoot, ContentIds.Units.Worker, new Vector2(-180, -60), new Color(0.24f, 0.7f, 0.35f));
-        AddUnit(_worldRoot, ContentIds.Units.Rifleman, new Vector2(-110, -25), new Color(0.28f, 0.62f, 0.95f));
-        AddUnit(_worldRoot, ContentIds.Units.Guardian, new Vector2(-40, 15), new Color(0.45f, 0.55f, 1.0f));
-        AddUnit(_worldRoot, ContentIds.Units.Rover, new Vector2(-10, 90), new Color(0.88f, 0.74f, 0.28f));
-        AddUnit(_worldRoot, ContentIds.Units.Commander, new Vector2(-210, 40), new Color(0.95f, 0.4f, 0.3f));
     }
 
     private void AddUnit(Node parent, string unitId, Vector2 position, Color color)
@@ -352,6 +354,12 @@ public partial class Main : Node2D
 
     private void SelectUnitAt(Vector2 worldPosition)
     {
+        if (_selectedSimUnit is not null)
+        {
+            _selectedSimUnit.SetSelected(false);
+            _selectedSimUnit = null;
+        }
+
         GreyboxUnit? nearest = null;
         var nearestDistance = float.MaxValue;
 
@@ -363,6 +371,22 @@ public partial class Main : Node2D
                 nearest = unit;
                 nearestDistance = distance;
             }
+        }
+
+        var nearestSimUnit = FindSelectableSimUnitAt(worldPosition);
+        if (nearestSimUnit is not null)
+        {
+            if (_selectedUnit is not null)
+            {
+                _selectedUnit.SetSelected(false);
+                _selectedUnit = null;
+            }
+
+            _selectedSimUnit = nearestSimUnit;
+            _selectedSimUnit.SetSelected(true);
+            var simDefinition = _selectedSimUnit.State.Definition;
+            _lastActionMessage = $"Selected {simDefinition.DisplayName} ({simDefinition.Id}) | HP {_selectedSimUnit.State.Health:0}/{simDefinition.Health}";
+            return;
         }
 
         if (_selectedUnit is not null)
@@ -385,9 +409,38 @@ public partial class Main : Node2D
 
     private void MoveSelectedUnit(Vector2 worldPosition)
     {
-        if (_selectedUnit is null)
+        if (_selectedUnit is null && _selectedSimUnit is null)
         {
             _lastActionMessage = "No unit selected. Left click a unit first.";
+            return;
+        }
+
+        if (_selectedSimUnit is not null && _simulation is not null)
+        {
+            var unit = _selectedSimUnit.State;
+            var enemyUnit = FindEnemyUnitAt(worldPosition);
+            if (enemyUnit is not null)
+            {
+                _simulation.CommandUnitAttackUnit(unit.EntityId, enemyUnit.EntityId);
+                _lastActionMessage = $"{unit.Definition.DisplayName} attacking {enemyUnit.Definition.DisplayName}.";
+                return;
+            }
+
+            var enemyBuilding = FindEnemyBuildingAt(worldPosition);
+            if (enemyBuilding is not null)
+            {
+                _simulation.CommandUnitAttackBuilding(unit.EntityId, enemyBuilding.EntityId);
+                _lastActionMessage = $"{unit.Definition.DisplayName} attacking {enemyBuilding.Definition.DisplayName}.";
+                return;
+            }
+
+            _simulation.CommandUnitMove(unit.EntityId, ToSim(worldPosition));
+            _lastActionMessage = $"Moving {unit.Definition.DisplayName} to {worldPosition.X:0}, {worldPosition.Y:0}";
+            return;
+        }
+
+        if (_selectedUnit is null)
+        {
             return;
         }
 
@@ -460,6 +513,57 @@ public partial class Main : Node2D
         }
 
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
+    }
+
+    private GreyboxSimUnit? FindSelectableSimUnitAt(Vector2 worldPosition)
+    {
+        GreyboxSimUnit? nearest = null;
+        var nearestDistance = float.MaxValue;
+
+        foreach (var unit in _simUnitViews.Values)
+        {
+            if (unit.State.FactionId != ContentIds.Factions.PlayerExpedition || unit.State.IsDestroyed)
+            {
+                continue;
+            }
+
+            var distance = unit.GlobalPosition.DistanceTo(worldPosition);
+            if (distance <= unit.SelectionRadius && distance < nearestDistance)
+            {
+                nearest = unit;
+                nearestDistance = distance;
+            }
+        }
+
+        return nearest;
+    }
+
+    private UnitState? FindEnemyUnitAt(Vector2 worldPosition)
+    {
+        if (_simulation is null)
+        {
+            return null;
+        }
+
+        return _simulation.Units
+            .Where(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && !unit.IsDestroyed)
+            .Where(unit => new Vector2(unit.Position.X, unit.Position.Y).DistanceTo(worldPosition) <= 22.0f)
+            .OrderBy(unit => new Vector2(unit.Position.X, unit.Position.Y).DistanceTo(worldPosition))
+            .FirstOrDefault();
+    }
+
+    private BuildingState? FindEnemyBuildingAt(Vector2 worldPosition)
+    {
+        if (_simulation is null)
+        {
+            return null;
+        }
+
+        return _simulation.Buildings
+            .Where(building => building.FactionId == ContentIds.Factions.PrivateMilitary && !building.IsDestroyed)
+            .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
+            .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
+            .FirstOrDefault();
     }
 
     private void UpdatePlacementGhost()

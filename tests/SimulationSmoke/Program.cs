@@ -107,6 +107,19 @@ Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId 
 Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary && building.Definition.Id == ContentIds.Buildings.ExtractorRefinery), "enemy construction planner builds an Extractor on an open well");
 Assert(enemyConstructionSimulation.EnemyMaterials < 1000, "enemy construction planner spends enemy resources");
 
+var playerCombatSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+playerCombatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var playerRifleman = playerCombatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var enemyRifleman = playerCombatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(70, 0));
+playerCombatSimulation.CommandUnitAttackUnit(playerRifleman.EntityId, enemyRifleman.EntityId);
+TickFor(playerCombatSimulation, 4.0f);
+Assert(enemyRifleman.IsDestroyed, "player combat unit can destroy an enemy unit");
+
+var enemyBuilding = playerCombatSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(120, 0), ContentIds.Factions.PrivateMilitary);
+playerCombatSimulation.CommandUnitAttackBuilding(playerRifleman.EntityId, enemyBuilding.EntityId);
+TickFor(playerCombatSimulation, 3.0f);
+Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
+
 Console.WriteLine("Simulation smoke checks passed.");
 
 static void Assert(bool condition, string message)

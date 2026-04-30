@@ -20,6 +20,7 @@ Current greybox demo controls:
 
 - Left click selects a unit or places the active building ghost.
 - Right click moves the selected unit, or cancels placement mode.
+- Right click an enemy unit or building with a selected combat unit to attack it.
 - Select the Worker, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
 - Mouse wheel zooms. `WASD` or arrow keys pan.
 - `F9` decreases debug UI scale, `F10` increases it, and `F8` resets it.

@@ -201,6 +201,48 @@ public sealed class RtsSimulation
         return unit;
     }
 
+    public void CommandUnitMove(int unitEntityId, SimVector2 position)
+    {
+        var unit = FindLiveUnit(unitEntityId);
+        if (unit is null)
+        {
+            return;
+        }
+
+        unit.MoveTarget = position;
+        unit.TargetUnitEntityId = null;
+        unit.TargetBuildingEntityId = null;
+        unit.IsBlockedByEnergyWall = false;
+    }
+
+    public void CommandUnitAttackUnit(int unitEntityId, int targetUnitEntityId)
+    {
+        var unit = FindLiveUnit(unitEntityId);
+        var target = FindLiveUnit(targetUnitEntityId);
+        if (unit is null || target is null || unit.FactionId == target.FactionId)
+        {
+            return;
+        }
+
+        unit.MoveTarget = null;
+        unit.TargetUnitEntityId = target.EntityId;
+        unit.TargetBuildingEntityId = null;
+    }
+
+    public void CommandUnitAttackBuilding(int unitEntityId, int targetBuildingEntityId)
+    {
+        var unit = FindLiveUnit(unitEntityId);
+        var target = FindLiveBuilding(targetBuildingEntityId);
+        if (unit is null || target is null || unit.FactionId == target.FactionId)
+        {
+            return;
+        }
+
+        unit.MoveTarget = null;
+        unit.TargetUnitEntityId = null;
+        unit.TargetBuildingEntityId = target.EntityId;
+    }
+
     public bool IsLineBlockedByEnergyWall(SimVector2 start, SimVector2 end)
     {
         return _energyWalls.Any(wall => LinesIntersect(start, end, wall.Start, wall.End));
@@ -289,35 +331,110 @@ public sealed class RtsSimulation
 
     private void TickEnemyPressure(float deltaSeconds)
     {
-        foreach (var unit in _units.Where(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && !unit.IsDestroyed))
+        foreach (var unit in _units.Where(unit => !unit.IsDestroyed))
         {
             unit.AttackCooldownRemaining = MathF.Max(0.0f, unit.AttackCooldownRemaining - deltaSeconds);
 
-            var target = GetEnemyTargetBuilding(unit);
-            unit.TargetBuildingEntityId = target?.EntityId;
-            if (target is null)
+            if (unit.FactionId == ContentIds.Factions.PrivateMilitary)
             {
-                continue;
+                TickEnemyUnit(unit, deltaSeconds);
             }
-
-            var distanceToTarget = unit.Position.DistanceTo(target.Position);
-            var attackRange = ToWorldRadius(unit.Definition.AttackRange) + target.FootprintWorldRadius;
-            if (unit.Definition.CanAttack && distanceToTarget <= attackRange)
+            else
             {
-                TryUnitAttackBuilding(unit, target);
-                continue;
+                TickPlayerUnit(unit, deltaSeconds);
             }
-
-            var direction = target.Position - unit.Position;
-            var distance = direction.Length();
-            if (distance <= 0.001f)
-            {
-                continue;
-            }
-
-            var stepDistance = unit.Definition.MovementSpeed * CombatMovementScale * deltaSeconds;
-            unit.Position += direction.Normalized() * MathF.Min(stepDistance, distance);
         }
+    }
+
+    private void TickPlayerUnit(UnitState unit, float deltaSeconds)
+    {
+        var targetUnit = unit.TargetUnitEntityId is null ? null : FindLiveUnit(unit.TargetUnitEntityId.Value);
+        if (targetUnit is not null && targetUnit.FactionId != unit.FactionId)
+        {
+            TickUnitAttackTarget(unit, targetUnit, deltaSeconds);
+            return;
+        }
+
+        var targetBuilding = unit.TargetBuildingEntityId is null ? null : FindLiveBuilding(unit.TargetBuildingEntityId.Value);
+        if (targetBuilding is not null && targetBuilding.FactionId != unit.FactionId)
+        {
+            TickUnitAttackTarget(unit, targetBuilding, deltaSeconds);
+            return;
+        }
+
+        var nearbyEnemy = FindNearestEnemyUnitInRange(unit);
+        if (nearbyEnemy is not null)
+        {
+            TryUnitAttackUnit(unit, nearbyEnemy);
+            return;
+        }
+
+        if (unit.MoveTarget is not null)
+        {
+            MoveUnitToward(unit, unit.MoveTarget.Value, deltaSeconds);
+        }
+    }
+
+    private void TickEnemyUnit(UnitState unit, float deltaSeconds)
+    {
+        var targetUnit = FindNearestEnemyUnitInRange(unit);
+        if (targetUnit is not null)
+        {
+            unit.TargetUnitEntityId = targetUnit.EntityId;
+            unit.TargetBuildingEntityId = null;
+            TryUnitAttackUnit(unit, targetUnit);
+            return;
+        }
+
+        var target = GetEnemyTargetBuilding(unit);
+        unit.TargetUnitEntityId = null;
+        unit.TargetBuildingEntityId = target?.EntityId;
+        if (target is null)
+        {
+            return;
+        }
+
+        TickUnitAttackTarget(unit, target, deltaSeconds);
+    }
+
+    private void TickUnitAttackTarget(UnitState attacker, UnitState target, float deltaSeconds)
+    {
+        var distanceToTarget = attacker.Position.DistanceTo(target.Position);
+        if (attacker.Definition.CanAttack && distanceToTarget <= ToWorldRadius(attacker.Definition.AttackRange))
+        {
+            TryUnitAttackUnit(attacker, target);
+            return;
+        }
+
+        MoveUnitToward(attacker, target.Position, deltaSeconds);
+    }
+
+    private void TickUnitAttackTarget(UnitState attacker, BuildingState target, float deltaSeconds)
+    {
+        var distanceToTarget = attacker.Position.DistanceTo(target.Position);
+        var attackRange = ToWorldRadius(attacker.Definition.AttackRange) + target.FootprintWorldRadius;
+        if (attacker.Definition.CanAttack && distanceToTarget <= attackRange)
+        {
+            TryUnitAttackBuilding(attacker, target);
+            return;
+        }
+
+        MoveUnitToward(attacker, target.Position, deltaSeconds);
+    }
+
+    private static void MoveUnitToward(UnitState unit, SimVector2 target, float deltaSeconds)
+    {
+        var direction = target - unit.Position;
+        var distance = direction.Length();
+        if (distance <= 4.0f)
+        {
+            unit.Position = target;
+            unit.MoveTarget = null;
+            return;
+        }
+
+        var stepDistance = unit.Definition.MovementSpeed * CombatMovementScale * deltaSeconds;
+        unit.Position += direction.Normalized() * MathF.Min(stepDistance, distance);
     }
 
     private BuildingState? GetEnemyTargetBuilding(UnitState unit)
@@ -359,6 +476,34 @@ public sealed class RtsSimulation
         RecomputePower();
     }
 
+    private void TryUnitAttackUnit(UnitState attacker, UnitState target)
+    {
+        if (attacker.AttackCooldownRemaining > 0.0f ||
+            target.IsDestroyed ||
+            attacker.Definition.AttackDamage <= 0.0f)
+        {
+            return;
+        }
+
+        target.ApplyDamage(attacker.Definition.AttackDamage, attacker.Definition.DamageType);
+        attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
+    }
+
+    private UnitState? FindNearestEnemyUnitInRange(UnitState unit)
+    {
+        if (!unit.Definition.CanAttack || unit.Definition.AttackRange <= 0.0f)
+        {
+            return null;
+        }
+
+        var range = ToWorldRadius(unit.Definition.AttackRange);
+        return _units
+            .Where(candidate => candidate.FactionId != unit.FactionId && !candidate.IsDestroyed)
+            .Where(candidate => candidate.Position.DistanceTo(unit.Position) <= range)
+            .OrderBy(candidate => candidate.Position.DistanceTo(unit.Position))
+            .FirstOrDefault();
+    }
+
     private EnergyWallSegment? FindBlockingEnergyWall(SimVector2 start, SimVector2 end)
     {
         return _energyWalls.FirstOrDefault(wall => LinesIntersect(start, end, wall.Start, wall.End));
@@ -367,6 +512,11 @@ public sealed class RtsSimulation
     private BuildingState? FindLiveBuilding(int entityId)
     {
         return _buildings.FirstOrDefault(building => building.EntityId == entityId && !building.IsDestroyed);
+    }
+
+    private UnitState? FindLiveUnit(int entityId)
+    {
+        return _units.FirstOrDefault(unit => unit.EntityId == entityId && !unit.IsDestroyed);
     }
 
     private bool HasPoweredBuilding(string factionId, string buildingId)

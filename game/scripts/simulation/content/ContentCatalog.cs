@@ -101,6 +101,8 @@ public sealed class ContentCatalog
                 record.GetProperty("can_construct").GetBoolean(),
                 record.GetProperty("can_repair").GetBoolean(),
                 record.GetProperty("can_run_over_infantry").GetBoolean(),
+                GetOptionalFloat(record, "run_over_damage"),
+                GetOptionalString(record, "run_over_damage_type") ?? "crush",
                 LoadStringArray(record, "tags")
             );
 

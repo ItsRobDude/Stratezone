@@ -171,6 +171,41 @@ var towerBuildingTarget = towerUpgradeSimulation.AddStartingBuilding(ContentIds.
 TickFor(towerUpgradeSimulation, 3.0f);
 Assert(towerBuildingTarget.Health < towerBuildingTarget.Definition.Health, "powered Rocket Tower damages enemy buildings");
 
+var splashSimulation = new RtsSimulation(catalog, 4000, []);
+splashSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, 0));
+Assert(splashSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-40, 0)).Success, "splash test places power");
+var splashTower = splashSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(110, 0));
+Assert(splashTower.Success, splashTower.Message);
+Assert(splashSimulation.TryUpgradeBuilding(splashTower.Building!.EntityId, ContentIds.Buildings.RocketTower).Success, "splash test upgrades Rocket Tower");
+var splashTarget = splashSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(230, 0));
+var splashNeighbor = splashSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(250, 20));
+var friendlyInBlast = splashSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(240, -20));
+TickFor(splashSimulation, 3.0f);
+Assert(splashTarget.Health < splashTarget.Definition.Health, "Rocket Tower damages direct target");
+Assert(splashNeighbor.Health < splashNeighbor.Definition.Health, "Rocket Tower splash damages nearby enemy");
+Assert(friendlyInBlast.Health < friendlyInBlast.Definition.Health, "friendly-fire explosive splash can hurt allied units");
+
+var ballisticFriendlyFireSimulation = new RtsSimulation(catalog, startingMaterials, []);
+ballisticFriendlyFireSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, 0));
+var shooter = ballisticFriendlyFireSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var ballisticEnemy = ballisticFriendlyFireSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(70, 0), ContentIds.Factions.PrivateMilitary);
+var ballisticAlly = ballisticFriendlyFireSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(70, 0));
+ballisticFriendlyFireSimulation.CommandUnitAttackBuilding(shooter.EntityId, ballisticEnemy.EntityId);
+TickFor(ballisticFriendlyFireSimulation, 1.0f);
+Assert(ballisticEnemy.Health < ballisticEnemy.Definition.Health, "ballistic attack damages enemy target");
+Assert(Math.Abs(ballisticAlly.Health - ballisticAlly.Definition.Health) < 0.01f, "non-friendly-fire ballistic attack does not hurt allies");
+
+var crushSimulation = new RtsSimulation(catalog, startingMaterials, []);
+crushSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, 0));
+var rover = crushSimulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var infantryToCrush = crushSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(40, 0));
+var friendlyInfantryNearCrush = crushSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(230, 0));
+Assert(!rover.Definition.CanAttack, "Rover cannot shoot");
+crushSimulation.CommandUnitMove(rover.EntityId, new SimVector2(260, 0));
+TickFor(crushSimulation, 2.0f);
+Assert(infantryToCrush.IsDestroyed, "Rover crush kills enemy Rifleman while moving through it");
+Assert(Math.Abs(friendlyInfantryNearCrush.Health - friendlyInfantryNearCrush.Definition.Health) < 0.01f, "Rover does not crush friendly infantry in this pass");
+
 var fogSimulation = new RtsSimulation(catalog, startingMaterials, []);
 fogSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
 var scout = fogSimulation.AddUnit(ContentIds.Units.Rover, ContentIds.Factions.PlayerExpedition, new SimVector2(-450, 0));

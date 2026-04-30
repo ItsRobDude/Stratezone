@@ -2,7 +2,7 @@ using Stratezone.Simulation.Content;
 
 namespace Stratezone.Simulation;
 
-public sealed class RtsSimulation
+public sealed partial class RtsSimulation
 {
     public const float ContentUnitScale = 24.0f;
     private const float ResourceWellCoreRadius = 28.0f;
@@ -253,7 +253,29 @@ public sealed class RtsSimulation
         return TryUpgradeBuildingForFaction(ContentIds.Factions.PlayerExpedition, buildingEntityId, upgradeBuildingId);
     }
 
+    public UpgradeResult ValidateBuildingUpgrade(int buildingEntityId, string upgradeBuildingId)
+    {
+        return ValidateBuildingUpgradeForFaction(ContentIds.Factions.PlayerExpedition, buildingEntityId, upgradeBuildingId);
+    }
+
     internal UpgradeResult TryUpgradeBuildingForFaction(string factionId, int buildingEntityId, string upgradeBuildingId)
+    {
+        var validation = ValidateBuildingUpgradeForFaction(factionId, buildingEntityId, upgradeBuildingId);
+        if (!validation.Success || validation.Building is null)
+        {
+            return validation;
+        }
+
+        var upgrade = _catalog.GetBuilding(upgradeBuildingId);
+        SpendMaterialsForFaction(factionId, upgrade.Cost);
+        validation.Building.UpgradeTo(upgrade);
+        RecomputePower();
+        RecomputeFog();
+        UpdateMissionState();
+        return new UpgradeResult(true, $"Upgraded to {upgrade.DisplayName}.", validation.Building);
+    }
+
+    private UpgradeResult ValidateBuildingUpgradeForFaction(string factionId, int buildingEntityId, string upgradeBuildingId)
     {
         var building = FindLiveBuilding(buildingEntityId);
         if (building is null || building.FactionId != factionId)
@@ -277,12 +299,7 @@ public sealed class RtsSimulation
             return new UpgradeResult(false, $"Need {upgrade.Cost:0} materials.");
         }
 
-        SpendMaterialsForFaction(factionId, upgrade.Cost);
-        building.UpgradeTo(upgrade);
-        RecomputePower();
-        RecomputeFog();
-        UpdateMissionState();
-        return new UpgradeResult(true, $"Upgraded to {upgrade.DisplayName}.", building);
+        return new UpgradeResult(true, $"Can upgrade to {upgrade.DisplayName}.", building);
     }
 
     public bool IsLineBlockedByEnergyWall(SimVector2 start, SimVector2 end)
@@ -448,8 +465,8 @@ public sealed class RtsSimulation
             var targetUnit = FindNearestHostileUnitForBuilding(building);
             if (targetUnit is not null)
             {
-                targetUnit.ApplyDamage(building.Definition.AttackDamage, building.Definition.DamageType);
-                building.AttackCooldownRemaining = MathF.Max(0.05f, building.Definition.AttackCooldown);
+                CombatResolver.ResolveBuildingAttack(building, targetUnit, _units, _buildings);
+                RecomputePower();
                 continue;
             }
 
@@ -464,8 +481,7 @@ public sealed class RtsSimulation
                 continue;
             }
 
-            targetBuilding.ApplyDamage(building.Definition.AttackDamage, building.Definition.DamageType);
-            building.AttackCooldownRemaining = MathF.Max(0.05f, building.Definition.AttackCooldown);
+            CombatResolver.ResolveBuildingAttack(building, targetBuilding, _units, _buildings);
             RecomputePower();
         }
     }
@@ -546,7 +562,7 @@ public sealed class RtsSimulation
         MoveUnitToward(attacker, target.Position, deltaSeconds);
     }
 
-    private static void MoveUnitToward(UnitState unit, SimVector2 target, float deltaSeconds)
+    private void MoveUnitToward(UnitState unit, SimVector2 target, float deltaSeconds)
     {
         var direction = target - unit.Position;
         var distance = direction.Length();
@@ -558,7 +574,9 @@ public sealed class RtsSimulation
         }
 
         var stepDistance = unit.Definition.MovementSpeed * CombatMovementScale * deltaSeconds;
+        var start = unit.Position;
         unit.Position += direction.Normalized() * MathF.Min(stepDistance, distance);
+        CombatResolver.TryCrushInfantry(unit, start, unit.Position, _units);
     }
 
     private BuildingState? GetEnemyTargetBuilding(UnitState unit)
@@ -595,8 +613,7 @@ public sealed class RtsSimulation
             return;
         }
 
-        target.ApplyDamage(unit.Definition.AttackDamage, unit.Definition.DamageType);
-        unit.AttackCooldownRemaining = MathF.Max(0.05f, unit.Definition.AttackCooldown);
+        CombatResolver.ResolveUnitAttack(unit, target, _units, _buildings);
         RecomputePower();
     }
 
@@ -609,8 +626,8 @@ public sealed class RtsSimulation
             return;
         }
 
-        target.ApplyDamage(attacker.Definition.AttackDamage, attacker.Definition.DamageType);
-        attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
+        CombatResolver.ResolveUnitAttack(attacker, target, _units, _buildings);
+        RecomputePower();
     }
 
     private UnitState? FindNearestEnemyUnitInRange(UnitState unit)
@@ -714,38 +731,6 @@ public sealed class RtsSimulation
             building.Definition.Id == definition.RequiresAdjacentBuildingId &&
             !building.IsDestroyed &&
             building.Position.DistanceTo(position) <= building.OccupancyRadius + ToWorldRadius(definition.FootprintRadius + definition.PlacementBuffer + 1.5f));
-    }
-
-    public bool IsVisibleToFaction(string factionId, SimVector2 position)
-    {
-        return (factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog).IsVisible(position);
-    }
-
-    public bool IsExploredByFaction(string factionId, SimVector2 position)
-    {
-        return (factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog).IsExplored(position);
-    }
-
-    private void RecomputeFog()
-    {
-        FogOfWarSystem.Recompute(_playerFog, _enemyFog, _buildings, _units);
-    }
-
-    private void RevealTanksForDestroyedHubs()
-    {
-        foreach (var hub in _buildings.Where(building =>
-            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
-            building.IsDestroyed &&
-            !_hubTankReveals.Contains(building.EntityId)).ToArray())
-        {
-            _hubTankReveals.Add(hub.EntityId);
-            AddUnit(ContentIds.Units.Tank, hub.FactionId, hub.Position + new SimVector2(85, 45));
-        }
-    }
-
-    private void UpdateMissionState()
-    {
-        MissionState = _missionObjectives.Evaluate(_units, _buildings);
     }
 
     private float GetMaterialsForFaction(string factionId)

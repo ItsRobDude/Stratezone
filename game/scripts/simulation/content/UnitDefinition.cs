@@ -24,5 +24,7 @@ public sealed record UnitDefinition(
     bool CanConstruct,
     bool CanRepair,
     bool CanRunOverInfantry,
+    float RunOverDamage,
+    string RunOverDamageType,
     IReadOnlyList<string> Tags
 );

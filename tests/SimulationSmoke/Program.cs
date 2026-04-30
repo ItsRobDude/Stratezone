@@ -70,6 +70,42 @@ var secondTower = wallSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTo
 Assert(secondTower.Success, secondTower.Message);
 Assert(wallSimulation.EnergyWalls.Count == 1, "two nearby powered wall anchors create a wall segment");
 Assert(wallSimulation.IsLineBlockedByEnergyWall(new SimVector2(0, 0), new SimVector2(260, 0)), "energy wall blocks a crossing line");
+var blockedEnemy = wallSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(520, 70));
+TickFor(wallSimulation, 5.0f);
+Assert(blockedEnemy.IsBlockedByEnergyWall, "enemy pressure recognizes a blocking energy wall");
+Assert(blockedEnemy.TargetBuildingEntityId == firstTower.Building?.EntityId || blockedEnemy.TargetBuildingEntityId == secondTower.Building?.EntityId, "blocked enemy targets a wall anchor");
+TickFor(wallSimulation, 70.0f);
+Assert(wallSimulation.EnergyWalls.Count == 0, "destroying a wall anchor drops the energy wall segment");
+
+var openPressureSimulation = new RtsSimulation(catalog, startingMaterials, []);
+var openHub = openPressureSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+openPressureSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(520, 70));
+TickFor(openPressureSimulation, 20.0f);
+Assert(openHub.Health < openHub.Definition.Health, "enemy pressure damages the Colony Hub when no wall blocks the route");
+
+var enemyBaseSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+TickFor(enemyBaseSimulation, 0.1f);
+Assert(enemyBaseSimulation.ProductionOrders.Count == 1, "enemy base queues production from powered Barracks");
+Assert(enemyBaseSimulation.EnemyMaterials <= 350, "enemy production and construction spend resources when queued");
+TickFor(enemyBaseSimulation, 13.0f);
+Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman), "enemy production spawns trained units from its base");
+
+var enemyConstructionSimulation = new RtsSimulation(
+    catalog,
+    startingMaterials,
+    [("well_first_landing_central", RtsSimulation.EnemyExtractorPosition)],
+    1000);
+enemyConstructionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+enemyConstructionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+TickFor(enemyConstructionSimulation, 0.1f);
+Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary && building.Definition.Id == ContentIds.Buildings.PowerPlant), "enemy construction planner builds a Power Plant");
+Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary && building.Definition.Id == ContentIds.Buildings.Barracks), "enemy construction planner builds a Barracks");
+Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary && building.Definition.Id == ContentIds.Buildings.ExtractorRefinery), "enemy construction planner builds an Extractor on an open well");
+Assert(enemyConstructionSimulation.EnemyMaterials < 1000, "enemy construction planner spends enemy resources");
 
 Console.WriteLine("Simulation smoke checks passed.");
 
@@ -78,6 +114,17 @@ static void Assert(bool condition, string message)
     if (!condition)
     {
         throw new InvalidOperationException($"Assertion failed: {message}");
+    }
+}
+
+static void TickFor(RtsSimulation simulation, float seconds)
+{
+    const float step = 0.1f;
+    var elapsed = 0.0f;
+    while (elapsed < seconds)
+    {
+        simulation.Tick(MathF.Min(step, seconds - elapsed));
+        elapsed += step;
     }
 }
 

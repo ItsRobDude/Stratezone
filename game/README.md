@@ -22,8 +22,13 @@ Current greybox demo controls:
 - Right click moves the selected unit, or cancels placement mode.
 - Select the Worker, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
 - Mouse wheel zooms. `WASD` or arrow keys pan.
+- `F9` decreases debug UI scale, `F10` increases it, and `F8` resets it.
 - The demo starts with extra materials so the construction loop can be tested without waiting on income.
 - Powered buildings show a small `⚡` prefix in their label.
+- A first-pass enemy base starts with its own materials, powered Barracks, and production queue.
+- The enemy construction planner can spend enemy materials to build or replace basic infrastructure from authored slots.
+- Enemy units spend enemy materials, train from the enemy base, and then move toward the Colony Hub.
+- Energy walls force the enemy to attack a nearby wall anchor before it can continue toward the Hub.
 
 Current simulation smoke check:
 

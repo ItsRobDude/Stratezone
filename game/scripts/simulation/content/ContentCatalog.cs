@@ -81,8 +81,15 @@ public sealed class ContentCatalog
                 record.GetProperty("id").GetString() ?? string.Empty,
                 record.GetProperty("display_name").GetString() ?? string.Empty,
                 record.GetProperty("role").GetString() ?? string.Empty,
+                record.GetProperty("cost").GetInt32(),
+                record.GetProperty("train_time_seconds").GetSingle(),
+                LoadResistances(record),
                 record.GetProperty("movement_speed").GetSingle(),
                 record.GetProperty("health").GetInt32(),
+                record.GetProperty("attack_damage").GetSingle(),
+                record.GetProperty("attack_range").GetSingle(),
+                record.GetProperty("attack_cooldown").GetSingle(),
+                record.GetProperty("damage_type").GetString() ?? "none",
                 record.GetProperty("can_attack").GetBoolean(),
                 record.GetProperty("can_construct").GetBoolean(),
                 record.GetProperty("can_repair").GetBoolean(),
@@ -109,6 +116,7 @@ public sealed class ContentCatalog
                 record.GetProperty("role").GetString() ?? string.Empty,
                 record.GetProperty("cost").GetInt32(),
                 record.GetProperty("health").GetInt32(),
+                LoadResistances(record),
                 record.GetProperty("footprint_radius").GetSingle(),
                 record.GetProperty("placement_buffer").GetSingle(),
                 record.GetProperty("requires_power").GetBoolean(),
@@ -158,15 +166,21 @@ public sealed class ContentCatalog
         foreach (var record in records.EnumerateArray())
         {
             var startingResources = new Dictionary<string, int>(StringComparer.Ordinal);
+            var enemyStartingResources = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var resource in record.GetProperty("starting_resources").EnumerateArray())
             {
-                if (resource.GetProperty("faction_id").GetString() != ContentIds.Factions.PlayerExpedition)
-                {
-                    continue;
-                }
+                var factionId = resource.GetProperty("faction_id").GetString() ?? string.Empty;
+                var resourceId = resource.GetProperty("resource_id").GetString() ?? string.Empty;
+                var amount = resource.GetProperty("amount").GetInt32();
 
-                startingResources[resource.GetProperty("resource_id").GetString() ?? string.Empty] =
-                    resource.GetProperty("amount").GetInt32();
+                if (factionId == ContentIds.Factions.PlayerExpedition)
+                {
+                    startingResources[resourceId] = amount;
+                }
+                else if (factionId == ContentIds.Factions.PrivateMilitary)
+                {
+                    enemyStartingResources[resourceId] = amount;
+                }
             }
 
             var wellIds = record.GetProperty("resource_wells")
@@ -179,6 +193,7 @@ public sealed class ContentCatalog
                 record.GetProperty("id").GetString() ?? string.Empty,
                 record.GetProperty("display_name").GetString() ?? string.Empty,
                 startingResources,
+                enemyStartingResources,
                 wellIds
             );
 
@@ -203,5 +218,16 @@ public sealed class ContentCatalog
         return record.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number
             ? value.GetSingle()
             : 0.0f;
+    }
+
+    private static IReadOnlyDictionary<string, float> LoadResistances(JsonElement record)
+    {
+        var resistances = new Dictionary<string, float>(StringComparer.Ordinal);
+        foreach (var resistance in record.GetProperty("damage_resistances").EnumerateObject())
+        {
+            resistances[resistance.Name] = resistance.Value.GetSingle();
+        }
+
+        return resistances;
     }
 }

@@ -6,6 +6,7 @@ public sealed record BuildingDefinition(
     string Role,
     int Cost,
     int Health,
+    IReadOnlyDictionary<string, float> DamageResistances,
     float FootprintRadius,
     float PlacementBuffer,
     bool RequiresPower,

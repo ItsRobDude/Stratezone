@@ -4,6 +4,11 @@ using Stratezone.Simulation.Content;
 
 public partial class Main : Node2D
 {
+    private const float DefaultUiScale = 1.6f;
+    private const float MinUiScale = 1.0f;
+    private const float MaxUiScale = 2.6f;
+    private const int HudBaseFontSize = 18;
+
     private static readonly string[] BuildHotkeyOrder =
     [
         ContentIds.Buildings.PowerPlant,
@@ -14,18 +19,21 @@ public partial class Main : Node2D
     ];
 
     private readonly Dictionary<int, GreyboxBuilding> _buildingViews = [];
+    private readonly Dictionary<int, GreyboxSimUnit> _simUnitViews = [];
     private readonly List<ResourceWellView> _resourceWellViews = [];
     private readonly List<GreyboxUnit> _units = [];
 
     private ContentCatalog? _catalog;
     private RtsSimulation? _simulation;
     private Camera2D? _camera;
+    private Panel? _statusPanel;
     private Label? _statusLabel;
     private PlacementGhost? _placementGhost;
     private EnergyWallView? _energyWallView;
     private Node2D? _worldRoot;
     private GreyboxUnit? _selectedUnit;
     private string? _placementBuildingId;
+    private float _uiScale = DefaultUiScale;
     private string _lastActionMessage = "Left click a unit. Select Worker, then press 1-5 to build.";
 
     public override void _Ready()
@@ -63,6 +71,11 @@ public partial class Main : Node2D
     {
         if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            if (HandleUiScaleHotkey(keyEvent.Keycode))
+            {
+                return;
+            }
+
             HandleBuildHotkey(keyEvent.Keycode);
             return;
         }
@@ -113,6 +126,9 @@ public partial class Main : Node2D
         var startingMaterials = mission.PlayerStartingResources.TryGetValue(ContentIds.Resources.Materials, out var materials)
             ? materials
             : 0;
+        var enemyStartingMaterials = mission.EnemyStartingResources.TryGetValue(ContentIds.Resources.Materials, out var enemyMaterials)
+            ? enemyMaterials
+            : 0;
 
         var wellPlacements = new List<(string, SimVector2)>
         {
@@ -120,8 +136,11 @@ public partial class Main : Node2D
             ("well_first_landing_central", new SimVector2(220, 30))
         };
 
-        _simulation = new RtsSimulation(_catalog, startingMaterials, wellPlacements);
+        _simulation = new RtsSimulation(_catalog, startingMaterials, wellPlacements, enemyStartingMaterials);
         _simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+        _simulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+        _simulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+        _simulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
     }
 
     private void SetupCamera()
@@ -139,14 +158,23 @@ public partial class Main : Node2D
     private void SetupHud()
     {
         var uiRoot = GetNode<CanvasLayer>("UiRoot");
+        _statusPanel = new Panel
+        {
+            Name = "StatusPanel",
+            Position = new Vector2(16, 16)
+        };
+        _statusPanel.Modulate = new Color(1.0f, 1.0f, 1.0f, 0.9f);
+        uiRoot.AddChild(_statusPanel);
+
         _statusLabel = new Label
         {
             Name = "StatusLabel",
             Text = string.Empty,
-            Position = new Vector2(16, 16),
-            Size = new Vector2(720, 140)
+            Position = new Vector2(14, 10),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
-        uiRoot.AddChild(_statusLabel);
+        _statusPanel.AddChild(_statusLabel);
+        ApplyUiScale();
     }
 
     private void SetupPlacementGhost()
@@ -229,6 +257,48 @@ public partial class Main : Node2D
         }
 
         EnterPlacementMode(BuildHotkeyOrder[index]);
+    }
+
+    private bool HandleUiScaleHotkey(Key keycode)
+    {
+        if (keycode == Key.F9)
+        {
+            SetUiScale(_uiScale - 0.2f);
+            return true;
+        }
+
+        if (keycode == Key.F10)
+        {
+            SetUiScale(_uiScale + 0.2f);
+            return true;
+        }
+
+        if (keycode == Key.F8)
+        {
+            SetUiScale(DefaultUiScale);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void SetUiScale(float scale)
+    {
+        _uiScale = Mathf.Clamp(scale, MinUiScale, MaxUiScale);
+        ApplyUiScale();
+        _lastActionMessage = $"UI scale set to {_uiScale:0.0}x.";
+    }
+
+    private void ApplyUiScale()
+    {
+        if (_statusPanel is null || _statusLabel is null)
+        {
+            return;
+        }
+
+        _statusPanel.Size = new Vector2(660, 150) * _uiScale;
+        _statusLabel.Size = new Vector2(636, 130) * _uiScale;
+        _statusLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(HudBaseFontSize * _uiScale));
     }
 
     private void EnterPlacementMode(string buildingId)
@@ -370,6 +440,25 @@ public partial class Main : Node2D
             _resourceWellViews[index].UpdateFromState(_simulation.ResourceWells[index]);
         }
 
+        foreach (var unit in _simulation.Units)
+        {
+            if (!_simUnitViews.TryGetValue(unit.EntityId, out var view))
+            {
+                view = new GreyboxSimUnit
+                {
+                    Name = $"SimUnit_{unit.EntityId}_{unit.Definition.Id}",
+                    ZIndex = 2
+                };
+                _worldRoot.AddChild(view);
+                view.Initialize(unit);
+                _simUnitViews.Add(unit.EntityId, view);
+            }
+            else
+            {
+                view.UpdateFromState(unit);
+            }
+        }
+
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
     }
 
@@ -399,7 +488,7 @@ public partial class Main : Node2D
             return;
         }
 
-        var placementLine = "Build: 1 Power Plant | 2 Pylon | 3 Barracks | 4 Extractor | 5 Defense Tower";
+        var placementLine = "Build: 1 Power | 2 Pylon | 3 Barracks | 4 Extractor | 5 Wall";
         if (_placementBuildingId is not null && _catalog is not null)
         {
             var definition = _catalog.GetBuilding(_placementBuildingId);
@@ -409,8 +498,10 @@ public partial class Main : Node2D
 
         var powered = _simulation.Buildings.Count(building => building.IsPowered);
         _statusLabel.Text =
-            $"Materials: {_simulation.Materials:0} | Buildings: {_simulation.Buildings.Count} | Powered: {powered}/{_simulation.Buildings.Count} | Walls: {_simulation.EnergyWalls.Count}\n" +
+            $"Materials: {_simulation.Materials:0} | Enemy: {_simulation.EnemyMaterials:0} | Buildings: {_simulation.Buildings.Count} | Powered: {powered}/{_simulation.Buildings.Count} | Walls: {_simulation.EnergyWalls.Count}\n" +
+            $"{_simulation.ObjectiveText}\n" +
             $"{placementLine}\n" +
+            $"UI: F9 smaller | F10 larger | F8 reset ({_uiScale:0.0}x)\n" +
             _lastActionMessage;
     }
 

@@ -12,6 +12,7 @@ var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Mat
 Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
 Assert(localization.Translate("missing.test.key") == "[[missing.test.key]]", "missing localization keys are obvious");
 Assert(localization.ContentName(ContentIds.Units.Worker) == "Worker", "content name localization keys resolve stable content ids");
+Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");
 
 var simulation = new RtsSimulation(
     catalog,
@@ -265,7 +266,10 @@ Assert(fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hi
 fogSimulation.CommandUnitMove(scout.EntityId, new SimVector2(-450, 0));
 TickFor(fogSimulation, 12.0f);
 Assert(fogSimulation.IsExploredByFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "scouted terrain remains explored");
-Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "enemy outside current vision is hidden again");
+Assert(!fogSimulation.IsCurrentlyObservedByFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "scout no longer has current sight after leaving");
+Assert(fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hiddenEnemy.Position), "enemy in explored terrain remains visible in real time");
+var enemyInBlackFog = fogSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(900, -360));
+Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, enemyInBlackFog.Position), "enemy in unexplored black fog remains hidden");
 
 var missionMarkers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
 Assert(mission.ResourceWellPlacements.Count == 2, "mission data owns resource well placements");

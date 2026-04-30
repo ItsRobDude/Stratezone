@@ -4,17 +4,27 @@ public sealed partial class RtsSimulation
 {
     public bool IsVisibleToFaction(string factionId, SimVector2 position)
     {
-        return (factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog).IsVisible(position);
+        return GetFogForFaction(factionId).IsExplored(position);
+    }
+
+    public bool IsCurrentlyObservedByFaction(string factionId, SimVector2 position)
+    {
+        return GetFogForFaction(factionId).IsVisible(position);
     }
 
     public bool IsExploredByFaction(string factionId, SimVector2 position)
     {
-        return (factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog).IsExplored(position);
+        return GetFogForFaction(factionId).IsExplored(position);
     }
 
     private void RecomputeFog()
     {
         FogOfWarSystem.Recompute(_playerFog, _enemyFog, _buildings, _units);
+    }
+
+    private FogOfWarState GetFogForFaction(string factionId)
+    {
+        return factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog;
     }
 
     private void RevealTanksForDestroyedHubs()

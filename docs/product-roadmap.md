@@ -52,7 +52,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
 - The first mission includes a controllable on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
 - The first mission is a small 5-10 minute top-down RTS scenario in bright readable meadows/fields with light forest.
-- Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud.
+- Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding weaponry and higher cost.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.

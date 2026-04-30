@@ -79,6 +79,8 @@ REQUIRED_I18N_KEYS = {
     "ui.command.no_selection_hint",
     "ui.mission_result.won_title",
     "ui.mission_result.lost_title",
+    "ui.unit.status.blocked_prefix",
+    "ui.building.destroyed_suffix",
 }
 
 
@@ -291,6 +293,8 @@ def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
     for record_id, record in records.items():
         if isinstance(record.get("display_name"), str):
             required_keys.add(i18n_key_for_record(record_id))
+            if record_id.startswith(("unit_", "building_")):
+                required_keys.add(i18n_short_key_for_record(record_id))
 
     for key in sorted(required_keys):
         value = strings.get(key)
@@ -298,6 +302,11 @@ def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
             errors.append(f"{path.relative_to(ROOT)}: missing localization key '{key}'")
 
     return errors
+
+
+def i18n_short_key_for_record(record_id: str) -> str:
+    prefix = record_id.split("_", 1)[0]
+    return f"{prefix}.{record_id}.short_name"
 
 
 def main() -> int:

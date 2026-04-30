@@ -62,7 +62,7 @@ The architecture is shaped around these realities:
 - the first playable mission matters more than future-perfect engine abstraction
 - levels are fresh authored scenarios rather than a persistent colony campaign
 - resource gathering uses powered refinery/extractor buildings on scarce limited wells that trickle resources and can deplete, not survival-style hauling
-- fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud
+- fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud, and units/buildings in explored areas remain visible in real time
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
 - Armory Annex and Vehicle Bay are planned powered Barracks add-ons built adjacent to the Barracks, not abstract upgrade buttons

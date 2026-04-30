@@ -188,7 +188,8 @@ When explored:
 
 - terrain becomes visible
 - the black fog is removed
-- enemies that leave or move away are not tracked
+- enemies and structures in explored terrain remain visible in real time
+- enemies that move into never-explored black fog are hidden
 - no last-known ghost markers are required
 
 ## Win and Loss

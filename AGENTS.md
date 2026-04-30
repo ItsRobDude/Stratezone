@@ -21,7 +21,7 @@ Current locked vision choices:
 - Resource gathering uses Dominion-style limited wells: place a refinery/extractor over a resource node, protect it, and expect it to eventually run out.
 - The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
 - The first mission has a controllable on-map commander troop who must be defended. He is a fragile fail-condition unit with a pistol, and keeping him at home base should be a sensible strategy.
-- Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud.
+- Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud; enemies and structures in explored areas remain visible in real time, while enemies that move into never-explored black fog are hidden.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.

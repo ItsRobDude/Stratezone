@@ -35,7 +35,7 @@ Current greybox demo controls:
 - Enemy units spend enemy materials, train from the enemy base, and then move toward the Colony Hub.
 - Energy walls force the enemy to attack a nearby wall anchor before it can continue toward the Hub.
 - Unit movement uses first-pass grid pathfinding around live building footprints and hostile energy wall segments.
-- Fog starts black outside explored cells; scouted terrain stays revealed, but enemies only render while currently visible.
+- Fog starts black outside explored cells; scouted terrain stays revealed, and enemies in explored terrain remain visible in real time.
 - Mission state is simulation-owned: Commander death loses, and destroying all enemy targets wins.
 - Rocket/Tank explosive attacks use simple full-strength splash. Friendly-fire explosives can hurt allied units.
 - Rovers and Tanks can crush enemy infantry while moving through them; friendly infantry is ignored for now.

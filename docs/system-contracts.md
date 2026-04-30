@@ -311,7 +311,8 @@ Prototype behavior:
 
 - unexplored areas are black
 - explored terrain stays revealed
-- enemies are only shown when currently visible
+- enemies and structures in explored terrain remain visible in real time
+- enemies that move into never-explored black fog are hidden
 - no last-known enemy ghost markers are required
 - Rover is the primary Level 1 scouting unit
 
@@ -319,7 +320,8 @@ Acceptance checks:
 
 - black fog is removed after scouting
 - terrain remains visible after exploration
-- an enemy that leaves vision is no longer tracked
+- an enemy in explored terrain remains visible after the scout leaves
+- an enemy in never-explored black fog is hidden
 
 ## Mission Objective System
 

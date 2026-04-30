@@ -1,14 +1,17 @@
 using Godot;
+using Stratezone.Localization;
 using Stratezone.Simulation;
 
 public partial class GreyboxBuilding : Node2D
 {
     private BuildingState? _state;
     private Label? _label;
+    private LocalizationCatalog? _localization;
     private bool _selected;
 
-    public void Initialize(BuildingState state)
+    public void Initialize(BuildingState state, LocalizationCatalog? localization = null)
     {
+        _localization = localization;
         _label = new Label
         {
             Position = new Vector2(-42, -12),
@@ -28,7 +31,7 @@ public partial class GreyboxBuilding : Node2D
         {
             var powerPrefix = ShouldShowPoweredBolt(state) ? "⚡ " : string.Empty;
             var factionPrefix = state.FactionId == ContentIds.Factions.PrivateMilitary ? "E " : string.Empty;
-            _label.Text = $"{factionPrefix}{powerPrefix}{ShortName(state.Definition.DisplayName)}{HealthSuffix(state)}";
+            _label.Text = $"{factionPrefix}{powerPrefix}{ShortName(state)}{HealthSuffix(state)}";
             _label.Modulate = state.IsDestroyed
                 ? new Color(0.62f, 0.62f, 0.62f)
                 : state.IsPowered ? Colors.White : new Color(1.0f, 0.45f, 0.35f);
@@ -261,12 +264,10 @@ public partial class GreyboxBuilding : Node2D
         return new Vector2(vector.X, vector.Y);
     }
 
-    private static string ShortName(string displayName)
+    private string ShortName(BuildingState state)
     {
-        return displayName
-            .Replace("Extractor/Refinery", "Extractor", StringComparison.Ordinal)
-            .Replace("Power Plant", "Power", StringComparison.Ordinal)
-            .Replace("Defense Tower", "Wall", StringComparison.Ordinal);
+        return _localization?.ContentShortName(state.Definition.Id, state.Definition.DisplayName) ??
+            state.Definition.DisplayName;
     }
 
     private static bool ShouldShowPoweredBolt(BuildingState state)
@@ -274,11 +275,11 @@ public partial class GreyboxBuilding : Node2D
         return state.IsPowered && (state.Definition.RequiresPower || state.Definition.ProvidesPower);
     }
 
-    private static string HealthSuffix(BuildingState state)
+    private string HealthSuffix(BuildingState state)
     {
         if (state.IsDestroyed)
         {
-            return " X";
+            return _localization?.Translate("ui.building.destroyed_suffix", fallback: " X") ?? " X";
         }
 
         if (state.Health >= state.Definition.Health)

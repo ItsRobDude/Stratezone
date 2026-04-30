@@ -19,6 +19,16 @@ public partial class Main
         return _localization?.ContentName(definition.Id, definition.DisplayName) ?? definition.DisplayName;
     }
 
+    private string UnitShortName(UnitDefinition definition)
+    {
+        return _localization?.ContentShortName(definition.Id, UnitName(definition)) ?? UnitName(definition);
+    }
+
+    private string BuildingShortName(BuildingDefinition definition)
+    {
+        return _localization?.ContentShortName(definition.Id, BuildingName(definition)) ?? BuildingName(definition);
+    }
+
     private string LocalizedMessage(string key, IReadOnlyDictionary<string, string>? args, string fallback)
     {
         return string.IsNullOrWhiteSpace(key)

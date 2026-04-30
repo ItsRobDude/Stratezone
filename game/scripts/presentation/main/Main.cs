@@ -51,7 +51,7 @@ public partial class Main : Node2D
     private bool _leftMouseSelecting;
     private Vector2 _selectionStartWorld;
     private float _uiScale = DefaultUiScale;
-    private string _lastActionMessage = "Left click Worker or a building. Worker builds with 1-5.";
+    private string _lastActionMessage = string.Empty;
 
     public override void _Ready()
     {
@@ -510,7 +510,7 @@ public partial class Main : Node2D
                     ZIndex = -1
                 };
                 _worldRoot.AddChild(view);
-                view.Initialize(building);
+                view.Initialize(building, _localization);
                 _buildingViews.Add(building.EntityId, view);
             }
             else
@@ -551,7 +551,7 @@ public partial class Main : Node2D
                     ZIndex = 2
                 };
                 _worldRoot.AddChild(view);
-                view.Initialize(unit);
+                view.Initialize(unit, _localization);
                 _simUnitViews.Add(unit.EntityId, view);
             }
             else
@@ -643,7 +643,7 @@ public partial class Main : Node2D
                 .Select((buildingId, index) =>
                 {
                     var definition = _catalog.GetBuilding(buildingId);
-                    var label = $"{index + 1} {ShortCommandName(BuildingName(definition))}";
+                    var label = $"{index + 1} {BuildingShortName(definition)}";
                     var hint = hasBuilder
                         ? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))))
                         : L("ui.command.requires_worker");
@@ -669,7 +669,7 @@ public partial class Main : Node2D
                         var key = index switch { 0 => "Q", 1 => "W", 2 => "E", _ => "R" };
                         var validation = _simulation.ValidateUnitProduction(unitId, building.EntityId);
                         return new CommandPanelAction(
-                            $"{key} {ShortCommandName(UnitName(unit))}",
+                            $"{key} {UnitShortName(unit)}",
                             LocalizedProduction(validation),
                             validation.CanQueue,
                             () =>
@@ -693,7 +693,7 @@ public partial class Main : Node2D
                         var key = upgradeId == ContentIds.Buildings.GunTower ? "G" : "T";
                         var validation = _simulation.ValidateBuildingUpgrade(building.EntityId, upgradeId);
                         return new CommandPanelAction(
-                            $"{key} {ShortCommandName(BuildingName(upgrade))}",
+                            $"{key} {BuildingShortName(upgrade)}",
                             LocalizedUpgrade(validation),
                             validation.Success,
                             () =>
@@ -757,14 +757,6 @@ public partial class Main : Node2D
         }
 
         return L("ui.selection.building", SimulationMessage.Args(("building", BuildingName(building.Definition))));
-    }
-
-    private static string ShortCommandName(string displayName)
-    {
-        return displayName
-            .Replace("Extractor/Refinery", "Extractor", StringComparison.Ordinal)
-            .Replace("Power Plant", "Power", StringComparison.Ordinal)
-            .Replace("Defense Tower", "Wall", StringComparison.Ordinal);
     }
 
     private void HandleCameraPan(double delta)

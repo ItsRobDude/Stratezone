@@ -139,6 +139,8 @@ Acceptance checks:
 - mission setup uses authored data for starting entities, wells, and enemy AI build slots
 - enemy pressure pacing comes from a mission AI profile rather than scene-only timing
 - enemy is visible at or near fog edge
+- enemies in explored terrain remain visible in real time
+- enemies in never-explored black fog are hidden
 - enemy produces or rebuilds only when it has resources
 - enemy pressure is tame but active
 - enemy pylon weak point can disable an enemy tower route

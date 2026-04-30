@@ -1,17 +1,20 @@
 using Godot;
+using Stratezone.Localization;
 using Stratezone.Simulation;
 
 public partial class GreyboxSimUnit : Node2D
 {
     private UnitState? _state;
     private Label? _label;
+    private LocalizationCatalog? _localization;
     private bool _selected;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
 
-    public void Initialize(UnitState state)
+    public void Initialize(UnitState state, LocalizationCatalog? localization = null)
     {
+        _localization = localization;
         _label = new Label
         {
             Position = new Vector2(-48, -38),
@@ -35,8 +38,12 @@ public partial class GreyboxSimUnit : Node2D
 
         if (_label is not null)
         {
-            var status = state.IsBlockedByEnergyWall || state.IsPathBlocked ? "BLOCKED " : string.Empty;
-            _label.Text = $"{status}{state.Definition.DisplayName} {HealthPercent(state):0}%";
+            var status = state.IsBlockedByEnergyWall || state.IsPathBlocked
+                ? _localization?.Translate("ui.unit.status.blocked_prefix", fallback: "BLOCKED ") ?? "BLOCKED "
+                : string.Empty;
+            var name = _localization?.ContentShortName(state.Definition.Id, state.Definition.DisplayName) ??
+                state.Definition.DisplayName;
+            _label.Text = $"{status}{name} {HealthPercent(state):0}%";
             _label.Modulate = state.IsDestroyed
                 ? new Color(0.55f, 0.55f, 0.55f)
                 : state.FactionId == ContentIds.Factions.PrivateMilitary

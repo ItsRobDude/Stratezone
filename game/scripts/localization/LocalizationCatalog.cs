@@ -56,9 +56,20 @@ public sealed class LocalizationCatalog
         return Translate(ContentNameKey(contentId), null, fallback);
     }
 
+    public string ContentShortName(string contentId, string? fallback = null)
+    {
+        return Translate(ContentShortNameKey(contentId), null, fallback ?? ContentName(contentId));
+    }
+
     public static string ContentNameKey(string contentId)
     {
         var prefix = contentId.Split('_', 2)[0];
         return $"{prefix}.{contentId}.name";
+    }
+
+    public static string ContentShortNameKey(string contentId)
+    {
+        var prefix = contentId.Split('_', 2)[0];
+        return $"{prefix}.{contentId}.short_name";
     }
 }

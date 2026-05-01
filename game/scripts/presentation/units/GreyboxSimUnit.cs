@@ -10,6 +10,7 @@ public partial class GreyboxSimUnit : Node2D
     private bool _selected;
     private bool _useRiflemanPlaceholder;
     private bool _useCadetPlaceholder;
+    private bool _useCommanderPlaceholder;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
@@ -19,6 +20,8 @@ public partial class GreyboxSimUnit : Node2D
         _localization = localization;
         _useRiflemanPlaceholder = state.Definition.Id == ContentIds.Units.Rifleman;
         _useCadetPlaceholder = state.Definition.Id == ContentIds.Units.Cadet;
+        _useCommanderPlaceholder = state.Definition.Id == ContentIds.Units.Commander;
+        SelectionRadius = _useCommanderPlaceholder ? 28.0f : 22.0f;
         _label = new Label
         {
             Position = new Vector2(-48, -38),
@@ -69,6 +72,10 @@ public partial class GreyboxSimUnit : Node2D
         if (_useCadetPlaceholder)
         {
             DrawCadetPlaceholder();
+        }
+        else if (_useCommanderPlaceholder)
+        {
+            DrawCommanderPlaceholder();
         }
         else if (_useRiflemanPlaceholder)
         {
@@ -256,6 +263,58 @@ public partial class GreyboxSimUnit : Node2D
         DrawLine(new Vector2(24, 27), new Vector2(30, 26), dark, 3.0f);
         DrawCircle(new Vector2(-18, 11), 3.5f, dark);
         DrawCircle(new Vector2(19, 10), 3.5f, plate);
+    }
+
+    private void DrawCommanderPlaceholder()
+    {
+        if (_state is null)
+        {
+            return;
+        }
+
+        var coat = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.62f, 0.10f, 0.10f)
+            : new Color(0.12f, 0.30f, 0.54f);
+        var armor = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.95f, 0.32f, 0.24f)
+            : new Color(0.24f, 0.64f, 0.95f);
+        var gold = new Color(0.95f, 0.76f, 0.22f);
+        var dark = new Color(0.05f, 0.07f, 0.09f);
+        var outline = _state.IsBlockedByEnergyWall
+            ? new Color(0.58f, 0.95f, 1.0f)
+            : dark;
+
+        DrawPolygon(
+            [
+                new Vector2(0, -24),
+                new Vector2(18, -4),
+                new Vector2(12, 24),
+                new Vector2(0, 34),
+                new Vector2(-12, 24),
+                new Vector2(-18, -4)
+            ],
+            [coat]);
+        DrawPolyline(
+            [
+                new Vector2(0, -24),
+                new Vector2(18, -4),
+                new Vector2(12, 24),
+                new Vector2(0, 34),
+                new Vector2(-12, 24),
+                new Vector2(-18, -4),
+                new Vector2(0, -24)
+            ],
+            outline,
+            2.5f);
+        DrawEllipse(new Vector2(0, -18), new Vector2(8, 9), armor, outline, 2.0f);
+        DrawRect(new Rect2(-9, -30, 18, 8), dark);
+        DrawRect(new Rect2(-7, -32, 14, 4), gold);
+        DrawCircle(new Vector2(0, -10), 4.0f, gold);
+        DrawLine(new Vector2(-10, -1), new Vector2(10, -1), gold, 2.0f);
+        DrawLine(new Vector2(-3, 5), new Vector2(-3, 22), gold, 2.0f);
+        DrawLine(new Vector2(3, 5), new Vector2(3, 22), gold, 2.0f);
+        DrawLine(new Vector2(10, 3), new Vector2(28, 14), dark, 4.0f);
+        DrawLine(new Vector2(25, 14), new Vector2(34, 14), dark, 2.5f);
     }
 
     private void DrawLimb(Vector2 start, Vector2 end, float width, Color fill, Color outline)

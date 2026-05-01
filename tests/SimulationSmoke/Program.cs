@@ -24,6 +24,7 @@ Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.F
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Commander) == 1, "Level 1 starts the player with one Commander");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Worker) == 1, "Level 1 starts the player with one Worker");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rover) == 1, "Level 1 starts the player with one provided Rover");
+Assert(!mission.StartingEntities.Any(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rifleman), "Level 1 does not start the player with extra Riflemen");
 
 var simulation = new RtsSimulation(
     catalog,
@@ -231,9 +232,12 @@ playerCombatSimulation.CommandUnitAttackUnit(playerRifleman.EntityId, enemyRifle
 TickFor(playerCombatSimulation, 4.0f);
 Assert(enemyRifleman.IsDestroyed, "player combat unit can destroy an enemy unit");
 
-var enemyBuilding = playerCombatSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(120, 0), ContentIds.Factions.PrivateMilitary);
-playerCombatSimulation.CommandUnitAttackBuilding(playerRifleman.EntityId, enemyBuilding.EntityId);
-TickFor(playerCombatSimulation, 3.0f);
+var buildingCombatSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+buildingCombatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var buildingAttacker = buildingCombatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var enemyBuilding = buildingCombatSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(120, 0), ContentIds.Factions.PrivateMilitary);
+buildingCombatSimulation.CommandUnitAttackBuilding(buildingAttacker.EntityId, enemyBuilding.EntityId);
+TickFor(buildingCombatSimulation, 3.0f);
 Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
 
 var commanderBuildingFilterSimulation = new RtsSimulation(catalog, startingMaterials, []);
@@ -291,6 +295,15 @@ var commander = missionLossSimulation.AddUnit(ContentIds.Units.Commander, Conten
 commander.ApplyDamage(999, "ballistic");
 missionLossSimulation.Tick(0.1f);
 Assert(missionLossSimulation.MissionState.Status == MissionStatus.Lost, "commander death triggers mission loss");
+var elapsedAtLoss = missionLossSimulation.ElapsedSeconds;
+missionLossSimulation.Tick(1.0f);
+Assert(Math.Abs(missionLossSimulation.ElapsedSeconds - elapsedAtLoss) < 0.01f, "terminal mission loss stops simulation ticking");
+
+var debugLossSimulation = new RtsSimulation(catalog, startingMaterials, []);
+debugLossSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+debugLossSimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+Assert(debugLossSimulation.DebugKillPlayerCommander(), "debug commander loss command kills the Commander");
+Assert(debugLossSimulation.MissionState.Status == MissionStatus.Lost, "debug commander loss command updates mission state immediately");
 
 var missionWinSimulation = new RtsSimulation(catalog, startingMaterials, []);
 missionWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));

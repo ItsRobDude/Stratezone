@@ -14,7 +14,6 @@
       "mission_markers": [
         { "id": "player_base", "position": { "x": -300, "y": -140 } },
         { "id": "player_worker", "position": { "x": -180, "y": -60 } },
-        { "id": "player_rifleman", "position": { "x": -110, "y": -25 } },
         { "id": "player_guardian", "position": { "x": -40, "y": 15 } },
         { "id": "player_rover", "position": { "x": -10, "y": 90 } },
         { "id": "player_commander", "position": { "x": -210, "y": 40 } },
@@ -38,11 +37,6 @@
           "content_id": "unit_worker",
           "faction_id": "faction_player_expedition",
           "marker": "player_worker"
-        },
-        {
-          "content_id": "unit_rifleman",
-          "faction_id": "faction_player_expedition",
-          "marker": "player_rifleman"
         },
         {
           "content_id": "unit_guardian",

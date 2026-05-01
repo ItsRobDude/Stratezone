@@ -41,6 +41,11 @@ public sealed partial class RtsSimulation
 
     private void UpdateMissionState()
     {
+        if (MissionState.Status != MissionStatus.Active)
+        {
+            return;
+        }
+
         MissionState = _missionObjectives.Evaluate(_units, _buildings);
     }
 }

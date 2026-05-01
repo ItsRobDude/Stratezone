@@ -214,6 +214,11 @@ public sealed partial class RtsSimulation
 
     public void Tick(float deltaSeconds)
     {
+        if (MissionState.Status != MissionStatus.Active)
+        {
+            return;
+        }
+
         _elapsedSeconds += deltaSeconds;
         RecomputePower();
         _enemyAi.Tick(this, deltaSeconds);
@@ -265,6 +270,22 @@ public sealed partial class RtsSimulation
         RecomputeFog();
         UpdateMissionState();
         return unit;
+    }
+
+    public bool DebugKillPlayerCommander()
+    {
+        var commander = _units.FirstOrDefault(unit =>
+            unit.FactionId == ContentIds.Factions.PlayerExpedition &&
+            unit.Definition.Id == ContentIds.Units.Commander &&
+            !unit.IsDestroyed);
+        if (commander is null)
+        {
+            return false;
+        }
+
+        commander.ApplyDamage(commander.Health + 999.0f, "debug");
+        UpdateMissionState();
+        return MissionState.Status == MissionStatus.Lost;
     }
 
     public void CommandUnitMove(int unitEntityId, SimVector2 position)

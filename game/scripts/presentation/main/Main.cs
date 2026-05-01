@@ -104,6 +104,11 @@ public partial class Main : Node2D
                 return;
             }
 
+            if (HandleDebugHotkey(keyEvent.Keycode))
+            {
+                return;
+            }
+
             if (upgradeHotkeysFirst && HandleUpgradeHotkey(keyEvent.Keycode))
             {
                 return;
@@ -675,6 +680,7 @@ public partial class Main : Node2D
                     ("powered", powered),
                     ("walls", _simulation.EnergyWalls.Count))) + "\n" +
             L("ui.hud.mission_line", SimulationMessage.Args(("status", _simulation.MissionState.Status), ("objective", LocalizedMissionText(_simulation.MissionState)))) + "\n" +
+            GetCommanderHudLine() + "\n" +
             L("ui.hud.alert_line", SimulationMessage.Args(("alerts", GetAlertSummary()))) + "\n" +
             $"{placementLine}\n" +
             $"{selectionLine}\n" +

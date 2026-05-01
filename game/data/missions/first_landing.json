@@ -78,6 +78,24 @@
           "content_id": "building_defense_tower",
           "faction_id": "faction_private_military",
           "marker": "enemy_defense"
+        },
+        {
+          "content_id": "unit_rifleman",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base",
+          "offset": { "x": -55, "y": -35 }
+        },
+        {
+          "content_id": "unit_rifleman",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base",
+          "offset": { "x": -35, "y": 45 }
+        },
+        {
+          "content_id": "unit_rifleman",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_barracks",
+          "offset": { "x": 45, "y": 35 }
         }
       ],
       "starting_resources": [
@@ -103,15 +121,25 @@
           "marker": "central_well"
         }
       ],
+      "available_unit_ids": ["unit_worker", "unit_rifleman"],
+      "available_building_ids": [
+        "building_power_plant",
+        "building_pylon",
+        "building_barracks",
+        "building_extractor_refinery",
+        "building_defense_tower",
+        "building_gun_tower",
+        "building_rocket_tower"
+      ],
       "enemy_ai_profile": {
         "id": "ai_profile_level_1_private_military_demo",
-        "first_attack_delay_seconds": 45,
-        "rebuild_cooldown_seconds": 18,
-        "production_cooldown_seconds": 12,
+        "first_attack_delay_seconds": 75,
+        "rebuild_cooldown_seconds": 28,
+        "production_cooldown_seconds": 24,
         "attack_group_size": 2,
         "central_well_interest": 1.0,
-        "pressure_slowdown_multiplier": 0.75,
-        "train_time_multiplier": 1.35,
+        "pressure_slowdown_multiplier": 0.65,
+        "train_time_multiplier": 1.6,
         "hub_marker": "enemy_base",
         "power_plant_marker": "enemy_power",
         "barracks_marker": "enemy_barracks",

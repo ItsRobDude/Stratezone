@@ -91,7 +91,7 @@ Unit production rule for Level 1:
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
 - Barracks add-ons are the preferred unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
-- Current placeholder mission data enables Barracks add-on unlocks. Level data may still start with an add-on prebuilt or simplify the step later if the 5-10 minute pacing gets too crowded.
+- Current Level 1 mission data exposes only Worker and Rifleman training. Guardian and Rover records may exist and mission-start Rovers may be present, but advanced Barracks training stays hidden until a later mission or explicit mission setup enables it.
 
 Workers are expensive, recruitable, non-combat units. They require player command for construction and repair.
 
@@ -119,8 +119,8 @@ Level 1 player units:
 
 - Worker
 - Rifleman
-- Guardian
-- Rover
+- Guardian as a scenario/start-only support unit if authored into the mission
+- Rover as a scenario/start-only scouting unit if authored into the mission
 - Commander
 
 Level 1 tank rule:
@@ -152,6 +152,9 @@ The enemy should:
 - still demonstrate basic RTS tactics
 - rebuild destroyed structures when it has resources
 - spend limited resources to rebuild and produce
+- attack slowly with small committed groups of 1-3 units instead of sending the whole base at once
+- keep some defenders near its base so scouting finds a defended position, not an empty spawn point
+- reveal intent through visible units, combat, scouting, and power/building state rather than omniscient HUD messages
 
 Enemy target priority for Level 1:
 
@@ -163,6 +166,8 @@ Enemy target priority for Level 1:
 6. Commander when reachable or specifically directed by a mission attack
 
 The enemy should compete for the central well, but Level 1 should run slower than the normal baseline so the player can understand what is happening.
+
+Player alerts should feel like classic RTS command warnings: direct and frequent for player-known events such as enemy spotted, base under attack, extractor under attack, unit under attack, power offline, construction complete, and training complete. Hidden enemy production, rebuilding, or attack planning should not be announced unless a future radar/scanner system explicitly earns that information.
 
 ## Map Beats
 

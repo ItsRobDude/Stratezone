@@ -441,6 +441,8 @@ Required fields:
 - `starting_entities`
 - `starting_resources`
 - `resource_wells`
+- `available_unit_ids`
+- `available_building_ids`
 - `objectives`
 - `failure_conditions`
 - `event_ids`
@@ -463,6 +465,7 @@ Prototype rules:
 - includes an enemy pylon weak point that can disable an enemy tower route
 - includes authored mission markers for base positions, wells, AI build slots, rally points, and choke points
 - includes an enemy AI profile for first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, pressure slowdown, and train-time multiplier
+- uses `available_unit_ids` and `available_building_ids` to hide or lock mission-inappropriate commands without deleting future content records
 - wins by destroying all required enemy targets
 - loses if the Commander dies
 - destroying either Colony Hub reveals a tank without changing win/loss by itself

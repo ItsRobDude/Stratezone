@@ -362,8 +362,9 @@ Early requirements:
 - environmental event warning
 - event start/end
 - event consequences
+- classic RTS command warnings for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete
 
-Events should be inspectable and tunable. Avoid opaque random chaos early.
+Events should be inspectable and tunable. Avoid opaque random chaos early. Do not surface omniscient hidden enemy intent in the normal HUD; enemy plans should be inferred from scouting, fog, visible units, attacks, and visible infrastructure state unless a future radar/scanner system grants extra information.
 
 ### AI System
 
@@ -371,12 +372,12 @@ Start with simple scripted or director-driven enemy behavior.
 
 Early requirements:
 
-- enemy waves
+- small committed enemy attack groups
 - patrols or guards
 - attack priority for visible player structures
 - retreat or regroup only if easy
 
-Do not build skirmish-grade AI before the authored mission loop works.
+Do not build skirmish-grade AI before the authored mission loop works. Level 1 should run slow and readable: small groups attack, some units defend the enemy base, and all enemy construction/production spends resources.
 
 ## Content Data
 
@@ -445,7 +446,7 @@ Early HUD surfaces:
 - selected entity card
 - build menu
 - objective tracker
-- event warnings
+- classic RTS alert line for player-known warnings
 - minimap later, not required first
 
 ## Art and Asset Pipeline

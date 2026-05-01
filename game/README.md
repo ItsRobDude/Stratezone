@@ -23,7 +23,7 @@ Current greybox demo controls:
 - Right click moves selected units with a small formation spread, or cancels placement mode.
 - Right click an enemy unit or building with selected combat units to attack it.
 - Select one or more Workers, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
-- Select a powered Barracks, then press `Q` Worker, `W` Rifleman, `E` Guardian, or `R` Rover to queue training.
+- Select a powered Barracks, then press `Q` Worker or `W` Rifleman to queue Level 1 training.
 - Select a Defense Tower, then press `G` Gun Tower or `T` Rocket Tower to upgrade in place.
 - The command panel mirrors the same build, train, and upgrade actions with disabled-state tooltips.
 - Mouse wheel zooms. `WASD` or arrow keys pan.
@@ -37,6 +37,8 @@ Current greybox demo controls:
 - Unit movement uses first-pass grid pathfinding around live building footprints and hostile energy wall segments.
 - Fog starts black outside explored cells; scouted terrain stays revealed, and enemies in explored terrain remain visible in real time.
 - Mission state is simulation-owned: Commander death loses, and destroying all enemy targets wins.
+- The HUD alert line shows classic RTS warnings for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
+- Level 1 hides advanced Barracks training commands even though future-unit content records already exist.
 - Rocket/Tank explosive attacks use simple full-strength splash. Friendly-fire explosives can hurt allied units.
 - Rovers and Tanks can crush enemy infantry while moving through them; friendly infantry is ignored for now.
 

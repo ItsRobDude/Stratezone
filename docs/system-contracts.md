@@ -363,6 +363,9 @@ Prototype behavior:
 - enemy rebuilds only when it can afford to
 - Level 1 enemy is slower than normal baseline
 - enemy competes for the central well
+- Level 1 attacks commit only a small group of 1-3 units and leave defenders at the enemy base
+- normal player HUD must not announce hidden enemy production, rebuilding, or attack planning
+- player-facing alerts are allowed for player-known events: enemy spotted, own assets under attack, own power loss, construction complete, and training complete
 
 Level 1 target priority:
 
@@ -378,3 +381,5 @@ Acceptance checks:
 - enemy cannot rebuild for free
 - enemy can pressure the contested well
 - destroying an enemy pylon can disable an enemy tower path
+- enemy attack commitment is capped to the mission profile instead of sending the whole enemy base
+- alerts are fog-safe and do not reveal hidden enemy intent

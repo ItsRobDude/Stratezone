@@ -214,6 +214,8 @@ public sealed class ContentCatalog
             var markers = LoadMissionMarkers(record);
             var startingEntities = LoadMissionStartingEntities(record);
             var wellPlacements = LoadMissionResourceWellPlacements(record);
+            var availableUnitIds = LoadStringArray(record, "available_unit_ids");
+            var availableBuildingIds = LoadStringArray(record, "available_building_ids");
             var enemyAiProfile = LoadEnemyAiProfile(record);
 
             var mission = new MissionDefinition(
@@ -225,6 +227,8 @@ public sealed class ContentCatalog
                 markers,
                 startingEntities,
                 wellPlacements,
+                availableUnitIds,
+                availableBuildingIds,
                 enemyAiProfile
             );
 

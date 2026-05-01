@@ -11,6 +11,8 @@ public sealed record MissionDefinition(
     IReadOnlyList<MissionMarkerDefinition> Markers,
     IReadOnlyList<MissionStartingEntityDefinition> StartingEntities,
     IReadOnlyList<MissionResourceWellPlacementDefinition> ResourceWellPlacements,
+    IReadOnlyList<string> AvailableUnitIds,
+    IReadOnlyList<string> AvailableBuildingIds,
     EnemyAiProfileDefinition EnemyAiProfile
 );
 

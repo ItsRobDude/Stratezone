@@ -165,6 +165,10 @@ public sealed partial class RtsSimulation
         var spawnOffset = order.FactionId == ContentIds.Factions.PrivateMilitary
             ? new SimVector2(-70, 0)
             : new SimVector2(70, 0);
-        AddUnit(order.UnitId, order.FactionId, hub.Position + spawnOffset);
+        var unit = AddUnit(order.UnitId, order.FactionId, hub.Position + spawnOffset);
+        _events.Add(new SimulationEvent(
+            order.FactionId,
+            "sim.event.training_complete",
+            SimulationMessage.Args(("unitId", unit.Definition.Id), ("unit", unit.Definition.DisplayName))));
     }
 }

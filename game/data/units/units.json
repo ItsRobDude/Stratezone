@@ -38,6 +38,42 @@
       "balance_status": "tunable_placeholder"
     },
     {
+      "id": "unit_cadet",
+      "display_name": "Cadet",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "light_infantry",
+      "cost": 75,
+      "train_time_seconds": 8,
+      "health": 35,
+      "damage_resistances": {
+        "ballistic": 0.0,
+        "energy": 0.0,
+        "explosive": -0.1,
+        "crush": 0.0
+      },
+      "movement_speed": 1.12,
+      "sight_range": 6,
+      "train_requirements": {
+        "allowed_by_building_id": "building_barracks",
+        "spawn_building_id": "building_colony_hub"
+      },
+      "spawn_rule": "colony_hub",
+      "attack_damage": 10,
+      "attack_range": 5,
+      "attack_cooldown": 0.9,
+      "damage_type": "ballistic",
+      "area_radius": 0,
+      "friendly_fire": false,
+      "target_filters": ["infantry", "vehicle", "building"],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": true,
+      "can_capture": false,
+      "can_run_over_infantry": false,
+      "tags": ["infantry", "cadet", "fragile"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
       "id": "unit_rifleman",
       "display_name": "Rifleman",
       "faction_availability": ["faction_player_expedition", "faction_private_military"],

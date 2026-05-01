@@ -23,7 +23,7 @@ Current locked vision choices:
 - The first mission has a controllable on-map commander troop who must be defended. He is a fragile fail-condition unit with a pistol, and keeping him at home base should be a sensible strategy.
 - Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud; enemies and structures in explored areas remain visible in real time, while enemies that move into never-explored black fog are hidden.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
-- First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
+- First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks, starting with Armory Annex and Vehicle Bay.

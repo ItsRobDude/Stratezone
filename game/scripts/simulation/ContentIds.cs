@@ -16,6 +16,7 @@ public static class ContentIds
     public static class Units
     {
         public const string Worker = "unit_worker";
+        public const string Cadet = "unit_cadet";
         public const string Rifleman = "unit_rifleman";
         public const string Guardian = "unit_guardian";
         public const string Rover = "unit_rover";

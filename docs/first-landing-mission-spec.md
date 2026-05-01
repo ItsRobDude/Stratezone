@@ -91,7 +91,7 @@ Unit production rule for Level 1:
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
 - Barracks add-ons are the preferred unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
-- Current Level 1 mission data exposes only Worker and Rifleman training. Guardian and Rover records may exist and mission-start Rovers may be present, but advanced Barracks training stays hidden until a later mission or explicit mission setup enables it.
+- Current Level 1 mission data exposes Worker, Cadet, and Rifleman training. Guardian and Rover records may exist and mission-start Rovers may be present, but advanced Barracks training stays hidden until a later mission or explicit mission setup enables it.
 
 Workers are expensive, recruitable, non-combat units. They require player command for construction and repair.
 
@@ -118,6 +118,7 @@ Tower walls should be an investment. In Level 1, the central choke should be blo
 Level 1 player units:
 
 - Worker
+- Cadet
 - Rifleman
 - Guardian as a scenario/start-only support unit if authored into the mission
 - Rover as a scenario/start-only scouting unit if authored into the mission
@@ -132,6 +133,7 @@ Level 1 tank rule:
 First-pass unit intent:
 
 - Riflemen die very quickly and work best with support, numbers, or harassment timing.
+- Cadets are cheaper and weaker than Riflemen, giving the player and enemy a disposable early infantry option.
 - Guardians are beefier than Riflemen but deal slightly less damage; if Barracks add-ons are active, they require a powered Armory Annex.
 - Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
 - Tanks survive more punishment than infantry but are not part of normal Level 1 production.

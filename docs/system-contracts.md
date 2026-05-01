@@ -197,7 +197,8 @@ Prototype behavior:
 
 - basic infantry follow the meatgrinder rule: they die quickly when caught out of position
 - tanks are highly resistant to ballistic fire and force energy, explosive, crush, or other anti-armor answers
-- Rifleman is the basic combat unit
+- Cadet is the cheapest trainable combat unit with lower cost, health, and damage than Rifleman
+- Rifleman is the baseline basic combat unit
 - Guardian is beefier than Rifleman but deals slightly less damage
 - Rover scouts and cannot shoot, but can run over enemy infantry
 - Commander is fragile, controllable, pistol-only, and mission-critical
@@ -209,6 +210,7 @@ Prototype behavior:
 Tunable placeholders:
 
 - Rifleman health: about 45, enough for roughly 2-3 seconds of Rifleman-vs-Rifleman time-to-kill
+- Cadet health and damage stay below Rifleman so it reads as a cheaper, weaker early troop
 - Guardian health: medium
 - Guardian damage: slightly below Rifleman
 - Commander health: low

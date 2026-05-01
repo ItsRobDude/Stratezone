@@ -131,6 +131,7 @@ Optional train requirement fields:
 First-pass unit IDs:
 
 - `unit_worker`
+- `unit_cadet`
 - `unit_rifleman`
 - `unit_guardian`
 - `unit_rover`
@@ -140,6 +141,7 @@ First-pass unit IDs:
 Prototype rules:
 
 - `unit_worker` is expensive, non-combat, can construct, can repair, and should flee from danger.
+- `unit_cadet` is the cheapest trainable infantry. It should cost less than Rifleman and have lower health and damage.
 - `unit_rifleman` is intentionally fragile. First-pass health should stay around 40-50 so infantry caught out of position die fast.
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.

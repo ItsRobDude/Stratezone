@@ -65,7 +65,7 @@ internal sealed class EnemyAiSystem
 
         var result = simulation.TryQueueUnitForFaction(
             ContentIds.Factions.PrivateMilitary,
-            ContentIds.Units.Rifleman,
+            ContentIds.Units.Cadet,
             null,
             _profile.TrainTimeMultiplier);
 

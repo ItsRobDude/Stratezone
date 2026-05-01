@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="128" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="blueArmor" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#36a8e8"/>
+      <stop offset="0.55" stop-color="#1670b9"/>
+      <stop offset="1" stop-color="#0b3f78"/>
+    </linearGradient>
+    <linearGradient id="visor" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#68e5ff"/>
+      <stop offset="1" stop-color="#1f5f9a"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)" stroke="#111820" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M36 29 L60 29 L67 47 L64 74 L55 86 L41 86 L32 74 L29 47 Z" fill="#d5d8dc"/>
+    <path d="M39 45 L57 45 L61 74 L52 81 L44 81 L35 74 Z" fill="#2a3037"/>
+    <path d="M33 23 Q36 8 48 7 Q60 8 63 23 L59 35 L37 35 Z" fill="url(#blueArmor)"/>
+    <path d="M38 20 Q48 12 58 20 L56 29 L40 29 Z" fill="url(#visor)"/>
+    <path d="M34 29 L28 36 L21 58 L31 64 L39 40 Z" fill="url(#blueArmor)"/>
+    <path d="M62 29 L69 36 L77 57 L68 65 L58 40 Z" fill="url(#blueArmor)"/>
+    <path d="M24 60 L34 65 L32 82 L23 82 Z" fill="#23272e"/>
+    <path d="M72 61 L63 67 L65 83 L74 82 Z" fill="#23272e"/>
+    <path d="M32 80 L45 82 L43 111 L31 112 Z" fill="#252a31"/>
+    <path d="M51 82 L64 80 L66 112 L54 111 Z" fill="#252a31"/>
+    <path d="M30 111 L45 111 L43 122 L29 122 Z" fill="#151a22"/>
+    <path d="M53 111 L68 111 L67 122 L54 122 Z" fill="#151a22"/>
+    <path d="M31 91 L43 91 L41 105 L31 106 Z" fill="url(#blueArmor)"/>
+    <path d="M54 91 L66 91 L66 106 L56 105 Z" fill="url(#blueArmor)"/>
+    <path d="M15 18 L20 18 L20 66 L15 66 Z" fill="#2b333c"/>
+    <path d="M18 15 L23 24 L20 28 L15 28 L13 22 Z" fill="#4f5a65"/>
+    <path d="M25 65 L73 55 L79 62 L34 76 Z" fill="#363d45"/>
+    <path d="M70 54 L84 55 L86 60 L77 63 Z" fill="#20262d"/>
+    <path d="M38 61 L59 58 L63 64 L42 68 Z" fill="#151a1f"/>
+    <path d="M46 67 L55 65 L55 83 L48 84 Z" fill="#1b2026"/>
+    <path d="M26 66 L33 63 L43 66 L39 73 L29 75 Z" fill="#d5d8dc"/>
+    <path d="M60 64 L68 61 L73 66 L67 73 L58 71 Z" fill="#d5d8dc"/>
+  </g>
+</svg>

@@ -49,6 +49,7 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `faction_player_expedition`
 - `faction_private_military`
 - `unit_worker`
+- `unit_cadet`
 - `unit_rifleman`
 - `unit_guardian`
 - `unit_rover`
@@ -178,7 +179,7 @@ Acceptance checks:
 
 - infrastructure strikes matter in at least one mission route
 - scouting reveals useful tactical information
-- Rifleman, Guardian, Rover, Commander, and tank roles are distinct
+- Cadet, Rifleman, Guardian, Rover, Commander, and tank roles are distinct
 - troop train times vary by unit, with more expensive or heavier units generally taking longer
 - explosive friendly fire works if explosive units are present
 - normal gunfire does not friendly-fire

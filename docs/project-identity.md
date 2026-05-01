@@ -181,7 +181,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding attacks and higher cost.
-- First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
+- First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. The first planned add-ons are Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.

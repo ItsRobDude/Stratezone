@@ -5,7 +5,7 @@
       "id": "faction_player_expedition",
       "display_name": "Player Expedition",
       "color_key": "blue",
-      "available_unit_ids": ["unit_worker", "unit_rifleman", "unit_guardian", "unit_rover", "unit_commander", "unit_tank"],
+      "available_unit_ids": ["unit_worker", "unit_cadet", "unit_rifleman", "unit_guardian", "unit_rover", "unit_commander", "unit_tank"],
       "available_building_ids": ["building_colony_hub", "building_barracks", "building_armory_annex", "building_vehicle_bay", "building_power_plant", "building_pylon", "building_extractor_refinery", "building_med_hall", "building_logistics_repair_pad", "building_defense_tower", "building_gun_tower", "building_rocket_tower", "building_artillery_battery"],
       "economy_modifiers": {
         "resource_income_multiplier": 1.0
@@ -20,7 +20,7 @@
       "id": "faction_private_military",
       "display_name": "Private Military",
       "color_key": "red",
-      "available_unit_ids": ["unit_worker", "unit_rifleman", "unit_guardian", "unit_rover", "unit_tank"],
+      "available_unit_ids": ["unit_worker", "unit_cadet", "unit_rifleman", "unit_guardian", "unit_rover", "unit_tank"],
       "available_building_ids": ["building_colony_hub", "building_barracks", "building_armory_annex", "building_vehicle_bay", "building_power_plant", "building_pylon", "building_extractor_refinery", "building_med_hall", "building_logistics_repair_pad", "building_defense_tower", "building_gun_tower", "building_rocket_tower", "building_artillery_battery"],
       "economy_modifiers": {
         "resource_income_multiplier": 0.75

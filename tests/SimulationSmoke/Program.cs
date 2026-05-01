@@ -13,7 +13,12 @@ Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComp
 Assert(localization.Translate("missing.test.key") == "[[missing.test.key]]", "missing localization keys are obvious");
 Assert(localization.ContentName(ContentIds.Units.Worker) == "Worker", "content name localization keys resolve stable content ids");
 Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");
-Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Worker) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
+var cadetDefinition = catalog.GetUnit(ContentIds.Units.Cadet);
+var riflemanDefinition = catalog.GetUnit(ContentIds.Units.Rifleman);
+Assert(cadetDefinition.Cost < riflemanDefinition.Cost, "Cadet costs less than Rifleman");
+Assert(cadetDefinition.Health < riflemanDefinition.Health, "Cadet has less health than Rifleman");
+Assert(cadetDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Cadet deals less damage than Rifleman");
+Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Worker) && mission.AvailableUnitIds.Contains(ContentIds.Units.Cadet) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
 Assert(!mission.AvailableUnitIds.Contains(ContentIds.Units.Guardian) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Rover), "mission data hides advanced Barracks training for Level 1");
 
 var simulation = new RtsSimulation(
@@ -141,7 +146,7 @@ TickFor(enemyBaseSimulation, 0.1f);
 Assert(enemyBaseSimulation.ProductionOrders.Count == 1, "enemy base queues production from powered Barracks");
 Assert(enemyBaseSimulation.EnemyMaterials <= 350, "enemy production and construction spend resources when queued");
 TickFor(enemyBaseSimulation, 13.0f);
-Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman), "enemy production spawns trained units from its base");
+Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Cadet), "enemy production spawns trained Cadets from its base");
 
 var playerProductionSimulation = new RtsSimulation(catalog, 2000, []);
 playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -150,12 +155,12 @@ var playerBarracks = playerProductionSimulation.TryPlaceBuilding(ContentIds.Buil
 Assert(playerBarracks.Success, playerBarracks.Message);
 playerProductionSimulation.DrainEvents();
 var materialsBeforeTraining = playerProductionSimulation.Materials;
-var riflemanQueue = playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building!.EntityId);
-Assert(riflemanQueue.Success, riflemanQueue.Message);
-Assert(riflemanQueue.MessageKey == "sim.production.queued", "production result returns a stable message key");
+var cadetQueue = playerProductionSimulation.TryQueueUnit(ContentIds.Units.Cadet, playerBarracks.Building!.EntityId);
+Assert(cadetQueue.Success, cadetQueue.Message);
+Assert(cadetQueue.MessageKey == "sim.production.queued", "production result returns a stable message key");
 Assert(playerProductionSimulation.Materials < materialsBeforeTraining, "player training spends materials immediately");
 TickFor(playerProductionSimulation, 11.0f);
-Assert(playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Rifleman), "player production spawns trained units from the Colony Hub");
+Assert(playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Cadet), "player production spawns trained Cadets from the Colony Hub");
 Assert(playerProductionSimulation.DrainEvents().Any(item => item.MessageKey == "sim.event.training_complete"), "player production emits a training-complete event");
 Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "Guardian training requires powered Armory Annex");
 playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));

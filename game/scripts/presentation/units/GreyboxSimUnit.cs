@@ -8,6 +8,8 @@ public partial class GreyboxSimUnit : Node2D
     private Label? _label;
     private LocalizationCatalog? _localization;
     private bool _selected;
+    private bool _useRiflemanPlaceholder;
+    private bool _useCadetPlaceholder;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
@@ -15,6 +17,8 @@ public partial class GreyboxSimUnit : Node2D
     public void Initialize(UnitState state, LocalizationCatalog? localization = null)
     {
         _localization = localization;
+        _useRiflemanPlaceholder = state.Definition.Id == ContentIds.Units.Rifleman;
+        _useCadetPlaceholder = state.Definition.Id == ContentIds.Units.Cadet;
         _label = new Label
         {
             Position = new Vector2(-48, -38),
@@ -62,6 +66,45 @@ public partial class GreyboxSimUnit : Node2D
             return;
         }
 
+        if (_useCadetPlaceholder)
+        {
+            DrawCadetPlaceholder();
+        }
+        else if (_useRiflemanPlaceholder)
+        {
+            DrawRiflemanPlaceholder();
+        }
+        else
+        {
+            DrawUnitToken();
+        }
+
+        if (_state.IsBlockedByEnergyWall || _state.IsPathBlocked)
+        {
+            var outline = _state.IsBlockedByEnergyWall
+                ? new Color(0.58f, 0.95f, 1.0f)
+                : new Color(0.18f, 0.04f, 0.04f);
+            DrawArc(Vector2.Zero, 24.0f, 0, Mathf.Tau, 48, outline, 2.0f);
+        }
+
+        if (_selected)
+        {
+            DrawArc(Vector2.Zero, SelectionRadius + 7.0f, 0, Mathf.Tau, 64, new Color(1.0f, 0.95f, 0.25f), 4.0f);
+        }
+
+        if (_state.MoveTarget is not null)
+        {
+            DrawPathDebug();
+        }
+    }
+
+    private void DrawUnitToken()
+    {
+        if (_state is null)
+        {
+            return;
+        }
+
         var fill = _state.FactionId == ContentIds.Factions.PrivateMilitary
             ? new Color(0.82f, 0.18f, 0.16f)
             : new Color(0.28f, 0.62f, 0.95f);
@@ -87,21 +130,146 @@ public partial class GreyboxSimUnit : Node2D
             ],
             outline,
             3.0f);
+    }
 
-        if (_state.IsBlockedByEnergyWall || _state.IsPathBlocked)
+    private void DrawRiflemanPlaceholder()
+    {
+        if (_state is null)
         {
-            DrawArc(Vector2.Zero, 24.0f, 0, Mathf.Tau, 48, outline, 2.0f);
+            return;
         }
 
-        if (_selected)
+        var armor = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.82f, 0.18f, 0.16f)
+            : new Color(0.10f, 0.47f, 0.78f);
+        var armorLight = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(1.0f, 0.38f, 0.32f)
+            : new Color(0.22f, 0.68f, 0.95f);
+        var dark = new Color(0.08f, 0.10f, 0.13f);
+        var cloth = new Color(0.16f, 0.18f, 0.21f);
+        var plate = new Color(0.72f, 0.75f, 0.78f);
+        var outline = _state.IsBlockedByEnergyWall
+            ? new Color(0.58f, 0.95f, 1.0f)
+            : new Color(0.04f, 0.06f, 0.08f);
+
+        DrawEllipse(new Vector2(0, -18), new Vector2(8, 9), armor, outline, 2.0f);
+        DrawPolygon(
+            [
+                new Vector2(-9, -9),
+                new Vector2(9, -9),
+                new Vector2(13, 8),
+                new Vector2(7, 19),
+                new Vector2(-7, 19),
+                new Vector2(-13, 8)
+            ],
+            [plate]);
+        DrawPolyline(
+            [
+                new Vector2(-9, -9),
+                new Vector2(9, -9),
+                new Vector2(13, 8),
+                new Vector2(7, 19),
+                new Vector2(-7, 19),
+                new Vector2(-13, 8),
+                new Vector2(-9, -9)
+            ],
+            outline,
+            2.0f);
+        DrawRect(new Rect2(-5, -20, 10, 5), new Color(0.28f, 0.82f, 1.0f));
+        DrawLine(new Vector2(-4, -16), new Vector2(5, -16), outline, 1.5f);
+
+        DrawLimb(new Vector2(-12, -5), new Vector2(-22, 9), 5.5f, armorLight, outline);
+        DrawLimb(new Vector2(12, -5), new Vector2(22, 7), 5.5f, armorLight, outline);
+        DrawLimb(new Vector2(-8, 18), new Vector2(-12, 34), 5.5f, cloth, outline);
+        DrawLimb(new Vector2(8, 18), new Vector2(12, 34), 5.5f, cloth, outline);
+        DrawLimb(new Vector2(-12, 34), new Vector2(-12, 45), 5.0f, armorLight, outline);
+        DrawLimb(new Vector2(12, 34), new Vector2(12, 45), 5.0f, armorLight, outline);
+        DrawLine(new Vector2(-18, 44), new Vector2(-7, 44), dark, 5.0f);
+        DrawLine(new Vector2(7, 44), new Vector2(18, 44), dark, 5.0f);
+
+        DrawLine(new Vector2(-19, 11), new Vector2(24, 2), dark, 5.0f);
+        DrawLine(new Vector2(18, 1), new Vector2(32, 1), dark, 3.0f);
+        DrawLine(new Vector2(-18, 11), new Vector2(6, 7), new Color(0.35f, 0.38f, 0.42f), 2.0f);
+        DrawCircle(new Vector2(-10, 12), 4.0f, plate);
+        DrawCircle(new Vector2(15, 5), 4.0f, plate);
+
+        DrawLine(new Vector2(-25, -20), new Vector2(-25, 21), dark, 4.0f);
+        DrawLine(new Vector2(-25, -20), new Vector2(-22, -12), new Color(0.40f, 0.44f, 0.48f), 3.0f);
+    }
+
+    private void DrawCadetPlaceholder()
+    {
+        if (_state is null)
         {
-            DrawArc(Vector2.Zero, SelectionRadius + 7.0f, 0, Mathf.Tau, 64, new Color(1.0f, 0.95f, 0.25f), 4.0f);
+            return;
         }
 
-        if (_state.MoveTarget is not null)
-        {
-            DrawPathDebug();
-        }
+        var armor = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.82f, 0.18f, 0.16f)
+            : new Color(0.10f, 0.45f, 0.78f);
+        var armorLight = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(1.0f, 0.38f, 0.32f)
+            : new Color(0.24f, 0.66f, 0.92f);
+        var dark = new Color(0.08f, 0.10f, 0.13f);
+        var cloth = new Color(0.15f, 0.16f, 0.19f);
+        var plate = new Color(0.74f, 0.76f, 0.78f);
+        var outline = _state.IsBlockedByEnergyWall
+            ? new Color(0.58f, 0.95f, 1.0f)
+            : new Color(0.04f, 0.06f, 0.08f);
+
+        DrawEllipse(new Vector2(0, -17), new Vector2(7, 8), armor, outline, 2.0f);
+        DrawRect(new Rect2(-4, -20, 8, 5), new Color(0.30f, 0.78f, 1.0f));
+        DrawLine(new Vector2(0, -24), new Vector2(0, -17), new Color(0.95f, 0.72f, 0.22f), 1.5f);
+        DrawPolygon(
+            [
+                new Vector2(-9, -8),
+                new Vector2(9, -8),
+                new Vector2(12, 7),
+                new Vector2(6, 18),
+                new Vector2(-6, 18),
+                new Vector2(-12, 7)
+            ],
+            [plate]);
+        DrawPolyline(
+            [
+                new Vector2(-9, -8),
+                new Vector2(9, -8),
+                new Vector2(12, 7),
+                new Vector2(6, 18),
+                new Vector2(-6, 18),
+                new Vector2(-12, 7),
+                new Vector2(-9, -8)
+            ],
+            outline,
+            2.0f);
+
+        DrawLimb(new Vector2(-11, -5), new Vector2(-18, 9), 5.0f, armorLight, outline);
+        DrawLimb(new Vector2(11, -5), new Vector2(19, 10), 5.0f, armorLight, outline);
+        DrawLimb(new Vector2(-7, 18), new Vector2(-11, 34), 5.0f, cloth, outline);
+        DrawLimb(new Vector2(7, 18), new Vector2(11, 34), 5.0f, cloth, outline);
+        DrawLimb(new Vector2(-11, 34), new Vector2(-11, 43), 4.5f, armorLight, outline);
+        DrawLimb(new Vector2(11, 34), new Vector2(11, 43), 4.5f, armorLight, outline);
+        DrawLine(new Vector2(-16, 43), new Vector2(-6, 43), dark, 4.5f);
+        DrawLine(new Vector2(6, 43), new Vector2(16, 43), dark, 4.5f);
+
+        DrawLine(new Vector2(19, 10), new Vector2(26, 28), dark, 4.0f);
+        DrawLine(new Vector2(24, 27), new Vector2(30, 26), dark, 3.0f);
+        DrawCircle(new Vector2(-18, 11), 3.5f, dark);
+        DrawCircle(new Vector2(19, 10), 3.5f, plate);
+    }
+
+    private void DrawLimb(Vector2 start, Vector2 end, float width, Color fill, Color outline)
+    {
+        DrawLine(start, end, outline, width + 2.5f);
+        DrawLine(start, end, fill, width);
+    }
+
+    private void DrawEllipse(Vector2 center, Vector2 radius, Color fill, Color outline, float outlineWidth)
+    {
+        DrawSetTransform(center, 0.0f, radius);
+        DrawCircle(Vector2.Zero, 1.0f, fill);
+        DrawArc(Vector2.Zero, 1.0f, 0, Mathf.Tau, 32, outline, outlineWidth / MathF.Max(radius.X, radius.Y));
+        DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
     }
 
     private void DrawPathDebug()

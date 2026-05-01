@@ -67,7 +67,7 @@ The architecture is shaped around these realities:
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
 - Armory Annex and Vehicle Bay are planned powered Barracks add-ons built adjacent to the Barracks, not abstract upgrade buttons
 - Gun Tower and Rocket Tower should be modeled as in-place Defense Tower upgrades that keep wall-anchor behavior while adding direct attack stats and higher cost
-- first prototype units are Worker, Rifleman, Guardian, Rover, and Commander
+- first prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
 - First Landing is a playable ugly 5-10 minute top-down mission before art direction or cutscenes
@@ -319,7 +319,8 @@ Owns attack legality, damage, resistance, range, cooldowns, projectiles if used,
 Early requirements:
 
 - individual infantry/security unit
-- Rifleman as the basic troop
+- Cadet as the cheapest basic troop
+- Rifleman as the baseline combat troop
 - Guardian as the laser trooper
 - Rover as the small fast scout vehicle for fog-of-war exploration
 - fragile Commander with a pistol as a mission fail-condition unit

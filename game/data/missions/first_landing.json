@@ -121,7 +121,7 @@
           "marker": "central_well"
         }
       ],
-      "available_unit_ids": ["unit_worker", "unit_rifleman"],
+      "available_unit_ids": ["unit_worker", "unit_cadet", "unit_rifleman"],
       "available_building_ids": [
         "building_power_plant",
         "building_pylon",

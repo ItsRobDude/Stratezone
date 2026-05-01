@@ -55,7 +55,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding weaponry and higher cost.
-- First prototype units are Worker, Rifleman, Guardian, Rover, and Commander.
+- First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. Armory Annex unlocks Guardian/explosive tech. Vehicle Bay unlocks Rover/heavy-armor capacity.
@@ -95,7 +95,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Add Colony Hub, Barracks, first Barracks add-on rules, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
 
 4. First combat loop
-   - Add Worker, Rifleman, Guardian, Rover, Commander, and same-tech human enemy equivalents.
+   - Add Worker, Cadet, Rifleman, Guardian, Rover, Commander, and same-tech human enemy equivalents.
    - Add building damage and repair.
    - Add an enemy infrastructure target.
 

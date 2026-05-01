@@ -22,6 +22,7 @@ public partial class Main : Node2D
     private static readonly string[] TrainHotkeyOrder =
     [
         ContentIds.Units.Worker,
+        ContentIds.Units.Cadet,
         ContentIds.Units.Rifleman,
         ContentIds.Units.Guardian,
         ContentIds.Units.Rover
@@ -386,6 +387,7 @@ public partial class Main : Node2D
             Key.W => 1,
             Key.E => 2,
             Key.R => 3,
+            Key.T => 4,
             _ => -1
         };
 

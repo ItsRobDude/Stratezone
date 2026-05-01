@@ -182,6 +182,7 @@ def validate_required_first_landing(records: dict[str, dict[str, Any]]) -> list[
         "faction_player_expedition",
         "faction_private_military",
         "unit_worker",
+        "unit_cadet",
         "unit_rifleman",
         "unit_guardian",
         "unit_rover",

@@ -4,6 +4,8 @@
   "strings": {
     "unit.unit_worker.name": "Worker",
     "unit.unit_worker.short_name": "Worker",
+    "unit.unit_cadet.name": "Cadet",
+    "unit.unit_cadet.short_name": "Cadet",
     "unit.unit_rifleman.name": "Rifleman",
     "unit.unit_rifleman.short_name": "Rifleman",
     "unit.unit_guardian.name": "Guardian",

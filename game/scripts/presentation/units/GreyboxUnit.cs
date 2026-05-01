@@ -92,6 +92,9 @@ public partial class GreyboxUnit : Node2D
             case "unit_worker":
                 DrawWorker(outline);
                 break;
+            case "unit_cadet":
+                DrawCadet(outline);
+                break;
             case "unit_rifleman":
                 DrawRifleman(outline);
                 break;
@@ -126,6 +129,14 @@ public partial class GreyboxUnit : Node2D
         DrawLine(new Vector2(5, -4), new Vector2(18, -12), outline, 4.0f);
         DrawLine(new Vector2(8, -1), new Vector2(20, -8), new Color(0.75f, 0.78f, 0.72f), 2.0f);
         DrawCircle(new Vector2(-2, -10), 4.5f, new Color(0.78f, 0.86f, 0.88f));
+    }
+
+    private void DrawCadet(Color outline)
+    {
+        DrawBodyCapsule(new Vector2(0, 1), 7.0f, 14.0f, _bodyColor, outline);
+        DrawLine(new Vector2(7, 2), new Vector2(13, 12), outline, 3.0f);
+        DrawLine(new Vector2(13, 12), new Vector2(16, 12), new Color(0.75f, 0.78f, 0.72f), 2.0f);
+        DrawCircle(new Vector2(0, -9), 4.0f, new Color(0.78f, 0.86f, 0.88f));
     }
 
     private void DrawGuardian(Color outline)

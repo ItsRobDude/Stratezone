@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="128" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="blueArmor" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#2d99df"/>
+      <stop offset="0.6" stop-color="#1268aa"/>
+      <stop offset="1" stop-color="#0b356b"/>
+    </linearGradient>
+    <linearGradient id="visor" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#67ddff"/>
+      <stop offset="1" stop-color="#255b9d"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#111820" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M36 27 Q38 10 48 8 Q58 10 61 27 L56 38 L40 38 Z" fill="url(#blueArmor)"/>
+    <path d="M41 22 L55 22 L54 31 L42 31 Z" fill="url(#visor)"/>
+    <path d="M37 36 L59 36 L66 54 L60 74 L52 82 L44 82 L36 74 L30 54 Z" fill="#d9dadd"/>
+    <path d="M36 55 L60 55 L55 72 L41 72 Z" fill="#24282e"/>
+    <path d="M31 38 L23 49 L28 66 L38 62 L40 43 Z" fill="url(#blueArmor)"/>
+    <path d="M65 38 L73 50 L69 68 L58 62 L56 43 Z" fill="url(#blueArmor)"/>
+    <path d="M29 65 L38 63 L35 86 L27 86 Z" fill="#2a2d33"/>
+    <path d="M68 67 L58 63 L61 87 L70 86 Z" fill="#2a2d33"/>
+    <path d="M36 81 L46 82 L43 111 L32 111 Z" fill="#2a2e34"/>
+    <path d="M50 82 L61 81 L64 111 L53 111 Z" fill="#2a2e34"/>
+    <path d="M33 96 L43 96 L41 108 L32 108 Z" fill="#c7cdd0"/>
+    <path d="M54 96 L64 96 L64 108 L55 108 Z" fill="#c7cdd0"/>
+    <path d="M30 111 L44 111 L42 121 L29 121 Z" fill="#10151d"/>
+    <path d="M52 111 L66 111 L67 121 L54 121 Z" fill="#10151d"/>
+    <path d="M72 65 L78 64 L81 90 L75 91 Z" fill="#22272e"/>
+    <path d="M75 88 L83 87 L84 93 L75 94 Z" fill="#10151d"/>
+  </g>
+</svg>

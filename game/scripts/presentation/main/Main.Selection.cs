@@ -157,7 +157,7 @@ public partial class Main
         if (enemyBuilding is not null)
         {
             var attackers = 0;
-            foreach (var unit in selectedUnits.Where(unit => unit.Definition.CanAttack))
+            foreach (var unit in selectedUnits.Where(UnitCanAttackBuildings))
             {
                 _simulation.CommandUnitAttackBuilding(unit.EntityId, enemyBuilding.EntityId);
                 attackers++;
@@ -195,6 +195,12 @@ public partial class Main
             (column - ((columns - 1) * 0.5f)) * spacing,
             (row - ((rows - 1) * 0.5f)) * spacing);
         return center + offset;
+    }
+
+    private static bool UnitCanAttackBuildings(UnitState unit)
+    {
+        return unit.Definition.CanAttack &&
+            unit.Definition.TargetFilters.Contains("building", StringComparer.Ordinal);
     }
 
     private IEnumerable<UnitState> SelectedUnits()

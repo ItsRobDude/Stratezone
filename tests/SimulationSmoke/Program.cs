@@ -236,6 +236,14 @@ playerCombatSimulation.CommandUnitAttackBuilding(playerRifleman.EntityId, enemyB
 TickFor(playerCombatSimulation, 3.0f);
 Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
 
+var commanderBuildingFilterSimulation = new RtsSimulation(catalog, startingMaterials, []);
+commanderBuildingFilterSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var commanderWithPistol = commanderBuildingFilterSimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var commanderBuildingTarget = commanderBuildingFilterSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(70, 0), ContentIds.Factions.PrivateMilitary);
+commanderBuildingFilterSimulation.CommandUnitAttackBuilding(commanderWithPistol.EntityId, commanderBuildingTarget.EntityId);
+TickFor(commanderBuildingFilterSimulation, 3.0f);
+Assert(Math.Abs(commanderBuildingTarget.Health - commanderBuildingTarget.Definition.Health) < 0.01f, "Commander target filters do not allow building damage");
+
 var enemyPrioritySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-210, -120));

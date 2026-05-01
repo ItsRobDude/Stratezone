@@ -97,7 +97,14 @@ public partial class Main : Node2D
     {
         if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            var upgradeHotkeysFirst = IsSelectedBuilding(ContentIds.Buildings.DefenseTower);
+
             if (HandleUiScaleHotkey(keyEvent.Keycode))
+            {
+                return;
+            }
+
+            if (upgradeHotkeysFirst && HandleUpgradeHotkey(keyEvent.Keycode))
             {
                 return;
             }
@@ -107,7 +114,7 @@ public partial class Main : Node2D
                 return;
             }
 
-            if (HandleUpgradeHotkey(keyEvent.Keycode))
+            if (!upgradeHotkeysFirst && HandleUpgradeHotkey(keyEvent.Keycode))
             {
                 return;
             }
@@ -378,6 +385,19 @@ public partial class Main : Node2D
         }
 
         return false;
+    }
+
+    private bool IsSelectedBuilding(string buildingId)
+    {
+        if (_simulation is null || _selectedBuildingEntityId is null)
+        {
+            return false;
+        }
+
+        return _simulation.Buildings.Any(building =>
+            building.EntityId == _selectedBuildingEntityId.Value &&
+            !building.IsDestroyed &&
+            building.Definition.Id == buildingId);
     }
 
     private bool HandleProductionHotkey(Key keycode)

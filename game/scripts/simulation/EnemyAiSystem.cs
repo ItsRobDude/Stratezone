@@ -19,6 +19,7 @@ internal sealed class EnemyAiSystem
 
     public EnemyAiProfileDefinition Profile => _profile;
     public SimVector2 HubPosition => _markers.HubPosition;
+    public SimVector2 RallyPosition => _markers.RallyPosition;
 
     public void Tick(RtsSimulation simulation, float deltaSeconds)
     {
@@ -63,9 +64,15 @@ internal sealed class EnemyAiSystem
             return;
         }
 
+        var selectedUnit = simulation.SelectEnemyProductionUnit();
+        if (selectedUnit is null)
+        {
+            return;
+        }
+
         var result = simulation.TryQueueUnitForFaction(
             ContentIds.Factions.PrivateMilitary,
-            ContentIds.Units.Cadet,
+            selectedUnit.Id,
             null,
             _profile.TrainTimeMultiplier);
 

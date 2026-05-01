@@ -47,7 +47,8 @@ public sealed record EnemyAiProfileDefinition(
     string PowerPlantMarkerId,
     string BarracksMarkerId,
     string ExtractorMarkerId,
-    string DefenseTowerMarkerId
+    string DefenseTowerMarkerId,
+    string RallyMarkerId
 )
 {
     public static EnemyAiProfileDefinition Default { get; } = new(
@@ -63,5 +64,6 @@ public sealed record EnemyAiProfileDefinition(
         "enemy_power",
         "enemy_barracks",
         "enemy_extractor",
-        "enemy_defense");
+        "enemy_defense",
+        "enemy_rally");
 }

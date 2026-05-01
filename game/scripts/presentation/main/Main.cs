@@ -209,7 +209,8 @@ public partial class Main : Node2D
             wellPlacements,
             enemyStartingMaterials,
             EnemyAiMarkers.FromMission(mission),
-            mission.EnemyAiProfile);
+            mission.EnemyAiProfile,
+            mission.AvailableUnitIds);
 
         foreach (var entity in mission.StartingEntities)
         {

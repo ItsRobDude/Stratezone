@@ -2,8 +2,14 @@ namespace Stratezone.Simulation;
 
 public sealed partial class RtsSimulation
 {
+    private const float EnemyScoutDispatchDelaySeconds = 18.0f;
+    private const float EnemyUnitPursuitRange = 9.0f;
+    private const float EnemyRetreatHealthRatio = 0.32f;
+    private const float EnemyRetreatRecoverRatio = 0.58f;
+
     private void TickEnemyPressure(float deltaSeconds)
     {
+        DispatchEnemyScout();
         CommitEnemyAttackGroup();
 
         foreach (var unit in _units.Where(unit => !unit.IsDestroyed))
@@ -18,7 +24,7 @@ public sealed partial class RtsSimulation
                 }
                 else
                 {
-                    TickEnemyDefenderUnit(unit);
+                    TickEnemyDefenderUnit(unit, deltaSeconds);
                 }
             }
             else
@@ -30,7 +36,8 @@ public sealed partial class RtsSimulation
 
     private void CommitEnemyAttackGroup()
     {
-        if (_elapsedSeconds < _enemyAi.Profile.FirstAttackDelaySeconds)
+        if (_elapsedSeconds < _enemyAi.Profile.FirstAttackDelaySeconds ||
+            _elapsedSeconds < _enemyOfficer.NextAttackAllowedSeconds)
         {
             return;
         }
@@ -62,7 +69,38 @@ public sealed partial class RtsSimulation
         foreach (var unit in idleCombatUnits.Take(groupSize - committedCount))
         {
             unit.IsEnemyAttackCommitted = true;
+            unit.IsEnemyScout = false;
+            unit.IsEnemyRetreating = false;
+            _knownCommittedEnemyIds.Add(unit.EntityId);
         }
+    }
+
+    private void DispatchEnemyScout()
+    {
+        if (_enemyOfficer.ScoutDispatched ||
+            _elapsedSeconds < EnemyScoutDispatchDelaySeconds ||
+            _elapsedSeconds >= _enemyAi.Profile.FirstAttackDelaySeconds)
+        {
+            return;
+        }
+
+        var scout = _units
+            .Where(unit =>
+                unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+                !unit.IsDestroyed &&
+                unit.Definition.CanAttack &&
+                !unit.IsEnemyAttackCommitted)
+            .OrderByDescending(unit => unit.Definition.MovementSpeed)
+            .ThenBy(unit => unit.Position.DistanceTo(_enemyAi.HubPosition))
+            .FirstOrDefault();
+        if (scout is null)
+        {
+            return;
+        }
+
+        scout.IsEnemyScout = true;
+        _enemyOfficer.ScoutDispatched = true;
+        SetUnitPathTo(scout, _enemyAi.RallyPosition);
     }
 
     private void TickBuildingAttacks(float deltaSeconds)
@@ -133,7 +171,13 @@ public sealed partial class RtsSimulation
 
     private void TickEnemyUnit(UnitState unit, float deltaSeconds)
     {
-        var targetUnit = FindNearestEnemyUnitInRange(unit);
+        if (ShouldEnemyRetreat(unit))
+        {
+            TickEnemyRetreat(unit, deltaSeconds);
+            return;
+        }
+
+        var targetUnit = FindEnemyPriorityUnit(unit, ToWorldRadius(EnemyUnitPursuitRange));
         if (targetUnit is not null)
         {
             unit.TargetUnitEntityId = targetUnit.EntityId;
@@ -153,8 +197,13 @@ public sealed partial class RtsSimulation
         TickUnitAttackTarget(unit, target, deltaSeconds);
     }
 
-    private void TickEnemyDefenderUnit(UnitState unit)
+    private void TickEnemyDefenderUnit(UnitState unit, float deltaSeconds)
     {
+        if (unit.IsEnemyScout)
+        {
+            TickEnemyScout(unit, deltaSeconds * _enemyAi.Profile.PressureSlowdownMultiplier);
+        }
+
         var targetUnit = FindNearestEnemyUnitInRange(unit);
         if (targetUnit is null)
         {
@@ -164,6 +213,55 @@ public sealed partial class RtsSimulation
         unit.TargetUnitEntityId = targetUnit.EntityId;
         unit.TargetBuildingEntityId = null;
         TryUnitAttackUnit(unit, targetUnit);
+    }
+
+    private bool ShouldEnemyRetreat(UnitState unit)
+    {
+        if (!HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub))
+        {
+            return false;
+        }
+
+        if (unit.IsEnemyRetreating)
+        {
+            return unit.HealthRatio < EnemyRetreatRecoverRatio &&
+                unit.Position.DistanceTo(_enemyAi.HubPosition) > ToWorldRadius(2.0f);
+        }
+
+        return unit.HealthRatio > 0.0f &&
+            unit.HealthRatio <= EnemyRetreatHealthRatio &&
+            unit.Position.DistanceTo(_enemyAi.HubPosition) > ToWorldRadius(4.0f);
+    }
+
+    private void TickEnemyRetreat(UnitState unit, float deltaSeconds)
+    {
+        if (!unit.IsEnemyRetreating)
+        {
+            _enemyOfficer.RetreatsOrdered++;
+        }
+
+        unit.IsEnemyRetreating = true;
+        unit.TargetUnitEntityId = null;
+        unit.TargetBuildingEntityId = null;
+        MoveUnitToward(unit, _enemyAi.HubPosition, deltaSeconds);
+        if (unit.Position.DistanceTo(_enemyAi.HubPosition) <= ToWorldRadius(2.0f))
+        {
+            unit.IsEnemyRetreating = false;
+            unit.IsEnemyAttackCommitted = false;
+        }
+    }
+
+    private void TickEnemyScout(UnitState unit, float deltaSeconds)
+    {
+        if (unit.MoveTarget is null || unit.Position.DistanceTo(unit.MoveTarget.Value) < 24.0f)
+        {
+            SetUnitPathTo(unit, _enemyAi.RallyPosition);
+        }
+
+        if (unit.MoveTarget is not null)
+        {
+            MoveUnitToward(unit, unit.MoveTarget.Value, deltaSeconds);
+        }
     }
 
     private void TickUnitAttackTarget(UnitState attacker, UnitState target, float deltaSeconds)
@@ -207,15 +305,62 @@ public sealed partial class RtsSimulation
         unit.IsBlockedByEnergyWall = blockingWall is not null;
         if (blockingWall is null)
         {
-            return hub;
+            return FindEnemyPriorityBuilding(unit) ?? hub;
         }
 
+        if (_knownWallBlockedEnemyIds.Add(unit.EntityId))
+        {
+            _enemyOfficer.WallBlocksEncountered++;
+        }
         var startAnchor = FindLiveBuilding(blockingWall.StartAnchorEntityId);
         var endAnchor = FindLiveBuilding(blockingWall.EndAnchorEntityId);
         return new[] { startAnchor, endAnchor }
             .Where(anchor => anchor is not null)
             .OrderBy(anchor => anchor!.Position.DistanceTo(unit.Position))
             .FirstOrDefault();
+    }
+
+    private UnitState? FindEnemyPriorityUnit(UnitState unit, float pursuitRange)
+    {
+        if (!unit.Definition.CanAttack || unit.Definition.AttackRange <= 0.0f)
+        {
+            return null;
+        }
+
+        return _units
+            .Where(candidate =>
+                candidate.FactionId == ContentIds.Factions.PlayerExpedition &&
+                !candidate.IsDestroyed &&
+                IsCurrentlyObservedByFaction(ContentIds.Factions.PrivateMilitary, candidate.Position) &&
+                candidate.Position.DistanceTo(unit.Position) <= pursuitRange)
+            .OrderBy(candidate => candidate.Definition.Id == ContentIds.Units.Commander ? 0 : 1)
+            .ThenBy(candidate => candidate.Position.DistanceTo(unit.Position))
+            .FirstOrDefault();
+    }
+
+    private BuildingState? FindEnemyPriorityBuilding(UnitState unit)
+    {
+        return _buildings
+            .Where(building =>
+                building.FactionId == ContentIds.Factions.PlayerExpedition &&
+                !building.IsDestroyed &&
+                IsCurrentlyObservedByFaction(ContentIds.Factions.PrivateMilitary, building.Position))
+            .OrderBy(building => GetEnemyBuildingPriority(building.Definition.Id))
+            .ThenBy(building => building.Position.DistanceTo(unit.Position))
+            .FirstOrDefault();
+    }
+
+    private static int GetEnemyBuildingPriority(string buildingId)
+    {
+        return buildingId switch
+        {
+            ContentIds.Buildings.ExtractorRefinery => 0,
+            ContentIds.Buildings.PowerPlant => 1,
+            ContentIds.Buildings.Pylon => 1,
+            ContentIds.Buildings.Barracks => 2,
+            ContentIds.Buildings.ColonyHub => 3,
+            _ => 4
+        };
     }
 
     private void TryUnitAttackBuilding(UnitState unit, BuildingState target)

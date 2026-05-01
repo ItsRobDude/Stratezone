@@ -90,8 +90,9 @@ Unit production rule for Level 1:
 
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
-- Barracks add-ons are the preferred unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
-- Current Level 1 mission data exposes Worker, Cadet, and Rifleman training. Guardian and Rover records may exist and mission-start Rovers may be present, but advanced Barracks training stays hidden until a later mission or explicit mission setup enables it.
+- Barracks add-ons are the preferred later unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
+- Current Level 1 mission data exposes Worker, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
+- Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other add-on production by changing mission availability and support buildings deliberately.
 
 Workers are expensive, recruitable, non-combat units. They require player command for construction and repair.
 
@@ -105,7 +106,7 @@ Level 1 should use:
 - Pylon
 - Extractor/Refinery
 - Defense Tower
-- Armory Annex or Vehicle Bay only if the first add-on pass fits the pacing
+- Armory Annex and Vehicle Bay records only as later add-on support; they are not player-buildable in the current Level 1 slice
 - Gun Tower, if the first armed-tower pass is ready
 - Rocket Tower, only if explosive friendly-fire behavior is ready
 
@@ -117,12 +118,11 @@ Tower walls should be an investment. In Level 1, the central choke should be blo
 
 Level 1 player units:
 
-- Worker
-- Cadet
-- Rifleman
-- Guardian as a scenario/start-only support unit if authored into the mission
-- Rover as a scenario/start-only scouting unit if authored into the mission
-- Commander
+- one Worker at mission start, with more Workers trainable
+- Cadet and Rifleman trainable from a powered Barracks
+- one Guardian at mission start as scenario support; no extra Guardian training in Level 1
+- one provided Rover at mission start for scouting; no extra Rover training in Level 1
+- one Commander at mission start; no Commander training in Level 1
 
 Level 1 tank rule:
 
@@ -155,6 +155,12 @@ The enemy should:
 - rebuild destroyed structures when it has resources
 - spend limited resources to rebuild and produce
 - attack slowly with small committed groups of 1-3 units instead of sending the whole base at once
+- choose between mission-available combat troops it can afford and satisfy requirements for, not hardcode a single unit type
+- train Cadets and Riflemen in Level 1, while Guardian and Rover production stay locked until a later mission explicitly enables their add-ons
+- send a limited scout/rally movement before the first committed attack if it has a suitable unit
+- let badly damaged committed attackers retreat toward base when a base still exists
+- delay new attack commitment briefly after a committed group is wiped
+- keep a small internal rival-officer memory of visible battlefield facts, without surfacing enemy adaptation text or hidden-plan alerts
 - keep some defenders near its base so scouting finds a defended position, not an empty spawn point
 - reveal intent through visible units, combat, scouting, and power/building state rather than omniscient HUD messages
 

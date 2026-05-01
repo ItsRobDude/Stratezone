@@ -10,6 +10,7 @@ public sealed partial class RtsSimulation
     private const float EnemyIncomeMultiplier = 0.75f;
     internal const float EnemyTrainTimeMultiplier = 1.25f;
     private const float FogCellSize = 64.0f;
+    private const float EnemyRegroupDelaySeconds = 18.0f;
 
     public static SimVector2 EnemyHubPosition => EnemyAiMarkers.FirstLanding.HubPosition;
     public static SimVector2 EnemyPowerPlantPosition => EnemyAiMarkers.FirstLanding.PowerPlantPosition;
@@ -24,11 +25,16 @@ public sealed partial class RtsSimulation
     private readonly List<ResourceWellState> _resourceWells = [];
     private readonly List<EnergyWallSegment> _energyWalls = [];
     private readonly List<SimulationEvent> _events = [];
+    private readonly HashSet<string>? _trainableUnitIds;
     private readonly FogOfWarState _playerFog = new(-760, 940, -420, 420, FogCellSize);
     private readonly FogOfWarState _enemyFog = new(-760, 940, -420, 420, FogCellSize);
     private readonly HashSet<int> _hubTankReveals = [];
     private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives = new();
+    private readonly EnemyOfficerState _enemyOfficer = new();
+    private readonly HashSet<int> _knownCommittedEnemyIds = [];
+    private readonly HashSet<int> _knownDestroyedEnemyPowerIds = [];
+    private readonly HashSet<int> _knownWallBlockedEnemyIds = [];
     private float _elapsedSeconds;
     private int _nextEntityId = 1;
 
@@ -38,12 +44,16 @@ public sealed partial class RtsSimulation
         IEnumerable<(string WellId, SimVector2 Position)> resourceWellPlacements,
         int enemyStartingMaterials = 0,
         EnemyAiMarkers? enemyAiMarkers = null,
-        EnemyAiProfileDefinition? enemyAiProfile = null)
+        EnemyAiProfileDefinition? enemyAiProfile = null,
+        IEnumerable<string>? trainableUnitIds = null)
     {
         _catalog = catalog;
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
+        _trainableUnitIds = trainableUnitIds is null
+            ? null
+            : new HashSet<string>(trainableUnitIds, StringComparer.Ordinal);
 
         foreach (var placement in resourceWellPlacements)
         {
@@ -63,6 +73,7 @@ public sealed partial class RtsSimulation
     public MissionState MissionState { get; private set; } = new(MissionStatus.Active, "Objective: establish the outpost.");
     public float ElapsedSeconds => _elapsedSeconds;
     public EnemyAiProfileDefinition EnemyAiProfile => _enemyAi.Profile;
+    public EnemyOfficerState EnemyOfficer => _enemyOfficer;
     public bool EnemyProductionOnline => HasPoweredBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.Barracks) &&
         HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub);
 
@@ -240,8 +251,10 @@ public sealed partial class RtsSimulation
             }
         }
 
+        RecomputeFog();
         RevealTanksForDestroyedHubs();
         RecomputeFog();
+        UpdateEnemyOfficerState();
         UpdateMissionState();
     }
 

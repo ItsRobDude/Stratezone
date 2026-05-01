@@ -59,7 +59,8 @@ First prototype roster:
 - **Barracks add-ons:** Armory Annex unlocks Guardian/explosive tech; Vehicle Bay unlocks Rover/heavy-armor capacity.
 - **Defensive variants:** Gun Tower and Rocket Tower are preferred in-place upgrades from Defense Towers and keep wall-anchor behavior while adding weaponry.
 - **Support and siege:** Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records but are not required for the first small mission unless pacing earns them.
-- **Units:** Worker, Rifleman, Guardian, Rover, Commander.
+- **Units:** Worker, Cadet, Rifleman, Guardian, Rover, Commander.
+- **Current Level 1 training:** Worker, Cadet, and Rifleman are trainable by the player and available to the first enemy AI. Guardian, Rover, and Commander can be authored into the scenario, but the player cannot train more of them in Level 1.
 
 For this pass, placeholder shapes are acceptable, art direction can wait until gameplay works, and no story cutscenes are required.
 

@@ -24,6 +24,7 @@ Current greybox demo controls:
 - Right click an enemy unit or building with selected combat units to attack it.
 - Select one or more Workers, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
 - Select a powered Barracks, then press `Q` Worker, `W` Cadet, or `E` Rifleman to queue Level 1 training.
+- The Level 1 player starts with one Guardian, one Commander, one Worker, and one provided Rover; Guardian, Rover, and Commander are not trainable in this mission.
 - Select a Defense Tower, then press `G` Gun Tower or `T` Rocket Tower to upgrade in place.
 - The command panel mirrors the same build, train, and upgrade actions with disabled-state tooltips.
 - Mouse wheel zooms. `WASD` or arrow keys pan.

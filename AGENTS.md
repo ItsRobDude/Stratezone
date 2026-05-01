@@ -34,6 +34,8 @@ Current locked vision choices:
 - Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records, but should only enter missions when their support/siege roles improve tactical clarity.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Level 1 enemy pressure should be slow and readable: small groups of 1-3 attackers, some defenders left at base, and no omniscient HUD warnings about hidden enemy plans.
+- Enemy rival-officer behavior should stay internal and mission-local: it may remember events and adjust actions, but it must not create player-facing adaptation text or alerts.
+- Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Worker, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Worker, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.

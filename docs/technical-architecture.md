@@ -377,8 +377,11 @@ Early requirements:
 - patrols or guards
 - attack priority for visible player structures
 - retreat or regroup only if easy
+- a small internal rival-officer state for memory-shaped behavior, not player-facing adaptation narration
 
 Do not build skirmish-grade AI before the authored mission loop works. Level 1 should run slow and readable: small groups attack, some units defend the enemy base, and all enemy construction/production spends resources.
+
+The rival-officer layer is not a full character simulation. It should track a few mission-local facts, such as power strikes, wall blocks, wiped attack groups, exposed Commander sightings, scouting, and retreats. It may adjust target choice, regroup timing, or production weights, but it must not announce hidden enemy strategic changes to the player. The player should infer adaptation from visible enemy actions and scouted battlefield state.
 
 ## Content Data
 

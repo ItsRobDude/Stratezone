@@ -180,6 +180,10 @@ Acceptance checks:
 - infrastructure strikes matter in at least one mission route
 - scouting reveals useful tactical information
 - Cadet, Rifleman, Guardian, Rover, Commander, and tank roles are distinct
+- Level 1 starts the player with one Worker, one Guardian, one Rover, and one Commander, while only Worker, Cadet, and Rifleman are trainable
+- first enemy AI production can choose between Level 1-available combat troops based on resources and requirements
+- enemy can scout/rally before first pressure, retreat damaged attackers, and regroup after a wiped attack group
+- rival-officer memory stays internal and does not add adaptation alerts or hidden-plan UI text
 - troop train times vary by unit, with more expensive or heavier units generally taking longer
 - explosive friendly fire works if explosive units are present
 - normal gunfire does not friendly-fire

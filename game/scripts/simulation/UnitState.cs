@@ -30,7 +30,10 @@ public sealed class UnitState
     public int? TargetBuildingEntityId { get; internal set; }
     public bool IsBlockedByEnergyWall { get; internal set; }
     public bool IsEnemyAttackCommitted { get; internal set; }
+    public bool IsEnemyScout { get; internal set; }
+    public bool IsEnemyRetreating { get; internal set; }
     public bool IsDestroyed => Health <= 0.0f;
+    internal float HealthRatio => Definition.Health <= 0 ? 0.0f : Health / Definition.Health;
 
     internal SimVector2? CurrentWaypoint => CurrentWaypointIndex < _pathWaypoints.Count
         ? _pathWaypoints[CurrentWaypointIndex]

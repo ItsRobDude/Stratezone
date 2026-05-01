@@ -1,3 +1,5 @@
+using Stratezone.Simulation.Content;
+
 namespace Stratezone.Simulation;
 
 public sealed partial class RtsSimulation
@@ -39,6 +41,17 @@ public sealed partial class RtsSimulation
     private ProductionValidation ValidateUnitProductionForFaction(string factionId, string unitId, int? producerBuildingEntityId, float availableMaterials)
     {
         var unit = _catalog.GetUnit(unitId);
+
+        if (_trainableUnitIds is not null && !_trainableUnitIds.Contains(unit.Id))
+        {
+            return new ProductionValidation(
+                false,
+                $"{unit.DisplayName} is not trainable in this mission.",
+                null,
+                null,
+                "sim.production.not_trainable",
+                SimulationMessage.Args(("unitId", unit.Id), ("unit", unit.DisplayName)));
+        }
 
         if (unit.AllowedByBuildingId is null || unit.SpawnBuildingId is null)
         {
@@ -132,6 +145,59 @@ public sealed partial class RtsSimulation
             producer,
             "sim.production.can_train",
             SimulationMessage.Args(("unitId", unit.Id), ("unit", unit.DisplayName)));
+    }
+
+    internal UnitDefinition? SelectEnemyProductionUnit()
+    {
+        var candidates = CandidateEnemyProductionUnits().ToArray();
+        if (candidates.Length == 0)
+        {
+            return null;
+        }
+
+        return candidates
+            .OrderByDescending(ScoreEnemyProductionCandidate)
+            .ThenByDescending(unit => unit.Cost)
+            .First();
+    }
+
+    private IEnumerable<UnitDefinition> CandidateEnemyProductionUnits()
+    {
+        var unitIds = _trainableUnitIds ?? _catalog.Units.Keys;
+        foreach (var unitId in unitIds)
+        {
+            var unit = _catalog.GetUnit(unitId);
+            if (!unit.CanAttack)
+            {
+                continue;
+            }
+
+            if (ValidateUnitProductionForFaction(ContentIds.Factions.PrivateMilitary, unit.Id, null, EnemyMaterials).CanQueue)
+            {
+                yield return unit;
+            }
+        }
+    }
+
+    private int CountEnemyUnitsAndOrders(string unitId)
+    {
+        return _units.Count(unit =>
+                unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+                unit.Definition.Id == unitId &&
+                !unit.IsDestroyed) +
+            _productionOrders.Count(order =>
+                order.FactionId == ContentIds.Factions.PrivateMilitary &&
+                order.UnitId == unitId);
+    }
+
+    private float ScoreEnemyProductionCandidate(UnitDefinition unit)
+    {
+        return EstimateCombatValue(unit) - (CountEnemyUnitsAndOrders(unit.Id) * 80.0f);
+    }
+
+    private static float EstimateCombatValue(UnitDefinition unit)
+    {
+        return unit.Health + (unit.AttackDamage * MathF.Max(1.0f, unit.AttackRange) / MathF.Max(0.1f, unit.AttackCooldown));
     }
 
     private void TickProduction(float deltaSeconds)

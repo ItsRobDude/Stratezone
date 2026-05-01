@@ -306,7 +306,8 @@ public sealed class ContentCatalog
             GetOptionalString(profile, "power_plant_marker") ?? EnemyAiProfileDefinition.Default.PowerPlantMarkerId,
             GetOptionalString(profile, "barracks_marker") ?? EnemyAiProfileDefinition.Default.BarracksMarkerId,
             GetOptionalString(profile, "extractor_marker") ?? EnemyAiProfileDefinition.Default.ExtractorMarkerId,
-            GetOptionalString(profile, "defense_tower_marker") ?? EnemyAiProfileDefinition.Default.DefenseTowerMarkerId);
+            GetOptionalString(profile, "defense_tower_marker") ?? EnemyAiProfileDefinition.Default.DefenseTowerMarkerId,
+            GetOptionalString(profile, "rally_marker") ?? EnemyAiProfileDefinition.Default.RallyMarkerId);
     }
 
     private static SimVector2 LoadVector(JsonElement record)

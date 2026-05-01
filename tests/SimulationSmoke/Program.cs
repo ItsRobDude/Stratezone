@@ -19,7 +19,11 @@ Assert(cadetDefinition.Cost < riflemanDefinition.Cost, "Cadet costs less than Ri
 Assert(cadetDefinition.Health < riflemanDefinition.Health, "Cadet has less health than Rifleman");
 Assert(cadetDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Cadet deals less damage than Rifleman");
 Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Worker) && mission.AvailableUnitIds.Contains(ContentIds.Units.Cadet) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
-Assert(!mission.AvailableUnitIds.Contains(ContentIds.Units.Guardian) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Rover), "mission data hides advanced Barracks training for Level 1");
+Assert(!mission.AvailableUnitIds.Contains(ContentIds.Units.Guardian) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Rover) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Commander), "mission data hides Level 1 scenario-only units from training");
+Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Guardian) == 1, "Level 1 starts the player with one Guardian");
+Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Commander) == 1, "Level 1 starts the player with one Commander");
+Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Worker) == 1, "Level 1 starts the player with one Worker");
+Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rover) == 1, "Level 1 starts the player with one provided Rover");
 
 var simulation = new RtsSimulation(
     catalog,
@@ -89,6 +93,7 @@ var blockedEnemy = wallSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.
 TickFor(wallSimulation, 5.0f);
 Assert(blockedEnemy.IsBlockedByEnergyWall, "enemy pressure recognizes a blocking energy wall");
 Assert(blockedEnemy.TargetBuildingEntityId == firstTower.Building?.EntityId || blockedEnemy.TargetBuildingEntityId == secondTower.Building?.EntityId, "blocked enemy targets a wall anchor");
+Assert(wallSimulation.EnemyOfficer.WallBlocksEncountered == 1, "enemy officer internally remembers a wall block without spamming repeat counts");
 TickFor(wallSimulation, 70.0f);
 Assert(wallSimulation.EnergyWalls.Count == 0, "destroying a wall anchor drops the energy wall segment");
 
@@ -146,7 +151,31 @@ TickFor(enemyBaseSimulation, 0.1f);
 Assert(enemyBaseSimulation.ProductionOrders.Count == 1, "enemy base queues production from powered Barracks");
 Assert(enemyBaseSimulation.EnemyMaterials <= 350, "enemy production and construction spend resources when queued");
 TickFor(enemyBaseSimulation, 13.0f);
-Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Cadet), "enemy production spawns trained Cadets from its base");
+Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman), "enemy production can choose Riflemen from its base when resources allow");
+
+var lowResourceEnemySimulation = new RtsSimulation(catalog, startingMaterials, [], 75);
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+TickFor(lowResourceEnemySimulation, 0.1f);
+Assert(lowResourceEnemySimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Cadet), "enemy production can choose Cadets when resources are too low for Riflemen");
+
+var enabledGuardianEnemySimulation = new RtsSimulation(
+    catalog,
+    startingMaterials,
+    [],
+    500,
+    null,
+    null,
+    [ContentIds.Units.Cadet, ContentIds.Units.Rifleman, ContentIds.Units.Guardian]);
+enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, RtsSimulation.EnemyBarracksPosition + new SimVector2(0, 80), ContentIds.Factions.PrivateMilitary);
+TickFor(enabledGuardianEnemySimulation, 0.1f);
+Assert(enabledGuardianEnemySimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Guardian), "enemy production can choose a later enabled Guardian when resources and add-ons allow it");
 
 var playerProductionSimulation = new RtsSimulation(catalog, 2000, []);
 playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -165,6 +194,16 @@ Assert(playerProductionSimulation.DrainEvents().Any(item => item.MessageKey == "
 Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "Guardian training requires powered Armory Annex");
 playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));
 Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "powered Armory Annex unlocks Guardian training");
+
+var levelOneProductionSimulation = new RtsSimulation(catalog, 3000, [], 0, null, null, mission.AvailableUnitIds);
+levelOneProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+Assert(levelOneProductionSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-220, 0)).Success, "Level 1 production test places power");
+var levelOneBarracks = levelOneProductionSimulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, new SimVector2(-20, 0));
+Assert(levelOneBarracks.Success, levelOneBarracks.Message);
+levelOneProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));
+Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, levelOneBarracks.Building!.EntityId).Success, "Level 1 mission rules block training extra Guardians even if an Armory Annex exists");
+Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Rover, levelOneBarracks.Building.EntityId).Success, "Level 1 mission rules block training extra Rovers");
+Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Commander, levelOneBarracks.Building.EntityId).Success, "Level 1 mission rules block training extra Commanders");
 
 var unpoweredProductionSimulation = new RtsSimulation(catalog, 1000, []);
 unpoweredProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -196,6 +235,47 @@ var enemyBuilding = playerCombatSimulation.AddStartingBuilding(ContentIds.Buildi
 playerCombatSimulation.CommandUnitAttackBuilding(playerRifleman.EntityId, enemyBuilding.EntityId);
 TickFor(playerCombatSimulation, 3.0f);
 Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
+
+var enemyPrioritySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-210, -120));
+var priorityExtractor = enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(-160, -120));
+enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(-120, -120));
+enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+var priorityEnemy = enemyPrioritySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(-80, -120));
+TickFor(enemyPrioritySimulation, 0.2f);
+Assert(priorityEnemy.TargetBuildingEntityId == priorityExtractor.EntityId, "enemy target priority favors visible Extractor before base cracking");
+
+var commanderPrioritySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+commanderPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+commanderPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+var exposedCommander = commanderPrioritySimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(520, 120));
+var commanderHunter = commanderPrioritySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(600, 120));
+TickFor(commanderPrioritySimulation, 0.2f);
+Assert(commanderPrioritySimulation.EnemyOfficer.CommanderSighted, "enemy officer internally remembers when the Commander is visible");
+Assert(commanderHunter.TargetUnitEntityId == exposedCommander.EntityId, "enemy target priority can punish an exposed visible Commander");
+
+var retreatSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+var retreatingEnemy = retreatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(80, 120));
+TickFor(retreatSimulation, 0.2f);
+retreatingEnemy.ApplyDamage(34, "ballistic");
+var retreatDistanceBefore = retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition);
+TickFor(retreatSimulation, 1.0f);
+Assert(retreatingEnemy.IsEnemyRetreating, "badly damaged committed enemies can retreat toward base");
+Assert(retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition) < retreatDistanceBefore, "retreating enemy moves closer to its base");
+
+var regroupSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+var doomedAttacker = regroupSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(80, 120));
+TickFor(regroupSimulation, 0.2f);
+Assert(doomedAttacker.IsEnemyAttackCommitted, "enemy attacker is committed before the regroup test");
+doomedAttacker.ApplyDamage(999, "ballistic");
+TickFor(regroupSimulation, 0.2f);
+Assert(regroupSimulation.EnemyOfficer.AttackGroupsLost == 1, "enemy officer internally remembers a wiped committed attack group");
+Assert(regroupSimulation.EnemyOfficer.NextAttackAllowedSeconds > regroupSimulation.ElapsedSeconds, "wiped attack group creates a regroup delay");
 
 var missionLossSimulation = new RtsSimulation(catalog, startingMaterials, []);
 missionLossSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
@@ -292,7 +372,8 @@ var pacedMissionSimulation = new RtsSimulation(
     missionWellPlacements,
     mission.EnemyStartingResources[ContentIds.Resources.Materials],
     EnemyAiMarkers.FromMission(mission),
-    mission.EnemyAiProfile);
+    mission.EnemyAiProfile,
+    mission.AvailableUnitIds);
 foreach (var entity in mission.StartingEntities)
 {
     var position = missionMarkers[entity.MarkerId] + entity.Offset;
@@ -308,6 +389,11 @@ foreach (var entity in mission.StartingEntities)
 
 TickFor(pacedMissionSimulation, mission.EnemyAiProfile.FirstAttackDelaySeconds - 5.0f);
 Assert(!pacedMissionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.TargetBuildingEntityId is not null), "mission AI profile delays first enemy pressure");
+Assert(pacedMissionSimulation.EnemyOfficer.ScoutDispatched, "mission AI can dispatch a scout before the first attack");
+Assert(pacedMissionSimulation.Units.Any(unit =>
+    unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+    unit.IsEnemyScout &&
+    !unit.IsEnemyAttackCommitted), "scouting does not commit the whole enemy base to an attack");
 TickFor(pacedMissionSimulation, 20.0f);
 Assert(pacedMissionSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary) ||
     pacedMissionSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman) > 0,

@@ -219,6 +219,13 @@ Tunable placeholders:
 - building explosive resistance: negative, while building ballistic resistance stays high enough to protect the siege ratio
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance until playtests prove the base cracks too slowly or too quickly
 
+Mission availability contract:
+
+- Mission `available_unit_ids` is the trainable-unit truth for the slice, not just a UI hint.
+- Level 1 trains Worker, Cadet, and Rifleman only. The player may start with a Guardian, Rover, and Commander, but cannot train more of those units in Level 1.
+- Enemy AI production uses the same mission trainable-unit list and should choose between valid affordable combat units instead of hardcoding one unit type.
+- Later missions may enable Guardian or Rover production by exposing those units in mission data and providing the required powered Barracks add-ons.
+
 Acceptance checks:
 
 - a Rover cannot shoot
@@ -366,6 +373,11 @@ Prototype behavior:
 - Level 1 enemy is slower than normal baseline
 - enemy competes for the central well
 - Level 1 attacks commit only a small group of 1-3 units and leave defenders at the enemy base
+- enemy can dispatch a small scout/rally movement before the first committed attack
+- damaged committed attackers may retreat toward base instead of fighting to the last hit point
+- wiped attack groups create an internal regroup delay before the next attack commitment
+- a small internal rival-officer state may remember battlefield facts such as lost attack groups, exposed Commander sightings, power strikes, wall blocks, scouting, and retreats
+- rival-officer state may tune enemy behavior only through visible simulation actions; it must not produce player-facing adaptation text or omniscient alerts
 - normal player HUD must not announce hidden enemy production, rebuilding, or attack planning
 - player-facing alerts are allowed for player-known events: enemy spotted, own assets under attack, own power loss, construction complete, and training complete
 
@@ -384,4 +396,6 @@ Acceptance checks:
 - enemy can pressure the contested well
 - destroying an enemy pylon can disable an enemy tower path
 - enemy attack commitment is capped to the mission profile instead of sending the whole enemy base
+- enemy target selection favors visible tactical targets before simple Colony Hub base-cracking
+- exposed Commander sightings are internal AI knowledge only and do not create adaptation alerts
 - alerts are fog-safe and do not reveal hidden enemy intent

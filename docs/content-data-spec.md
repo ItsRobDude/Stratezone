@@ -147,6 +147,7 @@ Prototype rules:
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.
 - `unit_guardian` should require `building_armory_annex` where Barracks add-ons are enabled by the mission.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
+- In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
 - `unit_tank` is not normally trainable in Level 1 but may be revealed from a destroyed Colony Hub. Its ballistic resistance should be high enough that Riflemen are a bad answer to heavy armor.
 - Troop training time varies by unit. More expensive or heavier units should generally take longer.
 - Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
@@ -467,7 +468,10 @@ Prototype rules:
 - includes an enemy pylon weak point that can disable an enemy tower route
 - includes authored mission markers for base positions, wells, AI build slots, rally points, and choke points
 - includes an enemy AI profile for first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, pressure slowdown, and train-time multiplier
-- uses `available_unit_ids` and `available_building_ids` to hide or lock mission-inappropriate commands without deleting future content records
+- uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission
+- uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records
+- starts the player with exactly one `unit_worker`, one `unit_guardian`, one `unit_rover`, and one `unit_commander`
+- exposes `unit_worker`, `unit_cadet`, and `unit_rifleman` as Level 1 trainable units; `unit_guardian`, `unit_rover`, and `unit_commander` stay scenario/start-only for Level 1
 - wins by destroying all required enemy targets
 - loses if the Commander dies
 - destroying either Colony Hub reveals a tank without changing win/loss by itself

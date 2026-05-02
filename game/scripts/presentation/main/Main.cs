@@ -419,11 +419,11 @@ public partial class Main : Node2D
     {
         var index = keycode switch
         {
-            Key.Q => 0,
-            Key.W => 1,
-            Key.E => 2,
-            Key.R => 3,
-            Key.T => 4,
+            Key.W => 0,
+            Key.C => 1,
+            Key.R => 2,
+            Key.G => 3,
+            Key.V => 4,
             _ => -1
         };
 

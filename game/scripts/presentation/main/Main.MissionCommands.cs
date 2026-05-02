@@ -30,11 +30,11 @@ public partial class Main
     {
         return unitId switch
         {
-            ContentIds.Units.Worker => "Q",
-            ContentIds.Units.Cadet => "W",
-            ContentIds.Units.Rifleman => "E",
-            ContentIds.Units.Guardian => "R",
-            ContentIds.Units.Rover => "T",
+            ContentIds.Units.Worker => "W",
+            ContentIds.Units.Cadet => "C",
+            ContentIds.Units.Rifleman => "R",
+            ContentIds.Units.Guardian => "G",
+            ContentIds.Units.Rover => "V",
             _ => "?"
         };
     }

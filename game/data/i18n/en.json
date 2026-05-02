@@ -62,6 +62,7 @@
     "sim.need_materials": "Need {amount} materials.",
     "sim.placement.blocked_by_building": "Blocked by {building}.",
     "sim.placement.extractor_requires_well": "Extractor must be placed on an open resource well.",
+    "sim.placement.resource_well_reserved": "Resource wells are reserved for Extractors.",
     "sim.placement.requires_adjacent_building": "{building} must be built adjacent to {requiredBuilding}.",
     "sim.placement.requires_powered_support": "Must be placed inside powered support.",
     "sim.placement.legal": "Placement legal.",

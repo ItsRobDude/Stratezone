@@ -107,6 +107,7 @@ Acceptance checks:
 - grouped move and attack commands keep units in a small spread formation instead of stacking them on one point
 - bottom action bar exposes available building and troop commands with costs and detail hints
 - attacks have a small readable flash or direction cue so damage is visible before final art
+- destroyed building outlines are hidden from the active playfield
 - HUD, command, validation, and objective text added after the i18n foundation uses localization keys
 - buildings and units have stable IDs
 - unit attack, movement, health, and resistance values come from content data
@@ -121,6 +122,7 @@ Acceptance checks:
 - unpowered Barracks visibly stops providing its function
 - unpowered Barracks add-ons visibly stop providing unlock/capacity effects
 - Extractor/Refinery generates income only on a resource well
+- non-extractor buildings cannot be placed over open resource wells
 - Defense Towers can create a blocking wall link
 - Defense Towers can upgrade in place into Gun/Rocket Tower variants without dropping a powered wall link
 - fog starts black outside known areas
@@ -142,6 +144,7 @@ Acceptance checks:
 - powered Barracks accepts a short serial troop queue and reports when that queue is full
 - player can use or bypass Barracks add-ons according to Level 1 pacing rules
 - central contested well exists
+- destroyed Extractor/Refinery buildings release their well claim so the contested well can be retaken
 - mission setup uses authored data for starting entities, wells, and enemy AI build slots
 - enemy pressure pacing comes from a mission AI profile rather than scene-only timing
 - enemy is visible at or near fog edge
@@ -153,6 +156,7 @@ Acceptance checks:
 - Rover scouts but cannot shoot
 - Rover can run over enemy infantry if that behavior is included
 - all required enemy targets destroyed triggers win
+- destroyed Barracks and Power Plants release same-faction Cadets before victory/loss checks finish
 - destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself, and the reveal-only tank does not block victory
 
 Evidence:

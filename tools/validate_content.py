@@ -23,6 +23,7 @@ REQUIRED_I18N_KEYS = {
     "sim.need_materials",
     "sim.placement.blocked_by_building",
     "sim.placement.extractor_requires_well",
+    "sim.placement.resource_well_reserved",
     "sim.placement.requires_adjacent_building",
     "sim.placement.requires_powered_support",
     "sim.placement.legal",

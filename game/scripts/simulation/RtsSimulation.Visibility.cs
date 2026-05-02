@@ -39,6 +39,46 @@ public sealed partial class RtsSimulation
         }
     }
 
+    private void RevealCadetsForDestroyedBuildings()
+    {
+        foreach (var building in _buildings.Where(building =>
+            building.IsDestroyed &&
+            !_buildingCadetReveals.Contains(building.EntityId)).ToArray())
+        {
+            var cadetCount = GetDestroyedBuildingCadetCount(building.Definition.Id);
+            if (cadetCount <= 0)
+            {
+                continue;
+            }
+
+            _buildingCadetReveals.Add(building.EntityId);
+            foreach (var offset in GetDestroyedBuildingCadetOffsets(cadetCount))
+            {
+                AddUnit(ContentIds.Units.Cadet, building.FactionId, building.Position + offset);
+            }
+        }
+    }
+
+    private static int GetDestroyedBuildingCadetCount(string buildingId)
+    {
+        return buildingId switch
+        {
+            ContentIds.Buildings.Barracks => 3,
+            ContentIds.Buildings.PowerPlant => 1,
+            _ => 0
+        };
+    }
+
+    private static IEnumerable<SimVector2> GetDestroyedBuildingCadetOffsets(int count)
+    {
+        var spacing = 34.0f;
+        for (var index = 0; index < count; index++)
+        {
+            var column = index - ((count - 1) * 0.5f);
+            yield return new SimVector2(column * spacing, 44.0f);
+        }
+    }
+
     private void UpdateMissionState()
     {
         if (MissionState.Status != MissionStatus.Active)

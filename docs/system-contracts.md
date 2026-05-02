@@ -101,8 +101,10 @@ Owns:
 Prototype behavior:
 
 - wells are scarce and can deplete
+- open wells are reserved for Extractor/Refinery placement; other buildings cannot cover them
 - active Extractor/Refinery buildings trickle income
 - destroyed or unpowered extractors stop income
+- destroyed extractors release their resource well claim so either side can rebuild on the well
 - the enemy spends from limited resources too
 - Level 1 includes one contested central well
 
@@ -115,7 +117,9 @@ Tunable placeholders:
 Acceptance checks:
 
 - income stops when a well depletes
+- non-extractor buildings cannot be placed over an open resource well
 - income stops when the extractor is destroyed or unpowered
+- a destroyed extractor no longer blocks placement on that well
 - spending cannot go below zero
 
 ## Worker System
@@ -221,6 +225,7 @@ Tunable placeholders:
 - Heavy Tank ballistic resistance: about 0.8 so Riflemen are nearly useless against heavy armor
 - building explosive resistance: negative, while building ballistic resistance stays high enough to protect the siege ratio
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance until playtests prove the base cracks too slowly or too quickly
+- destroyed Barracks and Power Plants release a small same-faction Cadet group before final mission-state evaluation
 
 Mission availability contract:
 

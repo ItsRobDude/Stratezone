@@ -62,7 +62,7 @@ var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVecto
 Assert(pylon.Success, pylon.Message);
 Assert(pylon.Building?.IsPowered == true, "pylon is powered by the plant");
 Assert(simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-430, 170)).IsLegal, "powered pylons can daisy chain to new pylons");
-Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(-350, 100)).IsLegal, "pylon extends powered placement");
+Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(-350, 80)).IsLegal, "pylon extends powered placement");
 
 var extractor = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(-350, 170));
 Assert(extractor.Success, extractor.Message);
@@ -75,6 +75,21 @@ var overlapSimulation = new RtsSimulation(
 overlapSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
 overlapSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-160, 0));
 Assert(overlapSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, new SimVector2(70, 0)).IsLegal, "extractor placement accepts footprint overlap with resource well");
+var barracksOnWell = overlapSimulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(70, 0));
+Assert(!barracksOnWell.IsLegal, "non-extractor buildings cannot be placed on open resource wells");
+Assert(barracksOnWell.MessageKey == "sim.placement.resource_well_reserved", "resource well placement block returns a stable message key");
+
+var reclaimedWellSimulation = new RtsSimulation(
+    catalog,
+    2000,
+    [("well_first_landing_central", new SimVector2(0, 0))]);
+reclaimedWellSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+reclaimedWellSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-160, 0));
+var claimedExtractor = reclaimedWellSimulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(0, 0));
+Assert(claimedExtractor.Success, claimedExtractor.Message);
+Assert(!reclaimedWellSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, new SimVector2(0, 0)).IsLegal, "live Extractor keeps the well claimed");
+claimedExtractor.Building!.ApplyDamage(9999, "explosive");
+Assert(reclaimedWellSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, new SimVector2(0, 0)).IsLegal, "destroyed Extractor releases the well for capture");
 
 var materialsBeforeIncome = simulation.Materials;
 simulation.Tick(1.0f);
@@ -371,6 +386,23 @@ var finalEnemy = missionWinSimulation.AddUnit(ContentIds.Units.Rifleman, Content
 finalEnemy.ApplyDamage(999, "ballistic");
 missionWinSimulation.Tick(0.1f);
 Assert(missionWinSimulation.MissionState.Status == MissionStatus.Won, "destroying all enemy targets triggers mission win");
+
+var destroyedEnemyBarracksSimulation = new RtsSimulation(catalog, startingMaterials, []);
+destroyedEnemyBarracksSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var destroyedEnemyBarracks = destroyedEnemyBarracksSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(90, 0), ContentIds.Factions.PrivateMilitary);
+destroyedEnemyBarracks.ApplyDamage(9999, "explosive");
+destroyedEnemyBarracksSimulation.Tick(0.1f);
+Assert(destroyedEnemyBarracksSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Cadet && !unit.IsDestroyed) == 3, "destroyed enemy Barracks releases three Cadets");
+Assert(destroyedEnemyBarracksSimulation.MissionState.Status == MissionStatus.Active, "destroyed enemy Barracks Cadets must be cleared before victory");
+destroyedEnemyBarracksSimulation.Tick(1.0f);
+Assert(destroyedEnemyBarracksSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Cadet && !unit.IsDestroyed) == 3, "destroyed Barracks Cadets spawn only once");
+
+var destroyedPlayerPowerSimulation = new RtsSimulation(catalog, startingMaterials, []);
+destroyedPlayerPowerSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var destroyedPlayerPower = destroyedPlayerPowerSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
+destroyedPlayerPower.ApplyDamage(9999, "explosive");
+destroyedPlayerPowerSimulation.Tick(0.1f);
+Assert(destroyedPlayerPowerSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Cadet && !unit.IsDestroyed) == 1, "destroyed player Power Plant releases one player Cadet");
 
 var hubRevealWinSimulation = new RtsSimulation(catalog, startingMaterials, []);
 hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));

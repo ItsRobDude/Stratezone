@@ -600,8 +600,9 @@ public partial class Main : Node2D
                 view.UpdateFromState(building);
             }
 
-            view.Visible = building.FactionId != ContentIds.Factions.PrivateMilitary ||
-                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position);
+            view.Visible = !building.IsDestroyed &&
+                (building.FactionId != ContentIds.Factions.PrivateMilitary ||
+                    _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position));
         }
 
         while (_resourceWellViews.Count < _simulation.ResourceWells.Count)

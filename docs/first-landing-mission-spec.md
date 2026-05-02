@@ -76,6 +76,8 @@ Level 1 should include:
 - one contested central well that both sides care about
 
 Extractors/Refineries should have normal building durability, with enough durability that the player can react before losing one instantly.
+Open resource wells are reserved for Extractor/Refinery placement; other buildings should not be placeable over them.
+When an Extractor/Refinery is destroyed, its resource well becomes open again; a destroyed building wreck or silhouette must not keep the well claimed.
 
 ## Build and Production Rules
 
@@ -85,6 +87,8 @@ Buildings need power immediately to function. Power affects both:
 
 - where the player can reasonably expand
 - whether powered buildings remain active
+
+Destroyed buildings should disappear from the active playfield rather than leaving blocking-looking footprint outlines. Barracks and Power Plants release a small same-faction Cadet group when destroyed, so cracking either side's infrastructure can still produce a short closeout fight.
 
 Unit production rule for Level 1:
 

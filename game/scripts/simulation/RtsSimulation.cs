@@ -29,6 +29,7 @@ public sealed partial class RtsSimulation
     private readonly FogOfWarState _playerFog = new(-760, 940, -420, 420, FogCellSize);
     private readonly FogOfWarState _enemyFog = new(-760, 940, -420, 420, FogCellSize);
     private readonly HashSet<int> _hubTankReveals = [];
+    private readonly HashSet<int> _buildingCadetReveals = [];
     private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives = new();
     private readonly EnemyOfficerState _enemyOfficer = new();
@@ -148,6 +149,11 @@ public sealed partial class RtsSimulation
             return new PlacementValidation(false, "Extractor must be placed on an open resource well.", null, "sim.placement.extractor_requires_well");
         }
 
+        if (BlocksOpenResourceWell(definition, position))
+        {
+            return new PlacementValidation(false, "Resource wells are reserved for Extractors.", null, "sim.placement.resource_well_reserved");
+        }
+
         if (!IsAdjacentRequirementMet(factionId, definition, position))
         {
             var required = _catalog.GetBuilding(definition.RequiresAdjacentBuildingId!);
@@ -258,6 +264,7 @@ public sealed partial class RtsSimulation
         }
 
         RecomputeFog();
+        RevealCadetsForDestroyedBuildings();
         RevealTanksForDestroyedHubs();
         RecomputeFog();
         UpdateEnemyOfficerState();
@@ -560,11 +567,34 @@ public sealed partial class RtsSimulation
 
         return _resourceWells
             .Where(well => well.Definition.ResourceId == definition.ExtractorResourceId)
-            .Where(well => well.ExtractorEntityId is null)
+            .Where(IsResourceWellOpen)
             .Where(well => !well.IsDepleted)
             .Where(well => well.Position.DistanceTo(position) <= ResourceWellCoreRadius + ToWorldRadius(definition.FootprintRadius))
             .OrderBy(well => well.Position.DistanceTo(position))
             .FirstOrDefault();
+    }
+
+    private bool BlocksOpenResourceWell(BuildingDefinition definition, SimVector2 position)
+    {
+        if (definition.ProvidesResourceExtraction)
+        {
+            return false;
+        }
+
+        var buildingRadius = ToWorldRadius(definition.FootprintRadius);
+        return _resourceWells
+            .Where(well => !well.IsDepleted)
+            .Where(IsResourceWellOpen)
+            .Any(well => well.Position.DistanceTo(position) <= ResourceWellCoreRadius + buildingRadius);
+    }
+
+    private bool IsResourceWellOpen(ResourceWellState well)
+    {
+        return well.ExtractorEntityId is null ||
+            !_buildings.Any(building =>
+                building.EntityId == well.ExtractorEntityId.Value &&
+                building.ResourceWellId == well.Definition.Id &&
+                !building.IsDestroyed);
     }
 
     private bool IsAdjacentRequirementMet(string factionId, BuildingDefinition definition, SimVector2 position)

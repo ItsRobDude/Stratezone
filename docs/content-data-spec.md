@@ -386,6 +386,8 @@ Prototype rules:
 - First Landing uses one limited resource.
 - Wells are scarce, trickle income, and can deplete.
 - Extractor/Refinery income stops when the well depletes, the building is unpowered, or the building is destroyed.
+- Open resource wells are reserved for Extractor/Refinery placement; non-extractor buildings should not cover usable wells.
+- Destroyed Extractor/Refinery buildings release their well claim; wrecks must not prevent a new Extractor from being placed on the same well.
 
 ## Map Definition
 

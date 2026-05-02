@@ -48,7 +48,7 @@ public partial class GreyboxBuilding : Node2D
 
     public override void _Draw()
     {
-        if (_state is null)
+        if (_state is null || _state.IsDestroyed)
         {
             return;
         }

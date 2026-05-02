@@ -8,10 +8,12 @@ public sealed class ProductionOrderState
         FactionId = factionId;
         ProducerBuildingEntityId = producerBuildingEntityId;
         RemainingSeconds = remainingSeconds;
+        TotalSeconds = remainingSeconds;
     }
 
     public string UnitId { get; }
     public string FactionId { get; }
     public int ProducerBuildingEntityId { get; }
     public float RemainingSeconds { get; internal set; }
+    public float TotalSeconds { get; }
 }

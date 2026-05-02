@@ -20,7 +20,7 @@ The intended product is:
 
 ## Current Status
 
-The repo is in pre-production with an initial Godot 4 C# scaffold.
+The repo is in pre-production with a playable greybox Godot 4 C# RTS slice.
 
 Current docs in place:
 
@@ -37,7 +37,9 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-The initial `game/` project, placeholder content data, content validation script, and basic greybox unit interaction shell exist. Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. The project compiles and passes a Godot headless smoke check.
+The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, worker-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
+
+Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. Content validation, the Godot C# build, simulation smoke checks, and a Godot headless smoke check pass locally.
 
 The first prototype stack is locked as Godot 4 with C#.
 
@@ -63,7 +65,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - Pylons link power over long distances.
 - Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
-- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
+- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a Medium Tank without changing win/loss conditions by itself; reveal-only tanks do not block destroy-all victory.
 - The first playable target is playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until gameplay works.
 - Explosive friendly fire exists; normal gunfire does not.
 - First-pass combat balance should follow the old-school RTS formula: basic infantry die quickly, base structures take a long time to crack with small arms, armor shrugs off ballistics, and explosives are the siege lane.
@@ -73,38 +75,24 @@ The first prototype stack is locked as Godot 4 with C#.
 
 ## Near-Term Priorities
 
-1. Foundation docs
-   - Decide worker replacement cost relative to basic combat units.
-   - Decide first-pass building footprint/buffer values.
-   - Decide first-pass troop cap values and Barracks add-on unlocks.
-   - Decide whether Level 1 teaches Barracks add-ons directly or starts with one add-on prebuilt.
-   - Decide Level 1 enemy production speed and resource handicap.
-   - Decide the first campaign's mission archetypes.
-   - Decide how much sci-fi utility tech belongs in the first unit roster.
+1. First Landing playability closeout
+   - Prove one complete start-to-win Greybox Demo run.
+   - Prove one Commander-death loss run.
+   - Patch only controls, readability, pacing, data drift, or localization issues that block the existing mission loop.
+   - Keep repair, support buildings, art polish, and wider colony systems deferred unless one directly blocks the closeout.
 
-2. Engine scaffold
+2. Validation and scaffold upkeep
    - Keep Godot .NET and .NET SDK versions documented.
    - Keep the project compiling after each implementation pass.
    - Keep content validation passing as data grows.
-   - Expand validation commands beyond scaffold smoke checks.
+   - Expand automated checks only when they protect deterministic behavior found during playability passes.
 
-3. Greybox First Landing
-   - Build a rough small playable map with placeholder shapes.
-   - Expand camera, selection, and move commands from the current placeholder unit shell.
-   - Implement basic construction.
-   - Add Colony Hub, Barracks, first Barracks add-on rules, Power Plant radius, Pylon linking, Extractor/Refinery, fog of war, Defense Tower wall links, and one enemy pressure event.
+3. Tactical proof follow-up
+   - Tune the enemy pylon weak point, central well pressure, tower-wall route, and attack pacing from playtest evidence.
+   - Decide whether repair is necessary for First Landing or should wait for later tactical identity work.
+   - Add a midlevel twist only after the basic win/loss run is reliably understandable.
 
-4. First combat loop
-   - Add Worker, Cadet, Rifleman, Guardian, Rover, Commander, and same-tech human enemy equivalents.
-   - Add building damage and repair.
-   - Add an enemy infrastructure target.
-
-5. First mission arc
-   - Add destroy-all-enemies objective and win/loss state.
-   - Add one midlevel twist.
-   - Add readable HUD warnings.
-
-6. Release runway
+4. Release runway
    - Keep `docs/release-roadmap.md` current as build tooling appears.
    - Add packaged-build checks before any public demo.
    - Separate prototype completeness from sellable release readiness.
@@ -187,14 +175,14 @@ Systems:
 - enemy raid event
 - basic combat
 - building damage
-- repair
+- repair deferred unless playtesting shows First Landing needs it
 - win/loss conditions
 - at least one non-base-destruction failure criterion
 - on-map commander defend condition
 - enemy rebuild/production from limited resources
 - central contested well
 - enemy pylon weak point that can disable an enemy tower route
-- Colony Hub tank reveal without changing win/loss rules
+- Colony Hub Medium Tank reveal without changing win/loss rules
 - defense tower wall path-blocking
 - HUD objective tracker
 

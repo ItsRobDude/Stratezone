@@ -54,6 +54,7 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `unit_guardian`
 - `unit_rover`
 - `unit_commander`
+- `unit_medium_tank`
 - `unit_tank`
 - `building_colony_hub`
 - `building_barracks`
@@ -103,6 +104,9 @@ Acceptance checks:
 - player can select one unit
 - player can box-select multiple units, if included in the pass
 - player can right-click move selected units
+- grouped move and attack commands keep units in a small spread formation instead of stacking them on one point
+- bottom action bar exposes available building and troop commands with costs and detail hints
+- attacks have a small readable flash or direction cue so damage is visible before final art
 - HUD, command, validation, and objective text added after the i18n foundation uses localization keys
 - buildings and units have stable IDs
 - unit attack, movement, health, and resistance values come from content data
@@ -135,6 +139,7 @@ Acceptance checks:
 - Commander is present, controllable, fragile, and pistol-only
 - Commander death triggers loss
 - player can build power, Barracks, Extractor/Refinery, and defenses
+- powered Barracks accepts a short serial troop queue and reports when that queue is full
 - player can use or bypass Barracks add-ons according to Level 1 pacing rules
 - central contested well exists
 - mission setup uses authored data for starting entities, wells, and enemy AI build slots
@@ -148,7 +153,7 @@ Acceptance checks:
 - Rover scouts but cannot shoot
 - Rover can run over enemy infantry if that behavior is included
 - all required enemy targets destroyed triggers win
-- destroying either Colony Hub reveals a tank without changing win/loss by itself
+- destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself, and the reveal-only tank does not block victory
 
 Evidence:
 
@@ -156,6 +161,7 @@ Evidence:
 - one commander-death loss run
 - notes for any missing or intentionally placeholder behavior
 - localization key coverage for mission result, objective, command, and blocked-action text
+- closeout notes should distinguish verified playable behavior from deferred systems such as repair, final balance, and final art
 
 ## Milestone 3 Checklist: Colony Pressure Pass
 
@@ -179,10 +185,10 @@ Acceptance checks:
 
 - infrastructure strikes matter in at least one mission route
 - scouting reveals useful tactical information
-- Cadet, Rifleman, Guardian, Rover, Commander, and tank roles are distinct
+- Cadet, Rifleman, Guardian, Rover, Commander, Medium Tank, and Heavy Tank roles are distinct
 - Level 1 starts the player with one Worker, one Guardian, one Rover, and one Commander, while only Worker, Cadet, and Rifleman are trainable
 - first enemy AI production can choose between Level 1-available combat troops based on resources and requirements
-- enemy can scout/rally before first pressure, retreat damaged attackers, and regroup after a wiped attack group
+- enemy can scout/rally before first pressure, retreat damaged attackers, avoid immediately recommitting badly damaged returnees, and regroup after a wiped attack group
 - rival-officer memory stays internal and does not add adaptation alerts or hidden-plan UI text
 - troop train times vary by unit, with more expensive or heavier units generally taking longer
 - explosive friendly fire works if explosive units are present

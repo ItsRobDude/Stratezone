@@ -18,6 +18,7 @@ internal static class CombatResolver
         ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
+            attacker.Position,
             attacker.Definition.AttackDamage,
             attacker.Definition.DamageType,
             attacker.Definition.AreaRadius,
@@ -26,6 +27,7 @@ internal static class CombatResolver
             directTarget.Position,
             units,
             buildings);
+        attacker.RegisterOutgoingAttack(directTarget.Position);
         attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
         return true;
     }
@@ -44,6 +46,7 @@ internal static class CombatResolver
         ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
+            attacker.Position,
             attacker.Definition.AttackDamage,
             attacker.Definition.DamageType,
             attacker.Definition.AreaRadius,
@@ -52,6 +55,7 @@ internal static class CombatResolver
             directTarget.Position,
             units,
             buildings);
+        attacker.RegisterOutgoingAttack(directTarget.Position);
         attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
         return true;
     }
@@ -70,6 +74,7 @@ internal static class CombatResolver
         ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
+            attacker.Position,
             attacker.Definition.AttackDamage,
             attacker.Definition.DamageType,
             attacker.Definition.AreaRadius,
@@ -96,6 +101,7 @@ internal static class CombatResolver
         ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
+            attacker.Position,
             attacker.Definition.AttackDamage,
             attacker.Definition.DamageType,
             attacker.Definition.AreaRadius,
@@ -141,6 +147,7 @@ internal static class CombatResolver
     private static void ResolveDamage(
         int sourceEntityId,
         string sourceFactionId,
+        SimVector2 sourcePosition,
         float damage,
         string damageType,
         float areaRadius,
@@ -164,6 +171,7 @@ internal static class CombatResolver
             }
 
             unit.ApplyDamage(damage, damageType);
+            unit.RegisterIncomingAttack(sourcePosition);
         }
 
         foreach (var building in buildings)
@@ -178,6 +186,7 @@ internal static class CombatResolver
             }
 
             building.ApplyDamage(damage, damageType);
+            building.RegisterIncomingAttack(sourcePosition);
         }
     }
 

@@ -222,8 +222,46 @@
       "balance_status": "tunable_placeholder"
     },
     {
+      "id": "unit_medium_tank",
+      "display_name": "Medium Tank",
+      "faction_availability": ["faction_player_expedition", "faction_private_military"],
+      "role": "medium_vehicle",
+      "cost": 300,
+      "train_time_seconds": 32,
+      "health": 300,
+      "damage_resistances": {
+        "ballistic": 0.73,
+        "energy": 0.1,
+        "explosive": 0.05,
+        "crush": 0.4
+      },
+      "movement_speed": 0.85,
+      "sight_range": 8,
+      "train_requirements": {
+        "allowed_by_building_id": null,
+        "spawn_building_id": null
+      },
+      "spawn_rule": "colony_hub_destroyed_reveal",
+      "attack_damage": 29,
+      "attack_range": 7,
+      "attack_cooldown": 3.5,
+      "damage_type": "explosive",
+      "area_radius": 1,
+      "friendly_fire": true,
+      "target_filters": ["infantry", "vehicle", "building"],
+      "can_construct": false,
+      "can_repair": false,
+      "can_attack": true,
+      "can_capture": false,
+      "can_run_over_infantry": true,
+      "run_over_damage": 130,
+      "run_over_damage_type": "crush",
+      "tags": ["vehicle", "medium", "level_1_reveal_only"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
       "id": "unit_tank",
-      "display_name": "Tank",
+      "display_name": "Heavy Tank",
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "heavy_vehicle",
       "cost": 450,
@@ -244,7 +282,7 @@
       "spawn_rule": "colony_hub_destroyed_reveal",
       "attack_damage": 55,
       "attack_range": 8,
-      "attack_cooldown": 2.4,
+      "attack_cooldown": 4.0,
       "damage_type": "explosive",
       "area_radius": 2,
       "friendly_fire": true,
@@ -256,7 +294,7 @@
       "can_run_over_infantry": true,
       "run_over_damage": 160,
       "run_over_damage_type": "crush",
-      "tags": ["vehicle", "heavy", "level_1_reveal_only"],
+      "tags": ["vehicle", "heavy", "heavy_tank"],
       "balance_status": "tunable_placeholder"
     }
   ]

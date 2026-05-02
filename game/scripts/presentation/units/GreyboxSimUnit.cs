@@ -94,6 +94,9 @@ public partial class GreyboxSimUnit : Node2D
             DrawArc(Vector2.Zero, 24.0f, 0, Mathf.Tau, 48, outline, 2.0f);
         }
 
+        DrawOutgoingAttackFlash();
+        DrawIncomingAttackFlash();
+
         if (_selected)
         {
             DrawArc(Vector2.Zero, SelectionRadius + 7.0f, 0, Mathf.Tau, 64, new Color(1.0f, 0.95f, 0.25f), 4.0f);
@@ -103,6 +106,49 @@ public partial class GreyboxSimUnit : Node2D
         {
             DrawPathDebug();
         }
+    }
+
+    private void DrawIncomingAttackFlash()
+    {
+        if (_state?.LastIncomingAttackOrigin is null || _state.HitFlashSeconds <= 0.0f)
+        {
+            return;
+        }
+
+        var alpha = Mathf.Clamp(_state.HitFlashSeconds / 0.28f, 0.0f, 1.0f);
+        var origin = ToLocal(new Vector2(_state.LastIncomingAttackOrigin.Value.X, _state.LastIncomingAttackOrigin.Value.Y));
+        var direction = origin.Length() > 0.001f ? origin.Normalized() : new Vector2(-1, 0);
+        var tracerStart = direction * 46.0f;
+        var tracerEnd = direction * 10.0f;
+        var color = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.55f, 0.92f, 1.0f, alpha)
+            : new Color(1.0f, 0.55f, 0.28f, alpha);
+
+        DrawLine(tracerStart, tracerEnd, color, 4.0f);
+        DrawCircle(Vector2.Zero, 18.0f + (8.0f * alpha), new Color(1.0f, 0.92f, 0.36f, 0.24f * alpha));
+        DrawArc(Vector2.Zero, 21.0f, 0, Mathf.Tau, 28, new Color(1.0f, 0.92f, 0.36f, alpha), 2.0f);
+    }
+
+    private void DrawOutgoingAttackFlash()
+    {
+        if (_state?.LastAttackTargetPosition is null || _state.AttackFlashSeconds <= 0.0f)
+        {
+            return;
+        }
+
+        var alpha = Mathf.Clamp(_state.AttackFlashSeconds / 0.22f, 0.0f, 1.0f);
+        var target = ToLocal(new Vector2(_state.LastAttackTargetPosition.Value.X, _state.LastAttackTargetPosition.Value.Y));
+        var direction = target.Length() > 0.001f ? target.Normalized() : new Vector2(1, 0);
+        var muzzle = direction * 30.0f;
+        var flashEnd = direction * 52.0f;
+        var side = new Vector2(-direction.Y, direction.X) * 5.0f;
+        var color = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(1.0f, 0.42f, 0.32f, alpha)
+            : new Color(0.50f, 0.90f, 1.0f, alpha);
+
+        DrawLine(muzzle, flashEnd, color, 4.0f);
+        DrawLine(muzzle + side, flashEnd - side, new Color(1.0f, 0.92f, 0.36f, alpha), 2.0f);
+        DrawCircle(flashEnd, 5.0f * alpha, new Color(1.0f, 0.92f, 0.36f, 0.75f * alpha));
     }
 
     private void DrawUnitToken()

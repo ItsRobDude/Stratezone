@@ -15,9 +15,17 @@ Assert(localization.ContentName(ContentIds.Units.Worker) == "Worker", "content n
 Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");
 var cadetDefinition = catalog.GetUnit(ContentIds.Units.Cadet);
 var riflemanDefinition = catalog.GetUnit(ContentIds.Units.Rifleman);
+var mediumTankDefinition = catalog.GetUnit(ContentIds.Units.MediumTank);
+var tankDefinition = catalog.GetUnit(ContentIds.Units.Tank);
 Assert(cadetDefinition.Cost < riflemanDefinition.Cost, "Cadet costs less than Rifleman");
 Assert(cadetDefinition.Health < riflemanDefinition.Health, "Cadet has less health than Rifleman");
 Assert(cadetDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Cadet deals less damage than Rifleman");
+Assert(tankDefinition.DisplayName == "Heavy Tank", "existing Tank record is promoted to Heavy Tank");
+Assert(mediumTankDefinition.Health < tankDefinition.Health, "Medium Tank is less durable than Heavy Tank");
+Assert(mediumTankDefinition.AttackDamage < tankDefinition.AttackDamage, "Medium Tank deals less damage than Heavy Tank");
+Assert(mediumTankDefinition.AreaRadius < tankDefinition.AreaRadius, "Medium Tank has smaller splash than Heavy Tank");
+Assert(Math.Abs(riflemanDefinition.Health - (mediumTankDefinition.AttackDamage * 1.1f) - (riflemanDefinition.Health * 0.3f)) < 1.5f, "Medium Tank shot leaves a Rifleman near 30 percent health");
+Assert(tankDefinition.AttackCooldown > 3.0f, "Heavy Tank cannon fires slowly enough to read as a heavy burst weapon");
 Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Worker) && mission.AvailableUnitIds.Contains(ContentIds.Units.Cadet) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
 Assert(!mission.AvailableUnitIds.Contains(ContentIds.Units.Guardian) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Rover) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Commander), "mission data hides Level 1 scenario-only units from training");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Guardian) == 1, "Level 1 starts the player with one Guardian");
@@ -189,8 +197,17 @@ var cadetQueue = playerProductionSimulation.TryQueueUnit(ContentIds.Units.Cadet,
 Assert(cadetQueue.Success, cadetQueue.Message);
 Assert(cadetQueue.MessageKey == "sim.production.queued", "production result returns a stable message key");
 Assert(playerProductionSimulation.Materials < materialsBeforeTraining, "player training spends materials immediately");
+Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building.EntityId).Success, "player can queue a Rifleman behind an active Barracks order");
+Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building.EntityId).Success, "player can queue multiple Riflemen behind an active Barracks order");
+Assert(playerProductionSimulation.ProductionOrders.Count(order => order.ProducerBuildingEntityId == playerBarracks.Building.EntityId) == 3, "Barracks keeps a small serial training queue");
+Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building.EntityId).Success, "Barracks queue accepts a fourth order");
+Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building.EntityId).Success, "Barracks queue accepts a fifth order");
+Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, playerBarracks.Building.EntityId).Success, "Barracks queue blocks a sixth order");
 TickFor(playerProductionSimulation, 11.0f);
 Assert(playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Cadet), "player production spawns trained Cadets from the Colony Hub");
+Assert(!playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Rifleman), "queued Riflemen do not train in parallel from one Barracks");
+TickFor(playerProductionSimulation, 10.5f);
+Assert(playerProductionSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Rifleman) == 1, "queued Riflemen train one after another from one Barracks");
 Assert(playerProductionSimulation.DrainEvents().Any(item => item.MessageKey == "sim.event.training_complete"), "player production emits a training-complete event");
 Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "Guardian training requires powered Armory Annex");
 playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));
@@ -210,6 +227,20 @@ var unpoweredProductionSimulation = new RtsSimulation(catalog, 1000, []);
 unpoweredProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
 var unpoweredBarracks = unpoweredProductionSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(0, 0));
 Assert(!unpoweredProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, unpoweredBarracks.EntityId).Success, "unpowered Barracks cannot train units");
+
+var spawnSpreadSimulation = new RtsSimulation(catalog, 2000, []);
+spawnSpreadSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+Assert(spawnSpreadSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-220, 0)).Success, "spawn spread test places power");
+var spawnSpreadBarracks = spawnSpreadSimulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, new SimVector2(-20, 0));
+Assert(spawnSpreadBarracks.Success, spawnSpreadBarracks.Message);
+Assert(spawnSpreadSimulation.TryQueueUnit(ContentIds.Units.Cadet, spawnSpreadBarracks.Building!.EntityId).Success, "spawn spread queues first Cadet");
+Assert(spawnSpreadSimulation.TryQueueUnit(ContentIds.Units.Cadet, spawnSpreadBarracks.Building.EntityId).Success, "spawn spread queues second Cadet");
+TickFor(spawnSpreadSimulation, 17.0f);
+var spawnedCadets = spawnSpreadSimulation.Units
+    .Where(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Cadet)
+    .ToArray();
+Assert(spawnedCadets.Length == 2, "spawn spread test produced two Cadets");
+Assert(spawnedCadets[0].Position.DistanceTo(spawnedCadets[1].Position) > 24.0f, "trained units spawn spread out instead of stacked");
 
 var enemyConstructionSimulation = new RtsSimulation(
     catalog,
@@ -240,6 +271,18 @@ buildingCombatSimulation.CommandUnitAttackBuilding(buildingAttacker.EntityId, en
 TickFor(buildingCombatSimulation, 3.0f);
 Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
 
+var attackVisualSimulation = new RtsSimulation(catalog, startingMaterials, []);
+attackVisualSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var visualAttacker = attackVisualSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var visualTarget = attackVisualSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(60, 0));
+attackVisualSimulation.CommandUnitAttackUnit(visualAttacker.EntityId, visualTarget.EntityId);
+TickFor(attackVisualSimulation, 0.1f);
+Assert(visualAttacker.AttackFlashSeconds > 0.0f, "unit attack records a short outgoing-fire flash");
+Assert(visualTarget.HitFlashSeconds > 0.0f, "unit damage records a short incoming-fire flash");
+Assert(visualTarget.LastIncomingAttackOrigin is not null && visualTarget.LastIncomingAttackOrigin.Value.DistanceTo(visualAttacker.Position) < 0.01f, "unit damage records incoming-fire direction");
+TickFor(attackVisualSimulation, 0.5f);
+Assert(visualTarget.HitFlashSeconds <= 0.0f, "incoming-fire flash decays without gameplay side effects");
+
 var commanderBuildingFilterSimulation = new RtsSimulation(catalog, startingMaterials, []);
 commanderBuildingFilterSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var commanderWithPistol = commanderBuildingFilterSimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
@@ -247,6 +290,19 @@ var commanderBuildingTarget = commanderBuildingFilterSimulation.AddStartingBuild
 commanderBuildingFilterSimulation.CommandUnitAttackBuilding(commanderWithPistol.EntityId, commanderBuildingTarget.EntityId);
 TickFor(commanderBuildingFilterSimulation, 3.0f);
 Assert(Math.Abs(commanderBuildingTarget.Health - commanderBuildingTarget.Definition.Health) < 0.01f, "Commander target filters do not allow building damage");
+
+var attackFormationSimulation = new RtsSimulation(catalog, startingMaterials, []);
+attackFormationSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var formationLeft = attackFormationSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-280, -40));
+var formationRight = attackFormationSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-280, 40));
+var formationTarget = attackFormationSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(260, 0));
+attackFormationSimulation.CommandUnitAttackUnit(formationLeft.EntityId, formationTarget.EntityId, new SimVector2(-52, 0));
+attackFormationSimulation.CommandUnitAttackUnit(formationRight.EntityId, formationTarget.EntityId, new SimVector2(52, 0));
+TickFor(attackFormationSimulation, 0.2f);
+Assert(formationLeft.MoveTarget is not null && formationRight.MoveTarget is not null, "attack formation creates movement targets while closing range");
+var leftMoveTarget = formationLeft.MoveTarget!.Value;
+var rightMoveTarget = formationRight.MoveTarget!.Value;
+Assert(leftMoveTarget.DistanceTo(rightMoveTarget) > 80.0f, "attack formation offsets keep grouped attackers from sharing one destination");
 
 var enemyPrioritySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
@@ -277,6 +333,10 @@ var retreatDistanceBefore = retreatingEnemy.Position.DistanceTo(RtsSimulation.En
 TickFor(retreatSimulation, 1.0f);
 Assert(retreatingEnemy.IsEnemyRetreating, "badly damaged committed enemies can retreat toward base");
 Assert(retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition) < retreatDistanceBefore, "retreating enemy moves closer to its base");
+TickFor(retreatSimulation, 20.0f);
+Assert(!retreatingEnemy.IsEnemyRetreating && !retreatingEnemy.IsEnemyAttackCommitted, "badly damaged enemies stand down after reaching their base");
+TickFor(retreatSimulation, 20.0f);
+Assert(!retreatingEnemy.IsEnemyAttackCommitted, "badly damaged enemies are not immediately recommitted into another attack wave");
 
 var regroupSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
@@ -311,6 +371,14 @@ var finalEnemy = missionWinSimulation.AddUnit(ContentIds.Units.Rifleman, Content
 finalEnemy.ApplyDamage(999, "ballistic");
 missionWinSimulation.Tick(0.1f);
 Assert(missionWinSimulation.MissionState.Status == MissionStatus.Won, "destroying all enemy targets triggers mission win");
+
+var hubRevealWinSimulation = new RtsSimulation(catalog, startingMaterials, []);
+hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var enemyHubToDestroy = hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(90, 0), ContentIds.Factions.PrivateMilitary);
+enemyHubToDestroy.ApplyDamage(9999, "explosive");
+hubRevealWinSimulation.Tick(0.1f);
+Assert(hubRevealWinSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed enemy Hub reveals a Medium Tank");
+Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Won, "reveal-only tank does not block destroy-all-enemies victory");
 
 var towerUpgradeSimulation = new RtsSimulation(catalog, 3000, []);
 towerUpgradeSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -364,6 +432,22 @@ crushSimulation.CommandUnitMove(rover.EntityId, new SimVector2(260, 0));
 TickFor(crushSimulation, 2.0f);
 Assert(infantryToCrush.IsDestroyed, "Rover crush kills enemy Rifleman while moving through it");
 Assert(Math.Abs(friendlyInfantryNearCrush.Health - friendlyInfantryNearCrush.Definition.Health) < 0.01f, "Rover does not crush friendly infantry in this pass");
+
+var mediumTankCrushSimulation = new RtsSimulation(catalog, startingMaterials, []);
+mediumTankCrushSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, 0));
+var mediumCrusher = mediumTankCrushSimulation.AddUnit(ContentIds.Units.MediumTank, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var mediumCrushTarget = mediumTankCrushSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(230, 0));
+mediumTankCrushSimulation.CommandUnitMove(mediumCrusher.EntityId, new SimVector2(320, 0));
+TickFor(mediumTankCrushSimulation, 4.0f);
+Assert(mediumCrushTarget.IsDestroyed, "Medium Tank crush kills enemy Rifleman while moving through it");
+
+var heavyTankCrushSimulation = new RtsSimulation(catalog, startingMaterials, []);
+heavyTankCrushSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, 0));
+var heavyCrusher = heavyTankCrushSimulation.AddUnit(ContentIds.Units.Tank, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var heavyCrushTarget = heavyTankCrushSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(230, 0));
+heavyTankCrushSimulation.CommandUnitMove(heavyCrusher.EntityId, new SimVector2(320, 0));
+TickFor(heavyTankCrushSimulation, 4.0f);
+Assert(heavyCrushTarget.IsDestroyed, "Heavy Tank crush kills enemy Rifleman while moving through it");
 
 var fogSimulation = new RtsSimulation(catalog, startingMaterials, []);
 fogSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));

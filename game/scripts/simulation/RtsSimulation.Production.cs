@@ -4,6 +4,8 @@ namespace Stratezone.Simulation;
 
 public sealed partial class RtsSimulation
 {
+    private const int MaxQueuedOrdersPerProducer = 5;
+
     public ProductionValidation ValidateUnitProduction(string unitId, int? producerBuildingEntityId = null)
     {
         return ValidateUnitProductionForFaction(ContentIds.Factions.PlayerExpedition, unitId, producerBuildingEntityId, Materials);
@@ -69,11 +71,6 @@ public sealed partial class RtsSimulation
             return new ProductionValidation(false, $"Need {unit.Cost:0} materials.", null, null, "sim.need_materials", SimulationMessage.Args(("amount", unit.Cost)));
         }
 
-        if (_productionOrders.Any(order => order.FactionId == factionId))
-        {
-            return new ProductionValidation(false, "Training queue is busy.", null, null, "sim.production.queue_busy");
-        }
-
         var spawn = _buildings.FirstOrDefault(building =>
             building.FactionId == factionId &&
             building.Definition.Id == unit.SpawnBuildingId &&
@@ -91,11 +88,14 @@ public sealed partial class RtsSimulation
         }
 
         var producer = producerBuildingEntityId is null
-            ? _buildings.FirstOrDefault(building =>
-                building.FactionId == factionId &&
-                building.Definition.Id == unit.AllowedByBuildingId &&
-                building.IsPowered &&
-                !building.IsDestroyed)
+            ? _buildings
+                .Where(building =>
+                    building.FactionId == factionId &&
+                    building.Definition.Id == unit.AllowedByBuildingId &&
+                    building.IsPowered &&
+                    !building.IsDestroyed)
+                .OrderBy(CountQueuedOrdersForProducer)
+                .FirstOrDefault()
             : _buildings.FirstOrDefault(building =>
                 building.EntityId == producerBuildingEntityId.Value &&
                 building.FactionId == factionId &&
@@ -138,6 +138,17 @@ public sealed partial class RtsSimulation
                 SimulationMessage.Args(("buildingId", addon.Id), ("building", addon.DisplayName)));
         }
 
+        if (CountQueuedOrdersForProducer(producer) >= MaxQueuedOrdersPerProducer)
+        {
+            return new ProductionValidation(
+                false,
+                "Training queue is full.",
+                null,
+                producer,
+                "sim.production.queue_full",
+                SimulationMessage.Args(("count", MaxQueuedOrdersPerProducer)));
+        }
+
         return new ProductionValidation(
             true,
             $"Can train {unit.DisplayName}.",
@@ -145,6 +156,11 @@ public sealed partial class RtsSimulation
             producer,
             "sim.production.can_train",
             SimulationMessage.Args(("unitId", unit.Id), ("unit", unit.DisplayName)));
+    }
+
+    private int CountQueuedOrdersForProducer(BuildingState producer)
+    {
+        return _productionOrders.Count(order => order.ProducerBuildingEntityId == producer.EntityId);
     }
 
     internal UnitDefinition? SelectEnemyProductionUnit()
@@ -202,9 +218,13 @@ public sealed partial class RtsSimulation
 
     private void TickProduction(float deltaSeconds)
     {
-        for (var index = _productionOrders.Count - 1; index >= 0; index--)
+        var activeOrders = _productionOrders
+            .GroupBy(order => order.ProducerBuildingEntityId)
+            .Select(group => group.First())
+            .ToArray();
+
+        foreach (var order in activeOrders)
         {
-            var order = _productionOrders[index];
             order.RemainingSeconds -= deltaSeconds;
             if (order.RemainingSeconds > 0.0f)
             {
@@ -212,7 +232,7 @@ public sealed partial class RtsSimulation
             }
 
             CompleteProductionOrder(order);
-            _productionOrders.RemoveAt(index);
+            _productionOrders.Remove(order);
         }
     }
 
@@ -228,13 +248,24 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        var spawnOffset = order.FactionId == ContentIds.Factions.PrivateMilitary
-            ? new SimVector2(-70, 0)
-            : new SimVector2(70, 0);
+        var spawnIndex = _units.Count(unit =>
+            unit.FactionId == order.FactionId &&
+            !unit.IsDestroyed);
+        var spawnOffset = GetProductionSpawnOffset(order.FactionId, spawnIndex);
         var unit = AddUnit(order.UnitId, order.FactionId, hub.Position + spawnOffset);
         _events.Add(new SimulationEvent(
             order.FactionId,
             "sim.event.training_complete",
             SimulationMessage.Args(("unitId", unit.Definition.Id), ("unit", unit.Definition.DisplayName))));
+    }
+
+    private static SimVector2 GetProductionSpawnOffset(string factionId, int spawnIndex)
+    {
+        var side = factionId == ContentIds.Factions.PrivateMilitary ? -1.0f : 1.0f;
+        var lane = spawnIndex % 3;
+        var row = spawnIndex / 3;
+        var x = 70.0f + (row * 34.0f);
+        var y = (lane - 1) * 42.0f;
+        return new SimVector2(x * side, y);
     }
 }

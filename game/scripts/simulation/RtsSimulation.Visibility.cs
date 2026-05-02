@@ -35,7 +35,7 @@ public sealed partial class RtsSimulation
             !_hubTankReveals.Contains(building.EntityId)).ToArray())
         {
             _hubTankReveals.Add(hub.EntityId);
-            AddUnit(ContentIds.Units.Tank, hub.FactionId, hub.Position + new SimVector2(85, 45));
+            AddUnit(ContentIds.Units.MediumTank, hub.FactionId, hub.Position + new SimVector2(85, 45));
         }
     }
 

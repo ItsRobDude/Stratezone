@@ -58,6 +58,7 @@ public sealed partial class RtsSimulation
                 unit.FactionId == ContentIds.Factions.PrivateMilitary &&
                 !unit.IsDestroyed &&
                 unit.Definition.CanAttack &&
+                unit.HealthRatio >= EnemyRetreatRecoverRatio &&
                 !unit.IsEnemyAttackCommitted)
             .OrderBy(unit => unit.Position.DistanceTo(_enemyAi.HubPosition))
             .ToArray();
@@ -89,6 +90,7 @@ public sealed partial class RtsSimulation
                 unit.FactionId == ContentIds.Factions.PrivateMilitary &&
                 !unit.IsDestroyed &&
                 unit.Definition.CanAttack &&
+                unit.HealthRatio >= EnemyRetreatRecoverRatio &&
                 !unit.IsEnemyAttackCommitted)
             .OrderByDescending(unit => unit.Definition.MovementSpeed)
             .ThenBy(unit => unit.Position.DistanceTo(_enemyAi.HubPosition))
@@ -153,6 +155,12 @@ public sealed partial class RtsSimulation
         if (targetBuilding is not null && targetBuilding.FactionId != unit.FactionId)
         {
             TickUnitAttackTarget(unit, targetBuilding, deltaSeconds);
+            return;
+        }
+
+        if (unit.MoveTarget is not null && unit.Definition.CanRunOverInfantry)
+        {
+            MoveUnitToward(unit, unit.MoveTarget.Value, deltaSeconds);
             return;
         }
 
@@ -248,6 +256,7 @@ public sealed partial class RtsSimulation
         {
             unit.IsEnemyRetreating = false;
             unit.IsEnemyAttackCommitted = false;
+            unit.ClearPath();
         }
     }
 
@@ -273,7 +282,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        MoveUnitToward(attacker, target.Position, deltaSeconds);
+        MoveUnitToward(attacker, target.Position + attacker.TargetFormationOffset, deltaSeconds);
     }
 
     private void TickUnitAttackTarget(UnitState attacker, BuildingState target, float deltaSeconds)
@@ -286,7 +295,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        MoveUnitToward(attacker, target.Position, deltaSeconds);
+        MoveUnitToward(attacker, target.Position + attacker.TargetFormationOffset, deltaSeconds);
     }
 
     private BuildingState? GetEnemyTargetBuilding(UnitState unit)

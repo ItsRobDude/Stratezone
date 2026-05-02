@@ -136,6 +136,7 @@ First-pass unit IDs:
 - `unit_guardian`
 - `unit_rover`
 - `unit_commander`
+- `unit_medium_tank`
 - `unit_tank`
 
 Prototype rules:
@@ -148,7 +149,8 @@ Prototype rules:
 - `unit_guardian` should require `building_armory_annex` where Barracks add-ons are enabled by the mission.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
 - In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
-- `unit_tank` is not normally trainable in Level 1 but may be revealed from a destroyed Colony Hub. Its ballistic resistance should be high enough that Riflemen are a bad answer to heavy armor.
+- `unit_medium_tank` is the Level 1 reveal tank. It is not normally trainable, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
+- `unit_tank` is now the Heavy Tank record. It is the promoted old tank profile and should remain a heavier later answer with stronger explosive splash and high ballistic resistance.
 - Troop training time varies by unit. More expensive or heavier units should generally take longer.
 - Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
 - Units have health and resistances; armor is not a pickup or separate equipment system in the first prototype.
@@ -186,11 +188,11 @@ The example is not final balance.
 First-pass resistance intent:
 
 - Basic infantry should die fast against other infantry.
-- Heavy armor should feel nearly impenetrable to ballistic infantry fire.
+- Heavy armor should feel nearly impenetrable to ballistic infantry fire, while Medium Tanks should be meaningfully faster to kill than Heavy Tanks.
 - Buildings should resist casual ballistic damage enough to preserve siege pacing.
 - Buildings should have negative explosive resistance so Rocket Towers, Tanks, and later siege weapons are the base-cracking lane.
 - The Colony Hub should keep its early siege ratio of 1200 health and 0.25 ballistic resistance unless playtests prove the ratio wrong.
-- Rover crush damage should remain high enough to instantly kill basic infantry when the player micros vehicles into exposed infantry.
+- Rover and tank crush damage should remain high enough to instantly kill basic infantry when the player micros vehicles into exposed infantry.
 
 ## Building Definition
 
@@ -474,7 +476,7 @@ Prototype rules:
 - exposes `unit_worker`, `unit_cadet`, and `unit_rifleman` as Level 1 trainable units; `unit_guardian`, `unit_rover`, and `unit_commander` stay scenario/start-only for Level 1
 - wins by destroying all required enemy targets
 - loses if the Commander dies
-- destroying either Colony Hub reveals a tank without changing win/loss by itself
+- destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself; reveal-only tanks are not required destroy-all targets
 
 ## Mission Event Definition
 

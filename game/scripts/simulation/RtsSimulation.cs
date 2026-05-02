@@ -220,6 +220,7 @@ public sealed partial class RtsSimulation
         }
 
         _elapsedSeconds += deltaSeconds;
+        TickPresentationState(deltaSeconds);
         RecomputePower();
         _enemyAi.Tick(this, deltaSeconds);
         TickProduction(deltaSeconds);
@@ -272,6 +273,19 @@ public sealed partial class RtsSimulation
         return unit;
     }
 
+    private void TickPresentationState(float deltaSeconds)
+    {
+        foreach (var unit in _units)
+        {
+            unit.TickPresentation(deltaSeconds);
+        }
+
+        foreach (var building in _buildings)
+        {
+            building.TickPresentation(deltaSeconds);
+        }
+    }
+
     public bool DebugKillPlayerCommander()
     {
         var commander = _units.FirstOrDefault(unit =>
@@ -298,10 +312,11 @@ public sealed partial class RtsSimulation
 
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = null;
+        unit.TargetFormationOffset = default;
         SetUnitPathTo(unit, position);
     }
 
-    public void CommandUnitAttackUnit(int unitEntityId, int targetUnitEntityId)
+    public void CommandUnitAttackUnit(int unitEntityId, int targetUnitEntityId, SimVector2 formationOffset = default)
     {
         var unit = FindLiveUnit(unitEntityId);
         var target = FindLiveUnit(targetUnitEntityId);
@@ -313,9 +328,10 @@ public sealed partial class RtsSimulation
         unit.ClearPath();
         unit.TargetUnitEntityId = target.EntityId;
         unit.TargetBuildingEntityId = null;
+        unit.TargetFormationOffset = formationOffset;
     }
 
-    public void CommandUnitAttackBuilding(int unitEntityId, int targetBuildingEntityId)
+    public void CommandUnitAttackBuilding(int unitEntityId, int targetBuildingEntityId, SimVector2 formationOffset = default)
     {
         var unit = FindLiveUnit(unitEntityId);
         var target = FindLiveBuilding(targetBuildingEntityId);
@@ -327,6 +343,7 @@ public sealed partial class RtsSimulation
         unit.ClearPath();
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = target.EntityId;
+        unit.TargetFormationOffset = formationOffset;
     }
 
     public UpgradeResult TryUpgradeBuilding(int buildingEntityId, string upgradeBuildingId)

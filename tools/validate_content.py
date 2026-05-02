@@ -193,6 +193,7 @@ def validate_required_first_landing(records: dict[str, dict[str, Any]]) -> list[
         "unit_guardian",
         "unit_rover",
         "unit_commander",
+        "unit_medium_tank",
         "unit_tank",
         "building_colony_hub",
         "building_barracks",

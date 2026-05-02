@@ -28,10 +28,15 @@ public sealed class UnitState
     public string? PathBlockedReason { get; private set; }
     public int? TargetUnitEntityId { get; internal set; }
     public int? TargetBuildingEntityId { get; internal set; }
+    public SimVector2 TargetFormationOffset { get; internal set; }
     public bool IsBlockedByEnergyWall { get; internal set; }
     public bool IsEnemyAttackCommitted { get; internal set; }
     public bool IsEnemyScout { get; internal set; }
     public bool IsEnemyRetreating { get; internal set; }
+    public SimVector2? LastIncomingAttackOrigin { get; private set; }
+    public SimVector2? LastAttackTargetPosition { get; private set; }
+    public float HitFlashSeconds { get; private set; }
+    public float AttackFlashSeconds { get; private set; }
     public bool IsDestroyed => Health <= 0.0f;
     internal float HealthRatio => Definition.Health <= 0 ? 0.0f : Health / Definition.Health;
 
@@ -87,5 +92,23 @@ public sealed class UnitState
             : 0.0f;
         var finalDamage = rawDamage * MathF.Max(0.0f, 1.0f - resistance);
         Health = MathF.Max(0.0f, Health - finalDamage);
+    }
+
+    internal void RegisterIncomingAttack(SimVector2 origin)
+    {
+        LastIncomingAttackOrigin = origin;
+        HitFlashSeconds = 0.28f;
+    }
+
+    internal void RegisterOutgoingAttack(SimVector2 targetPosition)
+    {
+        LastAttackTargetPosition = targetPosition;
+        AttackFlashSeconds = 0.22f;
+    }
+
+    internal void TickPresentation(float deltaSeconds)
+    {
+        HitFlashSeconds = MathF.Max(0.0f, HitFlashSeconds - deltaSeconds);
+        AttackFlashSeconds = MathF.Max(0.0f, AttackFlashSeconds - deltaSeconds);
     }
 }

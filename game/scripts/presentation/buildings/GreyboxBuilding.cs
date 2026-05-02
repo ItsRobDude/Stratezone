@@ -71,10 +71,32 @@ public partial class GreyboxBuilding : Node2D
             DrawCircle(Vector2.Zero, 6.0f, new Color(0.8f, 0.95f, 1.0f));
         }
 
+        DrawIncomingAttackFlash();
+
         if (_selected)
         {
             DrawArc(Vector2.Zero, radius + 10.0f, 0, Mathf.Tau, 72, new Color(1.0f, 0.95f, 0.25f), 4.0f);
         }
+    }
+
+    private void DrawIncomingAttackFlash()
+    {
+        if (_state?.LastIncomingAttackOrigin is null || _state.HitFlashSeconds <= 0.0f)
+        {
+            return;
+        }
+
+        var alpha = Mathf.Clamp(_state.HitFlashSeconds / 0.28f, 0.0f, 1.0f);
+        var origin = ToLocal(ToGodot(_state.LastIncomingAttackOrigin.Value));
+        var direction = origin.Length() > 0.001f ? origin.Normalized() : new Vector2(-1, 0);
+        var edge = direction * (_state.FootprintWorldRadius + 12.0f);
+        var impact = direction * MathF.Min(_state.FootprintWorldRadius, 34.0f);
+        var color = _state.FactionId == ContentIds.Factions.PrivateMilitary
+            ? new Color(0.55f, 0.92f, 1.0f, alpha)
+            : new Color(1.0f, 0.55f, 0.28f, alpha);
+
+        DrawLine(edge, impact, color, 5.0f);
+        DrawArc(Vector2.Zero, _state.FootprintWorldRadius + 7.0f, 0, Mathf.Tau, 48, new Color(1.0f, 0.92f, 0.36f, alpha), 3.0f);
     }
 
     private void DrawFootprintOutline(float radius, BuildingState state)

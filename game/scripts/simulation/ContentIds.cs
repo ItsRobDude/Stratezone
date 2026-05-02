@@ -21,6 +21,7 @@ public static class ContentIds
         public const string Guardian = "unit_guardian";
         public const string Rover = "unit_rover";
         public const string Commander = "unit_commander";
+        public const string MediumTank = "unit_medium_tank";
         public const string Tank = "unit_tank";
     }
 

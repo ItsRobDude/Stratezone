@@ -190,7 +190,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - The first enemy faction should rebuild and produce from limited resources, racing the player for new wells, but slower than usual in Level 1.
 - The first mission objective is to destroy all enemies on the map.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
-- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
+- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a Medium Tank without changing win/loss conditions by itself.
 - The first playable milestone should be playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until the RTS loop works.
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.

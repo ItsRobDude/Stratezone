@@ -20,7 +20,10 @@ internal sealed class MissionObjectiveSystem
         }
 
         var remainingEnemyTargets =
-            units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && !unit.IsDestroyed) +
+            units.Count(unit =>
+                unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+                !unit.IsDestroyed &&
+                IsRequiredEnemyTarget(unit)) +
             buildings.Count(building => building.FactionId == ContentIds.Factions.PrivateMilitary && !building.IsDestroyed);
 
         var hasEnemyPresence =
@@ -47,5 +50,10 @@ internal sealed class MissionObjectiveSystem
             ? SimulationMessage.Args(("remaining", remainingEnemyTargets))
             : null;
         return new MissionState(MissionStatus.Active, text, null, remainingEnemyTargets, key, args);
+    }
+
+    private static bool IsRequiredEnemyTarget(UnitState unit)
+    {
+        return !unit.Definition.Tags.Contains("level_1_reveal_only", StringComparer.Ordinal);
     }
 }

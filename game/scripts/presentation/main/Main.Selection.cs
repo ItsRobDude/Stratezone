@@ -141,9 +141,13 @@ public partial class Main
         if (enemyUnit is not null)
         {
             var attackers = 0;
-            foreach (var unit in selectedUnits.Where(unit => unit.Definition.CanAttack))
+            var attackingUnits = selectedUnits.Where(unit => unit.Definition.CanAttack).ToArray();
+            for (var index = 0; index < attackingUnits.Length; index++)
             {
-                _simulation.CommandUnitAttackUnit(unit.EntityId, enemyUnit.EntityId);
+                _simulation.CommandUnitAttackUnit(
+                    attackingUnits[index].EntityId,
+                    enemyUnit.EntityId,
+                    ToSim(GetGroupOffset(index, attackingUnits.Length)));
                 attackers++;
             }
 
@@ -157,9 +161,13 @@ public partial class Main
         if (enemyBuilding is not null)
         {
             var attackers = 0;
-            foreach (var unit in selectedUnits.Where(UnitCanAttackBuildings))
+            var attackingUnits = selectedUnits.Where(UnitCanAttackBuildings).ToArray();
+            for (var index = 0; index < attackingUnits.Length; index++)
             {
-                _simulation.CommandUnitAttackBuilding(unit.EntityId, enemyBuilding.EntityId);
+                _simulation.CommandUnitAttackBuilding(
+                    attackingUnits[index].EntityId,
+                    enemyBuilding.EntityId,
+                    ToSim(GetGroupOffset(index, attackingUnits.Length)));
                 attackers++;
             }
 
@@ -171,7 +179,7 @@ public partial class Main
 
         for (var index = 0; index < selectedUnits.Length; index++)
         {
-            _simulation.CommandUnitMove(selectedUnits[index].EntityId, ToSim(GetGroupDestination(worldPosition, index, selectedUnits.Length)));
+            _simulation.CommandUnitMove(selectedUnits[index].EntityId, ToSim(worldPosition + GetGroupOffset(index, selectedUnits.Length)));
         }
 
         _lastActionMessage = L(
@@ -179,22 +187,21 @@ public partial class Main
             SimulationMessage.Args(("count", selectedUnits.Length), ("x", $"{worldPosition.X:0}"), ("y", $"{worldPosition.Y:0}")));
     }
 
-    private static Vector2 GetGroupDestination(Vector2 center, int index, int count)
+    private static Vector2 GetGroupOffset(int index, int count)
     {
         if (count <= 1)
         {
-            return center;
+            return Vector2.Zero;
         }
 
-        const float spacing = 40.0f;
+        const float spacing = 52.0f;
         var columns = Mathf.CeilToInt(Mathf.Sqrt(count));
         var rows = Mathf.CeilToInt(count / (float)columns);
         var column = index % columns;
         var row = index / columns;
-        var offset = new Vector2(
+        return new Vector2(
             (column - ((columns - 1) * 0.5f)) * spacing,
             (row - ((rows - 1) * 0.5f)) * spacing);
-        return center + offset;
     }
 
     private static bool UnitCanAttackBuildings(UnitState unit)

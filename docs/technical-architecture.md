@@ -349,7 +349,7 @@ Early requirements:
 - survive raid
 - destroy all enemies on the map
 - defend an on-map commander unit
-- support a Level 1 tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
+- support a Level 1 Medium Tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
 - support mission data choosing whether Barracks add-ons are player-built, prebuilt, or locked for the mission
 - fail if mission-specific critical conditions are broken, such as colony hub destroyed, commander killed, transport lost, convoy escaped, or objective timer expired
 

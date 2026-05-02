@@ -196,11 +196,12 @@ Owns:
 Prototype behavior:
 
 - basic infantry follow the meatgrinder rule: they die quickly when caught out of position
-- tanks are highly resistant to ballistic fire and force energy, explosive, crush, or other anti-armor answers
+- Medium and Heavy Tanks are resistant to ballistic fire and force energy, explosive, crush, or other anti-armor answers
 - Cadet is the cheapest trainable combat unit with lower cost, health, and damage than Rifleman
 - Rifleman is the baseline basic combat unit
 - Guardian is beefier than Rifleman but deals slightly less damage
 - Rover scouts and cannot shoot, but can run over enemy infantry
+- Medium and Heavy Tanks can run over enemy infantry on direct move orders
 - Commander is fragile, controllable, pistol-only, and mission-critical
 - buildings preserve siege pacing: basic infantry can harass weak infrastructure, but base-cracking should require explosives, heavy units, or a major numbers advantage
 - explosive damage is strong against structures
@@ -214,8 +215,10 @@ Tunable placeholders:
 - Guardian health: medium
 - Guardian damage: slightly below Rifleman
 - Commander health: low
-- tank health: high
-- Tank ballistic resistance: about 0.8 so Riflemen are nearly useless against heavy armor
+- Medium Tank health: below Heavy Tank, with roughly half the practical Rifleman time-to-kill burden of the old reveal tank
+- Medium Tank shell: lower damage and smaller splash than Heavy Tank, leaving a full-health Rifleman near 30 percent health on direct hit
+- Heavy Tank health: high
+- Heavy Tank ballistic resistance: about 0.8 so Riflemen are nearly useless against heavy armor
 - building explosive resistance: negative, while building ballistic resistance stays high enough to protect the siege ratio
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance until playtests prove the base cracks too slowly or too quickly
 
@@ -229,9 +232,9 @@ Mission availability contract:
 Acceptance checks:
 
 - a Rover cannot shoot
-- a Rover can instantly kill basic infantry with crush damage when the crush system is included
+- Rovers and tanks can instantly kill basic infantry with crush damage when moved through exposed enemy infantry
 - a small Rifleman group cannot efficiently destroy a Colony Hub without siege support
-- Riflemen perform poorly against Tanks because of high ballistic resistance
+- Riflemen perform poorly against Heavy Tanks because of high ballistic resistance
 - explosive damage can harm friendly units in range
 - commander death triggers mission loss
 
@@ -345,14 +348,14 @@ Prototype behavior:
 
 - Level 1 win condition is destroy all enemies
 - Level 1 loss condition is commander death
-- destroying either Colony Hub reveals a tank but does not change win/loss conditions by itself
+- destroying either Colony Hub reveals a Medium Tank but does not change win/loss conditions by itself; reveal-only tanks are not required enemy targets
 - objective state should be readable in HUD/debug output
 
 Acceptance checks:
 
 - commander death loses the mission
 - destroying all required enemy targets wins the mission
-- destroying a Colony Hub can reveal a tank without ending the mission
+- destroying a Colony Hub can reveal a Medium Tank without ending the mission
 
 ## Enemy Production and AI
 

@@ -90,6 +90,7 @@ Unit production rule for Level 1:
 
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
+- A powered Barracks accepts a small serial training queue so repeated Rifleman/Cadet clicks are not lost; one unit trains at a time per Barracks.
 - Barracks add-ons are the preferred later unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
 - Current Level 1 mission data exposes Worker, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
 - Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other add-on production by changing mission availability and support buildings deliberately.
@@ -127,17 +128,21 @@ Level 1 player units:
 Level 1 tank rule:
 
 - tanks are not normally trainable in Level 1
-- destroying either player's or enemy's Colony Hub reveals a tank from that hub
-- the tank reveal does not add, remove, or replace any win/loss condition
+- destroying either player's or enemy's Colony Hub reveals a Medium Tank from that hub
+- the Medium Tank reveal does not add, remove, or replace any win/loss condition; a reveal-only tank is not a required destroy-all target
 
 First-pass unit intent:
 
 - Riflemen die very quickly and work best with support, numbers, or harassment timing.
+- Grouped infantry should spread into a small formation on move and attack orders; the greybox should not teach players to stack ten Riflemen on one impact point.
 - Cadets are cheaper and weaker than Riflemen, giving the player and enemy a disposable early infantry option.
 - Guardians are beefier than Riflemen but deal slightly less damage; if Barracks add-ons are active, they require a powered Armory Annex.
 - Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
+- Medium Tanks are the Level 1 reveal vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old reveal tank.
+- Heavy Tanks are the promoted version of the old tank record and should stay later/heavier than the Level 1 reveal.
+- Tanks can run over enemy infantry on direct move orders, preserving vehicle micro instead of stopping to auto-fire before impact.
 - Tanks survive more punishment than infantry but are not part of normal Level 1 production.
-- Tanks should shrug off Rifleman fire; the player should need Guardian energy fire, explosive towers, another tank, or infrastructure play to answer heavy armor cleanly.
+- Heavy Tanks should shrug off Rifleman fire and fire slowly as heavy burst weapons; the player should need Guardian energy fire, explosive towers, another tank, or infrastructure play to answer heavy armor cleanly.
 
 Explosive friendly fire exists. Normal gunfire does not cause friendly fire.
 
@@ -159,6 +164,7 @@ The enemy should:
 - train Cadets and Riflemen in Level 1, while Guardian and Rover production stay locked until a later mission explicitly enables their add-ons
 - send a limited scout/rally movement before the first committed attack if it has a suitable unit
 - let badly damaged committed attackers retreat toward base when a base still exists
+- keep badly damaged returned attackers out of new attack waves until they are above the recovery threshold, so retreat does not become back-and-forth indecision
 - delay new attack commitment briefly after a committed group is wiped
 - keep a small internal rival-officer memory of visible battlefield facts, without surfacing enemy adaptation text or hidden-plan alerts
 - keep some defenders near its base so scouting finds a defended position, not an empty spawn point
@@ -173,7 +179,7 @@ Enemy target priority for Level 1:
 5. Colony Hub
 6. Commander when reachable or specifically directed by a mission attack
 
-The enemy should compete for the central well, but Level 1 should run slower than the normal baseline so the player can understand what is happening.
+The enemy should compete for the central well, but Level 1 should run slower than the normal baseline so the player can understand what is happening. The greybox demo should give the player roughly two minutes before the first committed attack group, and that first committed group should be a single attacker until playtests show the opening is too passive.
 
 Player alerts should feel like classic RTS command warnings: direct and frequent for player-known events such as enemy spotted, base under attack, extractor under attack, unit under attack, power offline, construction complete, and training complete. Hidden enemy production, rebuilding, or attack planning should not be announced unless a future radar/scanner system explicitly earns that information.
 

@@ -74,6 +74,7 @@ Level 1 should include:
 
 - one safer starting well or early-access well for the player
 - one contested central well that both sides care about
+- a forward enemy Pylon that powers the enemy's central Extractor and tower-wall route, creating a concrete infrastructure-strike option
 
 Extractors/Refineries should have normal building durability, with enough durability that the player can react before losing one instantly.
 Open resource wells are reserved for Extractor/Refinery placement; other buildings should not be placeable over them.
@@ -185,6 +186,8 @@ Enemy target priority for Level 1:
 
 The enemy should compete for the central well, but Level 1 should run slower than the normal baseline so the player can understand what is happening. The greybox demo should give the player roughly two minutes before the first committed attack group, and that first committed group should be a single attacker until playtests show the opening is too passive.
 
+The current greybox enemy route uses a forward Pylon weak point between the enemy base and the contested well. Destroying that Pylon should shut off the enemy central Extractor and drop the powered tower-wall route, allowing the player to attack through the opening or retake the well after destroying the enemy Extractor.
+
 Player alerts should feel like classic RTS command warnings: direct and frequent for player-known events such as enemy spotted, base under attack, extractor under attack, unit under attack, power offline, construction complete, and training complete. Hidden enemy production, rebuilding, or attack planning should not be announced unless a future radar/scanner system explicitly earns that information.
 
 ## Map Beats
@@ -199,7 +202,7 @@ Required map elements:
 - enemy visible at the fog edge or shortly after scouting
 - central choke between player and enemy
 - contested resource well near or beyond the choke
-- enemy pylon weak point that can cut power to an enemy tower
+- enemy pylon weak point that can cut power to the enemy tower-wall route and central Extractor
 
 The pylon weak point should teach infrastructure strikes. Destroying it should create a clear tactical opening for players who do not want to brute force the enemy defense.
 

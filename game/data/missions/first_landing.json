@@ -21,10 +21,12 @@
         { "id": "central_well", "position": { "x": 220, "y": 30 } },
         { "id": "central_choke", "position": { "x": 130, "y": 0 } },
         { "id": "enemy_base", "position": { "x": 620, "y": 120 } },
-        { "id": "enemy_power", "position": { "x": 380, "y": 120 } },
+        { "id": "enemy_power", "position": { "x": 580, "y": 80 } },
+        { "id": "enemy_pylon_weak_point", "position": { "x": 400, "y": 30 } },
         { "id": "enemy_barracks", "position": { "x": 500, "y": -80 } },
         { "id": "enemy_extractor", "position": { "x": 220, "y": 30 } },
-        { "id": "enemy_defense", "position": { "x": 340, "y": -70 } },
+        { "id": "enemy_defense", "position": { "x": 340, "y": -50 } },
+        { "id": "enemy_defense_south", "position": { "x": 340, "y": 110 } },
         { "id": "enemy_rally", "position": { "x": 300, "y": 40 } }
       ],
       "starting_entities": [
@@ -64,6 +66,11 @@
           "marker": "enemy_power"
         },
         {
+          "content_id": "building_pylon",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_pylon_weak_point"
+        },
+        {
           "content_id": "building_barracks",
           "faction_id": "faction_private_military",
           "marker": "enemy_barracks"
@@ -72,6 +79,11 @@
           "content_id": "building_defense_tower",
           "faction_id": "faction_private_military",
           "marker": "enemy_defense"
+        },
+        {
+          "content_id": "building_defense_tower",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_defense_south"
         },
         {
           "content_id": "unit_rifleman",

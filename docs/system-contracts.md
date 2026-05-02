@@ -380,6 +380,7 @@ Prototype behavior:
 - enemy rebuilds only when it can afford to
 - Level 1 enemy is slower than normal baseline
 - enemy competes for the central well
+- Level 1's forward enemy Pylon powers the central Extractor and tower-wall route, so destroying it should visibly shut off that infrastructure route
 - Level 1 attacks commit only a small group of 1-3 units and leave defenders at the enemy base
 - enemy can dispatch a small scout/rally movement before the first committed attack
 - damaged committed attackers may retreat toward base instead of fighting to the last hit point
@@ -402,7 +403,7 @@ Acceptance checks:
 
 - enemy cannot rebuild for free
 - enemy can pressure the contested well
-- destroying an enemy pylon can disable an enemy tower path
+- destroying an enemy pylon can disable an enemy tower path and shut off the central Extractor route when mission data wires that Pylon as the forward power source
 - enemy attack commitment is capped to the mission profile instead of sending the whole enemy base
 - enemy target selection favors visible tactical targets before simple Colony Hub base-cracking
 - exposed Commander sightings are internal AI knowledge only and do not create adaptation alerts

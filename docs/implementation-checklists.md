@@ -152,7 +152,8 @@ Acceptance checks:
 - enemies in never-explored black fog are hidden
 - enemy produces or rebuilds only when it has resources
 - enemy pressure is tame but active
-- enemy pylon weak point can disable an enemy tower route
+- enemy pylon weak point can disable the enemy tower-wall route
+- enemy pylon weak point powers the enemy central Extractor so destroying it creates a visible infrastructure-strike route
 - Rover scouts but cannot shoot
 - Rover can run over enemy infantry if that behavior is included
 - all required enemy targets destroyed triggers win
@@ -161,8 +162,9 @@ Acceptance checks:
 
 Evidence:
 
-- one completed mission run
-- one commander-death loss run
+- one completed mission run; current evidence includes a user-completed greybox win run
+- one commander-death loss run; deterministic smoke coverage currently proves Commander death and the F7/debug loss path
+- smoke coverage for central well retake, enemy Pylon weak point, and tower-wall shutdown
 - notes for any missing or intentionally placeholder behavior
 - localization key coverage for mission result, objective, command, and blocked-action text
 - closeout notes should distinguish verified playable behavior from deferred systems such as repair, final balance, and final art

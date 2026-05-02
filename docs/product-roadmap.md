@@ -37,7 +37,7 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, worker-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
+The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, worker-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
 
 Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. Content validation, the Godot C# build, simulation smoke checks, and a Godot headless smoke check pass locally.
 
@@ -75,11 +75,11 @@ The first prototype stack is locked as Godot 4 with C#.
 
 ## Near-Term Priorities
 
-1. First Landing playability closeout
-   - Prove one complete start-to-win Greybox Demo run.
-   - Prove one Commander-death loss run.
+1. First Landing tactical route closeout
+   - Treat the user-completed win run as the first playable proof for the current greybox slice.
+   - Keep Commander-loss verification lightweight through the F7/debug path unless natural combat loss exposes a distinct bug.
+   - Prove the enemy Pylon weak point, central well retake, tower-wall route, and attack pacing from data-backed checks and manual notes.
    - Patch only controls, readability, pacing, data drift, or localization issues that block the existing mission loop.
-   - Keep repair, support buildings, art polish, and wider colony systems deferred unless one directly blocks the closeout.
 
 2. Validation and scaffold upkeep
    - Keep Godot .NET and .NET SDK versions documented.
@@ -88,7 +88,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Expand automated checks only when they protect deterministic behavior found during playability passes.
 
 3. Tactical proof follow-up
-   - Tune the enemy pylon weak point, central well pressure, tower-wall route, and attack pacing from playtest evidence.
+   - Tune the enemy pylon weak point, central well pressure, tower-wall route, and attack pacing from additional playtest evidence.
    - Decide whether repair is necessary for First Landing or should wait for later tactical identity work.
    - Add a midlevel twist only after the basic win/loss run is reliably understandable.
 
@@ -130,6 +130,8 @@ Exit criteria:
 
 Goal: prove basic RTS interaction and base construction.
 
+Current status: the greybox base/control loop is functionally present. Remaining work here should be treated as bug fixing or evidence capture, while new gameplay direction should land under Milestone 2 unless it directly repairs controls, construction, power, resources, fog, or command readability.
+
 Systems:
 
 - camera pan/zoom
@@ -157,6 +159,8 @@ Exit criteria:
 ## Milestone 2: First Landing Mission
 
 Goal: prove the core mission loop.
+
+Current status: active. A user playtest has completed a win run in the current slice, and deterministic smoke coverage proves the Commander-loss/debug path. The next validation target is repeatable mission routing: central well retake, forward enemy power strike, tower-wall opening, and readable pressure.
 
 Mission arc:
 

@@ -503,26 +503,48 @@ Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Uni
 var missionWellPlacements = mission.ResourceWellPlacements
     .Select(placement => (placement.WellId, missionMarkers[placement.MarkerId] + placement.Offset))
     .ToArray();
-var pacedMissionSimulation = new RtsSimulation(
-    catalog,
-    startingMaterials,
-    missionWellPlacements,
-    mission.EnemyStartingResources[ContentIds.Resources.Materials],
-    EnemyAiMarkers.FromMission(mission),
-    mission.EnemyAiProfile,
-    mission.AvailableUnitIds);
-foreach (var entity in mission.StartingEntities)
+Assert(mission.Markers.Any(marker => marker.Id == "enemy_pylon_weak_point"), "mission data exposes an enemy pylon weak-point marker");
+Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Buildings.Pylon && entity.MarkerId == "enemy_pylon_weak_point"), "mission starts with a real enemy Pylon weak point");
+
+var routeSimulation = CreateMissionSimulation(catalog, mission, startingMaterials, missionMarkers, missionWellPlacements);
+var enemyForwardPylon = routeSimulation.Buildings.Single(building =>
+    building.FactionId == ContentIds.Factions.PrivateMilitary &&
+    building.Definition.Id == ContentIds.Buildings.Pylon);
+Assert(enemyForwardPylon.IsPowered, "enemy pylon weak point starts powered by the enemy base plant");
+Assert(routeSimulation.EnergyWalls.Any(wall =>
 {
-    var position = missionMarkers[entity.MarkerId] + entity.Offset;
-    if (entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
-    {
-        pacedMissionSimulation.AddStartingBuilding(entity.ContentId, position, entity.FactionId);
-    }
-    else if (entity.ContentId.StartsWith("unit_", StringComparison.Ordinal))
-    {
-        pacedMissionSimulation.AddUnit(entity.ContentId, entity.FactionId, position);
-    }
-}
+    var start = routeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
+    var end = routeSimulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
+    return start.FactionId == ContentIds.Factions.PrivateMilitary &&
+        end.FactionId == ContentIds.Factions.PrivateMilitary;
+}), "mission starts with a powered enemy tower-wall route");
+
+TickFor(routeSimulation, 0.1f);
+var enemyCentralExtractor = routeSimulation.Buildings.Single(building =>
+    building.FactionId == ContentIds.Factions.PrivateMilitary &&
+    building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
+    building.ResourceWellId == "well_first_landing_central");
+Assert(enemyCentralExtractor.IsPowered, "enemy pylon powers the central well Extractor");
+enemyForwardPylon.ApplyDamage(9999, "explosive");
+TickFor(routeSimulation, 0.1f);
+Assert(routeSimulation.EnemyOfficer.PowerStrikesTaken == 1, "destroying the enemy Pylon counts as an internal power strike");
+Assert(!enemyCentralExtractor.IsPowered, "destroying the enemy Pylon shuts off the central enemy Extractor");
+Assert(!routeSimulation.EnergyWalls.Any(wall =>
+{
+    var start = routeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
+    var end = routeSimulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
+    return start.FactionId == ContentIds.Factions.PrivateMilitary &&
+        end.FactionId == ContentIds.Factions.PrivateMilitary;
+}), "destroying the enemy Pylon drops the enemy tower-wall route");
+enemyCentralExtractor.ApplyDamage(9999, "explosive");
+Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).Success, "retake route places player power");
+Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160)).Success, "retake route places first player Pylon");
+Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-10, 120)).Success, "retake route chains player Pylon toward the central well");
+Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(120, 150)).Success, "retake route reaches the central well with powered support");
+var centralRetakeValidation = routeSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, missionMarkers["central_well"]);
+Assert(centralRetakeValidation.IsLegal, $"destroyed enemy Extractor releases the central well for player retake ({centralRetakeValidation.MessageKey}: {centralRetakeValidation.Reason})");
+
+var pacedMissionSimulation = CreateMissionSimulation(catalog, mission, startingMaterials, missionMarkers, missionWellPlacements);
 
 TickFor(pacedMissionSimulation, mission.EnemyAiProfile.FirstAttackDelaySeconds - 5.0f);
 Assert(!pacedMissionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.TargetBuildingEntityId is not null), "mission AI profile delays first enemy pressure");
@@ -567,6 +589,38 @@ static void TickFor(RtsSimulation simulation, float seconds)
         simulation.Tick(MathF.Min(step, seconds - elapsed));
         elapsed += step;
     }
+}
+
+static RtsSimulation CreateMissionSimulation(
+    ContentCatalog catalog,
+    MissionDefinition mission,
+    int startingMaterials,
+    IReadOnlyDictionary<string, SimVector2> missionMarkers,
+    IEnumerable<(string WellId, SimVector2 Position)> missionWellPlacements)
+{
+    var simulation = new RtsSimulation(
+        catalog,
+        startingMaterials,
+        missionWellPlacements,
+        mission.EnemyStartingResources[ContentIds.Resources.Materials],
+        EnemyAiMarkers.FromMission(mission),
+        mission.EnemyAiProfile,
+        mission.AvailableUnitIds);
+
+    foreach (var entity in mission.StartingEntities)
+    {
+        var position = missionMarkers[entity.MarkerId] + entity.Offset;
+        if (entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
+        {
+            simulation.AddStartingBuilding(entity.ContentId, position, entity.FactionId);
+        }
+        else if (entity.ContentId.StartsWith("unit_", StringComparison.Ordinal))
+        {
+            simulation.AddUnit(entity.ContentId, entity.FactionId, position);
+        }
+    }
+
+    return simulation;
 }
 
 static string FindRepoRoot()

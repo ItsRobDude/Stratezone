@@ -159,12 +159,14 @@ Acceptance checks:
 - all required enemy targets destroyed triggers win
 - destroyed Barracks and Power Plants release same-faction Cadets before victory/loss checks finish
 - destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself, and the reveal-only tank does not block victory
+- Guardian energy fire, revealed Medium Tanks, and Rocket Tower explosives outperform comparable ballistic options against armored vehicles
 
 Evidence:
 
 - one completed mission run; current evidence includes a user-completed greybox win run
 - one commander-death loss run; deterministic smoke coverage currently proves Commander death and the F7/debug loss path
 - smoke coverage for central well retake, enemy Pylon weak point, and tower-wall shutdown
+- smoke coverage for Guardian-vs-armor damage math, Medium Tank reveal on both sides, and Rocket Tower anti-armor tuning
 - notes for any missing or intentionally placeholder behavior
 - localization key coverage for mission result, objective, command, and blocked-action text
 - closeout notes should distinguish verified playable behavior from deferred systems such as repair, final balance, and final art
@@ -192,6 +194,7 @@ Acceptance checks:
 - infrastructure strikes matter in at least one mission route
 - scouting reveals useful tactical information
 - Cadet, Rifleman, Guardian, Rover, Commander, Medium Tank, and Heavy Tank roles are distinct
+- Guardian is proven as anti-armor infantry without becoming a better anti-infantry Rifleman
 - Level 1 starts the player with one Worker, one Guardian, one Rover, and one Commander, while only Worker, Cadet, and Rifleman are trainable
 - first enemy AI production can choose between Level 1-available combat troops based on resources and requirements
 - enemy can scout/rally before first pressure, retreat damaged attackers, avoid immediately recommitting badly damaged returnees, and regroup after a wiped attack group

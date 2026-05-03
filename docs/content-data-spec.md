@@ -146,6 +146,7 @@ Prototype rules:
 - `unit_rifleman` is intentionally fragile. First-pass health should stay around 40-50 so infantry caught out of position die fast.
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.
+- `unit_guardian` is the anti-armor infantry proof role: lower raw damage than Rifleman, but energy damage that performs meaningfully better against Medium and Heavy Tanks than Rifleman ballistics.
 - `unit_guardian` should require `building_armory_annex` where Barracks add-ons are enabled by the mission.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
 - In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
@@ -189,6 +190,8 @@ First-pass resistance intent:
 
 - Basic infantry should die fast against other infantry.
 - Heavy armor should feel nearly impenetrable to ballistic infantry fire, while Medium Tanks should be meaningfully faster to kill than Heavy Tanks.
+- Guardian energy fire should be worse than Rifleman fire against basic infantry but more than twice as effective as Rifleman fire against Medium and Heavy Tanks.
+- Revealed Medium Tanks and Rocket Tower explosives should also outperform Rifleman/Gun Tower ballistics against armored vehicles.
 - Buildings should resist casual ballistic damage enough to preserve siege pacing.
 - Buildings should have negative explosive resistance so Rocket Towers, Tanks, and later siege weapons are the base-cracking lane.
 - The Colony Hub should keep its early siege ratio of 1200 health and 0.25 ballistic resistance unless playtests prove the ratio wrong.
@@ -334,7 +337,7 @@ In-place tower upgrade placeholder example:
 id: building_rocket_tower
 display_name: Rocket Tower
 role: explosive_wall_anchor
-cost: 320
+cost: 420
 build_time_seconds: 0
 requires_power: true
 requires_adjacent_building_id: none
@@ -345,7 +348,8 @@ upgrade_from_building_id: building_defense_tower
 upgrade_preserves_wall_anchor: true
 wall_anchor: true
 wall_link_range: 7
-attack_damage: 80
+attack_damage: 55
+attack_cooldown: 2.4
 damage_type: explosive
 area_radius: 2
 friendly_fire: true

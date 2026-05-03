@@ -141,9 +141,9 @@ First-pass unit intent:
 - Riflemen die very quickly and work best with support, numbers, or harassment timing.
 - Grouped infantry should spread into a small formation on move and attack orders; the greybox should not teach players to stack ten Riflemen on one impact point.
 - Cadets are cheaper and weaker than Riflemen, giving the player and enemy a disposable early infantry option.
-- Guardians are beefier than Riflemen but deal slightly less damage; if Barracks add-ons are active, they require a powered Armory Annex.
+- Guardians are beefier than Riflemen and deal slightly less raw damage, but their energy fire is the first infantry anti-armor proof role: worse than Riflemen into basic infantry, meaningfully better into Medium and Heavy Tanks. If Barracks add-ons are active, they require a powered Armory Annex.
 - Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
-- Medium Tanks are the Level 1 reveal vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old reveal tank.
+- Medium Tanks are the Level 1 reveal vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old reveal tank. A revealed Medium Tank should also be a better anti-armor answer than Rifleman fire.
 - Heavy Tanks are the promoted version of the old tank record and should stay later/heavier than the Level 1 reveal.
 - Tanks can run over enemy infantry on direct move orders, preserving vehicle micro instead of stopping to auto-fire before impact.
 - Tanks survive more punishment than infantry but are not part of normal Level 1 production.

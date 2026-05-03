@@ -203,7 +203,7 @@ Prototype behavior:
 - Medium and Heavy Tanks are resistant to ballistic fire and force energy, explosive, crush, or other anti-armor answers
 - Cadet is the cheapest trainable combat unit with lower cost, health, and damage than Rifleman
 - Rifleman is the baseline basic combat unit
-- Guardian is beefier than Rifleman but deals slightly less damage
+- Guardian is beefier than Rifleman and deals slightly less raw damage, but its energy weapon is the first infantry anti-armor proof role
 - Rover scouts and cannot shoot, but can run over enemy infantry
 - Medium and Heavy Tanks can run over enemy infantry on direct move orders
 - Commander is fragile, controllable, pistol-only, and mission-critical
@@ -217,7 +217,7 @@ Tunable placeholders:
 - Rifleman health: about 45, enough for roughly 2-3 seconds of Rifleman-vs-Rifleman time-to-kill
 - Cadet health and damage stay below Rifleman so it reads as a cheaper, weaker early troop
 - Guardian health: medium
-- Guardian damage: slightly below Rifleman
+- Guardian damage: slightly below Rifleman as raw damage, worse than Rifleman into basic infantry, and more than twice as effective as Rifleman into Medium or Heavy Tanks because armor resists ballistics much harder than energy
 - Commander health: low
 - Medium Tank health: below Heavy Tank, with roughly half the practical Rifleman time-to-kill burden of the old reveal tank
 - Medium Tank shell: lower damage and smaller splash than Heavy Tank, leaving a full-health Rifleman near 30 percent health on direct hit
@@ -240,6 +240,7 @@ Acceptance checks:
 - Rovers and tanks can instantly kill basic infantry with crush damage when moved through exposed enemy infantry
 - a small Rifleman group cannot efficiently destroy a Colony Hub without siege support
 - Riflemen perform poorly against Heavy Tanks because of high ballistic resistance
+- Guardian energy fire, revealed Medium Tank shells, and Rocket Tower explosives outperform their ballistic counterparts against armored vehicles
 - explosive damage can harm friendly units in range
 - commander death triggers mission loss
 

@@ -187,6 +187,7 @@ Systems:
 - central contested well
 - enemy pylon weak point that can disable an enemy tower route
 - Colony Hub Medium Tank reveal without changing win/loss rules
+- Guardian anti-armor infantry tuning proven against Medium and Heavy Tanks without making Guardian a better anti-infantry Rifleman
 - defense tower wall path-blocking
 - HUD objective tracker
 

@@ -15,11 +15,21 @@ Assert(localization.ContentName(ContentIds.Units.Worker) == "Worker", "content n
 Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");
 var cadetDefinition = catalog.GetUnit(ContentIds.Units.Cadet);
 var riflemanDefinition = catalog.GetUnit(ContentIds.Units.Rifleman);
+var guardianDefinition = catalog.GetUnit(ContentIds.Units.Guardian);
 var mediumTankDefinition = catalog.GetUnit(ContentIds.Units.MediumTank);
 var tankDefinition = catalog.GetUnit(ContentIds.Units.Tank);
+var gunTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.GunTower);
+var rocketTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.RocketTower);
 Assert(cadetDefinition.Cost < riflemanDefinition.Cost, "Cadet costs less than Rifleman");
 Assert(cadetDefinition.Health < riflemanDefinition.Health, "Cadet has less health than Rifleman");
 Assert(cadetDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Cadet deals less damage than Rifleman");
+Assert(guardianDefinition.Role == "anti_armor_infantry", "Guardian content role is the anti-armor infantry proof role");
+Assert(guardianDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Guardian keeps lower raw damage than Rifleman");
+Assert(DamagePerSecondAgainst(guardianDefinition, riflemanDefinition) < DamagePerSecondAgainst(riflemanDefinition, riflemanDefinition), "Guardian is not a better anti-infantry Rifleman");
+Assert(DamagePerSecondAgainst(guardianDefinition, mediumTankDefinition) > DamagePerSecondAgainst(riflemanDefinition, mediumTankDefinition) * 2.0f, "Guardian energy fire outperforms Rifleman ballistics against Medium Tanks");
+Assert(DamagePerSecondAgainst(guardianDefinition, tankDefinition) > DamagePerSecondAgainst(riflemanDefinition, tankDefinition) * 2.25f, "Guardian energy fire outperforms Rifleman ballistics against Heavy Tanks");
+Assert(DamagePerSecondAgainst(mediumTankDefinition, mediumTankDefinition) > DamagePerSecondAgainst(riflemanDefinition, mediumTankDefinition) * 1.5f, "revealed Medium Tanks are a better anti-armor answer than Riflemen");
+Assert(BuildingDamagePerSecondAgainst(rocketTowerDefinition, mediumTankDefinition) > BuildingDamagePerSecondAgainst(gunTowerDefinition, mediumTankDefinition) * 4.0f, "Rocket Tower explosives outperform Gun Tower ballistics against Medium Tanks");
 Assert(tankDefinition.DisplayName == "Heavy Tank", "existing Tank record is promoted to Heavy Tank");
 Assert(mediumTankDefinition.Health < tankDefinition.Health, "Medium Tank is less durable than Heavy Tank");
 Assert(mediumTankDefinition.AttackDamage < tankDefinition.AttackDamage, "Medium Tank deals less damage than Heavy Tank");
@@ -412,6 +422,14 @@ hubRevealWinSimulation.Tick(0.1f);
 Assert(hubRevealWinSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed enemy Hub reveals a Medium Tank");
 Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Won, "reveal-only tank does not block destroy-all-enemies victory");
 
+var playerHubRevealSimulation = new RtsSimulation(catalog, startingMaterials, []);
+var playerHubToDestroy = playerHubRevealSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+playerHubRevealSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(90, 0));
+playerHubToDestroy.ApplyDamage(9999, "explosive");
+playerHubRevealSimulation.Tick(0.1f);
+Assert(playerHubRevealSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed player Hub reveals a Medium Tank for the player");
+Assert(playerHubRevealSimulation.MissionState.Status == MissionStatus.Active, "player Hub Medium Tank reveal does not replace mission loss conditions by itself");
+
 var towerUpgradeSimulation = new RtsSimulation(catalog, 3000, []);
 towerUpgradeSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
 Assert(towerUpgradeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0)).Success, "tower upgrade test places power");
@@ -578,6 +596,34 @@ static void Assert(bool condition, string message)
     {
         throw new InvalidOperationException($"Assertion failed: {message}");
     }
+}
+
+static float DamagePerSecondAgainst(UnitDefinition attacker, UnitDefinition target)
+{
+    if (!attacker.CanAttack || attacker.AttackDamage <= 0.0f || attacker.AttackCooldown <= 0.0f)
+    {
+        return 0.0f;
+    }
+
+    return EffectiveDamage(attacker.AttackDamage, attacker.DamageType, target.DamageResistances) / attacker.AttackCooldown;
+}
+
+static float BuildingDamagePerSecondAgainst(BuildingDefinition attacker, UnitDefinition target)
+{
+    if (attacker.AttackDamage <= 0.0f || attacker.AttackCooldown <= 0.0f)
+    {
+        return 0.0f;
+    }
+
+    return EffectiveDamage(attacker.AttackDamage, attacker.DamageType, target.DamageResistances) / attacker.AttackCooldown;
+}
+
+static float EffectiveDamage(float rawDamage, string damageType, IReadOnlyDictionary<string, float> resistances)
+{
+    var resistance = resistances.TryGetValue(damageType, out var value)
+        ? value
+        : 0.0f;
+    return rawDamage * MathF.Max(0.0f, 1.0f - resistance);
 }
 
 static void TickFor(RtsSimulation simulation, float seconds)

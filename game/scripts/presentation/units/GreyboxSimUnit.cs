@@ -148,8 +148,12 @@ public partial class GreyboxSimUnit : Node2D
     {
         var assetSlug = unitId switch
         {
+            ContentIds.Units.Cadet => "cadet",
             ContentIds.Units.Rifleman => "rifleman",
             ContentIds.Units.Guardian => "guardian",
+            ContentIds.Units.Commander => "commander",
+            ContentIds.Units.MediumTank => "medium_tank",
+            ContentIds.Units.Tank => "tank",
             _ => null
         };
 

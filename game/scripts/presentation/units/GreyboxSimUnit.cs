@@ -4,13 +4,21 @@ using Stratezone.Simulation;
 
 public partial class GreyboxSimUnit : Node2D
 {
+    private const float DirectionalSpriteScale = 0.06f;
+    private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+    private static readonly Dictionary<string, IReadOnlyDictionary<int, Texture2D>> DirectionalTextureCache = [];
+
     private UnitState? _state;
     private Label? _label;
     private LocalizationCatalog? _localization;
+    private Sprite2D? _directionalSprite;
+    private string? _directionalAssetSlug;
     private bool _selected;
     private bool _useRiflemanPlaceholder;
     private bool _useCadetPlaceholder;
     private bool _useCommanderPlaceholder;
+    private int _facingAngle = 180;
+    private Vector2? _lastPosition;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
@@ -22,6 +30,7 @@ public partial class GreyboxSimUnit : Node2D
         _useCadetPlaceholder = state.Definition.Id == ContentIds.Units.Cadet;
         _useCommanderPlaceholder = state.Definition.Id == ContentIds.Units.Commander;
         SelectionRadius = _useCommanderPlaceholder ? 28.0f : 22.0f;
+        InitializeDirectionalSprite(state.Definition.Id);
         _label = new Label
         {
             Position = new Vector2(-48, -38),
@@ -40,8 +49,12 @@ public partial class GreyboxSimUnit : Node2D
 
     public void UpdateFromState(UnitState state)
     {
+        var nextPosition = new Vector2(state.Position.X, state.Position.Y);
+        UpdateFacing(state, nextPosition);
+
         _state = state;
-        Position = new Vector2(state.Position.X, state.Position.Y);
+        Position = nextPosition;
+        _lastPosition = nextPosition;
 
         if (_label is not null)
         {
@@ -69,7 +82,11 @@ public partial class GreyboxSimUnit : Node2D
             return;
         }
 
-        if (_useCadetPlaceholder)
+        if (_directionalSprite is not null)
+        {
+            // Real unit art is drawn by the child Sprite2D; keep overlays and debug cues in this node.
+        }
+        else if (_useCadetPlaceholder)
         {
             DrawCadetPlaceholder();
         }
@@ -106,6 +123,163 @@ public partial class GreyboxSimUnit : Node2D
         {
             DrawPathDebug();
         }
+    }
+
+    private void InitializeDirectionalSprite(string unitId)
+    {
+        var assetSlug = unitId switch
+        {
+            ContentIds.Units.Rifleman => "rifleman",
+            ContentIds.Units.Guardian => "guardian",
+            _ => null
+        };
+
+        if (assetSlug is null)
+        {
+            return;
+        }
+
+        _directionalAssetSlug = assetSlug;
+        var textures = LoadDirectionalTextures(assetSlug);
+        if (!textures.TryGetValue(_facingAngle, out var initialTexture))
+        {
+            GD.PushWarning($"No directional unit sprites found for {unitId}; using greybox placeholder.");
+            _directionalAssetSlug = null;
+            return;
+        }
+
+        _directionalSprite = new Sprite2D
+        {
+            Centered = false,
+            Texture = initialTexture,
+            Scale = Vector2.One * DirectionalSpriteScale,
+            Position = GetSpriteOriginOffset(initialTexture)
+        };
+        AddChild(_directionalSprite);
+    }
+
+    private static IReadOnlyDictionary<int, Texture2D> LoadDirectionalTextures(string assetSlug)
+    {
+        if (DirectionalTextureCache.TryGetValue(assetSlug, out var cached))
+        {
+            return cached;
+        }
+
+        var textures = new Dictionary<int, Texture2D>();
+        foreach (var angle in DirectionalAngles)
+        {
+            var path = $"res://assets/units/{assetSlug}/directional/{assetSlug}_{angle:000}.png";
+            var texture = LoadTexture(path);
+            if (texture is not null)
+            {
+                textures[angle] = texture;
+            }
+        }
+
+        DirectionalTextureCache[assetSlug] = textures;
+        return textures;
+    }
+
+    private static Texture2D? LoadTexture(string resourcePath)
+    {
+        if (ResourceLoader.Exists(resourcePath))
+        {
+            return GD.Load<Texture2D>(resourcePath);
+        }
+
+        var filePath = ProjectSettings.GlobalizePath(resourcePath);
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        var image = Image.LoadFromFile(filePath);
+        return image is null || image.IsEmpty()
+            ? null
+            : ImageTexture.CreateFromImage(image);
+    }
+
+    private void UpdateFacing(UnitState state, Vector2 nextPosition)
+    {
+        var direction = GetFacingDirection(state, nextPosition);
+        if (direction is null || direction.Value.LengthSquared() <= 0.001f)
+        {
+            return;
+        }
+
+        var angle = DirectionToCompassAngle(direction.Value);
+        if (angle == _facingAngle)
+        {
+            return;
+        }
+
+        _facingAngle = angle;
+        UpdateDirectionalTexture();
+    }
+
+    private Vector2? GetFacingDirection(UnitState state, Vector2 nextPosition)
+    {
+        if (state.LastAttackTargetPosition is not null && state.AttackFlashSeconds > 0.0f)
+        {
+            var target = new Vector2(state.LastAttackTargetPosition.Value.X, state.LastAttackTargetPosition.Value.Y);
+            return target - nextPosition;
+        }
+
+        if (_lastPosition is not null)
+        {
+            var movementDelta = nextPosition - _lastPosition.Value;
+            if (movementDelta.LengthSquared() > 0.25f)
+            {
+                return movementDelta;
+            }
+        }
+
+        if (state.CurrentWaypointIndex < state.PathWaypoints.Count)
+        {
+            var waypoint = state.PathWaypoints[state.CurrentWaypointIndex];
+            return new Vector2(waypoint.X, waypoint.Y) - nextPosition;
+        }
+
+        if (state.MoveTarget is not null)
+        {
+            return new Vector2(state.MoveTarget.Value.X, state.MoveTarget.Value.Y) - nextPosition;
+        }
+
+        return null;
+    }
+
+    private void UpdateDirectionalTexture()
+    {
+        if (_directionalSprite is null || _directionalAssetSlug is null)
+        {
+            return;
+        }
+
+        var textures = LoadDirectionalTextures(_directionalAssetSlug);
+        if (!textures.TryGetValue(_facingAngle, out var texture))
+        {
+            return;
+        }
+
+        _directionalSprite.Texture = texture;
+        _directionalSprite.Position = GetSpriteOriginOffset(texture);
+    }
+
+    private static Vector2 GetSpriteOriginOffset(Texture2D texture)
+    {
+        var size = texture.GetSize() * DirectionalSpriteScale;
+        return new Vector2(-size.X * 0.5f, -size.Y * 0.5f);
+    }
+
+    private static int DirectionToCompassAngle(Vector2 direction)
+    {
+        var degrees = Mathf.RadToDeg(Mathf.Atan2(direction.X, -direction.Y));
+        if (degrees < 0.0f)
+        {
+            degrees += 360.0f;
+        }
+
+        return Mathf.PosMod(Mathf.RoundToInt(degrees / 45.0f) * 45, 360);
     }
 
     private void DrawIncomingAttackFlash()

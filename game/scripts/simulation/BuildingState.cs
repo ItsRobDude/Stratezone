@@ -25,6 +25,7 @@ public sealed class BuildingState
     public SimVector2? LastIncomingAttackOrigin { get; private set; }
     public float HitFlashSeconds { get; private set; }
     public bool IsDestroyed => Health <= 0.0f;
+    public bool IsDamaged => !IsDestroyed && Health < Definition.Health;
 
     public float FootprintWorldRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius);
     public float OccupancyRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius + Definition.PlacementBuffer);
@@ -41,6 +42,18 @@ public sealed class BuildingState
             : 0.0f;
         var finalDamage = rawDamage * MathF.Max(0.0f, 1.0f - resistance);
         Health = MathF.Max(0.0f, Health - finalDamage);
+    }
+
+    internal float Repair(float healthAmount)
+    {
+        if (IsDestroyed || healthAmount <= 0.0f)
+        {
+            return 0.0f;
+        }
+
+        var previousHealth = Health;
+        Health = MathF.Min(Definition.Health, Health + healthAmount);
+        return Health - previousHealth;
     }
 
     internal void RegisterIncomingAttack(SimVector2 origin)

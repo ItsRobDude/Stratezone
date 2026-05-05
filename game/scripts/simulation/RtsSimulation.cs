@@ -319,6 +319,7 @@ public sealed partial class RtsSimulation
 
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = null;
+        unit.RepairTargetBuildingEntityId = null;
         unit.TargetFormationOffset = default;
         SetUnitPathTo(unit, position);
     }
@@ -335,6 +336,7 @@ public sealed partial class RtsSimulation
         unit.ClearPath();
         unit.TargetUnitEntityId = target.EntityId;
         unit.TargetBuildingEntityId = null;
+        unit.RepairTargetBuildingEntityId = null;
         unit.TargetFormationOffset = formationOffset;
     }
 
@@ -350,6 +352,7 @@ public sealed partial class RtsSimulation
         unit.ClearPath();
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = target.EntityId;
+        unit.RepairTargetBuildingEntityId = null;
         unit.TargetFormationOffset = formationOffset;
     }
 
@@ -620,11 +623,11 @@ public sealed partial class RtsSimulation
     {
         if (factionId == ContentIds.Factions.PrivateMilitary)
         {
-            EnemyMaterials -= amount;
+            EnemyMaterials = MathF.Max(0.0f, EnemyMaterials - amount);
             return;
         }
 
-        Materials -= amount;
+        Materials = MathF.Max(0.0f, Materials - amount);
     }
 
     private bool WouldBePowered(string factionId, BuildingDefinition definition, SimVector2 position)

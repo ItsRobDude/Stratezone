@@ -43,7 +43,7 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "light_infantry",
       "cost": 75,
-      "train_time_seconds": 8,
+      "train_time_seconds": 3,
       "health": 35,
       "damage_resistances": {
         "ballistic": 0.0,
@@ -79,7 +79,7 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "basic_infantry",
       "cost": 100,
-      "train_time_seconds": 10,
+      "train_time_seconds": 4,
       "health": 45,
       "damage_resistances": {
         "ballistic": 0.0,
@@ -115,7 +115,7 @@
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "anti_armor_infantry",
       "cost": 140,
-      "train_time_seconds": 14,
+      "train_time_seconds": 9,
       "health": 125,
       "damage_resistances": {
         "ballistic": 0.15,

@@ -61,6 +61,11 @@ public partial class Main
         return LocalizedMessage(result.MessageKey, result.MessageArgs, result.Message);
     }
 
+    private string LocalizedRepair(RepairResult result)
+    {
+        return LocalizedMessage(result.MessageKey, result.MessageArgs, result.Message);
+    }
+
     private string LocalizedMissionText(MissionState state)
     {
         return LocalizedMessage(state.PrimaryTextKey, state.PrimaryTextArgs, state.PrimaryText);

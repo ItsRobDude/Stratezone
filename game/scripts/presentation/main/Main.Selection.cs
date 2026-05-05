@@ -177,6 +177,25 @@ public partial class Main
             return;
         }
 
+        var repairTarget = FindRepairablePlayerBuildingAt(worldPosition);
+        if (repairTarget is not null)
+        {
+            var repairers = 0;
+            foreach (var worker in selectedUnits.Where(unit => unit.Definition.CanRepair))
+            {
+                var result = _simulation.CommandUnitRepairBuilding(worker.EntityId, repairTarget.EntityId);
+                if (result.Success)
+                {
+                    repairers++;
+                }
+            }
+
+            _lastActionMessage = repairers > 0
+                ? L("ui.action.units_repairing_building", SimulationMessage.Args(("count", repairers), ("building", BuildingName(repairTarget.Definition))))
+                : L("ui.action.selected_units_cannot_repair");
+            return;
+        }
+
         for (var index = 0; index < selectedUnits.Length; index++)
         {
             _simulation.CommandUnitMove(selectedUnits[index].EntityId, ToSim(worldPosition + GetGroupOffset(index, selectedUnits.Length)));
@@ -256,6 +275,23 @@ public partial class Main
 
         return _simulation.Buildings
             .Where(building => building.FactionId == ContentIds.Factions.PlayerExpedition && !building.IsDestroyed)
+            .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
+            .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
+            .FirstOrDefault();
+    }
+
+    private BuildingState? FindRepairablePlayerBuildingAt(Vector2 worldPosition)
+    {
+        if (_simulation is null)
+        {
+            return null;
+        }
+
+        return _simulation.Buildings
+            .Where(building =>
+                building.FactionId == ContentIds.Factions.PlayerExpedition &&
+                !building.IsDestroyed &&
+                building.IsDamaged)
             .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
             .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
             .FirstOrDefault();

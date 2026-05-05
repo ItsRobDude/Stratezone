@@ -99,7 +99,7 @@ Unit production rule for Level 1:
 - Barracks add-ons are the preferred later unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
 - Current Level 1 mission data exposes Worker, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
 - Cadets should recruit in only a few seconds. They are the fastest to build, cheapest combat troop, weakest troop, and easiest troop to kill.
-- Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel once balance data is retuned from the current placeholder values.
+- Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel.
 - Guardians should be slower and more expensive than Riflemen because they are specialized anti-armor / anti-defense troops, not the default infantry upgrade.
 - Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other add-on production by changing mission availability and support buildings deliberately.
 

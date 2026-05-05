@@ -144,6 +144,11 @@ public sealed partial class RtsSimulation
 
     private void TickPlayerUnit(UnitState unit, float deltaSeconds)
     {
+        if (TickUnitRepair(unit, deltaSeconds))
+        {
+            return;
+        }
+
         var targetUnit = unit.TargetUnitEntityId is null ? null : FindLiveUnit(unit.TargetUnitEntityId.Value);
         if (targetUnit is not null && targetUnit.FactionId != unit.FactionId)
         {

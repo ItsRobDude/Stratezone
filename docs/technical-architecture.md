@@ -58,7 +58,7 @@ The architecture is shaped around these realities:
 - the project is likely to be built with heavy AI assistance
 - the primary development machine is Windows
 - the game may eventually be sold as a downloadable desktop indie game
-- art production should assume AI-assisted concepts plus Photoshop cleanup, not a large art team
+- art production should assume AI-assisted concepts, Adobe Illustrator vectorization, cleanup, and generated turntable/directional frames, not a large art team or reliable paid artist pipeline
 - the first playable mission matters more than future-perfect engine abstraction
 - levels are fresh authored scenarios rather than a persistent colony campaign
 - resource gathering uses powered refinery/extractor buildings on scarce limited wells that trickle resources and can deplete, not survival-style hauling
@@ -71,6 +71,7 @@ The architecture is shaped around these realities:
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
 - First Landing is a playable ugly 5-10 minute top-down mission before art direction or cutscenes
+- the first public build target is a demo built from the first five levels, but the project is still pre-demo and should not optimize release tooling ahead of working level design
 - debugging must be straightforward enough for future Codex runs to reason about quickly
 
 ## Proposed Repo Shape

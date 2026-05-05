@@ -72,6 +72,7 @@ Prototype behavior:
 - workers construct Barracks add-ons adjacent to the Barracks by player command
 - workers can upgrade a Defense Tower into an armed tower variant in place when the player pays the cost and requirements
 - workers can repair during danger if the player commands them
+- repair spends materials based on missing health; the cost scales with percent destroyed instead of being free or flat-priced
 - construction should fail clearly if unaffordable, blocked, or outside legal support
 
 Tunable placeholders:
@@ -79,12 +80,15 @@ Tunable placeholders:
 - building buffer: enough to prevent over-cramming on small maps
 - build time: short enough for a 5-10 minute Level 1
 - repair rate: useful but not combat-dominating
+- repair cost: proportional to missing health and cheaper than full replacement unless playtests prove repair is too safe
 
 Acceptance checks:
 
 - a worker can start and complete a build job
 - a Barracks add-on must be adjacent to a valid Barracks
 - a Defense Tower can upgrade in place without losing its wall-anchor identity during the upgrade
+- repairing a lightly damaged building or unit costs less than repairing a nearly destroyed one
+- repair cannot spend materials below zero
 - blocked placement is rejected
 - an unpowered or unsupported build decision is rejected or clearly marked inactive according to the final implementation choice
 
@@ -169,6 +173,7 @@ Prototype behavior:
 - Barracks upgrades are physical modules built by Workers adjacent to the Barracks
 - Armory Annex unlocks Guardian training and explosive-weapon tech where the mission allows it
 - Vehicle Bay unlocks Rover training and expands heavy-armor capacity where the mission allows it
+- Level 1 silently hides and locks Vehicle Bay; it should not appear as a disabled player command in the first mission
 - add-ons require power; unpowered add-ons stop providing unlocks or capacity until power returns
 - expanding the Barracks should create a power-network decision rather than a menu-only upgrade decision
 
@@ -201,9 +206,9 @@ Prototype behavior:
 
 - basic infantry follow the meatgrinder rule: they die quickly when caught out of position
 - Medium and Heavy Tanks are resistant to ballistic fire and force energy, explosive, crush, or other anti-armor answers
-- Cadet is the cheapest trainable combat unit with lower cost, health, and damage than Rifleman
-- Rifleman is the baseline basic combat unit
-- Guardian is beefier than Rifleman and deals slightly less raw damage, but its energy weapon is the first infantry anti-armor proof role
+- Cadet is the cheapest and fastest trainable combat unit, with lower cost, health, and damage than Rifleman
+- Rifleman is the baseline basic combat unit, still fast to train but a small step up from Cadet in cost, durability, and damage
+- Guardian is beefier, slower to train, more expensive, and specialized for anti-armor / anti-defense work; it should not become the default answer to basic infantry
 - Rover scouts and cannot shoot, but can run over enemy infantry
 - Medium and Heavy Tanks can run over enemy infantry on direct move orders
 - Commander is fragile, controllable, pistol-only, and mission-critical
@@ -216,6 +221,9 @@ Tunable placeholders:
 
 - Rifleman health: about 45, enough for roughly 2-3 seconds of Rifleman-vs-Rifleman time-to-kill
 - Cadet health and damage stay below Rifleman so it reads as a cheaper, weaker early troop
+- Cadet recruit time: only a few seconds
+- Rifleman recruit time: roughly 3-4 seconds in the intended fast classic-RTS feel, or only slightly slower than Cadet if final pacing changes
+- Guardian recruit time: slower than Rifleman because it is a specialist
 - Guardian health: medium
 - Guardian damage: slightly below Rifleman as raw damage, worse than Rifleman into basic infantry, and more than twice as effective as Rifleman into Medium or Heavy Tanks because armor resists ballistics much harder than energy
 - Commander health: low
@@ -231,6 +239,7 @@ Mission availability contract:
 
 - Mission `available_unit_ids` is the trainable-unit truth for the slice, not just a UI hint.
 - Level 1 trains Worker, Cadet, and Rifleman only. The player may start with a Guardian, Rover, and Commander, but cannot train more of those units in Level 1.
+- Level 1 does not expose Vehicle Bay to the player; it is silently locked and hidden.
 - Enemy AI production uses the same mission trainable-unit list and should choose between valid affordable combat units instead of hardcoding one unit type.
 - Later missions may enable Guardian or Rover production by exposing those units in mission data and providing the required powered Barracks add-ons.
 

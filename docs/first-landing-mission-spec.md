@@ -98,9 +98,12 @@ Unit production rule for Level 1:
 - A powered Barracks accepts a small serial training queue so repeated Rifleman/Cadet clicks are not lost; one unit trains at a time per Barracks.
 - Barracks add-ons are the preferred later unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
 - Current Level 1 mission data exposes Worker, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
+- Cadets should recruit in only a few seconds. They are the fastest to build, cheapest combat troop, weakest troop, and easiest troop to kill.
+- Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel once balance data is retuned from the current placeholder values.
+- Guardians should be slower and more expensive than Riflemen because they are specialized anti-armor / anti-defense troops, not the default infantry upgrade.
 - Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other add-on production by changing mission availability and support buildings deliberately.
 
-Workers are expensive, recruitable, non-combat units. They require player command for construction and repair.
+Workers are expensive, recruitable, non-combat units. They require player command for construction and repair. Repair should work in First Landing: it spends materials based on the target's missing health percentage, so lightly damaged assets are cheap to patch while badly damaged assets cost meaningfully more to restore.
 
 ## Available Buildings
 
@@ -113,6 +116,7 @@ Level 1 should use:
 - Extractor/Refinery
 - Defense Tower
 - Armory Annex and Vehicle Bay records only as later add-on support; they are not player-buildable in the current Level 1 slice
+- Vehicle Bay is silently locked and hidden from the Level 1 player, not shown as a disabled tease
 - Gun Tower, if the first armed-tower pass is ready
 - Rocket Tower, only if explosive friendly-fire behavior is ready
 
@@ -186,7 +190,7 @@ Enemy target priority for Level 1:
 
 The enemy should compete for the central well, but Level 1 should run slower than the normal baseline so the player can understand what is happening. The greybox demo should give the player roughly two minutes before the first committed attack group, and that first committed group should be a single attacker until playtests show the opening is too passive.
 
-The current greybox enemy route uses a forward Pylon weak point between the enemy base and the contested well. Destroying that Pylon should shut off the enemy central Extractor and drop the powered tower-wall route, allowing the player to attack through the opening or retake the well after destroying the enemy Extractor.
+The current greybox enemy route uses a forward Pylon weak point between the enemy base and the contested well. Destroying that Pylon should shut off the enemy central Extractor and drop the powered tower-wall route, allowing the player to attack through the opening or retake the well after destroying the enemy Extractor. This route does not need to be tutorial-obvious in Level 1; it is acceptable if players discover it through scouting and experimentation rather than a heavy-handed prompt.
 
 Player alerts should feel like classic RTS command warnings: direct and frequent for player-known events such as enemy spotted, base under attack, extractor under attack, unit under attack, power offline, construction complete, and training complete. Hidden enemy production, rebuilding, or attack planning should not be announced unless a future radar/scanner system explicitly earns that information.
 
@@ -240,10 +244,15 @@ These values are tunable placeholders for scaffolding and early tests:
 - first enemy pressure: after the player has had time to start power and production
 - contested well pressure: visible early, not instantly fatal
 - infantry durability: meatgrinder-low; Rifleman health starts around 45
+- player-facing infantry recruitment should feel Dominion / classic RTS fast: Cadet fastest, Rifleman only slightly slower, Guardian slower because it is specialized
 - worker cost: expensive relative to Rifleman
 - tower cost: high enough to make wall placement a choice
-- Barracks add-on cost: meaningful enough to create a power/placement decision, but not enough to stall Level 1
+- Barracks add-on cost: meaningful enough to create a power/placement decision in later missions; Level 1 hides Vehicle Bay and should not require add-on learning
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance so Riflemen alone are slow base-crackers
 - Level 1 enemy economy: slower than normal
 
 Do not treat these as final balance.
+
+## Deferred From Level 1
+
+Med Hall, Logistics / Repair Pad, and Artillery Battery are later-mission systems for now. First Landing should get worker repair working before it introduces dedicated healing, vehicle maintenance pads, or static siege infrastructure.

@@ -6,6 +6,8 @@ Guidance for Codex and other coding agents working in this repository.
 
 Stratezone is a mission-first colony RTS, not a pure base-builder and not a pure Command & Conquer clone.
 
+The strongest old-game inspiration is Dominion: Storm Over Gift 3, with useful secondary lessons from classic Command & Conquer-style RTS pacing. Borrow the fast, readable build-and-command feel; do not copy exact factions, units, art, maps, names, or story.
+
 The durable design rule is:
 
 > RimWorld for colony stakes. Dominion/C&C-style RTS for battlefield control.
@@ -24,9 +26,11 @@ Current locked vision choices:
 - Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud; enemies and structures in explored areas remain visible in real time, while enemies that move into never-explored black fog are hidden.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
+- Cadets should be the fastest, cheapest, weakest, easiest-to-kill combat troop. Riflemen should train only slightly slower and be a small step up. Guardians should be slower, more expensive specialist anti-armor / anti-defense infantry.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks, starting with Armory Annex and Vehicle Bay.
+- Vehicle Bay is silently locked and hidden in Level 1.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
 - Defense Towers create an energy wall when placed near another compatible Defense Tower, blocking enemy pathing until a tower is destroyed.
@@ -36,11 +40,15 @@ Current locked vision choices:
 - Level 1 enemy pressure should be slow and readable: small groups of 1-3 attackers, some defenders left at base, and no omniscient HUD warnings about hidden enemy plans.
 - Enemy rival-officer behavior should stay internal and mission-local: it may remember events and adjust actions, but it must not create player-facing adaptation text or alerts.
 - Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Worker, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Worker, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
+- Repair should work in First Landing and cost materials based on missing health percentage.
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
 - Ancient-tech mystery is out of scope for now.
+- Med Hall, Logistics / Repair Pad, and Artillery Battery are later-mission systems unless First Landing playtests prove a hard need.
 - Visual tone is military-industrial with restrained near-future utility tech.
+- Art production should assume AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames while paid art is out of reach.
+- The first public build target is a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
 - Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, objective timer expired, or combinations of those.
 
 ## Source of Truth

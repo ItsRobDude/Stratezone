@@ -15,6 +15,7 @@ The intended product is:
 - packageable as a desktop indie game
 - scoped around authored missions before sandbox or procedural expansion
 - visually practical for AI-assisted concept art plus Photoshop cleanup
+- realistic about asset production: AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames are valid working paths while paid art is out of reach
 - grounded in restrained near-future military utility rather than ancient-tech mystery
 - built around limited RTS-style resource wells, not survival-game resource hauling
 
@@ -89,7 +90,7 @@ The first prototype stack is locked as Godot 4 with C#.
 
 3. Tactical proof follow-up
    - Tune the enemy pylon weak point, central well pressure, tower-wall route, and attack pacing from additional playtest evidence.
-   - Decide whether repair is necessary for First Landing or should wait for later tactical identity work.
+   - Implement repair for First Landing, with material cost scaling by missing health percentage.
    - Add a midlevel twist only after the basic win/loss run is reliably understandable.
 
 4. Release runway
@@ -286,6 +287,8 @@ Exit criteria:
 
 Goal: prepare a public or semi-public downloadable build through itch.io.
 
+Current public-build decision: the first public artifact should be a demo covering the first five levels. The project is still pre-demo; the current greybox First Landing work should not be marketed as the public demo, and repeatable level-design proof is still missing.
+
 Code and tool work:
 
 - create repeatable Windows export steps
@@ -393,7 +396,7 @@ Exit criteria:
 
 These are not first-prototype commitments:
 
-- second mission
+- second through fifth missions for the first public demo
 - second faction
 - campaign layer
 - persistent expedition progression, only if mission-first structure earns it
@@ -406,9 +409,8 @@ These are not first-prototype commitments:
 
 - Exact building footprint/buffer values for constrained maps.
 - Worker replacement cost relative to basic combat units.
-- Exact Level 1 use of Armory Annex and Vehicle Bay.
-- Whether Med Hall, Logistics / Repair Pad, and Artillery Battery should appear in First Landing or wait for a later tactical mission.
+- Exact later-mission use of Armory Annex and Vehicle Bay. Vehicle Bay is hidden in Level 1.
+- Med Hall, Logistics / Repair Pad, and Artillery Battery should wait for later missions unless First Landing playtests prove a hard need.
 - First campaign mission archetypes and failure-condition mix.
-- Whether the first public build should be a demo, prototype, or private playtest.
-- Whether Steam starts with a demo, playtest, Early Access candidate, or full release candidate.
+- Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.
 - Whether the first paid release targets itch.io first, Steam first, or both after the demo proves itself.

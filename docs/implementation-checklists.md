@@ -142,7 +142,8 @@ Acceptance checks:
 - Commander death triggers loss
 - player can build power, Barracks, Extractor/Refinery, and defenses
 - powered Barracks accepts a short serial troop queue and reports when that queue is full
-- player can use or bypass Barracks add-ons according to Level 1 pacing rules
+- Vehicle Bay is silently locked and hidden in Level 1
+- player can repair damaged assets, with material cost scaling by missing health percentage
 - central contested well exists
 - destroyed Extractor/Refinery buildings release their well claim so the contested well can be retaken
 - mission setup uses authored data for starting entities, wells, and enemy AI build slots
@@ -160,6 +161,7 @@ Acceptance checks:
 - destroyed Barracks and Power Plants release same-faction Cadets before victory/loss checks finish
 - destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself, and the reveal-only tank does not block victory
 - Guardian energy fire, revealed Medium Tanks, and Rocket Tower explosives outperform comparable ballistic options against armored vehicles
+- Cadet recruits fastest, Rifleman recruits only slightly slower, and Guardian recruits slower as a specialist; current content data should be retuned if it does not match that feel
 
 Evidence:
 
@@ -167,6 +169,7 @@ Evidence:
 - one commander-death loss run; deterministic smoke coverage currently proves Commander death and the F7/debug loss path
 - smoke coverage for central well retake, enemy Pylon weak point, and tower-wall shutdown
 - smoke coverage for Guardian-vs-armor damage math, Medium Tank reveal on both sides, and Rocket Tower anti-armor tuning
+- repair smoke coverage for proportional material cost and no-negative-spend behavior once repair is implemented
 - notes for any missing or intentionally placeholder behavior
 - localization key coverage for mission result, objective, command, and blocked-action text
 - closeout notes should distinguish verified playable behavior from deferred systems such as repair, final balance, and final art
@@ -200,6 +203,7 @@ Acceptance checks:
 - enemy can scout/rally before first pressure, retreat damaged attackers, avoid immediately recommitting badly damaged returnees, and regroup after a wiped attack group
 - rival-officer memory stays internal and does not add adaptation alerts or hidden-plan UI text
 - troop train times vary by unit, with more expensive or heavier units generally taking longer
+- train-time tuning preserves the intended fast Dominion / classic RTS feel instead of making early infantry feel like slow colony-sim recruits
 - explosive friendly fire works if explosive units are present
 - normal gunfire does not friendly-fire
 - player can win through something smarter than direct unit spam
@@ -235,6 +239,8 @@ Evidence:
 
 Before any itch.io or Steam-facing build:
 
+- public demo scope is the first five levels, not the current greybox-only mission
+- current project state remains pre-demo until working level design exists beyond the prototype loop
 - packaged Windows build runs from a clean folder
 - build includes version, channel, and commit or build identifier
 - player can launch, play, restart, quit, and relaunch

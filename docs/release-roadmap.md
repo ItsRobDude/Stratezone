@@ -24,6 +24,8 @@ Stratezone should reach public release through honest build gates:
 
 Do not promise store-page features that are not in the build. The game should never rely on a storefront description to explain missing basics.
 
+Current public-build decision: the first public build is a demo, not a prototype label, Early Access claim, or sellable release. The intended demo scope is the first five levels. The current project is still pre-demo because repeatable level design, finished mission flow, packaging, settings, provenance notes, and public-facing build QA are not done.
+
 ## Tooling Ladder
 
 These tools should appear as the project matures:
@@ -43,6 +45,7 @@ These tools should appear as the project matures:
 
 Before any public build, Stratezone needs:
 
+- the first five demo levels to exist and play coherently, or a deliberately reduced public-scope decision recorded before release work begins
 - a packaged Windows build that runs outside the editor
 - a main menu or direct mission start that does not require developer explanation
 - settings for resolution/window mode, volume, and input basics

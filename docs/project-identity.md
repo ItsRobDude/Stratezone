@@ -4,6 +4,8 @@ This document is the source of truth for Stratezone's product identity, player p
 
 Stratezone should become a systems-forward mission RTS about turning fragile battlefield landings into defensible war outposts. It should feel tense, readable, military-industrial, and practical without becoming an opaque sim or a nostalgic clone.
 
+The strongest old-game inspiration is Dominion: Storm Over Gift 3, with useful secondary lessons from classic Command & Conquer-style RTS pacing. The goal is to learn from that fast, readable build-and-command feel without copying exact factions, units, art, maps, names, or story.
+
 The intended player feeling is:
 
 - under pressure, but not overwhelmed
@@ -132,6 +134,7 @@ Prefer:
 - data-driven units and buildings once patterns are clear
 - simple AI director events before complex emergent storytelling
 - practical art pipelines over asset-production fantasies
+- AI-assisted art, Illustrator vectorization, cleanup, and turntable-derived directional frames when that is the realistic way to get usable assets
 
 ## What Stratezone Is Not
 
@@ -192,6 +195,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a Medium Tank without changing win/loss conditions by itself.
 - The first playable milestone should be playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until the RTS loop works.
+- The first public build should be a demo, not an Early Access or sellable release claim. The current target for that demo is the first five levels, but the project is still pre-demo and does not yet have a reliable finished level-design pipeline.
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.
 - Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
@@ -202,7 +206,6 @@ These are intentionally unresolved:
 
 - Is the wider world mostly human factions fighting each other, or are non-human factions central later?
 - Exact worker replacement cost relative to basic combat units.
-- Exact Level 1 pacing for whether Barracks add-ons are player-built, prebuilt, or deferred until a later mission.
 - Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
 - How many mission archetypes belong in the first campaign slice?
 - Exact Level 1 enemy production speed and resource handicap.

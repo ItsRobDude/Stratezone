@@ -142,17 +142,17 @@ First-pass unit IDs:
 Prototype rules:
 
 - `unit_worker` is expensive, non-combat, can construct, can repair, and should flee from danger.
-- `unit_cadet` is the cheapest trainable infantry. It should cost less than Rifleman and have lower health and damage.
-- `unit_rifleman` is intentionally fragile. First-pass health should stay around 40-50 so infantry caught out of position die fast.
+- `unit_cadet` is the cheapest and fastest trainable infantry. It should cost less than Rifleman, have lower health and damage, and recruit in only a few seconds.
+- `unit_rifleman` is intentionally fragile. First-pass health should stay around 40-50 so infantry caught out of position die fast. It should train quickly, roughly 3-4 seconds in the intended fast classic-RTS feel, and only slightly slower than Cadet.
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.
-- `unit_guardian` is the anti-armor infantry proof role: lower raw damage than Rifleman, but energy damage that performs meaningfully better against Medium and Heavy Tanks than Rifleman ballistics.
+- `unit_guardian` is the anti-armor infantry proof role: slower and more expensive than Rifleman, lower raw damage than Rifleman, but energy damage that performs meaningfully better against Medium and Heavy Tanks than Rifleman ballistics.
 - `unit_guardian` should require `building_armory_annex` where Barracks add-ons are enabled by the mission.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
 - In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
 - `unit_medium_tank` is the Level 1 reveal tank. It is not normally trainable, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
 - `unit_tank` is now the Heavy Tank record. It is the promoted old tank profile and should remain a heavier later answer with stronger explosive splash and high ballistic resistance.
-- Troop training time varies by unit. More expensive or heavier units should generally take longer.
+- Troop training time varies by unit. Cadet is fastest, Rifleman is only slightly slower, and Guardian is slower because it is a specialized anti-armor / anti-defense unit.
 - Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
 - Units have health and resistances; armor is not a pickup or separate equipment system in the first prototype.
 
@@ -259,7 +259,7 @@ Prototype rules:
 - `building_colony_hub` is the spawn location for trained units.
 - `building_barracks` controls what can be trained by level, troop capacity, and unlocks.
 - `building_armory_annex` is a powered Barracks add-on that unlocks Guardian training and explosive tech where the mission allows it.
-- `building_vehicle_bay` is a powered Barracks add-on that unlocks Rover training and heavy-armor capacity where the mission allows it.
+- `building_vehicle_bay` is a powered Barracks add-on that unlocks Rover training and heavy-armor capacity where the mission allows it. In First Landing it is silently locked and hidden from the player.
 - `building_power_plant` provides local power.
 - `building_pylon` extends or links power.
 - `building_extractor_refinery` extracts from a resource well and stops when unpowered, destroyed, or depleted.
@@ -480,6 +480,7 @@ Prototype rules:
 - uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records
 - starts the player with exactly one `unit_worker`, one `unit_guardian`, one `unit_rover`, and one `unit_commander`
 - exposes `unit_worker`, `unit_cadet`, and `unit_rifleman` as Level 1 trainable units; `unit_guardian`, `unit_rover`, and `unit_commander` stay scenario/start-only for Level 1
+- hides `building_vehicle_bay` in Level 1 rather than presenting it as a disabled command
 - wins by destroying all required enemy targets
 - loses if the Commander dies
 - destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself; reveal-only tanks are not required destroy-all targets

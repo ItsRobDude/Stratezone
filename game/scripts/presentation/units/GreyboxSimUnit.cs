@@ -5,6 +5,9 @@ using Stratezone.Simulation;
 public partial class GreyboxSimUnit : Node2D
 {
     private const float DirectionalSpriteScale = 0.06f;
+    private const int DirectionalAtlasColumns = 4;
+    private const float UnitLabelZoomThreshold = 0.85f;
+    private const float PathDebugZoomThreshold = 0.75f;
     private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
     private static readonly Dictionary<string, IReadOnlyDictionary<int, Texture2D>> DirectionalTextureCache = [];
 
@@ -18,6 +21,7 @@ public partial class GreyboxSimUnit : Node2D
     private bool _useCadetPlaceholder;
     private bool _useCommanderPlaceholder;
     private int _facingAngle = 180;
+    private float _cameraZoom = 1.0f;
     private Vector2? _lastPosition;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
@@ -38,12 +42,27 @@ public partial class GreyboxSimUnit : Node2D
             Size = new Vector2(96, 24)
         };
         AddChild(_label);
+        ApplyZoomDetailVisibility();
         UpdateFromState(state);
     }
 
     public void SetSelected(bool selected)
     {
         _selected = selected;
+        ApplyZoomDetailVisibility();
+        QueueRedraw();
+    }
+
+    public void SetCameraZoom(float cameraZoom)
+    {
+        var nextZoom = Mathf.Max(0.01f, cameraZoom);
+        if (Mathf.IsEqualApprox(_cameraZoom, nextZoom))
+        {
+            return;
+        }
+
+        _cameraZoom = nextZoom;
+        ApplyZoomDetailVisibility();
         QueueRedraw();
     }
 
@@ -119,7 +138,7 @@ public partial class GreyboxSimUnit : Node2D
             DrawArc(Vector2.Zero, SelectionRadius + 7.0f, 0, Mathf.Tau, 64, new Color(1.0f, 0.95f, 0.25f), 4.0f);
         }
 
-        if (_state.MoveTarget is not null)
+        if (ShouldDrawPathDebug() && _state.MoveTarget is not null)
         {
             DrawPathDebug();
         }
@@ -165,6 +184,55 @@ public partial class GreyboxSimUnit : Node2D
             return cached;
         }
 
+        var textures = LoadDirectionalAtlasTextures(assetSlug);
+        if (textures.Count == DirectionalAngles.Length)
+        {
+            DirectionalTextureCache[assetSlug] = textures;
+            return textures;
+        }
+
+        textures = LoadLooseDirectionalTextures(assetSlug);
+        DirectionalTextureCache[assetSlug] = textures;
+        return textures;
+    }
+
+    private static IReadOnlyDictionary<int, Texture2D> LoadDirectionalAtlasTextures(string assetSlug)
+    {
+        var atlasPath = $"res://assets/units/{assetSlug}/{assetSlug}_directional_atlas.png";
+        var atlas = LoadTexture(atlasPath);
+        if (atlas is null)
+        {
+            return new Dictionary<int, Texture2D>();
+        }
+
+        var atlasSize = atlas.GetSize();
+        var atlasRows = Mathf.CeilToInt(DirectionalAngles.Length / (float)DirectionalAtlasColumns);
+        var frameWidth = atlasSize.X / DirectionalAtlasColumns;
+        var frameHeight = atlasSize.Y / atlasRows;
+        if (frameWidth <= 0.0f || frameHeight <= 0.0f)
+        {
+            GD.PushWarning($"Directional atlas for {assetSlug} has invalid size {atlasSize}.");
+            return new Dictionary<int, Texture2D>();
+        }
+
+        var textures = new Dictionary<int, Texture2D>();
+        for (var index = 0; index < DirectionalAngles.Length; index++)
+        {
+            var angle = DirectionalAngles[index];
+            var column = index % DirectionalAtlasColumns;
+            var row = index / DirectionalAtlasColumns;
+            textures[angle] = new AtlasTexture
+            {
+                Atlas = atlas,
+                Region = new Rect2(column * frameWidth, row * frameHeight, frameWidth, frameHeight)
+            };
+        }
+
+        return textures;
+    }
+
+    private static IReadOnlyDictionary<int, Texture2D> LoadLooseDirectionalTextures(string assetSlug)
+    {
         var textures = new Dictionary<int, Texture2D>();
         foreach (var angle in DirectionalAngles)
         {
@@ -176,7 +244,6 @@ public partial class GreyboxSimUnit : Node2D
             }
         }
 
-        DirectionalTextureCache[assetSlug] = textures;
         return textures;
     }
 
@@ -269,6 +336,24 @@ public partial class GreyboxSimUnit : Node2D
     {
         var size = texture.GetSize() * DirectionalSpriteScale;
         return new Vector2(-size.X * 0.5f, -size.Y * 0.5f);
+    }
+
+    private void ApplyZoomDetailVisibility()
+    {
+        if (_label is not null)
+        {
+            _label.Visible = ShouldShowUnitLabel();
+        }
+    }
+
+    private bool ShouldShowUnitLabel()
+    {
+        return _selected || _cameraZoom >= UnitLabelZoomThreshold;
+    }
+
+    private bool ShouldDrawPathDebug()
+    {
+        return _selected && _cameraZoom >= PathDebugZoomThreshold;
     }
 
     private static int DirectionToCompassAngle(Vector2 direction)

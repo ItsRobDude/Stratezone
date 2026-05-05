@@ -646,6 +646,7 @@ public partial class Main : Node2D
                 (unit.FactionId != ContentIds.Factions.PrivateMilitary ||
                     _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position));
             view.SetSelected(_selectedUnitEntityIds.Contains(unit.EntityId));
+            view.SetCameraZoom(CurrentCameraZoom());
         }
 
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
@@ -1002,6 +1003,21 @@ public partial class Main : Node2D
 
         var zoomValue = Mathf.Clamp(_camera.Zoom.X + delta, 0.55f, 1.8f);
         _camera.Zoom = new Vector2(zoomValue, zoomValue);
+        ApplyUnitPresentationZoom();
+    }
+
+    private void ApplyUnitPresentationZoom()
+    {
+        var cameraZoom = CurrentCameraZoom();
+        foreach (var unitView in _simUnitViews.Values)
+        {
+            unitView.SetCameraZoom(cameraZoom);
+        }
+    }
+
+    private float CurrentCameraZoom()
+    {
+        return _camera?.Zoom.X ?? 1.0f;
     }
 
     private static SimVector2 ToSim(Vector2 vector)

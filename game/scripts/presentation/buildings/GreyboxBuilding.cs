@@ -1,10 +1,20 @@
+using System.Collections.Generic;
+using System.IO;
 using Godot;
 using Stratezone.Localization;
 using Stratezone.Simulation;
 
 public partial class GreyboxBuilding : Node2D
 {
+    private const float DirectionalSpriteScale = 0.5f;
+    private const int DirectionalSpriteAngle = 180;
+    private const int DirectionalAtlasColumns = 4;
+
+    private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+    private static readonly Dictionary<string, Texture2D> DirectionalTextureCache = [];
+
     private BuildingState? _state;
+    private Sprite2D? _directionalSprite;
     private Label? _label;
     private LocalizationCatalog? _localization;
     private bool _selected;
@@ -12,11 +22,13 @@ public partial class GreyboxBuilding : Node2D
     public void Initialize(BuildingState state, LocalizationCatalog? localization = null)
     {
         _localization = localization;
+        InitializeDirectionalSprite(state.Definition.Id);
         _label = new Label
         {
-            Position = new Vector2(-42, -12),
+            Position = new Vector2(-54, -72),
             HorizontalAlignment = HorizontalAlignment.Center,
-            Size = new Vector2(84, 24)
+            Size = new Vector2(108, 24),
+            ZIndex = 20
         };
         AddChild(_label);
         UpdateFromState(state);
@@ -35,6 +47,13 @@ public partial class GreyboxBuilding : Node2D
             _label.Modulate = state.IsDestroyed
                 ? new Color(0.62f, 0.62f, 0.62f)
                 : state.IsPowered ? Colors.White : new Color(1.0f, 0.45f, 0.35f);
+            UpdateLabelPosition();
+        }
+
+        if (_directionalSprite is not null)
+        {
+            _directionalSprite.Visible = !state.IsDestroyed;
+            _directionalSprite.Modulate = GetSpriteModulate(state);
         }
 
         QueueRedraw();
@@ -59,7 +78,10 @@ public partial class GreyboxBuilding : Node2D
             ? new Color(0.18f, 0.04f, 0.04f)
             : new Color(0.05f, 0.12f, 0.16f);
         DrawFootprintOutline(radius, _state);
-        DrawBuildingSilhouette(_state, fill, outline);
+        if (_directionalSprite is null)
+        {
+            DrawBuildingSilhouette(_state, fill, outline);
+        }
 
         if (!_state.IsDestroyed && _state.Definition.ProvidesPower && _state.IsPowered && _state.Definition.PowerRadius > 0)
         {
@@ -77,6 +99,139 @@ public partial class GreyboxBuilding : Node2D
         {
             DrawArc(Vector2.Zero, radius + 10.0f, 0, Mathf.Tau, 72, new Color(1.0f, 0.95f, 0.25f), 4.0f);
         }
+    }
+
+    private void InitializeDirectionalSprite(string buildingId)
+    {
+        var assetSlug = buildingId switch
+        {
+            ContentIds.Buildings.Barracks => "barracks",
+            ContentIds.Buildings.ColonyHub => "colony_hub",
+            ContentIds.Buildings.PowerPlant => "power_plant",
+            ContentIds.Buildings.VehicleBay => "vehicle_bay",
+            _ => null
+        };
+
+        if (assetSlug is null)
+        {
+            return;
+        }
+
+        var texture = LoadDirectionalTexture(assetSlug);
+        if (texture is null)
+        {
+            GD.PushWarning($"No directional building sprite found for {buildingId}; using greybox placeholder.");
+            return;
+        }
+
+        _directionalSprite = new Sprite2D
+        {
+            Texture = texture,
+            Centered = true,
+            Scale = Vector2.One * DirectionalSpriteScale,
+            ZIndex = 1
+        };
+        AddChild(_directionalSprite);
+    }
+
+    private static Texture2D? LoadDirectionalTexture(string assetSlug)
+    {
+        if (DirectionalTextureCache.TryGetValue(assetSlug, out var cached))
+        {
+            return cached;
+        }
+
+        var atlas = LoadTexture($"res://assets/buildings/{assetSlug}/{assetSlug}_directional_atlas.png");
+        if (atlas is not null)
+        {
+            var atlasSize = atlas.GetSize();
+            var rows = Mathf.CeilToInt(DirectionalAngles.Length / (float)DirectionalAtlasColumns);
+            var frameWidth = atlasSize.X / DirectionalAtlasColumns;
+            var frameHeight = atlasSize.Y / rows;
+            if (frameWidth > 0 && frameHeight > 0)
+            {
+                for (var index = 0; index < DirectionalAngles.Length; index++)
+                {
+                    if (DirectionalAngles[index] != DirectionalSpriteAngle)
+                    {
+                        continue;
+                    }
+
+                    var column = index % DirectionalAtlasColumns;
+                    var row = index / DirectionalAtlasColumns;
+                    var texture = new AtlasTexture
+                    {
+                        Atlas = atlas,
+                        Region = new Rect2(column * frameWidth, row * frameHeight, frameWidth, frameHeight)
+                    };
+                    DirectionalTextureCache[assetSlug] = texture;
+                    return texture;
+                }
+            }
+        }
+
+        var looseTexture = LoadTexture($"res://assets/buildings/{assetSlug}/directional/{assetSlug}_{DirectionalSpriteAngle:000}.png");
+        if (looseTexture is not null)
+        {
+            DirectionalTextureCache[assetSlug] = looseTexture;
+        }
+
+        return looseTexture;
+    }
+
+    private static Texture2D? LoadTexture(string resourcePath)
+    {
+        if (ResourceLoader.Exists(resourcePath))
+        {
+            return GD.Load<Texture2D>(resourcePath);
+        }
+
+        var filePath = ProjectSettings.GlobalizePath(resourcePath);
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        var image = Image.LoadFromFile(filePath);
+        return image is null || image.IsEmpty()
+            ? null
+            : ImageTexture.CreateFromImage(image);
+    }
+
+    private void UpdateLabelPosition()
+    {
+        if (_label is null)
+        {
+            return;
+        }
+
+        if (_directionalSprite?.Texture is not null)
+        {
+            var size = _directionalSprite.Texture.GetSize() * DirectionalSpriteScale;
+            _label.Position = new Vector2(-54, -size.Y / 2.0f - 24.0f);
+            return;
+        }
+
+        _label.Position = new Vector2(-54, -72);
+    }
+
+    private static Color GetSpriteModulate(BuildingState state)
+    {
+        if (state.IsDestroyed)
+        {
+            return new Color(0.45f, 0.45f, 0.45f, 0.8f);
+        }
+
+        if (state.FactionId == ContentIds.Factions.PrivateMilitary)
+        {
+            return state.IsPowered || !state.Definition.RequiresPower
+                ? new Color(1.0f, 0.72f, 0.68f)
+                : new Color(0.72f, 0.48f, 0.44f);
+        }
+
+        return state.IsPowered || !state.Definition.RequiresPower
+            ? Colors.White
+            : new Color(0.64f, 0.58f, 0.52f);
     }
 
     private void DrawIncomingAttackFlash()

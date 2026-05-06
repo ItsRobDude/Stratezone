@@ -107,7 +107,11 @@ public partial class GreyboxBuilding : Node2D
         {
             ContentIds.Buildings.Barracks => "barracks",
             ContentIds.Buildings.ColonyHub => "colony_hub",
+            ContentIds.Buildings.DefenseTower => "defense_tower",
+            ContentIds.Buildings.GunTower => "gun_tower",
             ContentIds.Buildings.PowerPlant => "power_plant",
+            ContentIds.Buildings.Pylon => "pylon",
+            ContentIds.Buildings.RocketTower => "rocket_tower",
             ContentIds.Buildings.VehicleBay => "vehicle_bay",
             _ => null
         };

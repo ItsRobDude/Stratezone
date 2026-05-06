@@ -152,6 +152,7 @@ public partial class GreyboxSimUnit : Node2D
             ContentIds.Units.Rifleman => "rifleman",
             ContentIds.Units.Guardian => "guardian",
             ContentIds.Units.Commander => "commander",
+            ContentIds.Units.Rover => "rover",
             ContentIds.Units.MediumTank => "medium_tank",
             ContentIds.Units.Tank => "tank",
             _ => null

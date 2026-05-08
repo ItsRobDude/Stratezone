@@ -21,7 +21,7 @@ public partial class Main : Node2D
 
     private static readonly string[] TrainHotkeyOrder =
     [
-        ContentIds.Units.Worker,
+        ContentIds.Units.Grunt,
         ContentIds.Units.Cadet,
         ContentIds.Units.Rifleman,
         ContentIds.Units.Guardian,
@@ -533,7 +533,7 @@ public partial class Main : Node2D
 
         if (!SelectedUnits().Any(unit => unit.Definition.CanConstruct))
         {
-            _lastActionMessage = L("ui.action.select_worker_before_building");
+            _lastActionMessage = L("ui.action.select_grunt_before_building");
             return;
         }
 
@@ -560,7 +560,7 @@ public partial class Main : Node2D
 
         if (!SelectedUnits().Any(unit => unit.Definition.CanConstruct))
         {
-            _lastActionMessage = L("ui.action.select_worker_before_building");
+            _lastActionMessage = L("ui.action.select_grunt_before_building");
             return;
         }
 
@@ -734,7 +734,7 @@ public partial class Main : Node2D
                 var enabled = hasBuilder;
                 var hint = enabled
                     ? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))))
-                    : L("ui.command.requires_worker");
+                    : L("ui.command.requires_grunt");
                 return new CommandPanelAction(
                     $"{index + 1} {BuildingShortName(definition)}",
                     BuildingDetail(definition, hint),
@@ -803,7 +803,7 @@ public partial class Main : Node2D
             _commandPanel.UpdateActions(
                 L("ui.action_bar.title_unit_selection", SimulationMessage.Args(("count", selectedUnits.Length))),
                 actions.ToArray(),
-                hasBuilder ? L("ui.command.worker_selection_hint") : L("ui.command.combat_selection_hint"));
+                hasBuilder ? L("ui.command.grunt_selection_hint") : L("ui.command.combat_selection_hint"));
             return;
         }
 
@@ -853,10 +853,10 @@ public partial class Main : Node2D
 
         if (building.Definition.Id == ContentIds.Buildings.Barracks)
         {
-            var worker = LocalizedProduction(_simulation.ValidateUnitProduction(ContentIds.Units.Worker, building.EntityId));
+            var grunt = LocalizedProduction(_simulation.ValidateUnitProduction(ContentIds.Units.Grunt, building.EntityId));
             return L(
                 "ui.selection.barracks",
-                SimulationMessage.Args(("commands", GetTrainingCommandSummary()), ("workerReason", worker)));
+                SimulationMessage.Args(("commands", GetTrainingCommandSummary()), ("gruntReason", grunt)));
         }
 
         if (building.Definition.Id == ContentIds.Buildings.DefenseTower)
@@ -935,7 +935,7 @@ public partial class Main : Node2D
     {
         return unitId switch
         {
-            ContentIds.Units.Worker => "W",
+            ContentIds.Units.Grunt => "W",
             ContentIds.Units.Cadet => "C",
             ContentIds.Units.Rifleman => "R",
             ContentIds.Units.Guardian => "G",

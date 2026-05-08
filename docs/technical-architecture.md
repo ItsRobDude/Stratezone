@@ -67,7 +67,7 @@ The architecture is shaped around these realities:
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
 - Armory Annex and Vehicle Bay are planned powered Barracks add-ons built adjacent to the Barracks, not abstract upgrade buttons
 - Gun Tower and Rocket Tower should be modeled as in-place Defense Tower upgrades that keep wall-anchor behavior while adding direct attack stats and higher cost
-- first prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander
+- first prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
 - First Landing is a playable ugly 5-10 minute top-down mission before art direction or cutscenes
@@ -110,7 +110,7 @@ simulation/
   core/
   economy/
   power/
-  workers/
+  grunts/
   combat/
   ai/
   missions/
@@ -169,7 +169,7 @@ Simulation-owned systems:
 - defense tower wall links and path blocking
 - Barracks add-on adjacency, power state, and training unlock effects
 - in-place tower upgrade state
-- workers as expensive recruitable units
+- grunts as expensive recruitable units
 - construction and repair
 - unit stats and combat resolution
 - projectiles or hitscan rules, if used
@@ -231,7 +231,7 @@ Recommended early model:
 
 - stable entity IDs
 - explicit data records for individual units, buildings, resources, and map objects
-- small domain services for systems like power, economy, combat, and workers
+- small domain services for systems like power, economy, combat, and grunts
 - content definitions for base stats and build costs
 
 This gives us enough structure to scale without turning the first prototype into framework archaeology.
@@ -294,24 +294,24 @@ Early requirements:
 - consequences when extractors are destroyed or unpowered
 - enemy economy uses limited resources and can race the player for unclaimed wells
 
-### Worker System
+### Grunt System
 
-Owns recruitable workers, construction, repair, worker availability, and worker consequence tracking.
+Owns recruitable grunts, construction, repair, grunt availability, and grunt consequence tracking.
 
 Early requirements:
 
-- expensive worker units
+- expensive grunt units
 - resource-cost replacement
 - build tasks
 - Barracks add-on construction tasks adjacent to the Barracks
 - tower upgrade tasks that convert Defense Towers into armed variants in place
 - repair tasks
-- worker danger or casualty consequences
+- grunt danger or casualty consequences
 - flee behavior when threatened
 - player-commanded construction and repair
 - simple priority rules
 
-Avoid deep personality simulation in the first prototype. Workers should behave like costly utility troops with no combat value: they can die under attack, should flee when threatened, and losing them is a meaningful economic and tactical setback.
+Avoid deep personality simulation in the first prototype. Grunts should behave like costly utility troops with no combat value: they can die under attack, should flee when threatened, and losing them is a meaningful economic and tactical setback.
 
 ### Combat System
 
@@ -415,7 +415,7 @@ Save data should include:
 - player resources
 - entity records and health
 - building status and power links
-- worker/task state
+- grunt/task state
 - commander state when the mission uses an on-map commander
 - objective progress
 - event director state
@@ -447,7 +447,7 @@ Early HUD surfaces:
 - resource count
 - power status
 - troop cap / allowed troop count
-- worker status
+- grunt status
 - selected entity card
 - build menu
 - objective tracker
@@ -517,5 +517,5 @@ Browser/web is not the default if Godot C# remains the technical path.
 - Exact repo layout after Godot scaffolding.
 - Whether JSON remains the long-term content data format or Godot resources earn their place later.
 - Exact building footprint/buffer values for constrained maps.
-- Exact worker replacement cost relative to basic combat units.
+- Exact grunt replacement cost relative to basic combat units.
 - Whether the first-pass simulation grid should later be replaced by Godot navigation, a flow-field layer, or a dedicated RTS pathfinding helper.

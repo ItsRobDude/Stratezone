@@ -11,7 +11,7 @@ var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Mat
 
 Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
 Assert(localization.Translate("missing.test.key") == "[[missing.test.key]]", "missing localization keys are obvious");
-Assert(localization.ContentName(ContentIds.Units.Worker) == "Worker", "content name localization keys resolve stable content ids");
+Assert(localization.ContentName(ContentIds.Units.Grunt) == "Grunt", "content name localization keys resolve stable content ids");
 Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");
 var cadetDefinition = catalog.GetUnit(ContentIds.Units.Cadet);
 var riflemanDefinition = catalog.GetUnit(ContentIds.Units.Rifleman);
@@ -26,7 +26,7 @@ Assert(cadetDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Cadet de
 Assert(cadetDefinition.TrainTimeSeconds == 3.0f, "Cadet recruits in only a few seconds");
 Assert(riflemanDefinition.TrainTimeSeconds == 4.0f, "Rifleman recruits only slightly slower than Cadet");
 Assert(guardianDefinition.TrainTimeSeconds == 9.0f, "Guardian trains slower as a specialist");
-Assert(catalog.GetUnit(ContentIds.Units.Worker).TrainTimeSeconds > guardianDefinition.TrainTimeSeconds, "Worker stays slow and expensive compared with infantry");
+Assert(catalog.GetUnit(ContentIds.Units.Grunt).TrainTimeSeconds > guardianDefinition.TrainTimeSeconds, "Grunt stays slow and expensive compared with infantry");
 Assert(guardianDefinition.Role == "anti_armor_infantry", "Guardian content role is the anti-armor infantry proof role");
 Assert(guardianDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Guardian keeps lower raw damage than Rifleman");
 Assert(DamagePerSecondAgainst(guardianDefinition, riflemanDefinition) < DamagePerSecondAgainst(riflemanDefinition, riflemanDefinition), "Guardian is not a better anti-infantry Rifleman");
@@ -40,11 +40,11 @@ Assert(mediumTankDefinition.AttackDamage < tankDefinition.AttackDamage, "Medium 
 Assert(mediumTankDefinition.AreaRadius < tankDefinition.AreaRadius, "Medium Tank has smaller splash than Heavy Tank");
 Assert(Math.Abs(riflemanDefinition.Health - (mediumTankDefinition.AttackDamage * 1.1f) - (riflemanDefinition.Health * 0.3f)) < 1.5f, "Medium Tank shot leaves a Rifleman near 30 percent health");
 Assert(tankDefinition.AttackCooldown > 3.0f, "Heavy Tank cannon fires slowly enough to read as a heavy burst weapon");
-Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Worker) && mission.AvailableUnitIds.Contains(ContentIds.Units.Cadet) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
+Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Grunt) && mission.AvailableUnitIds.Contains(ContentIds.Units.Cadet) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
 Assert(!mission.AvailableUnitIds.Contains(ContentIds.Units.Guardian) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Rover) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Commander), "mission data hides Level 1 scenario-only units from training");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Guardian) == 1, "Level 1 starts the player with one Guardian");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Commander) == 1, "Level 1 starts the player with one Commander");
-Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Worker) == 1, "Level 1 starts the player with one Worker");
+Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Grunt) == 1, "Level 1 starts the player with one Grunt");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rover) == 1, "Level 1 starts the player with one provided Rover");
 Assert(!mission.StartingEntities.Any(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rifleman), "Level 1 does not start the player with extra Riflemen");
 
@@ -180,14 +180,14 @@ pursuitPathSimulation.CommandUnitAttackUnit(pursuingRifleman.EntityId, pursuedRi
 TickFor(pursuitPathSimulation, 7.0f);
 Assert(pursuedRifleman.Health < pursuedRifleman.Definition.Health, "attack pursuit uses routed movement around blockers");
 
-var enemyBaseSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+var enemyBaseSimulation = new RtsSimulation(catalog, startingMaterials, [], 800);
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
 TickFor(enemyBaseSimulation, 0.1f);
 Assert(enemyBaseSimulation.ProductionOrders.Count == 1, "enemy base queues production from powered Barracks");
-Assert(enemyBaseSimulation.EnemyMaterials <= 350, "enemy production and construction spend resources when queued");
+Assert(enemyBaseSimulation.EnemyMaterials <= 700, "enemy production and construction spend resources when queued");
 TickFor(enemyBaseSimulation, 13.0f);
 Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman), "enemy production can choose Riflemen from its base when resources allow");
 
@@ -203,7 +203,7 @@ var enabledGuardianEnemySimulation = new RtsSimulation(
     catalog,
     startingMaterials,
     [],
-    500,
+    900,
     null,
     null,
     [ContentIds.Units.Cadet, ContentIds.Units.Rifleman, ContentIds.Units.Guardian]);
@@ -211,7 +211,7 @@ enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHu
 enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
 enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
 enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
-enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, RtsSimulation.EnemyBarracksPosition + new SimVector2(0, 80), ContentIds.Factions.PrivateMilitary);
+enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, RtsSimulation.EnemyPowerPlantPosition + new SimVector2(20, 160), ContentIds.Factions.PrivateMilitary);
 TickFor(enabledGuardianEnemySimulation, 0.1f);
 Assert(enabledGuardianEnemySimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Guardian), "enemy production can choose a later enabled Guardian when resources and add-ons allow it");
 
@@ -258,52 +258,52 @@ var unpoweredBarracks = unpoweredProductionSimulation.AddStartingBuilding(Conten
 Assert(!unpoweredProductionSimulation.TryQueueUnit(ContentIds.Units.Rifleman, unpoweredBarracks.EntityId).Success, "unpowered Barracks cannot train units");
 
 var repairSimulation = new RtsSimulation(catalog, 1000, []);
-var repairWorker = repairSimulation.AddUnit(ContentIds.Units.Worker, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
+var repairGrunt = repairSimulation.AddUnit(ContentIds.Units.Grunt, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
 var repairPowerPlant = repairSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
 repairPowerPlant.ApplyDamage(120, "debug");
 var damagedHealth = repairPowerPlant.Health;
 var repairMaterialsBefore = repairSimulation.Materials;
-var repairStart = repairSimulation.CommandUnitRepairBuilding(repairWorker.EntityId, repairPowerPlant.EntityId);
+var repairStart = repairSimulation.CommandUnitRepairBuilding(repairGrunt.EntityId, repairPowerPlant.EntityId);
 Assert(repairStart.Success, repairStart.Message);
 TickFor(repairSimulation, 1.0f);
-Assert(repairPowerPlant.Health > damagedHealth, "Worker repairs damaged friendly buildings over time");
-Assert(repairPowerPlant.Health < repairPowerPlant.Definition.Health, "Worker repair takes time instead of finishing instantly");
-Assert(repairSimulation.Materials < repairMaterialsBefore, "Worker repair spends materials while restoring health");
-Assert(repairWorker.RepairTargetBuildingEntityId == repairPowerPlant.EntityId, "Worker has one active repair target");
+Assert(repairPowerPlant.Health > damagedHealth, "Grunt repairs damaged friendly buildings over time");
+Assert(repairPowerPlant.Health < repairPowerPlant.Definition.Health, "Grunt repair takes time instead of finishing instantly");
+Assert(repairSimulation.Materials < repairMaterialsBefore, "Grunt repair spends materials while restoring health");
+Assert(repairGrunt.RepairTargetBuildingEntityId == repairPowerPlant.EntityId, "Grunt has one active repair target");
 var repairTower = repairSimulation.AddStartingBuilding(ContentIds.Buildings.DefenseTower, new SimVector2(180, 0));
 repairTower.ApplyDamage(80, "debug");
-Assert(repairSimulation.CommandUnitRepairBuilding(repairWorker.EntityId, repairTower.EntityId).Success, "Worker can switch repair targets");
-Assert(repairWorker.RepairTargetBuildingEntityId == repairTower.EntityId, "Worker repair command replaces the previous target");
+Assert(repairSimulation.CommandUnitRepairBuilding(repairGrunt.EntityId, repairTower.EntityId).Success, "Grunt can switch repair targets");
+Assert(repairGrunt.RepairTargetBuildingEntityId == repairTower.EntityId, "Grunt repair command replaces the previous target");
 var repairRifleman = repairSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 40));
-Assert(!repairSimulation.CommandUnitRepairBuilding(repairRifleman.EntityId, repairTower.EntityId).Success, "non-Worker units cannot repair buildings");
+Assert(!repairSimulation.CommandUnitRepairBuilding(repairRifleman.EntityId, repairTower.EntityId).Success, "non-Grunt units cannot repair buildings");
 var enemyRepairTarget = repairSimulation.AddStartingBuilding(ContentIds.Buildings.Pylon, new SimVector2(360, 0), ContentIds.Factions.PrivateMilitary);
 enemyRepairTarget.ApplyDamage(40, "debug");
-Assert(!repairSimulation.CommandUnitRepairBuilding(repairWorker.EntityId, enemyRepairTarget.EntityId).Success, "Worker cannot repair enemy buildings");
+Assert(!repairSimulation.CommandUnitRepairBuilding(repairGrunt.EntityId, enemyRepairTarget.EntityId).Success, "Grunt cannot repair enemy buildings");
 
 var lightRepairSimulation = new RtsSimulation(catalog, 1000, []);
-var lightRepairWorker = lightRepairSimulation.AddUnit(ContentIds.Units.Worker, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
+var lightRepairGrunt = lightRepairSimulation.AddUnit(ContentIds.Units.Grunt, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
 var lightRepairBuilding = lightRepairSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
 lightRepairBuilding.ApplyDamage(60, "debug");
 var lightRepairMaterialsBefore = lightRepairSimulation.Materials;
-Assert(lightRepairSimulation.CommandUnitRepairBuilding(lightRepairWorker.EntityId, lightRepairBuilding.EntityId).Success, "light repair command starts");
+Assert(lightRepairSimulation.CommandUnitRepairBuilding(lightRepairGrunt.EntityId, lightRepairBuilding.EntityId).Success, "light repair command starts");
 TickFor(lightRepairSimulation, 3.0f);
 var lightRepairCost = lightRepairMaterialsBefore - lightRepairSimulation.Materials;
 
 var heavyRepairSimulation = new RtsSimulation(catalog, 1000, []);
-var heavyRepairWorker = heavyRepairSimulation.AddUnit(ContentIds.Units.Worker, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
+var heavyRepairGrunt = heavyRepairSimulation.AddUnit(ContentIds.Units.Grunt, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
 var heavyRepairBuilding = heavyRepairSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
 heavyRepairBuilding.ApplyDamage(180, "debug");
 var heavyRepairMaterialsBefore = heavyRepairSimulation.Materials;
-Assert(heavyRepairSimulation.CommandUnitRepairBuilding(heavyRepairWorker.EntityId, heavyRepairBuilding.EntityId).Success, "heavy repair command starts");
+Assert(heavyRepairSimulation.CommandUnitRepairBuilding(heavyRepairGrunt.EntityId, heavyRepairBuilding.EntityId).Success, "heavy repair command starts");
 TickFor(heavyRepairSimulation, 8.0f);
 var heavyRepairCost = heavyRepairMaterialsBefore - heavyRepairSimulation.Materials;
 Assert(heavyRepairCost > lightRepairCost * 2.0f, "repair cost scales with missing health");
 
 var lowMaterialRepairSimulation = new RtsSimulation(catalog, 1, []);
-var lowMaterialRepairWorker = lowMaterialRepairSimulation.AddUnit(ContentIds.Units.Worker, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
+var lowMaterialRepairGrunt = lowMaterialRepairSimulation.AddUnit(ContentIds.Units.Grunt, ContentIds.Factions.PlayerExpedition, new SimVector2(50, 0));
 var lowMaterialRepairBuilding = lowMaterialRepairSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
 lowMaterialRepairBuilding.ApplyDamage(180, "debug");
-Assert(lowMaterialRepairSimulation.CommandUnitRepairBuilding(lowMaterialRepairWorker.EntityId, lowMaterialRepairBuilding.EntityId).Success, "repair can start with limited materials");
+Assert(lowMaterialRepairSimulation.CommandUnitRepairBuilding(lowMaterialRepairGrunt.EntityId, lowMaterialRepairBuilding.EntityId).Success, "repair can start with limited materials");
 TickFor(lowMaterialRepairSimulation, 10.0f);
 Assert(lowMaterialRepairSimulation.Materials >= 0.0f, "repair spending cannot drive materials negative");
 
@@ -405,7 +405,7 @@ Assert(commanderHunter.TargetUnitEntityId == exposedCommander.EntityId, "enemy t
 var retreatSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-var retreatingEnemy = retreatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(80, 120));
+var retreatingEnemy = retreatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, RtsSimulation.EnemyHubPosition + new SimVector2(-180, 0));
 TickFor(retreatSimulation, 0.2f);
 retreatingEnemy.ApplyDamage(34, "ballistic");
 var retreatDistanceBefore = retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition);
@@ -420,7 +420,7 @@ Assert(!retreatingEnemy.IsEnemyAttackCommitted, "badly damaged enemies are not i
 var regroupSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-var doomedAttacker = regroupSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(80, 120));
+var doomedAttacker = regroupSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, RtsSimulation.EnemyHubPosition + new SimVector2(-180, 0));
 TickFor(regroupSimulation, 0.2f);
 Assert(doomedAttacker.IsEnemyAttackCommitted, "enemy attacker is committed before the regroup test");
 doomedAttacker.ApplyDamage(999, "ballistic");
@@ -571,18 +571,44 @@ Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, e
 
 var missionMarkers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
 Assert(mission.ResourceWellPlacements.Count == 2, "mission data owns resource well placements");
-Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Units.Worker), "mission data owns starting player units");
+Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Units.Grunt), "mission data owns starting player units");
 var missionWellPlacements = mission.ResourceWellPlacements
     .Select(placement => (placement.WellId, missionMarkers[placement.MarkerId] + placement.Offset))
     .ToArray();
 Assert(mission.Markers.Any(marker => marker.Id == "enemy_pylon_weak_point"), "mission data exposes an enemy pylon weak-point marker");
 Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Buildings.Pylon && entity.MarkerId == "enemy_pylon_weak_point"), "mission starts with a real enemy Pylon weak point");
+var missionStartingBuildings = mission.StartingEntities
+    .Where(entity => entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
+    .Select(entity => (
+        Entity: entity,
+        Position: missionMarkers[entity.MarkerId] + entity.Offset,
+        Definition: catalog.GetBuilding(entity.ContentId)))
+    .ToArray();
+foreach (var left in missionStartingBuildings)
+{
+    foreach (var right in missionStartingBuildings)
+    {
+        if (left.Entity == right.Entity ||
+            string.CompareOrdinal(left.Entity.MarkerId, right.Entity.MarkerId) >= 0)
+        {
+            continue;
+        }
+
+        var requiredDistance = RtsSimulation.ToWorldRadius(left.Definition.FootprintRadius + left.Definition.PlacementBuffer) +
+            RtsSimulation.ToWorldRadius(right.Definition.FootprintRadius + right.Definition.PlacementBuffer);
+        var actualDistance = left.Position.DistanceTo(right.Position);
+        Assert(
+            actualDistance >= requiredDistance,
+            $"mission starting buildings are spaced legally ({left.Entity.ContentId} at {left.Entity.MarkerId}, {right.Entity.ContentId} at {right.Entity.MarkerId})");
+    }
+}
 
 var routeSimulation = CreateMissionSimulation(catalog, mission, startingMaterials, missionMarkers, missionWellPlacements);
 var enemyForwardPylon = routeSimulation.Buildings.Single(building =>
     building.FactionId == ContentIds.Factions.PrivateMilitary &&
-    building.Definition.Id == ContentIds.Buildings.Pylon);
-Assert(enemyForwardPylon.IsPowered, "enemy pylon weak point starts powered by the enemy base plant");
+    building.Definition.Id == ContentIds.Buildings.Pylon &&
+    building.Position.DistanceTo(missionMarkers["enemy_pylon_weak_point"]) < 0.01f);
+Assert(enemyForwardPylon.IsPowered, "enemy pylon weak point starts powered by the enemy base chain");
 Assert(routeSimulation.EnergyWalls.Any(wall =>
 {
     var start = routeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
@@ -597,6 +623,7 @@ var enemyCentralExtractor = routeSimulation.Buildings.Single(building =>
     building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
     building.ResourceWellId == "well_first_landing_central");
 Assert(enemyCentralExtractor.IsPowered, "enemy pylon powers the central well Extractor");
+Assert(routeSimulation.IsLineBlockedByEnergyWall(new SimVector2(-300, -140), enemyCentralExtractor.Position), "mission enemy wall blocks the direct player-base route to the central Extractor");
 enemyForwardPylon.ApplyDamage(9999, "explosive");
 TickFor(routeSimulation, 0.1f);
 Assert(routeSimulation.EnemyOfficer.PowerStrikesTaken == 1, "destroying the enemy Pylon counts as an internal power strike");
@@ -612,7 +639,8 @@ enemyCentralExtractor.ApplyDamage(9999, "explosive");
 Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).Success, "retake route places player power");
 Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160)).Success, "retake route places first player Pylon");
 Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-10, 120)).Success, "retake route chains player Pylon toward the central well");
-Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(120, 150)).Success, "retake route reaches the central well with powered support");
+Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(140, 210)).Success, "retake route avoids the enemy wall anchors while extending support");
+Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(300, 170)).Success, "retake route reaches the central well with powered support");
 var centralRetakeValidation = routeSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, missionMarkers["central_well"]);
 Assert(centralRetakeValidation.IsLegal, $"destroyed enemy Extractor releases the central well for player retake ({centralRetakeValidation.MessageKey}: {centralRetakeValidation.Reason})");
 

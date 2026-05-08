@@ -52,7 +52,7 @@ Practical examples:
 - Bad: a Barracks scene script disables itself because a sprite is outside a visual radius.
 - Good: `MissionObjectiveSystem` decides win/loss and emits state for the HUD.
 - Bad: a HUD label decides the mission is won.
-- Good: content data uses stable IDs such as `unit_worker` and `building_colony_hub`.
+- Good: content data uses stable IDs such as `unit_grunt` and `building_colony_hub`.
 - Bad: save data depends on display names or Godot node paths as canonical identity.
 
 ## Source of Truth Hierarchy
@@ -151,7 +151,7 @@ Prefer:
 - `PowerNetwork`
 - `BuildRadius`
 - `ResourceWell`
-- `WorkerJob`
+- `GruntJob`
 - `MissionObjective`
 - `RaidEvent`
 - `UnitDefinition`
@@ -219,7 +219,7 @@ Once code exists, prioritize tests for systems where bugs would undermine player
 - power network behavior
 - build legality
 - resource extraction
-- worker job assignment
+- grunt job assignment
 - construction and repair
 - combat damage rules
 - mission objective state
@@ -301,7 +301,7 @@ As systems are added, prefer debug surfaces for:
 
 - power network state
 - resource income
-- worker job queues
+- grunt job queues
 - AI event timers
 - selected entity IDs
 - mission objective state

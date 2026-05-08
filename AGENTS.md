@@ -16,7 +16,7 @@ Keep the base alive, readable, and tactically relevant. Avoid adding deep simula
 
 Current locked vision choices:
 
-- Workers are important recruitable units. They are useless in combat, should flee from attackers, and losing them should hurt because replacing them costs resources.
+- Grunts are important recruitable units. They are useless in combat, should flee from attackers, and losing them should hurt because replacing them costs resources.
 - Levels are fresh authored scenarios, closer to a classic RTS campaign than a persistent colony sim.
 - Combat uses individual units with varied strength, specialty, and cost. Some units should perform best in groups; elite or expensive units can stand alone better.
 - First-pass combat balance should make basic infantry die fast, make base structures slow to crack with small arms, make armor highly resistant to ballistics, and make explosives the siege lane.
@@ -25,7 +25,7 @@ Current locked vision choices:
 - The first mission has a controllable on-map commander troop who must be defended. He is a fragile fail-condition unit with a pistol, and keeping him at home base should be a sensible strategy.
 - Fog of war uses classic black unexplored areas. Once explored, an area stays visible rather than returning to gray shroud; enemies and structures in explored areas remain visible in real time, while enemies that move into never-explored black fog are hidden.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
-- First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
+- First prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Cadets should be the fastest, cheapest, weakest, easiest-to-kill combat troop. Riflemen should train only slightly slower and be a small step up. Guardians should be slower, more expensive specialist anti-armor / anti-defense infantry.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
@@ -39,7 +39,7 @@ Current locked vision choices:
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Level 1 enemy pressure should be slow and readable: small groups of 1-3 attackers, some defenders left at base, and no omniscient HUD warnings about hidden enemy plans.
 - Enemy rival-officer behavior should stay internal and mission-local: it may remember events and adjust actions, but it must not create player-facing adaptation text or alerts.
-- Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Worker, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Worker, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
+- Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Grunt, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Grunt, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
 - Repair should work in First Landing and cost materials based on missing health percentage.
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
@@ -91,8 +91,8 @@ If this direction changes, update this file and the README in the same pass.
 - Barracks add-ons should require power so expanding production creates new power-network vulnerabilities.
 - Treat Defense Tower wall links as path-blocking gameplay, not cosmetic VFX.
 - Prefer in-place armed tower upgrades from existing Defense Towers so players can establish walls quickly, then invest in weapons without losing the wall role.
-- Make workers valuable as expensive recruitable units, not life-sim colonists.
-- Workers must not be given combat utility in the first prototype; fleeing is their defensive behavior.
+- Make grunts valuable as expensive recruitable units, not life-sim colonists.
+- Grunts must not be given combat utility in the first prototype; fleeing is their defensive behavior.
 - Building placement should not show a visible grid, but structures need spacing/buffer constraints so small maps cannot be over-crammed.
 - Prefer infrastructure strikes over simple unit-spam victory.
 - Keep factions, lore, and unit rosters small until the core loop is fun.
@@ -114,7 +114,7 @@ If this direction changes, update this file and the README in the same pass.
 - Do not add new player-facing English strings directly inside simulation rule code.
 - Simulation results should expose stable message keys plus arguments; presentation localizes them.
 - Content IDs are never player text, save identity, or translated values.
-- `display_name` is an English prototype fallback only. Prefer localization keys such as `unit.unit_worker.name`.
+- `display_name` is an English prototype fallback only. Prefer localization keys such as `unit.unit_grunt.name`.
 - New HUD, command, objective, warning, tooltip, validation, or mission-result text must be localizable.
 - Debug-only labels and developer logs may stay English if they are not shown as player-facing copy.
 
@@ -122,7 +122,7 @@ If this direction changes, update this file and the README in the same pass.
 
 Keep simulation state separate from presentation.
 
-- Simulation owns resources, workers, jobs, power, combat rules, events, mission objectives, AI, and saveable state.
+- Simulation owns resources, grunts, jobs, power, combat rules, events, mission objectives, AI, and saveable state.
 - Presentation owns sprites, animation, particles, camera, sound, and UI rendering.
 - Content data owns units, buildings, factions, missions, maps, event definitions, and balance values.
 

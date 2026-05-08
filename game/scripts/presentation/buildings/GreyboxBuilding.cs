@@ -7,6 +7,7 @@ using Stratezone.Simulation;
 public partial class GreyboxBuilding : Node2D
 {
     private const float DirectionalSpriteScale = 0.5f;
+    private const float PylonDirectionalSpriteScale = 0.42f;
     private const int DirectionalSpriteAngle = 180;
     private const int DirectionalAtlasColumns = 4;
 
@@ -39,6 +40,13 @@ public partial class GreyboxBuilding : Node2D
         _state = state;
         Position = ToGodot(state.Position);
 
+        if (_directionalSprite is not null)
+        {
+            _directionalSprite.Visible = !state.IsDestroyed;
+            _directionalSprite.Modulate = GetSpriteModulate(state);
+            UpdateDirectionalSpriteLayout(state);
+        }
+
         if (_label is not null)
         {
             var powerPrefix = ShouldShowPoweredBolt(state) ? "⚡ " : string.Empty;
@@ -50,12 +58,6 @@ public partial class GreyboxBuilding : Node2D
             UpdateLabelPosition();
         }
 
-        if (_directionalSprite is not null)
-        {
-            _directionalSprite.Visible = !state.IsDestroyed;
-            _directionalSprite.Modulate = GetSpriteModulate(state);
-        }
-
         QueueRedraw();
     }
 
@@ -63,6 +65,31 @@ public partial class GreyboxBuilding : Node2D
     {
         _selected = selected;
         QueueRedraw();
+    }
+
+    public bool ContainsInteractionPoint(Vector2 worldPosition, float padding = 8.0f)
+    {
+        if (_state is null || _state.IsDestroyed)
+        {
+            return false;
+        }
+
+        return GetInteractionRect().Grow(padding).HasPoint(ToLocal(worldPosition));
+    }
+
+    public float DistanceToInteractionBounds(Vector2 worldPosition)
+    {
+        if (_state is null)
+        {
+            return float.MaxValue;
+        }
+
+        var localPoint = ToLocal(worldPosition);
+        var rect = GetInteractionRect();
+        var clamped = new Vector2(
+            Mathf.Clamp(localPoint.X, rect.Position.X, rect.End.X),
+            Mathf.Clamp(localPoint.Y, rect.Position.Y, rect.End.Y));
+        return localPoint.DistanceTo(clamped);
     }
 
     public override void _Draw()
@@ -135,10 +162,43 @@ public partial class GreyboxBuilding : Node2D
         {
             Texture = texture,
             Centered = true,
-            Scale = Vector2.One * DirectionalSpriteScale,
             ZIndex = 1
         };
         AddChild(_directionalSprite);
+    }
+
+    private void UpdateDirectionalSpriteLayout(BuildingState state)
+    {
+        if (_directionalSprite?.Texture is null)
+        {
+            return;
+        }
+
+        var scale = GetDirectionalSpriteScale(state.Definition.Id);
+        var size = _directionalSprite.Texture.GetSize() * scale;
+
+        _directionalSprite.Scale = Vector2.One * scale;
+        _directionalSprite.Offset = new Vector2(0, state.FootprintWorldRadius - (size.Y / 2.0f));
+    }
+
+    private Rect2 GetInteractionRect()
+    {
+        if (_state is null)
+        {
+            return new Rect2();
+        }
+
+        var radius = _state.FootprintWorldRadius;
+        var footprint = new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f));
+        if (_directionalSprite?.Texture is null)
+        {
+            return footprint;
+        }
+
+        var size = _directionalSprite.Texture.GetSize() * _directionalSprite.Scale;
+        var spriteTopLeft = _directionalSprite.Offset - (size / 2.0f);
+        var spriteRect = new Rect2(spriteTopLeft, size);
+        return footprint.Merge(spriteRect);
     }
 
     private static Texture2D? LoadDirectionalTexture(string assetSlug)
@@ -214,8 +274,8 @@ public partial class GreyboxBuilding : Node2D
 
         if (_directionalSprite?.Texture is not null)
         {
-            var size = _directionalSprite.Texture.GetSize() * DirectionalSpriteScale;
-            _label.Position = new Vector2(-54, -size.Y / 2.0f - 24.0f);
+            var interactionRect = GetInteractionRect();
+            _label.Position = new Vector2(-54, interactionRect.Position.Y - 24.0f);
             return;
         }
 
@@ -239,6 +299,13 @@ public partial class GreyboxBuilding : Node2D
         return state.IsPowered || !state.Definition.RequiresPower
             ? Colors.White
             : new Color(0.64f, 0.58f, 0.52f);
+    }
+
+    private static float GetDirectionalSpriteScale(string buildingId)
+    {
+        return buildingId == ContentIds.Buildings.Pylon
+            ? PylonDirectionalSpriteScale
+            : DirectionalSpriteScale;
     }
 
     private void DrawIncomingAttackFlash()

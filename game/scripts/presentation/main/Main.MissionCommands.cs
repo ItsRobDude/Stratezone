@@ -30,7 +30,7 @@ public partial class Main
     {
         return unitId switch
         {
-            ContentIds.Units.Worker => "W",
+            ContentIds.Units.Grunt => "W",
             ContentIds.Units.Cadet => "C",
             ContentIds.Units.Rifleman => "R",
             ContentIds.Units.Guardian => "G",

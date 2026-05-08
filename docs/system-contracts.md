@@ -16,7 +16,7 @@ The contracts are implementation-ready enough to prevent guessing, but intention
 
 Simulation owns game truth. Presentation reads it.
 
-Simulation owns resources, power, workers, jobs, combat outcomes, fog truth, mission objectives, enemy production, and saveable state. Presentation owns sprites, animation, selection visuals, particles, camera, audio, and UI rendering.
+Simulation owns resources, power, grunts, jobs, combat outcomes, fog truth, mission objectives, enemy production, and saveable state. Presentation owns sprites, animation, selection visuals, particles, camera, audio, and UI rendering.
 
 Scene scripts may submit commands and display results. They should not secretly become the only place where rules live.
 
@@ -60,7 +60,7 @@ Owns:
 - hidden footprint and spacing constraints
 - Barracks add-on adjacency legality
 - in-place tower upgrade legality
-- worker construction jobs
+- grunt construction jobs
 - repair jobs
 - powered expansion constraints
 
@@ -68,10 +68,10 @@ Prototype behavior:
 
 - placement should feel freeform, with no visible grid
 - structures still need footprints and buffer spacing
-- workers construct buildings by player command
-- workers construct Barracks add-ons adjacent to the Barracks by player command
-- workers can upgrade a Defense Tower into an armed tower variant in place when the player pays the cost and requirements
-- workers can repair during danger if the player commands them
+- grunts construct buildings by player command
+- grunts construct Barracks add-ons adjacent to the Barracks by player command
+- grunts can upgrade a Defense Tower into an armed tower variant in place when the player pays the cost and requirements
+- grunts can repair during danger if the player commands them
 - repair spends materials based on missing health; the cost scales with percent destroyed instead of being free or flat-priced
 - construction should fail clearly if unaffordable, blocked, or outside legal support
 
@@ -84,7 +84,7 @@ Tunable placeholders:
 
 Acceptance checks:
 
-- a worker can start and complete a build job
+- a grunt can start and complete a build job
 - a Barracks add-on must be adjacent to a valid Barracks
 - a Defense Tower can upgrade in place without losing its wall-anchor identity during the upgrade
 - repairing a lightly damaged building or unit costs less than repairing a nearly destroyed one
@@ -100,7 +100,7 @@ Owns:
 - resource well capacity
 - extraction rate
 - storage or available balance
-- spending on buildings, workers, and troops
+- spending on buildings, grunts, and troops
 
 Prototype behavior:
 
@@ -126,37 +126,37 @@ Acceptance checks:
 - a destroyed extractor no longer blocks placement on that well
 - spending cannot go below zero
 
-## Worker System
+## Grunt System
 
 Owns:
 
-- worker units
+- grunt units
 - build jobs
 - repair jobs
 - flee behavior
-- worker loss consequences
+- grunt loss consequences
 
 Prototype behavior:
 
-- workers are expensive recruitable units
-- workers have no combat utility
-- workers require player command for construction and repair
-- workers flee attackers rather than fight
-- losing all workers is recoverable if the player can afford replacements
-- workers spawn from the Colony Hub when Barracks rules allow training
+- grunts are expensive recruitable units
+- grunts have no combat utility
+- grunts require player command for construction and repair
+- grunts flee attackers rather than fight
+- losing all grunts is recoverable if the player can afford replacements
+- grunts spawn from the Colony Hub when Barracks rules allow training
 
 Tunable placeholders:
 
-- worker cost: expensive relative to Rifleman
-- worker health: low to medium
+- grunt cost: expensive relative to Rifleman
+- grunt health: low to medium
 - flee trigger: nearby hostile or damage taken
 
 Acceptance checks:
 
-- a worker does not attack enemies
-- a threatened worker flees
-- a worker can build and repair when commanded
-- a worker can build a Barracks add-on or tower upgrade when commanded and requirements are met
+- a grunt does not attack enemies
+- a threatened grunt flees
+- a grunt can build and repair when commanded
+- a grunt can build a Barracks add-on or tower upgrade when commanded and requirements are met
 
 ## Barracks Add-on System
 
@@ -170,7 +170,7 @@ Owns:
 
 Prototype behavior:
 
-- Barracks upgrades are physical modules built by Workers adjacent to the Barracks
+- Barracks upgrades are physical modules built by Grunts adjacent to the Barracks
 - Armory Annex unlocks Guardian training and explosive-weapon tech where the mission allows it
 - Vehicle Bay unlocks Rover training and expands heavy-armor capacity where the mission allows it
 - Level 1 silently hides and locks Vehicle Bay; it should not appear as a disabled player command in the first mission
@@ -238,7 +238,7 @@ Tunable placeholders:
 Mission availability contract:
 
 - Mission `available_unit_ids` is the trainable-unit truth for the slice, not just a UI hint.
-- Level 1 trains Worker, Cadet, and Rifleman only. The player may start with a Guardian, Rover, and Commander, but cannot train more of those units in Level 1.
+- Level 1 trains Grunt, Cadet, and Rifleman only. The player may start with a Guardian, Rover, and Commander, but cannot train more of those units in Level 1.
 - Level 1 does not expose Vehicle Bay to the player; it is silently locked and hidden.
 - Enemy AI production uses the same mission trainable-unit list and should choose between valid affordable combat units instead of hardcoding one unit type.
 - Later missions may enable Guardian or Rover production by exposing those units in mission data and providing the required powered Barracks add-ons.
@@ -268,7 +268,7 @@ Prototype behavior:
 
 - Med Hall heals infantry within a radius, requires power, and spends resources only while actually healing.
 - Logistics / Repair Pad repairs mechanical units parked on it, requires power, and spends resources only while actually repairing.
-- Repair Pad should reduce the need to send fragile Workers to the front line to fix vehicles.
+- Repair Pad should reduce the need to send fragile Grunts to the front line to fix vehicles.
 - Artillery Battery is fragile, expensive, powered, static, and cannot target enemies inside its minimum range.
 - Artillery Battery is a siege tool for cracking bases and forcing assaults, not a self-defending turret.
 - Artillery explosive damage can cause friendly fire.

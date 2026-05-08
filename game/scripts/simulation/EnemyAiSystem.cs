@@ -32,6 +32,8 @@ internal sealed class EnemyAiSystem
         if (_elapsedSeconds >= _nextRebuildSeconds)
         {
             EnsureBuilding(simulation, ContentIds.Buildings.PowerPlant, _markers.PowerPlantPosition);
+            EnsureBuildingAt(simulation, ContentIds.Buildings.Pylon, _markers.BasePylonPosition);
+            EnsureBuildingAt(simulation, ContentIds.Buildings.Pylon, _markers.ForwardPylonPosition);
             EnsureBuilding(simulation, ContentIds.Buildings.Barracks, _markers.BarracksPosition);
             if (_profile.CentralWellInterest > 0.0f)
             {
@@ -48,6 +50,20 @@ internal sealed class EnemyAiSystem
     private static void EnsureBuilding(RtsSimulation simulation, string buildingId, SimVector2 position)
     {
         if (simulation.HasLiveBuilding(ContentIds.Factions.PrivateMilitary, buildingId))
+        {
+            return;
+        }
+
+        simulation.TryPlaceBuildingForFaction(ContentIds.Factions.PrivateMilitary, buildingId, position);
+    }
+
+    private static void EnsureBuildingAt(RtsSimulation simulation, string buildingId, SimVector2 position)
+    {
+        if (simulation.Buildings.Any(building =>
+            building.FactionId == ContentIds.Factions.PrivateMilitary &&
+            building.Definition.Id == buildingId &&
+            !building.IsDestroyed &&
+            building.Position.DistanceTo(position) <= RtsSimulation.ToWorldRadius(1.0f)))
         {
             return;
         }

@@ -181,9 +181,9 @@ public partial class Main
         if (repairTarget is not null)
         {
             var repairers = 0;
-            foreach (var worker in selectedUnits.Where(unit => unit.Definition.CanRepair))
+            foreach (var grunt in selectedUnits.Where(unit => unit.Definition.CanRepair))
             {
-                var result = _simulation.CommandUnitRepairBuilding(worker.EntityId, repairTarget.EntityId);
+                var result = _simulation.CommandUnitRepairBuilding(grunt.EntityId, repairTarget.EntityId);
                 if (result.Success)
                 {
                     repairers++;
@@ -268,33 +268,19 @@ public partial class Main
 
     private BuildingState? FindSelectablePlayerBuildingAt(Vector2 worldPosition)
     {
-        if (_simulation is null)
-        {
-            return null;
-        }
-
-        return _simulation.Buildings
-            .Where(building => building.FactionId == ContentIds.Factions.PlayerExpedition && !building.IsDestroyed)
-            .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
-            .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
-            .FirstOrDefault();
+        return FindBuildingAt(
+            worldPosition,
+            building => building.FactionId == ContentIds.Factions.PlayerExpedition && !building.IsDestroyed);
     }
 
     private BuildingState? FindRepairablePlayerBuildingAt(Vector2 worldPosition)
     {
-        if (_simulation is null)
-        {
-            return null;
-        }
-
-        return _simulation.Buildings
-            .Where(building =>
+        return FindBuildingAt(
+            worldPosition,
+            building =>
                 building.FactionId == ContentIds.Factions.PlayerExpedition &&
                 !building.IsDestroyed &&
-                building.IsDamaged)
-            .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
-            .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
-            .FirstOrDefault();
+                building.IsDamaged);
     }
 
     private UnitState? FindEnemyUnitAt(Vector2 worldPosition)
@@ -314,16 +300,51 @@ public partial class Main
 
     private BuildingState? FindEnemyBuildingAt(Vector2 worldPosition)
     {
+        return FindBuildingAt(
+            worldPosition,
+            building =>
+                building.FactionId == ContentIds.Factions.PrivateMilitary &&
+                !building.IsDestroyed &&
+                _simulation is not null &&
+                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position));
+    }
+
+    private BuildingState? FindBuildingAt(Vector2 worldPosition, Func<BuildingState, bool> predicate)
+    {
         if (_simulation is null)
         {
             return null;
         }
 
         return _simulation.Buildings
-            .Where(building => building.FactionId == ContentIds.Factions.PrivateMilitary && !building.IsDestroyed)
-            .Where(building => _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position))
-            .Where(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition) <= building.FootprintWorldRadius)
-            .OrderBy(building => new Vector2(building.Position.X, building.Position.Y).DistanceTo(worldPosition))
+            .Where(predicate)
+            .Where(building => BuildingContainsPoint(building, worldPosition))
+            .OrderBy(building => BuildingHitDistance(building, worldPosition))
             .FirstOrDefault();
+    }
+
+    private bool BuildingContainsPoint(BuildingState building, Vector2 worldPosition)
+    {
+        if (_buildingViews.TryGetValue(building.EntityId, out var view) && view.Visible)
+        {
+            return view.ContainsInteractionPoint(worldPosition);
+        }
+
+        return ToGodot(building.Position).DistanceTo(worldPosition) <= building.FootprintWorldRadius;
+    }
+
+    private float BuildingHitDistance(BuildingState building, Vector2 worldPosition)
+    {
+        if (_buildingViews.TryGetValue(building.EntityId, out var view) && view.Visible)
+        {
+            return view.DistanceToInteractionBounds(worldPosition);
+        }
+
+        return ToGodot(building.Position).DistanceTo(worldPosition);
+    }
+
+    private static Vector2 ToGodot(SimVector2 vector)
+    {
+        return new Vector2(vector.X, vector.Y);
     }
 }

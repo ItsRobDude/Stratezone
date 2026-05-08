@@ -40,7 +40,7 @@ The player should quickly learn:
 
 - the commander is fragile and important
 - power matters immediately
-- workers and construction matter
+- grunts and construction matter
 - scouting reveals the enemy edge
 - the mission is won by destroying the enemy
 
@@ -82,7 +82,7 @@ When an Extractor/Refinery is destroyed, its resource well becomes open again; a
 
 ## Build and Production Rules
 
-Buildings are constructed by workers.
+Buildings are constructed by grunts.
 
 Buildings need power immediately to function. Power affects both:
 
@@ -97,13 +97,13 @@ Unit production rule for Level 1:
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
 - A powered Barracks accepts a small serial training queue so repeated Rifleman/Cadet clicks are not lost; one unit trains at a time per Barracks.
 - Barracks add-ons are the preferred later unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
-- Current Level 1 mission data exposes Worker, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
+- Current Level 1 mission data exposes Grunt, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
 - Cadets should recruit in only a few seconds. They are the fastest to build, cheapest combat troop, weakest troop, and easiest troop to kill.
 - Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel.
 - Guardians should be slower and more expensive than Riflemen because they are specialized anti-armor / anti-defense troops, not the default infantry upgrade.
 - Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other add-on production by changing mission availability and support buildings deliberately.
 
-Workers are expensive, recruitable, non-combat units. They require player command for construction and repair. Repair should work in First Landing: it spends materials based on the target's missing health percentage, so lightly damaged assets are cheap to patch while badly damaged assets cost meaningfully more to restore.
+Grunts are expensive, recruitable, non-combat units. They require player command for construction and repair. Repair should work in First Landing: it spends materials based on the target's missing health percentage, so lightly damaged assets are cheap to patch while badly damaged assets cost meaningfully more to restore.
 
 ## Available Buildings
 
@@ -128,7 +128,7 @@ Tower walls should be an investment. In Level 1, the central choke should be blo
 
 Level 1 player units:
 
-- one Worker at mission start, with more Workers trainable
+- one Grunt at mission start, with more Grunts trainable
 - Cadet and Rifleman trainable from a powered Barracks
 - one Guardian at mission start as scenario support; no extra Guardian training in Level 1
 - one provided Rover at mission start for scouting; no extra Rover training in Level 1
@@ -245,7 +245,7 @@ These values are tunable placeholders for scaffolding and early tests:
 - contested well pressure: visible early, not instantly fatal
 - infantry durability: meatgrinder-low; Rifleman health starts around 45
 - player-facing infantry recruitment should feel Dominion / classic RTS fast: Cadet fastest, Rifleman only slightly slower, Guardian slower because it is specialized
-- worker cost: expensive relative to Rifleman
+- grunt cost: expensive relative to Rifleman
 - tower cost: high enough to make wall placement a choice
 - Barracks add-on cost: meaningful enough to create a power/placement decision in later missions; Level 1 hides Vehicle Bay and should not require add-on learning
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance so Riflemen alone are slow base-crackers
@@ -255,4 +255,4 @@ Do not treat these as final balance.
 
 ## Deferred From Level 1
 
-Med Hall, Logistics / Repair Pad, and Artillery Battery are later-mission systems for now. First Landing should get worker repair working before it introduces dedicated healing, vehicle maintenance pads, or static siege infrastructure.
+Med Hall, Logistics / Repair Pad, and Artillery Battery are later-mission systems for now. First Landing should get grunt repair working before it introduces dedicated healing, vehicle maintenance pads, or static siege infrastructure.

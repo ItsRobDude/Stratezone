@@ -89,8 +89,8 @@ public partial class GreyboxUnit : Node2D
 
         switch (_definition.Id)
         {
-            case "unit_worker":
-                DrawWorker(outline);
+            case "unit_grunt":
+                DrawGrunt(outline);
                 break;
             case "unit_cadet":
                 DrawCadet(outline);
@@ -114,7 +114,7 @@ public partial class GreyboxUnit : Node2D
         }
     }
 
-    private void DrawWorker(Color outline)
+    private void DrawGrunt(Color outline)
     {
         DrawBodyCapsule(new Vector2(0, 1), 9.0f, 14.0f, _bodyColor, outline);
         DrawRect(new Rect2(new Vector2(-6, 1), new Vector2(12, 11)), new Color(0.98f, 0.78f, 0.24f));

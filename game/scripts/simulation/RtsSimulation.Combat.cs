@@ -238,12 +238,12 @@ public sealed partial class RtsSimulation
         if (unit.IsEnemyRetreating)
         {
             return unit.HealthRatio < EnemyRetreatRecoverRatio &&
-                unit.Position.DistanceTo(_enemyAi.HubPosition) > ToWorldRadius(2.0f);
+                unit.Position.DistanceTo(_enemyAi.HubPosition) > GetEnemyRetreatStandDownDistance();
         }
 
         return unit.HealthRatio > 0.0f &&
             unit.HealthRatio <= EnemyRetreatHealthRatio &&
-            unit.Position.DistanceTo(_enemyAi.HubPosition) > ToWorldRadius(4.0f);
+            unit.Position.DistanceTo(_enemyAi.HubPosition) > GetEnemyRetreatTriggerDistance();
     }
 
     private void TickEnemyRetreat(UnitState unit, float deltaSeconds)
@@ -257,12 +257,28 @@ public sealed partial class RtsSimulation
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = null;
         MoveUnitToward(unit, _enemyAi.HubPosition, deltaSeconds);
-        if (unit.Position.DistanceTo(_enemyAi.HubPosition) <= ToWorldRadius(2.0f))
+        if (unit.Position.DistanceTo(_enemyAi.HubPosition) <= GetEnemyRetreatStandDownDistance())
         {
             unit.IsEnemyRetreating = false;
             unit.IsEnemyAttackCommitted = false;
             unit.ClearPath();
         }
+    }
+
+    private float GetEnemyRetreatStandDownDistance()
+    {
+        var hub = _buildings.FirstOrDefault(building =>
+            building.FactionId == ContentIds.Factions.PrivateMilitary &&
+            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
+            !building.IsDestroyed);
+        return hub is null
+            ? ToWorldRadius(2.0f)
+            : hub.FootprintWorldRadius + ToWorldRadius(1.0f);
+    }
+
+    private float GetEnemyRetreatTriggerDistance()
+    {
+        return GetEnemyRetreatStandDownDistance() + ToWorldRadius(2.0f);
     }
 
     private void TickEnemyScout(UnitState unit, float deltaSeconds)

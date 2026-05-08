@@ -1,6 +1,6 @@
 # Stratezone
 
-**Stratezone** is an early-stage mission RTS concept: a hostile-world strategy game where the player builds a fragile expedition outpost, protects important workers, manages power networks, and commands military units through authored battlefield scenarios.
+**Stratezone** is an early-stage mission RTS concept: a hostile-world strategy game where the player builds a fragile expedition outpost, protects important grunts, manages power networks, and commands military units through authored battlefield scenarios.
 
 The target feel is **RimWorld-style colony stakes** meeting **late-90s military-industrial RTS mission design**. The base should feel alive, vulnerable, and useful, while combat stays readable and command-driven.
 
@@ -28,7 +28,7 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 
 ## Core Fantasy
 
-You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable workers, barracks-controlled training rules, powered Barracks add-ons, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
+You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable grunts, barracks-controlled training rules, powered Barracks add-ons, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
 
 ## Primary Player Verbs
 
@@ -36,7 +36,7 @@ You command an expedition on a dangerous frontier world. Each level is a fresh s
 - Extend power and build radius.
 - Build refineries/extractors on limited resource wells that can run out.
 - Expand production with powered Barracks add-ons.
-- Protect expensive workers who flee from combat, the on-map commander, and critical infrastructure.
+- Protect expensive grunts who flee from combat, the on-map commander, and critical infrastructure.
 - Command individual units, vehicles, artillery, commanders, and units that perform better in groups.
 - Upgrade Defense Towers in place into armed towers when the wall line needs teeth.
 - Repair after raids, storms, and sabotage.
@@ -59,8 +59,8 @@ First prototype roster:
 - **Barracks add-ons:** Armory Annex unlocks Guardian/explosive tech; Vehicle Bay unlocks Rover/heavy-armor capacity.
 - **Defensive variants:** Gun Tower and Rocket Tower are preferred in-place upgrades from Defense Towers and keep wall-anchor behavior while adding weaponry.
 - **Support and siege:** Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records but are later-mission systems unless First Landing playtests prove a hard need.
-- **Units:** Worker, Cadet, Rifleman, Guardian anti-armor infantry, Rover, Commander.
-- **Current Level 1 training:** Worker, Cadet, and Rifleman are trainable by the player and available to the first enemy AI. Guardian, Rover, and Commander can be authored into the scenario, but the player cannot train more of them in Level 1.
+- **Units:** Grunt, Cadet, Rifleman, Guardian anti-armor infantry, Rover, Commander.
+- **Current Level 1 training:** Grunt, Cadet, and Rifleman are trainable by the player and available to the first enemy AI. Guardian, Rover, and Commander can be authored into the scenario, but the player cannot train more of them in Level 1.
 - **Public build target:** the first public build should be a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
 
 For this pass, placeholder shapes are acceptable, art direction can wait until gameplay works, and no story cutscenes are required.

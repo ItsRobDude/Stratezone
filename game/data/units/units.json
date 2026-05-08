@@ -2,8 +2,8 @@
   "schema_version": 1,
   "records": [
     {
-      "id": "unit_worker",
-      "display_name": "Worker",
+      "id": "unit_grunt",
+      "display_name": "Grunt",
       "faction_availability": ["faction_player_expedition", "faction_private_military"],
       "role": "builder_repair",
       "cost": 150,
@@ -34,7 +34,7 @@
       "can_attack": false,
       "can_capture": false,
       "can_run_over_infantry": false,
-      "tags": ["worker", "non_combat", "flees"],
+      "tags": ["grunt", "non_combat", "flees"],
       "balance_status": "tunable_placeholder"
     },
     {

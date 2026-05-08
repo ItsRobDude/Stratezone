@@ -4,23 +4,23 @@ namespace Stratezone.Simulation;
 
 public sealed partial class RtsSimulation
 {
-    private const float WorkerRepairRatePerSecond = 24.0f;
+    private const float GruntRepairRatePerSecond = 24.0f;
     private const float FullRepairCostFraction = 0.6f;
     private const float RepairInteractionRange = 1.5f;
 
     public RepairResult CommandUnitRepairBuilding(int unitEntityId, int targetBuildingEntityId)
     {
         var validation = ValidateUnitRepairBuilding(unitEntityId, targetBuildingEntityId);
-        if (!validation.Success || validation.Worker is null || validation.Building is null)
+        if (!validation.Success || validation.Grunt is null || validation.Building is null)
         {
             return validation;
         }
 
-        validation.Worker.TargetUnitEntityId = null;
-        validation.Worker.TargetBuildingEntityId = null;
-        validation.Worker.RepairTargetBuildingEntityId = validation.Building.EntityId;
-        validation.Worker.TargetFormationOffset = default;
-        validation.Worker.ClearPath();
+        validation.Grunt.TargetUnitEntityId = null;
+        validation.Grunt.TargetBuildingEntityId = null;
+        validation.Grunt.RepairTargetBuildingEntityId = validation.Building.EntityId;
+        validation.Grunt.TargetFormationOffset = default;
+        validation.Grunt.ClearPath();
         return validation;
     }
 
@@ -30,7 +30,7 @@ public sealed partial class RtsSimulation
         var building = FindLiveBuilding(targetBuildingEntityId);
         if (unit is null || !unit.Definition.CanRepair)
         {
-            return new RepairResult(false, "Select a Worker.", null, building, "sim.repair.requires_worker");
+            return new RepairResult(false, "Select a Grunt.", null, building, "sim.repair.requires_grunt");
         }
 
         if (building is null || building.FactionId != unit.FactionId)
@@ -100,7 +100,7 @@ public sealed partial class RtsSimulation
         }
 
         var materialPerHealth = GetRepairMaterialCostPerHealth(target.Definition);
-        var targetHealth = WorkerRepairRatePerSecond * deltaSeconds;
+        var targetHealth = GruntRepairRatePerSecond * deltaSeconds;
         var affordableHealth = materialPerHealth <= 0.0f
             ? targetHealth
             : materialsAvailable / materialPerHealth;

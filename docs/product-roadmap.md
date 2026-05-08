@@ -38,7 +38,7 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, worker-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
+The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, grunt-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
 
 Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. Content validation, the Godot C# build, simulation smoke checks, and a Godot headless smoke check pass locally.
 
@@ -46,7 +46,7 @@ The first prototype stack is locked as Godot 4 with C#.
 
 ## Settled Direction
 
-- Workers are important recruitable units. They are useless in combat, flee from attackers, and replacing them costs resources and slows the outpost.
+- Grunts are important recruitable units. They are useless in combat, flee from attackers, and replacing them costs resources and slows the outpost.
 - The primary format is mission RTS, not survival sandbox.
 - Each level starts as a fresh scenario, closer to a classic RTS campaign.
 - Combat uses individual units with varied cost, strength, and specialty.
@@ -58,7 +58,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding weaponry and higher cost.
-- First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
+- First prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. Armory Annex unlocks Guardian/explosive tech. Vehicle Bay unlocks Rover/heavy-armor capacity.
@@ -115,7 +115,7 @@ Deliverables:
 - content data spec
 - implementation checklists
 - first-mission assumptions
-- worker-importance direction
+- grunt-importance direction
 - first enemy faction direction
 - commander-as-unit direction
 - refinery/extractor economy direction
@@ -146,7 +146,7 @@ Systems:
 - extractor/refinery on a resource well
 - Defense Tower energy wall links
 - in-place Defense Tower upgrades into armed tower variants
-- construction with recruitable worker units
+- construction with recruitable grunt units
 - first fog-of-war pass
 - hidden placement spacing/buffer constraints with no visible grid
 
@@ -204,7 +204,7 @@ Goal: make the outpost feel alive without becoming a deep colony sim.
 
 Candidate systems:
 
-- expensive worker units and replacement cost
+- expensive grunt units and replacement cost
 - supply/stability/morale as a compact outpost health layer
 - injuries or repair strain
 - event warnings and consequences
@@ -408,7 +408,7 @@ These are not first-prototype commitments:
 ## Open Decisions
 
 - Exact building footprint/buffer values for constrained maps.
-- Worker replacement cost relative to basic combat units.
+- Grunt replacement cost relative to basic combat units.
 - Exact later-mission use of Armory Annex and Vehicle Bay. Vehicle Bay is hidden in Level 1.
 - Med Hall, Logistics / Repair Pad, and Artillery Battery should wait for later missions unless First Landing playtests prove a hard need.
 - First campaign mission archetypes and failure-condition mix.

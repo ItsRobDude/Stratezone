@@ -48,7 +48,7 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `mission_first_landing`
 - `faction_player_expedition`
 - `faction_private_military`
-- `unit_worker`
+- `unit_grunt`
 - `unit_cadet`
 - `unit_rifleman`
 - `unit_guardian`
@@ -115,8 +115,8 @@ Acceptance checks:
 - building `build_time_seconds` is `0` for the first prototype
 - player can place a basic building with visible placement feedback
 - blocked placement is rejected
-- a worker can construct a building by command
-- a worker can construct a powered Barracks add-on adjacent to a Barracks
+- a grunt can construct a building by command
+- a grunt can construct a powered Barracks add-on adjacent to a Barracks
 - Power Plant powers nearby structures
 - Pylon extends or links power
 - unpowered Barracks visibly stops providing its function
@@ -178,8 +178,8 @@ Evidence:
 
 Acceptance checks:
 
-- worker loss creates a real resource/time setback
-- worker replacement is possible if affordable
+- grunt loss creates a real resource/time setback
+- grunt replacement is possible if affordable
 - pressure warning appears before major danger
 - pressure creates a choice between repair, defense, expansion, or attack
 - pressure does not turn into deep colonist simulation
@@ -198,7 +198,7 @@ Acceptance checks:
 - scouting reveals useful tactical information
 - Cadet, Rifleman, Guardian, Rover, Commander, Medium Tank, and Heavy Tank roles are distinct
 - Guardian is proven as anti-armor infantry without becoming a better anti-infantry Rifleman
-- Level 1 starts the player with one Worker, one Guardian, one Rover, and one Commander, while only Worker, Cadet, and Rifleman are trainable
+- Level 1 starts the player with one Grunt, one Guardian, one Rover, and one Commander, while only Grunt, Cadet, and Rifleman are trainable
 - first enemy AI production can choose between Level 1-available combat troops based on resources and requirements
 - enemy can scout/rally before first pressure, retreat damaged attackers, avoid immediately recommitting badly damaged returnees, and regroup after a wiped attack group
 - rival-officer memory stays internal and does not add adaptation alerts or hidden-plan UI text

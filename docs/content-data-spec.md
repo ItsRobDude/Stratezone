@@ -51,7 +51,7 @@ Current file:
 
 Rules:
 
-- content name keys are derived from stable IDs, such as `unit.unit_worker.name`, `building.building_power_plant.name`, `resource.resource_materials.name`, and `faction.faction_private_military.name`
+- content name keys are derived from stable IDs, such as `unit.unit_grunt.name`, `building.building_power_plant.name`, `resource.resource_materials.name`, and `faction.faction_private_military.name`
 - mission, objective, command, HUD, warning, validation, and result text should use explicit localization keys
 - localized strings must not be used as save IDs, content references, test identity, or gameplay rule inputs
 - existing `display_name` fields remain English fallback during the prototype
@@ -73,9 +73,9 @@ Rules:
 
 Examples:
 
-- Good: `unit_worker`
+- Good: `unit_grunt`
 - Good: `building_power_plant`
-- Bad: `cheap_worker_v2`
+- Bad: `cheap_grunt_v2`
 - Bad: `Node2D_EnemyBuilding`
 
 ## Data Categories
@@ -130,7 +130,7 @@ Optional train requirement fields:
 
 First-pass unit IDs:
 
-- `unit_worker`
+- `unit_grunt`
 - `unit_cadet`
 - `unit_rifleman`
 - `unit_guardian`
@@ -141,7 +141,7 @@ First-pass unit IDs:
 
 Prototype rules:
 
-- `unit_worker` is expensive, non-combat, can construct, can repair, and should flee from danger.
+- `unit_grunt` is expensive, non-combat, can construct, can repair, and should flee from danger.
 - `unit_cadet` is the cheapest and fastest trainable infantry. It should cost less than Rifleman, have lower health and damage, and recruit in only a few seconds.
 - `unit_rifleman` is intentionally fragile. First-pass health should stay around 40-50 so infantry caught out of position die fast. It should train quickly, roughly 3-4 seconds in the intended fast classic-RTS feel, and only slightly slower than Cadet.
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
@@ -159,8 +159,8 @@ Prototype rules:
 Tunable placeholder example:
 
 ```text
-id: unit_worker
-display_name: Worker
+id: unit_grunt
+display_name: Grunt
 role: builder_repair
 cost: 150
 train_time_seconds: 18
@@ -168,7 +168,7 @@ health: 60
 damage_resistances: ballistic 0.0, energy 0.0, explosive -0.15, crush 0.0
 movement_speed: 1.0
 sight_range: 6
-train_requirements: building_barracks allows worker training, spawn at building_colony_hub
+train_requirements: building_barracks allows grunt training, spawn at building_colony_hub
 attack_damage: 0
 attack_range: 0
 attack_cooldown: 0
@@ -181,7 +181,7 @@ can_repair: true
 can_attack: false
 can_capture: false
 can_run_over_infantry: false
-tags: worker, non_combat, flees
+tags: grunt, non_combat, flees
 ```
 
 The example is not final balance.
@@ -359,7 +359,7 @@ tags: tower, wall_anchor, armed, explosive, powered, upgrade
 Support and siege building placeholder intent:
 
 - `building_med_hall` heals infantry within a radius, slowly spends resources while healing, and requires power.
-- `building_logistics_repair_pad` is a powered platform that repairs mechanical units parked on it, keeping Workers out of front-line vehicle repair when the player plans ahead.
+- `building_logistics_repair_pad` is a powered platform that repairs mechanical units parked on it, keeping Grunts out of front-line vehicle repair when the player plans ahead.
 - `building_artillery_battery` is a fragile, expensive static siege emplacement with long range, explosive damage, friendly fire, and a minimum range that prevents close self-defense.
 
 ## Resource and Well Definitions
@@ -478,8 +478,8 @@ Prototype rules:
 - includes an enemy AI profile for first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, pressure slowdown, and train-time multiplier
 - uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission
 - uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records
-- starts the player with exactly one `unit_worker`, one `unit_guardian`, one `unit_rover`, and one `unit_commander`
-- exposes `unit_worker`, `unit_cadet`, and `unit_rifleman` as Level 1 trainable units; `unit_guardian`, `unit_rover`, and `unit_commander` stay scenario/start-only for Level 1
+- starts the player with exactly one `unit_grunt`, one `unit_guardian`, one `unit_rover`, and one `unit_commander`
+- exposes `unit_grunt`, `unit_cadet`, and `unit_rifleman` as Level 1 trainable units; `unit_guardian`, `unit_rover`, and `unit_commander` stay scenario/start-only for Level 1
 - hides `building_vehicle_bay` in Level 1 rather than presenting it as a disabled command
 - wins by destroying all required enemy targets
 - loses if the Commander dies

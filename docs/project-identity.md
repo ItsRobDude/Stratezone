@@ -10,7 +10,7 @@ The intended player feeling is:
 
 - under pressure, but not overwhelmed
 - clever for cutting enemy infrastructure instead of only brute-forcing fights
-- protective of the outpost, its expensive workers, and its commander
+- protective of the outpost, its expensive grunts, and its commander
 - rewarded for scouting, preparation, and recovery
 - grounded in military-industrial near-future warfare rather than flashy space fantasy
 
@@ -28,7 +28,7 @@ Stratezone should be a playable, packageable indie strategy game built around:
 
 - real-time base construction
 - powered expansion networks
-- recruitable workers with meaningful mission and economy value
+- recruitable grunts with meaningful mission and economy value
 - refinery/extractor placement on limited resource wells that can run out
 - pylon-linked power over long distances
 - defense towers that create energy walls between paired towers
@@ -46,7 +46,7 @@ The early goal is not a survival game, giant sandbox, or persistent colony sim. 
 
 The colony should matter, but the player should still feel like an RTS commander.
 
-Workers, power, production, repairs, and mission objectives should create pressure. Workers are expensive recruitable units: it is normal for them to die if the base is under attack, but losing them should hurt because replacing them costs resources and slows the base. Workers are useless in combat and should flee from attackers rather than fight.
+Grunts, power, production, repairs, and mission objectives should create pressure. Grunts are expensive recruitable units: it is normal for them to die if the base is under attack, but losing them should hurt because replacing them costs resources and slows the base. Grunts are useless in combat and should flee from attackers rather than fight.
 
 The correct balance is:
 
@@ -76,8 +76,8 @@ The game should use strong silhouettes and clear battlefield language.
 
 At normal zoom, the player should quickly understand:
 
-- this is a worker
-- this worker should be kept away from combat
+- this is a grunt
+- this grunt should be kept away from combat
 - this is the commander
 - this is a soldier
 - this unit works best grouped with others
@@ -172,9 +172,9 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 
 - Stratezone is mission RTS first, not survival sandbox first.
 - Each level starts as a fresh scenario, closer to a classic RTS campaign structure than a persistent colony.
-- Workers are expensive recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
-- Workers are useless in combat and flee from attackers.
-- Workers require player command for construction and repair in the first prototype.
+- Grunts are expensive recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
+- Grunts are useless in combat and flee from attackers.
+- Grunts require player command for construction and repair in the first prototype.
 - Combat uses individual units with varied cost, strength, and specialty.
 - Some units should be stronger when grouped or supported; expensive specialist units may stand a better chance alone.
 - Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
@@ -184,7 +184,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding attacks and higher cost.
-- First prototype units are Worker, Cadet, Rifleman, Guardian, Rover, and Commander.
+- First prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
 - Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. The first planned add-ons are Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
@@ -205,7 +205,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 These are intentionally unresolved:
 
 - Is the wider world mostly human factions fighting each other, or are non-human factions central later?
-- Exact worker replacement cost relative to basic combat units.
+- Exact grunt replacement cost relative to basic combat units.
 - Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
 - How many mission archetypes belong in the first campaign slice?
 - Exact Level 1 enemy production speed and resource handicap.

@@ -489,6 +489,8 @@ Prototype rules:
 - includes an enemy AI profile for first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, pressure slowdown, and train-time multiplier
 - uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission
 - uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records
+- future first-demo missions should use authored `starting_entities`, `starting_resources`, `available_unit_ids`, and `available_building_ids` rather than a player-selected loadout system
+- future first-demo missions may use partial bases, allotted or irreplaceable troops, or no-base starts when the mission proof target needs that shape
 - starts the player with exactly one `unit_grunt`, one `unit_guardian`, one `unit_rover`, and one `unit_commander`
 - exposes `unit_grunt`, `unit_cadet`, and `unit_rifleman` as Level 1 trainable units; `unit_guardian`, `unit_rover`, and `unit_commander` stay scenario/start-only for Level 1
 - hides `building_vehicle_bay` in Level 1 rather than presenting it as a disabled command

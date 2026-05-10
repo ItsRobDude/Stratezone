@@ -63,7 +63,8 @@ First prototype roster:
 - **Support and siege:** Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records but are later-mission systems unless First Landing playtests prove a hard need.
 - **Units:** Grunt, Cadet, Rifleman, Guardian anti-armor infantry, Rover, Commander.
 - **Current Level 1 training:** Grunt, Cadet, and Rifleman are trainable by the player and available to the first enemy AI. Guardian, Rover, and Commander can be authored into the scenario, but the player cannot train more of them in Level 1.
-- **Roadmap shape:** Level 2 should prove a resource race with terrain chokepoints and Defense Tower walls; Level 3 should prove Armory Annex and Guardian access before broader unlocks.
+- **Roadmap shape:** Level 2 should prove a resource race with terrain chokepoints, Defense Tower walls, and likely first Armory/Guardian production; Vehicle Bay/Rover production should enter the five-level demo, likely Mission 3 or Mission 4.
+- **Mission starts:** first-demo starts are authored, with no player-selected loadouts for now. Later missions may begin with a partial base, allotted or irreplaceable troops, or no base at all.
 - **Public build target:** the first public build should be a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
 
 For this pass, placeholder shapes are acceptable, art direction can wait until gameplay works, and no story cutscenes are required.

@@ -97,6 +97,7 @@ The first prototype stack is locked as Godot 4 with C#.
 
 4. Level 2 planning target
    - Build a resource-race mission with more strategic base-building terrain: cliffs, water, chokepoints, and Defense Tower wall opportunities.
+   - Use Level 2 as the likely first Armory Annex / Guardian production mission if that does not overload the resource-race proof.
    - Keep the first enemy same-tech and same-building for now, using red or alternate-color presentation.
    - Use environmental layout and resource competition before adding Med Hall, Repair Pad, or Artillery.
 
@@ -230,9 +231,9 @@ Exit criteria:
 - scenario checks can prove a mission route without replaying every unrelated system assertion
 - no new major mechanic has been added just to make the roadmap look larger
 
-## Milestone 4: Level 2 - Resource Race and Terrain Chokes
+## Milestone 4: Level 2 - Resource Race, Terrain Chokes, and First Armory
 
-Goal: prove strategic base-building pressure through terrain and resource competition.
+Goal: prove strategic base-building pressure through terrain and resource competition, with Armory Annex / Guardian production as the likely first powered unlock if the mission can carry it.
 
 Mission shape:
 
@@ -242,7 +243,9 @@ Mission shape:
 - authored buildable clearings and resource basins that make base expansion readable without a visible grid
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
+- likely first Armory Annex and Guardian production, justified by enemy armor, hardened defense, or tower-anchor pressure
 - quick RTS failure/retry expectations rather than persistent campaign consequences
+- no Vehicle Bay requirement
 - no Med Hall, Logistics / Repair Pad, or Artillery unless one is clearly needed to make the mission work
 
 Exit criteria:
@@ -251,25 +254,27 @@ Exit criteria:
 - the resource race is legible before it becomes punishing
 - at least one chokepoint can be shaped with Defense Tower walls
 - blocked terrain affects placement and/or movement in a way smoke checks can prove
+- Guardian production remains a specialist answer if Armory enters this mission
 - infrastructure strikes matter without requiring a new faction or story system
 - the mission proves a second repeatable level-design pattern after First Landing
 
-## Milestone 5: Level 3 - Armory and Guardian Tactical Unlock
+## Milestone 5: Level 3 - Vehicle Bay and Rover Tactical Unlock Candidate
 
-Goal: prove the first deliberate tech unlock mission.
+Goal: assign and prove the first Vehicle Bay / Rover production mission, with Level 3 as the working slot and Level 4 as the fallback if mission shape demands it.
 
 Deliverables:
 
-- an authored mission where the Armory Annex matters as a powered physical add-on
-- Guardian production or Guardian access that is earned through mission setup rather than assumed globally
-- anti-armor or anti-defense pressure that makes Guardian useful without turning it into the default anti-infantry answer
+- an authored mission where the Vehicle Bay matters as a powered physical add-on
+- Rover production or Rover access earned through mission setup rather than assumed globally
+- route, scouting, transport, crush, or vehicle-pressure design that makes Rover access useful without invalidating infantry
+- confirmation that Armory/Guardian either landed cleanly in Level 2 or was deliberately moved
 - at most one support/siege system from Med Hall, Logistics / Repair Pad, or Artillery Battery if the mission proves a hard need
 - enemy use of the same tech family unless a later art/design pass deliberately changes that
 
 Exit criteria:
 
-- the player understands why the Armory Annex exists
-- Guardian remains distinct from Rifleman and Cadet
+- the player understands why the Vehicle Bay exists
+- Rover remains utility/mobile pressure, not a replacement for the infantry roster
 - power disruption can affect the unlock path
 - the mission adds tactical identity without broad roster bloat
 
@@ -280,8 +285,9 @@ Goal: decide and prove the remaining first-demo mission archetypes before packag
 Deliverables:
 
 - Level 4 and Level 5 mission briefs or greybox starts
-- one additional mission archetype beyond resource race and Armory unlock
-- a decision on whether Vehicle Bay/Rover production enters the demo or stays later
+- one additional mission archetype beyond resource race / first Armory and Vehicle Bay / Rover
+- Vehicle Bay / Rover production is assigned to Mission 3 or Mission 4
+- authored start patterns are named: full base, partial base, no-base moving force, or allotted/irreplaceable troops
 - a decision on whether the demo uses one or two support/siege systems total
 - a written cut line for systems that stay after the first public demo
 
@@ -289,6 +295,7 @@ Exit criteria:
 
 - the first five-level demo has a coherent sequence of playable lessons
 - each mission has one primary proof target and one clear reason to exist
+- no player loadout system is needed for the first demo
 - no mission depends on lore or cutscenes to explain its mechanical purpose
 
 ## Milestone 7: Playtest Build
@@ -438,7 +445,7 @@ These are not first-prototype commitments:
 
 - Exact building footprint/buffer values for constrained maps.
 - Grunt replacement cost relative to basic combat units.
-- Exact Vehicle Bay/Rover production mission. Vehicle Bay is hidden in Level 1 and should not enter Level 2 unless the resource-race mission needs it.
+- Exact Vehicle Bay/Rover production mission slot. Current direction is that Vehicle Bay enters the first demo in Mission 3 or Mission 4, never Level 1.
 - Exact support/siege mission slots. Current direction is no more than one or two in the first demo: Artillery Battery and powered Grunt-hacked defense equipment are the strongest candidates, Med Hall fits a possible later snow/extraction scenario, and Logistics / Repair Pad waits until vehicles are mission-critical.
 - Level 4 and Level 5 mission archetypes and failure-condition mix.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.

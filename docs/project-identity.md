@@ -204,8 +204,9 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - The sci-fi tone is military-industrial with restrained future utility tech.
 - Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
 - Quick RTS restart is the expected first-demo failure model. Persistent campaign consequences are later scope.
-- Level 2 should lean toward a resource race with strategic base-building terrain such as cliffs, water, chokepoints, and useful Defense Tower wall positions.
-- Level 3 should prove Armory Annex and Guardian access before broadening into multiple unlock systems.
+- Mission starts are authored, with no player-selected loadouts for now. Some missions can begin with partial bases, allotted or irreplaceable troops, or no base at all.
+- Level 2 should lean toward a resource race with strategic base-building terrain such as cliffs, water, chokepoints, useful Defense Tower wall positions, and likely first Armory Annex / Guardian production if the mission can carry it.
+- Vehicle Bay / Rover production should enter the first five-level demo, likely in Mission 3 or Mission 4.
 - Med Hall, Logistics / Repair Pad, and Artillery Battery may enter the first demo one or two at most, and only when a specific mission needs that role.
 
 ## Open Vision Questions
@@ -214,6 +215,6 @@ These are intentionally unresolved:
 
 - Exact grunt replacement cost relative to basic combat units.
 - Exact Level 4 and Level 5 mission archetypes.
-- Whether Vehicle Bay/Rover production enters the first demo or stays later.
+- Exact Vehicle Bay/Rover mission slot, currently Mission 3 or Mission 4.
 - Which one or two support/siege systems, if any, earn a place in the first demo.
 - Exact Level 1 enemy production speed and resource handicap.

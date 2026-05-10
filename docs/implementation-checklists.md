@@ -196,7 +196,7 @@ Evidence:
 - one dry-run plan for adding a second mission without copying First Landing scene logic
 - validation command output
 
-## Milestone 4 Checklist: Level 2 - Resource Race and Terrain Chokes
+## Milestone 4 Checklist: Level 2 - Resource Race, Terrain Chokes, and First Armory
 
 Acceptance checks:
 
@@ -207,24 +207,29 @@ Acceptance checks:
 - resource basins make important wells read as tactical map pockets
 - Defense Tower wall placement matters because of the map shape
 - enemy power or extractor infrastructure can be scouted and attacked
+- Armory Annex and Guardian production are included if the Level 2 route can carry the first unlock without losing the resource-race proof
+- Guardian remains anti-armor / anti-defense specialist if introduced here
 - pressure creates a choice between repair, defense, expansion, or attack
 - quick fail/retry flow is acceptable; no persistent campaign consequence is required
+- Vehicle Bay remains absent from Level 2 unless the roadmap is deliberately reopened
 - Med Hall, Logistics / Repair Pad, and Artillery remain absent unless one is needed for the mission's primary proof
 
 Evidence:
 
 - one expansion/resource-race route note
 - one defensive wall/chokepoint route note
+- one Armory/Guardian route note if the unlock enters Level 2
 - smoke or debug evidence for any new terrain/passability/buildability rule
 - notes for any support/siege system deliberately kept out
 
-## Milestone 5 Checklist: Armory and Guardian Tactical Unlock
+## Milestone 5 Checklist: Vehicle Bay and Rover Tactical Unlock Candidate
 
 Acceptance checks:
 
-- Armory Annex is a physical powered Barracks add-on in the mission, not only a menu upgrade
-- Guardian production or Guardian access is earned through mission setup
-- Guardian remains proven as anti-armor infantry without becoming a better anti-infantry Rifleman
+- Vehicle Bay is a physical powered Barracks add-on in the mission, not only a menu upgrade
+- Rover production or Rover access is earned through mission setup
+- Rover role is useful without replacing infantry or turning the mission into a vehicle-only test
+- Armory/Guardian placement is resolved: either proven in Level 2 or deliberately carried into this mission
 - power disruption can affect the unlock path
 - troop train times preserve fast classic-RTS pacing
 - enemy still uses the same human tech family unless a later art/design pass deliberately changes it
@@ -232,8 +237,8 @@ Acceptance checks:
 
 Evidence:
 
-- one route note showing why Armory/Guardian mattered
-- smoke coverage for the unlock path and anti-armor role
+- one route note showing why Vehicle Bay/Rover mattered
+- smoke coverage for the unlock path and Rover role
 - notes explaining whether Med Hall, Logistics / Repair Pad, or Artillery stayed deferred
 
 ## Milestone 6 Checklist: Demo Mission Set Shape
@@ -243,7 +248,9 @@ Acceptance checks:
 - Level 4 and Level 5 have mission briefs or greybox starts
 - each demo mission has one primary proof target
 - the first demo remains a campaign-like arc of authored simulation scenarios, not a story-heavy cutscene plan
-- Vehicle Bay/Rover production is either assigned to a mission or explicitly deferred
+- mission starts are authored; no player loadout screen is required for the first demo
+- at least one later mission start pattern is named if used: partial base, no-base moving force, allotted/irreplaceable troops, or normal base start
+- Vehicle Bay/Rover production is assigned to Mission 3 or Mission 4
 - the demo uses no more than one or two support/siege systems unless the roadmap is deliberately reopened
 - each mission has a clear failure-condition mix and restart expectation
 - cut systems are named instead of left as vague future work
@@ -252,6 +259,7 @@ Evidence:
 
 - five-level demo sequence outline
 - per-mission proof target list
+- per-mission start-pattern list
 - explicit cut/defer list for systems outside the first public demo
 
 ## Public Build Checklist

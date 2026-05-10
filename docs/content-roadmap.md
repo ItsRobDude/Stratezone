@@ -20,6 +20,8 @@ It should capture approved direction before implementation, but it should not pr
 - Make each mission prove one main idea and one secondary pressure at most.
 - Prefer resource, power, terrain, scouting, and commander-position problems before adding new unit families.
 - Support and siege systems should enter only when a mission needs them, not because the content list feels thin.
+- Mission starts are authored. No player-selected loadouts for now.
+- Some missions may start with a partial base, allotted irreplaceable troops, or no base at all if the mission is about keeping a force moving.
 - Quick RTS restart is the first-demo failure model; persistent campaign consequences are later scope.
 
 ## First Demo Mission Archetype Direction
@@ -51,9 +53,9 @@ Content boundary:
 - no heavy story cutscenes
 - same-tech human enemy is acceptable even if represented with placeholder colors
 
-### Mission 2: Resource Race and Chokepoints
+### Mission 2: Resource Race, Chokepoints, and First Guardian Unlock
 
-Purpose: prove strategic base-building through terrain and scarce wells.
+Purpose: prove strategic base-building through terrain and scarce wells while introducing Guardian production if the mission can carry that extra lesson cleanly.
 
 Frame:
 
@@ -68,34 +70,38 @@ Gameplay shape:
 - Defense Tower walls matter because of map shape
 - enemy power and extractor routes are useful strike targets
 - player chooses between expanding, walling, repairing, or attacking
+- Armory Annex and Guardian production can enter here as the first powered add-on unlock
+- enemy armor, hardened defense, or tower anchors should justify Guardian use if the unlock enters Level 2
 
 Content boundary:
 
 - same-tech enemy only, reskinned red or alternate color
-- no new tech layer unless the terrain/resource proof genuinely needs it
+- no Vehicle Bay requirement
+- no broad tech layer beyond Armory/Guardian if Level 2 takes that unlock
 - Med Hall, Logistics / Repair Pad, and Artillery stay out unless the mission cannot work without one
 
-### Mission 3: Armory Unlock and Anti-Armor
+### Mission 3: Vehicle Bay and Rover Unlock Candidate
 
-Purpose: prove the first deliberate tech unlock.
+Purpose: prove the first vehicle-production unlock if the demo sequence is ready for mobile utility and vehicle sustain pressure.
 
 Frame:
 
-- After stabilizing the outpost and securing new resources, the expedition can bring a new production module online.
-- The Armory Annex becomes the first clear step from survival setup into battlefield specialization.
+- After the expedition secures enough resources and field production, a Vehicle Bay can come online as the next production module.
+- This should feel like the base is becoming operational, not like the player opened a broad research tree.
 
 Gameplay shape:
 
-- Armory Annex is a physical powered add-on adjacent to Barracks
-- Guardian access is earned through mission setup, construction, restoration, or protection
-- enemy armor, hardened defenses, or defense anchors justify Guardian use
+- Vehicle Bay is a physical powered add-on adjacent to Barracks
+- Rover production or Rover access is earned through mission setup, construction, restoration, or protection
+- map routes should make mobile vehicle play useful without making infantry irrelevant
 - power disruption can disable the unlock path
-- Guardian must remain a specialist, not a better general-purpose Rifleman
+- the mission can assign limited or irreplaceable starting troops if the design needs tighter control
 
 Content boundary:
 
-- prove Armory/Guardian before broadening into multiple unlock systems
-- Vehicle Bay/Rover production should stay later unless this mission's proof target changes
+- Vehicle Bay should enter the first demo, with Mission 3 as the working candidate and Mission 4 as the fallback slot
+- do not add a broad tank roster just because Vehicle Bay appears
+- no player loadout selection
 - at most one support/siege system may appear if the mission proves a hard need
 
 ### Commander Field Operation
@@ -104,14 +110,14 @@ Purpose: use the Commander as a real troop without turning every mission into an
 
 Frame:
 
-- Commander presence can represent battlefield authorization, coordination, or command-link stability.
-- Barracks, Vehicle Bay, or other production hubs may require the Commander at base or inside a command radius in some missions, but this should be used sparingly.
+- Commander presence can represent battlefield authorization or coordination, but command-link unlock framing is not the preferred explanation for progression.
+- If the Commander affects a mission system later, it should be mission-specific and rare rather than the default production rule.
 
 Gameplay shape:
 
 - Commander remains controllable, vulnerable, and mission-relevant
-- a mission may ask the Commander to inspect, activate, secure, or coordinate one important objective
-- if the Commander leaves base, some production or command function can pause or degrade
+- a mission may ask the Commander to inspect, activate, secure, or coordinate one important objective only if that moment earns its place
+- if the Commander affects base operation, that rule must be explicit, local to the mission, and easy to understand
 - the player should usually be able to keep the Commander protected unless the mission is explicitly about a commander field task
 
 Content boundary:
@@ -210,12 +216,12 @@ Content boundary:
 Working first-demo sequence:
 
 1. First Landing
-2. Resource Race and Chokepoints
-3. Armory Unlock and Anti-Armor
-4. Broken Outpost Recovery or Commander Field Operation
+2. Resource Race, Chokepoints, and likely first Guardian production
+3. Vehicle Bay and Rover Unlock candidate
+4. Broken Outpost Recovery, Vehicle Bay fallback, or Commander Field Operation
 5. Siege Breaker, Transport/Extraction, or carefully authored Two-Front Defense
 
-The fourth and fifth mission slots remain open. The current preference is to use those slots to round out Stratezone's identity without adding too many new systems: recovery/rescue, commander use, transport/extraction, or siege should each earn its place through one clean mission proof.
+The fourth and fifth mission slots remain open. The current preference is to use those slots to round out Stratezone's identity without adding too many new systems: recovery/rescue, commander use, transport/extraction, Vehicle Bay fallback, or siege should each earn its place through one clean mission proof.
 
 ## Terrain Planning Transition
 
@@ -695,8 +701,8 @@ Fit:
 Working doctrine sequence:
 
 1. Level 1: tame same-tech scout/regroup/private-military pressure.
-2. Level 2: resource-race enemy that contests wells and protects extractors.
-3. Level 3: same-tech enemy introduces armor or hardened-defense pressure that makes Armory/Guardian useful.
+2. Level 2: resource-race enemy that contests wells, protects extractors, and may use armor or hardened-defense pressure if Armory/Guardian production enters here.
+3. Level 3 or 4: same-tech enemy creates a reason for Vehicle Bay / Rover production without making infantry obsolete.
 4. Later: pylon striker, tower turtle, siege base, transport hunter, or scout/harass profiles.
 
 Guardrails:
@@ -775,15 +781,15 @@ Purpose: tie base function, communications, and mission infrastructure together 
 
 Direction:
 
-- Favored future angle.
-- Some missions may use a command-link concept through Colony Hub, communications relay, Commander, or restored infrastructure.
-- Structures might work fully only when connected to command through a clear mission rule.
-- This should probably arrive after Level 2 terrain/resource grammar is proven.
+- Not a current favorite for explaining progression.
+- Communications can remain story framing, but do not make "command link restored" the default reason new buildings or units become available.
+- If a mission later uses command-link behavior, it should be a local objective rule rather than a broad production system.
+- Keep this tabled until a specific mission proves the need.
 
 Fit:
 
-- Strong match for the "restore communications / cut off from home" framing.
-- Better than making every production building depend directly on Commander proximity.
+- Possible later as a mission-specific infrastructure problem.
+- Not needed for the first unlock pacing plan.
 
 ### Emergency Order
 
@@ -837,7 +843,7 @@ Approved now:
 1. Mission-critical controllable troop.
 2. Visible/reachable Commander can affect enemy target priority.
 3. Occasional mission variants, used sparingly.
-4. Command-link/production-range concept as the favored future expansion.
+4. Commander can support a specific mission objective if the scenario earns it.
 
 Tabled:
 
@@ -845,6 +851,7 @@ Tabled:
 - field authorization errands
 - tactical aura
 - emergency-order active abilities
+- command-link/production-range as a broad unlock explanation
 
 Guardrails:
 
@@ -969,6 +976,61 @@ Guardrails:
 - no generic capture-point economy
 - no support/siege layer added without a mission proof target
 
+## Progression and Unlock Pacing
+
+Progression should feel like an expedition becoming more capable across authored missions, not like a permanent campaign-tech tree. Each mission defines its own start, available units, available buildings, failure conditions, and proof target.
+
+### Authored Starts
+
+Purpose: keep mission design tight while the game is pre-demo.
+
+Direction:
+
+- No player-selected loadouts for now.
+- Mission data owns starting units, starting buildings, starting resources, available trainable units, and available build commands.
+- Some missions can start with a partially built base.
+- Some missions can start with allotted or irreplaceable troops.
+- Some missions can have no base at all if the point is to keep a force moving, extract, or survive a route.
+
+Fit:
+
+- Strongly recommended for the first demo.
+- Prevents a loadout UI, balance matrix, and persistent progression layer from distracting from mission proof.
+
+### Physical Unlocks
+
+Purpose: make progression happen through RTS objects on the map instead of abstract menu research.
+
+Direction:
+
+- Armory Annex unlocks Guardian/explosive tech where the mission allows it.
+- Vehicle Bay unlocks Rover/heavy-armor capacity where the mission allows it.
+- Add-ons should be physical, powered, attackable, and adjacent to Barracks.
+- Unlocks should be readable through mission setup, construction, restoration, or protection.
+
+Fit:
+
+- Strong fit for Stratezone's power-and-infrastructure identity.
+- Keeps progression tied to map pressure.
+
+### Demo Unlock Sequence
+
+Working direction:
+
+1. Level 1: train Grunt, Cadet, and Rifleman only; Guardian, Rover, and Commander are authored starting/scenario units.
+2. Level 2: likely introduce Armory Annex and Guardian production inside the resource-race/chokepoint mission if that does not overload the lesson.
+3. Level 3: preferred working slot for Vehicle Bay and Rover production.
+4. Level 4: fallback Vehicle Bay slot if Level 3 needs to become recovery, no-base movement, or equipment takeover instead.
+5. Level 5: support/siege payoff such as Artillery Battery, powered Grunt-hacked defense equipment, extraction, or siege breaker.
+
+Guardrails:
+
+- no permanent campaign tech tree in the first demo
+- no player loadout screen
+- no command-link restoration as the default unlock explanation
+- no Vehicle Bay in Level 1
+- no broad tank roster just because Vehicle Bay enters the demo
+
 ## Next Content Planning Topic
 
-The next planning section should be progression and unlock pacing: what the player starts with, what each demo mission unlocks, what stays hidden, and how mission rewards avoid becoming a broad campaign-tech system too early.
+The next planning section should be mission start and failure-condition patterns: when to use partial bases, no-base moving-force scenarios, irreplaceable troops, commander failure, transport/extraction failure, timers, and base destruction without making every mission feel like an escort mission.

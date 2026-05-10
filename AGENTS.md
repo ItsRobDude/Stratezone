@@ -40,6 +40,9 @@ Current locked vision choices:
 - Level 1 enemy pressure should be slow and readable: small groups of 1-3 attackers, some defenders left at base, and no omniscient HUD warnings about hidden enemy plans.
 - Enemy rival-officer behavior should stay internal and mission-local: it may remember events and adjust actions, but it must not create player-facing adaptation text or alerts.
 - Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Grunt, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Grunt, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
+- Mission starts are authored, with no player-selected loadouts for now. Later missions may start with partial bases, allotted or irreplaceable troops, or no base at all.
+- Armory Annex / Guardian production is the likely Level 2 unlock if the resource-race mission can carry it. Vehicle Bay / Rover production should enter the first five-level demo, likely Mission 3 or Mission 4, and never Level 1.
+- Do not use command-link restoration as the default explanation for unit or building unlocks.
 - Repair should work in First Landing and cost materials based on missing health percentage.
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.

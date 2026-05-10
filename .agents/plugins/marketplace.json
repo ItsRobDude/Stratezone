@@ -1,0 +1,20 @@
+{
+  "name": "stratezone-local",
+  "interface": {
+    "displayName": "Stratezone Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "stratezone-mission-steward",
+      "source": {
+        "source": "local",
+        "path": "./plugins/stratezone-mission-steward"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

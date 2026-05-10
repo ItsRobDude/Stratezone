@@ -30,14 +30,14 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 
 ## Core Fantasy
 
-You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable grunts, barracks-controlled training rules, powered Barracks add-ons, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Same-tech human enemy forces, resource pressure, terrain chokepoints, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
+You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable grunts, barracks-controlled training rules, Barracks upgrades, powered production add-ons, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Same-tech human enemy forces, resource pressure, terrain chokepoints, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
 
 ## Primary Player Verbs
 
 - Build colony structures.
 - Extend power and build radius.
 - Build refineries/extractors on limited resource wells that can run out.
-- Expand production with powered Barracks add-ons.
+- Expand production with Barracks upgrades and powered production add-ons.
 - Protect expensive grunts who flee from combat, the on-map commander, and critical infrastructure.
 - Command individual units, vehicles, artillery, commanders, and units that perform better in groups.
 - Upgrade Defense Towers in place into armed towers when the wall line needs teeth.
@@ -58,12 +58,12 @@ The first playable target is a small 5-10 minute fresh-scenario mission, interna
 First prototype roster:
 
 - **Buildings:** Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, Defense Tower.
-- **Barracks add-ons:** Armory Annex unlocks Guardian/explosive tech; Vehicle Bay unlocks Rover/heavy-armor capacity.
+- **Barracks upgrades/add-ons:** Guardian production is unlocked by upgrading the Barracks itself; Vehicle Bay is the powered physical add-on for Rover/heavy-armor capacity.
 - **Defensive variants:** Gun Tower and Rocket Tower are preferred in-place upgrades from Defense Towers and keep wall-anchor behavior while adding weaponry.
 - **Support and siege:** Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records but are later-mission systems unless First Landing playtests prove a hard need.
 - **Units:** Grunt, Cadet, Rifleman, Guardian anti-armor infantry, Rover, Commander.
 - **Current Level 1 training:** Grunt, Cadet, and Rifleman are trainable by the player and available to the first enemy AI. Guardian, Rover, and Commander can be authored into the scenario, but the player cannot train more of them in Level 1.
-- **Roadmap shape:** Level 2 should prove a resource race with terrain chokepoints, Defense Tower walls, and likely first Armory/Guardian production; Vehicle Bay/Rover production should enter the five-level demo, likely Mission 3 or Mission 4.
+- **Roadmap shape:** Level 2 should prove a player-built resource race with terrain chokepoints, Defense Tower walls, and likely first Barracks Guardian upgrade; Vehicle Bay/Rover production should enter the five-level demo, likely Mission 3 or Mission 4.
 - **Mission starts:** first-demo starts are authored, with no player-selected loadouts for now. Later missions may begin with a partial base, allotted or irreplaceable troops, or no base at all.
 - **Public build target:** the first public build should be a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
 

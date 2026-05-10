@@ -64,7 +64,7 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `building_defense_tower`
 - `building_gun_tower`
 - `building_rocket_tower`
-- `building_armory_annex`
+- `building_armory_annex` (legacy placeholder; not the planned first-demo Guardian unlock path)
 - `building_vehicle_bay`
 - `building_med_hall`
 - `building_logistics_repair_pad`
@@ -197,19 +197,21 @@ Evidence:
 - one dry-run plan for adding a second mission without copying First Landing scene logic
 - validation command output
 
-## Milestone 4 Checklist: Level 2 - Resource Race, Terrain Chokes, and First Armory
+## Milestone 4 Checklist: Level 2 - Resource Race, Terrain Chokes, and First Guardian Upgrade
 
 Acceptance checks:
 
 - Level 2 uses the same-tech human enemy family with red or alternate-color presentation
+- Level 2 has the player build and place the base instead of starting with a finished base
 - scarce wells force a visible resource race
 - cliffs, water, or other impassable terrain create readable chokepoints without a complex terrain-simulation expansion
 - buildable clearings give the player practical base spaces without a visible grid
 - resource basins make important wells read as tactical map pockets
 - Defense Tower wall placement matters because of the map shape
 - enemy power or extractor infrastructure can be scouted and attacked
-- Armory Annex and Guardian production are included if the Level 2 route can carry the first unlock without losing the resource-race proof
+- Barracks Guardian upgrade and Guardian production are included if the Level 2 route can carry the first unlock without losing the resource-race proof
 - Guardian remains anti-armor / anti-defense specialist if introduced here
+- Armory Annex is not used as the Guardian unlock path
 - player-facing warnings report only known events, not hidden attack planning
 - early raid triggers coalesce or queue behind cooldowns instead of stacking when Barracks and first Extractor appear back to back
 - pressure creates a choice between repair, defense, expansion, or attack
@@ -221,7 +223,7 @@ Evidence:
 
 - one expansion/resource-race route note
 - one defensive wall/chokepoint route note
-- one Armory/Guardian route note if the unlock enters Level 2
+- one Barracks Guardian upgrade route note if the unlock enters Level 2
 - smoke or debug evidence for any new terrain/passability/buildability rule
 - notes for any support/siege system deliberately kept out
 
@@ -232,7 +234,7 @@ Acceptance checks:
 - Vehicle Bay is a physical powered Barracks add-on in the mission, not only a menu upgrade
 - Rover production or Rover access is earned through mission setup
 - Rover role is useful without replacing infantry or turning the mission into a vehicle-only test
-- Armory/Guardian placement is resolved: either proven in Level 2 or deliberately carried into this mission
+- Barracks Guardian upgrade placement is resolved: either proven in Level 2 or deliberately carried into this mission
 - power disruption can affect the unlock path
 - troop train times preserve fast classic-RTS pacing
 - enemy still uses the same human tech family unless a later art/design pass deliberately changes it
@@ -252,10 +254,12 @@ Acceptance checks:
 - each demo mission has one primary proof target
 - the first demo remains a campaign-like arc of authored simulation scenarios, not a story-heavy cutscene plan
 - mission starts are authored; no player loadout screen is required for the first demo
-- at least one later mission start pattern is named if used: partial base, no-base moving force, allotted/irreplaceable troops, or normal base start
+- at least one later mission start pattern is named if used: player-built base, partial base, no-base moving force, allotted/irreplaceable troops, or normal base start
 - Vehicle Bay/Rover production is assigned to Mission 3 or Mission 4
+- Mission 5 is no-base in the current demo outline
 - the demo uses no more than one or two support/siege systems unless the roadmap is deliberately reopened
 - each mission has a clear failure-condition mix and restart expectation, with no timer-expiry mission failure unless the roadmap is explicitly reopened
+- briefing, objective, warning, map callout, failure, and success copy is planned as localization-keyed player-facing text
 - cut systems are named instead of left as vague future work
 
 Evidence:
@@ -264,6 +268,8 @@ Evidence:
 - per-mission proof target list
 - per-mission start-pattern list
 - per-mission failure-condition list
+- per-mission presentation/localization string list
+- implementation follow-up for replacing the current Armory Annex placeholder with the Barracks Guardian upgrade path
 - explicit cut/defer list for systems outside the first public demo
 
 ## Public Build Checklist

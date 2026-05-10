@@ -65,7 +65,7 @@ The architecture is shaped around these realities:
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud, and units/buildings in explored areas remain visible in real time
 - building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
-- Armory Annex and Vehicle Bay are planned powered Barracks add-ons built adjacent to the Barracks, not abstract upgrade buttons
+- Guardian production is planned as a Barracks upgrade; Vehicle Bay is planned as a powered physical Barracks add-on built adjacent to the Barracks
 - Gun Tower and Rocket Tower should be modeled as in-place Defense Tower upgrades that keep wall-anchor behavior while adding direct attack stats and higher cost
 - first prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
@@ -252,7 +252,7 @@ Early requirements:
 
 - freeform-feeling placement with hidden footprint/buffer constraints
 - passability checks
-- adjacency checks for Barracks add-ons
+- adjacency checks for physical Barracks add-ons such as Vehicle Bay
 - resource-well positions
 - base start area
 - enemy base area
@@ -357,7 +357,7 @@ Early requirements:
 - destroy all enemies on the map
 - defend an on-map commander unit
 - support a Level 1 Medium Tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
-- support mission data choosing whether Barracks add-ons are player-built, prebuilt, or locked for the mission
+- support mission data choosing whether Barracks upgrades/add-ons are player-built, prebuilt, upgraded in place, or locked for the mission
 - fail if mission-specific critical conditions are broken, such as Colony Hub destroyed, Commander killed, transport lost, convoy escaped, or required Grunt/equipment lost; timer-expiry mission failure is not planned for the first demo unless the roadmap is explicitly reopened
 
 ### Event Director

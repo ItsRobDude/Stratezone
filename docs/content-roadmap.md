@@ -65,19 +65,21 @@ Frame:
 
 Gameplay shape:
 
+- the player still builds and places the base; the mission does not start with a finished base
 - limited resource wells create an expansion race
 - cliffs, water, ridges, or other terrain blockers create readable chokepoints
 - Defense Tower walls matter because of map shape
 - enemy power and extractor routes are useful strike targets
 - player chooses between expanding, walling, repairing, or attacking
-- Armory Annex and Guardian production can enter here as the first powered add-on unlock
+- Guardian production can enter here through a Barracks upgrade, not an Armory Annex
 - enemy armor, hardened defense, or tower anchors should justify Guardian use if the unlock enters Level 2
 
 Content boundary:
 
 - same-tech enemy only, reskinned red or alternate color
+- no Armory Annex
 - no Vehicle Bay requirement
-- no broad tech layer beyond Armory/Guardian if Level 2 takes that unlock
+- no broad tech layer beyond the Barracks Guardian upgrade if Level 2 takes that unlock
 - Med Hall, Logistics / Repair Pad, and Artillery stay out unless the mission cannot work without one
 
 ### Mission 3: Vehicle Bay and Rover Unlock Candidate
@@ -216,7 +218,7 @@ Content boundary:
 Working first-demo sequence:
 
 1. First Landing
-2. Resource Race, Chokepoints, and likely first Guardian production
+2. Resource Race, Chokepoints, and likely first Barracks Guardian upgrade
 3. Vehicle Bay and Rover Unlock candidate
 4. Broken Outpost Recovery, Vehicle Bay fallback, or Commander Field Operation
 5. Siege Breaker, Transport/Extraction, or carefully authored Two-Front Defense
@@ -701,7 +703,7 @@ Fit:
 Working doctrine sequence:
 
 1. Level 1: tame same-tech scout/regroup/private-military pressure.
-2. Level 2: resource-race enemy that contests wells, protects extractors, and may use armor or hardened-defense pressure if Armory/Guardian production enters here.
+2. Level 2: resource-race enemy that contests wells, protects extractors, and may use armor or hardened-defense pressure if the Barracks Guardian upgrade enters here.
 3. Level 3 or 4: same-tech enemy creates a reason for Vehicle Bay / Rover production without making infantry obsolete.
 4. Later: pylon striker, tower turtle, siege base, transport hunter, or scout/harass profiles.
 
@@ -1003,9 +1005,10 @@ Purpose: make progression happen through RTS objects on the map instead of abstr
 
 Direction:
 
-- Armory Annex unlocks Guardian/explosive tech where the mission allows it.
+- Barracks upgrade unlocks Guardian/explosive tech where the mission allows it; no Armory Annex is planned for the first demo path.
 - Vehicle Bay unlocks Rover/heavy-armor capacity where the mission allows it.
-- Add-ons should be physical, powered, attackable, and adjacent to Barracks.
+- Vehicle Bay should be physical, powered, attackable, and adjacent to Barracks.
+- Guardian unlock should remain tied to a powered Barracks rather than an abstract campaign research tree.
 - Unlocks should be readable through mission setup, construction, restoration, or protection.
 
 Fit:
@@ -1018,7 +1021,7 @@ Fit:
 Working direction:
 
 1. Level 1: train Grunt, Cadet, and Rifleman only; Guardian, Rover, and Commander are authored starting/scenario units.
-2. Level 2: likely introduce Armory Annex and Guardian production inside the resource-race/chokepoint mission if that does not overload the lesson.
+2. Level 2: likely introduce Barracks Guardian upgrade inside the player-built resource-race/chokepoint mission if that does not overload the lesson.
 3. Level 3: preferred working slot for Vehicle Bay and Rover production.
 4. Level 4: fallback Vehicle Bay slot if Level 3 needs to become recovery, no-base movement, or equipment takeover instead.
 5. Level 5: support/siege payoff such as Artillery Battery, powered Grunt-hacked defense equipment, extraction, or siege breaker.
@@ -1047,8 +1050,23 @@ Direction:
 
 Fit:
 
-- Default pattern for First Landing and Resource Race.
+- Default pattern for First Landing and some later build-and-hold missions.
 - Best when the mission's main verb is build, scout, expand, defend, or attack.
+
+### Player-Built Base Start
+
+Purpose: preserve base-building agency without starting from a finished outpost.
+
+Direction:
+
+- Start with the pieces, resources, or deployment state needed for the player to place and build the opening base.
+- Use this when the mission is about expansion choices, buildable clearings, terrain chokes, and resource-race pressure.
+- The mission should still give enough breathing room for the player to establish first power, production, and resource extraction.
+
+Fit:
+
+- Current preferred pattern for Mission 2.
+- Different from a finished full-base start because the player chooses the initial base shape.
 
 ### Partial Base Start
 
@@ -1159,10 +1177,10 @@ Fit:
 Working first-demo pattern:
 
 1. Level 1: full base start; Commander and Hub failure.
-2. Level 2: full base start; Commander and Hub failure; resource race plus likely Armory/Guardian.
+2. Level 2: player-built base start; Commander and Hub failure; resource race plus likely Barracks Guardian upgrade.
 3. Level 3: full or partial base start; Vehicle Bay/Rover unlock candidate.
 4. Level 4: partial base, equipment takeover, recovery, or Vehicle Bay fallback.
-5. Level 5: siege, extraction, snow extraction, or no-base moving force, with one clear alternate failure rule.
+5. Level 5: no-base siege/extraction or snow extraction, with one clear alternate failure rule.
 
 Guardrails:
 
@@ -1261,7 +1279,7 @@ Purpose: introduce armor as a readable lesson, not a surprise punishment.
 Direction:
 
 - Armor or hardened defense should appear only after the player has, can unlock, or has been taught the intended answer.
-- Level 2 can use hardened defenses, tower anchors, or one light armor beat if Armory/Guardian enters there.
+- Level 2 can use hardened defenses, tower anchors, or one light armor beat if Barracks Guardian upgrade enters there.
 - Level 3 can use vehicle pressure if Vehicle Bay/Rover is being taught.
 - Telegraph armor through mission setup, visible enemy tech, wrecks, or scouted structures.
 
@@ -1302,6 +1320,234 @@ Guardrails:
 - no surprise armor before the counter is available or readable
 - no constant wave-spawner feel
 
+## Player-Facing Mission Presentation
+
+Mission presentation should feel like field-command RTS communication: short briefings, clear objective verbs, terse known-event warnings, and sparse map callouts. It should add purpose without making the player wait through a cutscene campaign.
+
+### Briefings
+
+Purpose: give each mission a reason to exist before the player starts issuing orders.
+
+Direction:
+
+- Use short pre-mission briefings, not long cutscenes.
+- Recommended structure: mission title, one situation paragraph, 3-5 objective bullets, starting assets/restrictions, and one tactical note if needed.
+- Keep story practical: landed off-course, supplies low, field module online, damaged outpost, extraction, siege, snow route.
+- Avoid lore encyclopedia entries, long named-cast exchanges, or mystery-tech hooks.
+
+Fit:
+
+- Strong first-demo fit.
+- Creates campaign feel without needing persistent progression UI.
+
+### Objective Text
+
+Purpose: tell the player what to do in mechanical terms.
+
+Direction:
+
+- Objectives should be current, direct, and actionable.
+- Good patterns: "Protect the Commander.", "Build an Extractor on the central well.", "Destroy hostile structures.", "Escort a Grunt to the defense console.", "Power the relay, then hack the turret controls."
+- Keep flavor in the briefing; keep objectives as gameplay instructions.
+- If a unit, structure, transport, Grunt, or equipment object can fail the mission, the objective text must say so before it can fail the mission.
+
+Fit:
+
+- Required for partial-base, equipment-takeover, and extraction missions.
+
+### Warning Language
+
+Purpose: report facts the player should know without revealing hidden enemy plans.
+
+Direction:
+
+- Use classic RTS command warnings: "Enemy spotted.", "Unit under attack.", "Extractor under attack.", "Power offline.", "Construction complete.", "Training complete.", "Grunt lost.", "Commander under attack."
+- Warnings report known events only.
+- Do not warn that the enemy is preparing a hidden raid, targeting a hidden Pylon, rebuilding under fog, or adapting strategy.
+- If radar or sensor equipment later earns extra information, the warning should say the sensor detected it, not pretend command knows hidden intent by default.
+
+Fit:
+
+- Directly supports the fog-of-war trust rule.
+
+### Map Callouts
+
+Purpose: orient the player without replacing scouting and terrain reading.
+
+Direction:
+
+- Use sparse labels for important authored places: Central Well, North Ridge, Ruined Relay, Old Bridge, Enemy Power Line, Extraction Zone, Defense Console.
+- Labels should clarify objectives, terrain, or route choices.
+- Avoid filling the map with labels that solve scouting for the player.
+
+Fit:
+
+- Useful from Level 2 onward when terrain grammar becomes more important.
+
+### Tone
+
+Purpose: keep the voice grounded in Stratezone's military-industrial field-ops identity.
+
+Direction:
+
+- Use restrained operational copy: "Power route restored.", "Central well online.", "Enemy contact near the ridge.", "Defense equipment ready for Grunt access."
+- Avoid heroic space-opera language, destiny language, ancient-tech mystery language, and faction taunts.
+- Story should grow from mission facts and consequences, not from exposition dumps.
+
+Fit:
+
+- Keeps the project distinct without overbuilding lore too early.
+
+### Failure Messaging
+
+Purpose: teach the player why the mission ended and what the next attempt should protect.
+
+Direction:
+
+- Failure messages should name the cause: "Mission failed: Commander killed.", "Mission failed: Colony Hub destroyed.", "Mission failed: Transport lost.", "Mission failed: Required Grunt lost before the equipment was secured."
+- Optional retry hints can be short and tactical: "Keep the Commander behind your tower line.", "Protect Pylons feeding your defenses.", "Escort the Grunt before starting the hack."
+- Do not hide failure causes behind vague dramatic text.
+
+Fit:
+
+- Important for quick RTS restart.
+
+### Success Messaging
+
+Purpose: give campaign continuity without needing cutscenes or a persistent tech screen.
+
+Direction:
+
+- Success text should be short after-action copy with one consequence.
+- Good patterns: "Landing zone secured. The expedition can expand toward the newly detected wells.", "Central wells secured. Guardian production is cleared for field use.", "Vehicle Bay online. Rover deployment is available for forward missions."
+- Keep success text truthful to the next mission's actual authored unlocks.
+
+Fit:
+
+- Good bridge into the five-mission demo outline.
+
+### Localization Requirement
+
+Purpose: keep player-facing mission copy out of simulation logic and prevent English prototype text from becoming permanent wiring.
+
+Direction:
+
+- Briefing titles, briefing body, objective text, warning text, map callouts, failure messages, success messages, retry hints, and tactical notes must be localizable.
+- Content records should use stable IDs and localization keys; English strings are fallback/prototype text only.
+- New mission-presentation surfaces should not ship with hardcoded English in simulation code.
+- Validation should require English localization keys once a presentation surface is wired.
+- Closeouts for any mission-presentation work must mention new player-facing strings and whether they are localized.
+
+Fit:
+
+- Hard guardrail, not a polish item.
+
+## Presentation Priority
+
+Working first-demo presentation pattern:
+
+1. Level 1: basic briefing, objective tracker, command warnings, clear failure/success messages.
+2. Level 2: resource-race briefing, callouts for central wells/ridges/chokes/enemy power lines, Barracks Guardian upgrade copy if used.
+3. Level 3: Vehicle Bay/Rover briefing and objective copy that presents it as a field module, not a research tree.
+4. Level 4: step objectives for power first, Grunt escort, hack/control, and equipment survival.
+5. Level 5: strong extraction/siege callouts, short final-phase warning copy, and precise failure/success messaging.
+
+Guardrails:
+
+- briefing gives purpose
+- objectives give verbs
+- warnings report facts
+- callouts orient, but do not replace scouting
+- success/failure teaches
+- all player-facing presentation copy is localizable
+
+## Five-Mission Demo Outline
+
+This is the working five-mission target, not a promise that every name or beat is final. The purpose is to keep implementation milestones grounded in playable mission shapes.
+
+### Demo Sequence
+
+| Mission | Working Title | Start State | Primary Proof | Unlock/System |
+| --- | --- | --- | --- | --- |
+| 1 | First Landing | deployed starter base | core RTS loop | none |
+| 2 | Wells at the Ridge | player builds/places base | resource race, terrain chokes, tower-wall choices | Barracks Guardian upgrade |
+| 3 | Mobile Response | full or light partial base | Vehicle Bay and Rover usefulness | Vehicle Bay / Rover |
+| 4 | Broken Outpost | partial damaged base | repair, power restore, Grunt hack/control | powered hackable defense equipment |
+| 5 | Frozen Breakout | no base | no-base siege/extraction finale | Artillery Battery or authored siege equipment |
+
+### Mission 1: First Landing
+
+Player feel: the expedition has landed and must stabilize fast.
+
+Direction:
+
+- Start with deployed Colony Hub, Commander, one Grunt, one Guardian, one Rover, and a small base area.
+- Train Grunt, Cadet, and Rifleman only.
+- Prove power, Pylons, Barracks, Extractor/Refinery, basic repair, basic combat, scouting, enemy weak-point attack, Commander protection, and destroy-all-enemies win.
+- Use meadow/field terrain with a central well, enemy Pylon weak point, and simple choke.
+- Keep enemy pressure slow and readable.
+- No Vehicle Bay, Med Hall, Logistics / Repair Pad, Artillery, or Armory Annex.
+
+### Mission 2: Wells at the Ridge
+
+Player feel: the enemy wants the same wells, and the terrain decides the fight.
+
+Direction:
+
+- The player still builds and places the base; do not start with a finished base.
+- Prove scarce wells, cliffs/water/ridges, buildable clearings, resource basins, Defense Tower wall placement, and enemy power/extractor routes.
+- Guardian production is unlocked through a Barracks upgrade, not an Armory Annex.
+- Use enemy armor, hardened defense, or tower anchors only if needed to justify Guardian use.
+- Enemy contests wells, rebuilds only with resources, and targets known infrastructure without hidden-plan warnings.
+- No Vehicle Bay, no Med Hall, no Logistics / Repair Pad, no Artillery.
+
+### Mission 3: Mobile Response
+
+Player feel: the map is wider now, and mobility matters.
+
+Direction:
+
+- Start with a full or light partial base.
+- Prove Vehicle Bay and Rover production as useful RTS infrastructure.
+- Use longer lanes, bridge/ford routes, exposed infrastructure, scouting distance, or response distance.
+- Enemy pressure should explain mobility without invalidating infantry.
+- Vehicle Bay should be the powered physical add-on; do not add a broad tank roster.
+- No Logistics / Repair Pad unless vehicle attrition playtests prove it is needed.
+
+### Mission 4: Broken Outpost
+
+Player feel: the position is damaged, but the player can turn it back on.
+
+Direction:
+
+- Start with a partial damaged base, broken power route, damaged towers, and one or two important Grunts.
+- Prove Grunt building repair, power restoration, escorted Grunt work, and powered hack/control of defense equipment.
+- Use a ruined relay, half-ruined unpowered turret, defense console, bridge route, or similar authored equipment.
+- Enemy pressure should hit the Grunt route or restored equipment only after the objective is readable.
+- Failure can involve required Grunt/equipment loss if clearly messaged.
+- No timer failure and no long escort slog.
+
+### Mission 5: Frozen Breakout
+
+Player feel: there is no base, the route is blocked, and the force must break through or extract.
+
+Direction:
+
+- Mission 5 is no-base.
+- Use a fixed/controlled force, authored siege equipment, or an Artillery Battery scenario object rather than a full production base.
+- Snow is visual/map flavor first: lanes, ridges, blocked approaches, fortified enemy position, and extraction/landing zone.
+- Do not add temperature survival.
+- Failure should be one clear alternate rule such as transport/extraction target lost, squad survival broken, or critical equipment lost.
+- No full-mission timer.
+
+### Demo Outline Guardrails
+
+- Mission 2 is not a prebuilt-base start.
+- Guardian unlock comes from Barracks upgrade, not Armory Annex.
+- Mission 5 is no-base.
+- Support/siege count remains tight: powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5 are the current preferred pair.
+- Med Hall, Logistics / Repair Pad, Neutral Repair Platform, player loadouts, timer-loss missions, broad campaign tech tree, and broad tank roster stay deferred unless playtests reopen them.
+
 ## Next Content Planning Topic
 
-The next planning section should be player-facing mission presentation: briefings, objective text, warning language, map callouts, and how much story flavor to use without turning the demo into a cutscene campaign.
+The final planning bucket should be the cut/defer list and implementation order: name what is explicitly outside the first demo, identify the runtime/data refactors caused by the current outline, and turn the roadmap into practical milestone work.

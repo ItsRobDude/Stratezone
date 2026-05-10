@@ -29,7 +29,7 @@ Current locked vision choices:
 - Cadets should be the fastest, cheapest, weakest, easiest-to-kill combat troop. Riflemen should train only slightly slower and be a small step up. Guardians should be slower, more expensive specialist anti-armor / anti-defense infantry.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
-- Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks, starting with Armory Annex and Vehicle Bay.
+- Guardian production should be unlocked by upgrading the Barracks itself, not by building an Armory Annex. Vehicle Bay remains a powered physical Barracks add-on for Rover/heavy-armor capacity.
 - Vehicle Bay is silently locked and hidden in Level 1.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
@@ -42,10 +42,11 @@ Current locked vision choices:
 - Enemy rival-officer behavior should stay internal and mission-local: it may remember events and adjust actions, but it must not create player-facing adaptation text or alerts.
 - Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Grunt, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Grunt, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
 - Mission starts are authored, with no player-selected loadouts for now. Later missions may start with partial bases, allotted or irreplaceable troops, or no base at all.
-- Armory Annex / Guardian production is the likely Level 2 unlock if the resource-race mission can carry it. Vehicle Bay / Rover production should enter the first five-level demo, likely Mission 3 or Mission 4, and never Level 1.
+- Barracks Guardian upgrade is the likely Level 2 unlock if the resource-race mission can carry it. Mission 2 should still have the player build/place their base rather than starting with a finished base. Vehicle Bay / Rover production should enter the first five-level demo, likely Mission 3 or Mission 4, and never Level 1.
 - Do not use command-link restoration as the default explanation for unit or building unlocks.
 - Repair should work in First Landing and cost materials based on missing health percentage.
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
+- Mission presentation should use short field-command briefings, direct objective verbs, sparse map callouts, truthful success/failure messages, and localizable player-facing strings.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
 - Ancient-tech mystery is out of scope for now.
@@ -93,7 +94,7 @@ If this direction changes, update this file and the README in the same pass.
 - Make power/build radius central to base expansion.
 - Underpowered buildings should shut off, not merely lose bonuses.
 - Power Plants generate local power; Pylons extend/link it over long distances.
-- Barracks add-ons should require power so expanding production creates new power-network vulnerabilities.
+- Vehicle Bay and future physical production add-ons should require power so expanding production creates new power-network vulnerabilities. Barracks upgrades should require the Barracks to stay powered.
 - Treat Defense Tower wall links as path-blocking gameplay, not cosmetic VFX.
 - Prefer in-place armed tower upgrades from existing Defense Towers so players can establish walls quickly, then invest in weapons without losing the wall role.
 - Make grunts valuable as expensive recruitable units, not life-sim colonists.

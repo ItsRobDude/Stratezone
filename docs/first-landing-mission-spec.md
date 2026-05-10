@@ -96,7 +96,7 @@ Unit production rule for Level 1:
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
 - A powered Barracks accepts a small serial training queue so repeated Rifleman/Cadet clicks are not lost; one unit trains at a time per Barracks.
-- Barracks add-ons are the preferred later unlock model: Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
+- Guardian production is planned as a later Barracks upgrade, not an Armory Annex. Vehicle Bay remains the preferred later physical add-on for Rover/heavy-armor capacity.
 - Current Level 1 mission data exposes Grunt, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
 - Cadets should recruit in only a few seconds. They are the fastest to build, cheapest combat troop, weakest troop, and easiest troop to kill.
 - Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel.
@@ -115,7 +115,7 @@ Level 1 should use:
 - Pylon
 - Extractor/Refinery
 - Defense Tower
-- Armory Annex and Vehicle Bay records only as later add-on support; they are not player-buildable in the current Level 1 slice
+- Armory Annex is a legacy placeholder record and is not planned as the Guardian unlock path. Vehicle Bay remains later add-on support and is not player-buildable in the current Level 1 slice
 - Vehicle Bay is silently locked and hidden from the Level 1 player, not shown as a disabled tease
 - Gun Tower, if the first armed-tower pass is ready
 - Rocket Tower, only if explosive friendly-fire behavior is ready
@@ -145,7 +145,7 @@ First-pass unit intent:
 - Riflemen die very quickly and work best with support, numbers, or harassment timing.
 - Grouped infantry should spread into a small formation on move and attack orders; the greybox should not teach players to stack ten Riflemen on one impact point.
 - Cadets are cheaper and weaker than Riflemen, giving the player and enemy a disposable early infantry option.
-- Guardians are beefier than Riflemen and deal slightly less raw damage, but their energy fire is the first infantry anti-armor proof role: worse than Riflemen into basic infantry, meaningfully better into Medium and Heavy Tanks. If Barracks add-ons are active, they require a powered Armory Annex.
+- Guardians are beefier than Riflemen and deal slightly less raw damage, but their energy fire is the first infantry anti-armor proof role: worse than Riflemen into basic infantry, meaningfully better into Medium and Heavy Tanks. In later missions, Guardian production should come from a powered/upgraded Barracks rather than an Armory Annex.
 - Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
 - Medium Tanks are the Level 1 reveal vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old reveal tank. A revealed Medium Tank should also be a better anti-armor answer than Rifleman fire.
 - Heavy Tanks are the promoted version of the old tank record and should stay later/heavier than the Level 1 reveal.
@@ -247,7 +247,7 @@ These values are tunable placeholders for scaffolding and early tests:
 - player-facing infantry recruitment should feel Dominion / classic RTS fast: Cadet fastest, Rifleman only slightly slower, Guardian slower because it is specialized
 - grunt cost: expensive relative to Rifleman
 - tower cost: high enough to make wall placement a choice
-- Barracks add-on cost: meaningful enough to create a power/placement decision in later missions; Level 1 hides Vehicle Bay and should not require add-on learning
+- Barracks Guardian upgrade cost: meaningful enough to create a power/production decision in later missions; Level 1 hides Vehicle Bay and should not require add-on learning
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance so Riflemen alone are slow base-crackers
 - Level 1 enemy economy: slower than normal
 

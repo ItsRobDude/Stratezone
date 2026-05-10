@@ -62,7 +62,7 @@ Good play should often mean:
 
 - cutting power by destroying or disabling a power plant or pylon
 - destroying an extractor
-- unpowering Barracks add-ons to shut off advanced training
+- unpowering Barracks upgrades/add-ons to shut off advanced training
 - destroying a defense tower to open an energy wall
 - disabling a radar station
 - capturing a neutral repair platform
@@ -191,7 +191,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - First prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
-- Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. The first planned add-ons are Armory Annex for Guardian/explosive tech and Vehicle Bay for Rover/heavy-armor capacity.
+- Guardian production should be unlocked by upgrading the Barracks itself. Vehicle Bay remains the first planned powered physical Barracks add-on for Rover/heavy-armor capacity.
 - Power Plant generates power in a small radius, and underpowered buildings shut off.
 - Pylons link power over long distances.
 - The first enemy faction should rebuild and produce from limited resources, racing the player for new wells, but slower than usual in Level 1.
@@ -205,7 +205,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, required Grunt/equipment lost, or combined conditions. Timer-expiry mission failures are not planned for the first demo.
 - Quick RTS restart is the expected first-demo failure model. Persistent campaign consequences are later scope.
 - Mission starts are authored, with no player-selected loadouts for now. Some missions can begin with partial bases, allotted or irreplaceable troops, or no base at all.
-- Level 2 should lean toward a resource race with strategic base-building terrain such as cliffs, water, chokepoints, useful Defense Tower wall positions, and likely first Armory Annex / Guardian production if the mission can carry it.
+- Level 2 should lean toward a player-built resource race with strategic base-building terrain such as cliffs, water, chokepoints, useful Defense Tower wall positions, and likely first Barracks Guardian upgrade if the mission can carry it.
 - Vehicle Bay / Rover production should enter the first five-level demo, likely in Mission 3 or Mission 4.
 - Med Hall, Logistics / Repair Pad, and Artillery Battery may enter the first demo one or two at most, and only when a specific mission needs that role.
 

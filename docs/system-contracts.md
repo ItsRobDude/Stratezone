@@ -158,11 +158,12 @@ Acceptance checks:
 - a grunt can build and repair when commanded
 - a grunt can build a Barracks add-on or tower upgrade when commanded and requirements are met
 
-## Barracks Add-on System
+## Barracks Upgrade and Add-on System
 
 Owns:
 
-- Barracks adjacency requirements
+- Barracks upgrade state
+- Barracks adjacency requirements for physical add-ons
 - powered add-on state
 - training unlock effects
 - troop capacity effects
@@ -170,25 +171,26 @@ Owns:
 
 Prototype behavior:
 
-- Barracks upgrades are physical modules built by Grunts adjacent to the Barracks
-- Armory Annex unlocks Guardian training and explosive-weapon tech where the mission allows it
+- Guardian training is unlocked by upgrading the Barracks itself where the mission allows it; it does not require an Armory Annex
 - Vehicle Bay unlocks Rover training and expands heavy-armor capacity where the mission allows it
 - Level 1 silently hides and locks Vehicle Bay; it should not appear as a disabled player command in the first mission
-- add-ons require power; unpowered add-ons stop providing unlocks or capacity until power returns
-- expanding the Barracks should create a power-network decision rather than a menu-only upgrade decision
+- physical add-ons require power; unpowered add-ons stop providing unlocks or capacity until power returns
+- the Guardian unlock requires the Barracks to stay powered
+- expanding the Barracks should create a power and production decision rather than a broad abstract research tree
 
 Tunable placeholders:
 
-- add-on footprint: small enough to fit near a starter Barracks but large enough to create placement pressure
-- add-on cost: meaningful but not mission-stalling
+- Guardian Barracks upgrade cost: meaningful but not mission-stalling
+- Vehicle Bay footprint: small enough to fit near a starter Barracks but large enough to create placement pressure
+- Vehicle Bay cost: meaningful but not mission-stalling
 - heavy-armor capacity delta: mission-specific
 
 Acceptance checks:
 
-- a powered Armory Annex unlocks its allowed advanced training
+- a powered upgraded Barracks unlocks Guardian training where the mission allows it
 - a powered Vehicle Bay unlocks its allowed vehicle/heavy-armor capacity effect
-- unpowering an add-on removes its effect without destroying trained units
-- destroying an add-on removes its effect and makes the Barracks visibly degraded in UI/debug output
+- unpowering the Barracks or add-on removes its effect without destroying trained units
+- destroying a required add-on removes its effect and makes the Barracks visibly degraded in UI/debug output
 
 ## Combat System
 
@@ -241,7 +243,7 @@ Mission availability contract:
 - Level 1 trains Grunt, Cadet, and Rifleman only. The player may start with a Guardian, Rover, and Commander, but cannot train more of those units in Level 1.
 - Level 1 does not expose Vehicle Bay to the player; it is silently locked and hidden.
 - Enemy AI production uses the same mission trainable-unit list and should choose between valid affordable combat units instead of hardcoding one unit type.
-- Later missions may enable Guardian or Rover production by exposing those units in mission data and providing the required powered Barracks add-ons.
+- Later missions may enable Guardian production through a Barracks upgrade and Rover production through a powered Vehicle Bay where mission data allows it.
 
 Acceptance checks:
 

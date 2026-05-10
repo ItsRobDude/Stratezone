@@ -63,7 +63,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - First prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
-- Barracks upgrades should be physical powered add-on modules built adjacent to the Barracks. Armory Annex unlocks Guardian/explosive tech. Vehicle Bay unlocks Rover/heavy-armor capacity.
+- Guardian production should be unlocked by upgrading the Barracks itself. Vehicle Bay is the powered physical Barracks add-on for Rover/heavy-armor capacity.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
 - Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
@@ -97,7 +97,7 @@ The first prototype stack is locked as Godot 4 with C#.
 
 4. Level 2 planning target
    - Build a resource-race mission with more strategic base-building terrain: cliffs, water, chokepoints, and Defense Tower wall opportunities.
-   - Use Level 2 as the likely first Armory Annex / Guardian production mission if that does not overload the resource-race proof.
+   - Use Level 2 as the likely first Barracks Guardian upgrade mission if that does not overload the resource-race proof.
    - Keep the first enemy same-tech and same-building for now, using red or alternate-color presentation.
    - Use environmental layout and resource competition before adding Med Hall, Repair Pad, or Artillery.
 
@@ -232,19 +232,20 @@ Exit criteria:
 - event triggers have grace/cooldown or coalescing rules before Level 2 relies on multiple base-building pressure triggers
 - no new major mechanic has been added just to make the roadmap look larger
 
-## Milestone 4: Level 2 - Resource Race, Terrain Chokes, and First Armory
+## Milestone 4: Level 2 - Resource Race, Terrain Chokes, and First Guardian Upgrade
 
-Goal: prove strategic base-building pressure through terrain and resource competition, with Armory Annex / Guardian production as the likely first powered unlock if the mission can carry it.
+Goal: prove player-built strategic base pressure through terrain and resource competition, with a Barracks Guardian upgrade as the likely first powered unlock if the mission can carry it.
 
 Mission shape:
 
 - same-tech human opponent using player-like structures and units with red or alternate-color presentation
+- the player builds and places the base instead of starting with a finished base
 - scarce resource wells that force a race for expansion timing
 - cliffs, water, or other impassable terrain that create readable chokepoints without requiring complex terrain simulation
 - authored buildable clearings and resource basins that make base expansion readable without a visible grid
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
-- likely first Armory Annex and Guardian production, justified by enemy armor, hardened defense, or tower-anchor pressure
+- likely first Barracks Guardian upgrade, justified by enemy armor, hardened defense, or tower-anchor pressure
 - pressure triggers do not stack immediate raids when normal base-building milestones happen close together
 - quick RTS failure/retry expectations rather than persistent campaign consequences
 - no Vehicle Bay requirement
@@ -256,7 +257,7 @@ Exit criteria:
 - the resource race is legible before it becomes punishing
 - at least one chokepoint can be shaped with Defense Tower walls
 - blocked terrain affects placement and/or movement in a way smoke checks can prove
-- Guardian production remains a specialist answer if Armory enters this mission
+- Guardian production remains a specialist answer if the Barracks upgrade enters this mission
 - infrastructure strikes matter without requiring a new faction or story system
 - the mission proves a second repeatable level-design pattern after First Landing
 
@@ -269,7 +270,7 @@ Deliverables:
 - an authored mission where the Vehicle Bay matters as a powered physical add-on
 - Rover production or Rover access earned through mission setup rather than assumed globally
 - route, scouting, transport, crush, or vehicle-pressure design that makes Rover access useful without invalidating infantry
-- confirmation that Armory/Guardian either landed cleanly in Level 2 or was deliberately moved
+- confirmation that Barracks Guardian upgrade either landed cleanly in Level 2 or was deliberately moved
 - at most one support/siege system from Med Hall, Logistics / Repair Pad, or Artillery Battery if the mission proves a hard need
 - enemy use of the same tech family unless a later art/design pass deliberately changes that
 
@@ -287,10 +288,12 @@ Goal: decide and prove the remaining first-demo mission archetypes before packag
 Deliverables:
 
 - Level 4 and Level 5 mission briefs or greybox starts
-- one additional mission archetype beyond resource race / first Armory and Vehicle Bay / Rover
+- one additional mission archetype beyond resource race / first Guardian upgrade and Vehicle Bay / Rover
 - Vehicle Bay / Rover production is assigned to Mission 3 or Mission 4
-- authored start patterns are named: full base, partial base, no-base moving force, or allotted/irreplaceable troops
+- authored start patterns are named: player-built base, full/deployed base, partial base, no-base moving force, or allotted/irreplaceable troops
+- Mission 5 is no-base in the current demo outline
 - timer-expiry failure stays out of the first demo unless the roadmap is deliberately reopened
+- player-facing mission presentation needs are named: briefing, objective text, warnings, map callouts, failure text, success text, and localization keys
 - a decision on whether the demo uses one or two support/siege systems total
 - a written cut line for systems that stay after the first public demo
 
@@ -300,6 +303,7 @@ Exit criteria:
 - each mission has one primary proof target and one clear reason to exist
 - no player loadout system is needed for the first demo
 - failure conditions are clear, mission-specific, and not hidden timers
+- new player-facing mission presentation copy is localizable
 - no mission depends on lore or cutscenes to explain its mechanical purpose
 
 ## Milestone 7: Playtest Build
@@ -450,6 +454,7 @@ These are not first-prototype commitments:
 - Exact building footprint/buffer values for constrained maps.
 - Grunt replacement cost relative to basic combat units.
 - Exact Vehicle Bay/Rover production mission slot. Current direction is that Vehicle Bay enters the first demo in Mission 3 or Mission 4, never Level 1.
+- Runtime/data path for replacing the current Armory Annex placeholder with the approved Barracks Guardian upgrade.
 - Exact support/siege mission slots. Current direction is no more than one or two in the first demo: Artillery Battery and powered Grunt-hacked defense equipment are the strongest candidates, Med Hall fits a possible later snow/extraction scenario, and Logistics / Repair Pad waits until vehicles are mission-critical.
 - Level 4 and Level 5 mission archetypes and failure-condition mix.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.

@@ -65,7 +65,7 @@ Good play should often mean:
 - unpowering Barracks upgrades/add-ons to shut off advanced training
 - destroying a defense tower to open an energy wall
 - disabling a radar station
-- capturing a neutral repair platform
+- taking over powered defense equipment
 - forcing the enemy to fight without production, vision, or defenses
 
 Victory should not only come from making the largest unit blob.
@@ -207,7 +207,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Mission starts are authored, with no player-selected loadouts for now. Some missions can begin with partial bases, allotted or irreplaceable troops, or no base at all.
 - Level 2 should lean toward a player-built resource race with strategic base-building terrain such as cliffs, water, chokepoints, useful Defense Tower wall positions, and likely first Barracks Guardian upgrade if the mission can carry it.
 - Vehicle Bay / Rover production should enter the first five-level demo, likely in Mission 3 or Mission 4.
-- Med Hall, Logistics / Repair Pad, and Artillery Battery may enter the first demo one or two at most, and only when a specific mission needs that role.
+- The preferred first-demo support/siege pair is powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5. Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless playtests deliberately reopen them.
 
 ## Open Vision Questions
 
@@ -216,5 +216,5 @@ These are intentionally unresolved:
 - Exact grunt replacement cost relative to basic combat units.
 - Exact Level 4 and Level 5 mission archetypes.
 - Exact Vehicle Bay/Rover mission slot, currently Mission 3 or Mission 4.
-- Which one or two support/siege systems, if any, earn a place in the first demo.
+- Exact Artillery/authored siege implementation for Mission 5.
 - Exact Level 1 enemy production speed and resource handicap.

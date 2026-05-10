@@ -406,18 +406,19 @@ Fit:
 
 ### Repair Platforms
 
-Purpose: provide rare mission-specific sustain without making Logistics / Repair Pad a standard early system.
+Purpose: later-only mission-specific sustain without making Logistics / Repair Pad a standard early system.
 
 Direction:
 
-- Use rarely, probably in one specific mission.
+- Cut from the first demo.
+- If reconsidered later, use rarely and only in one specific mission.
 - It may require power or Grunt activation before it repairs.
 - It should not become a generic free-heal point.
 
 Fit:
 
 - Better after vehicles matter more.
-- Could appear in a recovery or vehicle-heavy mission if the support role earns its place.
+- Could appear in a later recovery or vehicle-heavy mission if the support role earns its place.
 
 ### Sensor or Radar Towers
 
@@ -521,7 +522,7 @@ Preferred first-demo candidates:
 4. Ruined unpowered turret
 5. Bridge control or destructible bridge after terrain/pathing support exists
 
-Possible but lower priority:
+Later-only possibilities:
 
 - Repair Platform
 - Wrecks as blockers/landmarks
@@ -921,7 +922,7 @@ Direction:
 
 - Defense or support equipment must be powered first, then hacked or controlled by a physically present Grunt.
 - The Grunt action should take time and leave the Grunt vulnerable.
-- The object can be a ruined turret, defense console, neutral repair platform, or other authored mission device.
+- The object can be a ruined turret, defense console, or other authored mission device.
 - The object should not be active and hostile while the player is expected to hack it unless the mission gives a fair way to cut power first.
 
 Fit:
@@ -935,6 +936,7 @@ Purpose: provide rare mission-specific sustain without exposing player-built Log
 
 Direction:
 
+- Cut from the first demo.
 - Use only as authored mission infrastructure.
 - It must be powered first, then hacked or controlled by a Grunt before it functions.
 - It may repair vehicles once active, but the repair comes from the platform, not from Grunt vehicle repair.
@@ -942,7 +944,7 @@ Direction:
 
 Fit:
 
-- Good for a vehicle-heavy recovery or extraction scenario.
+- Later-only candidate for a vehicle-heavy recovery or extraction scenario.
 - Lower priority than Artillery Battery and powered hackable defense equipment.
 
 ### Support as Mission Objective
@@ -969,7 +971,7 @@ Approved direction:
 3. Powered hackable defense equipment is the strongest support-objective candidate.
 4. Med Hall can fit a later snow/extraction scenario if infantry attrition needs support.
 5. Logistics / Repair Pad waits until vehicles are central, and Grunts still cannot repair vehicles.
-6. Neutral Repair Platform is rare authored infrastructure, powered first and Grunt-controlled after that.
+6. Neutral Repair Platform is cut from the first demo; it can be reconsidered later as rare authored infrastructure.
 
 Guardrails:
 
@@ -977,6 +979,7 @@ Guardrails:
 - no Grunt vehicle repair
 - no generic capture-point economy
 - no support/siege layer added without a mission proof target
+- no Neutral Repair Platform in the first demo
 
 ## Progression and Unlock Pacing
 
@@ -1546,8 +1549,59 @@ Direction:
 - Guardian unlock comes from Barracks upgrade, not Armory Annex.
 - Mission 5 is no-base.
 - Support/siege count remains tight: powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5 are the current preferred pair.
-- Med Hall, Logistics / Repair Pad, Neutral Repair Platform, player loadouts, timer-loss missions, broad campaign tech tree, and broad tank roster stay deferred unless playtests reopen them.
+- Med Hall, Logistics / Repair Pad, Neutral Repair Platform, player loadouts, timer-loss missions, broad campaign tech tree, and broad tank roster stay cut from the first demo unless playtests reopen them.
 
-## Next Content Planning Topic
+## Cut/Defer List and Implementation Order
 
-The final planning bucket should be the cut/defer list and implementation order: name what is explicitly outside the first demo, identify the runtime/data refactors caused by the current outline, and turn the roadmap into practical milestone work.
+This section turns the planning pass into a protection list and a build order. New ideas should either serve a named mission proof target or go on the cut/defer list.
+
+### Cut From The First Demo
+
+These are out of the five-level demo unless the roadmap is explicitly reopened:
+
+- Neutral Repair Platform
+- timer-expiry mission failures
+- player-selected loadouts
+- persistent campaign tech tree
+- second faction
+- ancient-tech or mystery-tech systems
+- broad tank roster
+- multiplayer
+- sandbox/skirmish mode
+- procedural maps
+- full map editor
+- long cutscenes or heavy story systems
+
+### Deferred Unless Playtests Prove Need
+
+These are not planned for the first demo, but can be reconsidered if a specific mission becomes worse without them:
+
+- Med Hall, only if infantry attrition becomes a real mission problem
+- Logistics / Repair Pad, only if Vehicle Bay/Rover missions prove vehicle sustain is painful
+- dev map workbench or map preview, only if JSON map authoring blocks Level 2 iteration
+- additional support/siege systems beyond the preferred Mission 4/Mission 5 pair
+- Commander field-operation variants beyond a rare authored moment
+
+### Required Runtime/Data Follow-Ups
+
+These are implementation debts created by the approved outline:
+
+1. Replace the current Armory Annex placeholder path with a Barracks Guardian upgrade.
+2. Support mission start patterns without scene-copying: deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force.
+3. Add Level 2 map logic for blocked terrain, buildable clearings, resource basins, chokepoint markers, and Defense Tower wall route proof.
+4. Add event trigger grace/cooldown/coalescing so normal early build milestones do not stack immediate raids.
+5. Move mission presentation surfaces toward localization keys: briefings, objectives, warnings, map callouts, success/failure messages, retry hints, and tactical notes.
+6. Keep enemy rebuild/production resource-bound and mission-profile-driven.
+
+### Recommended Build Order
+
+1. Milestone 3: Mission grammar and architecture hardening. Make mission setup reusable, split or justify oversized files, prepare start-pattern support, add trigger coalescing, and define localization-key paths for mission presentation.
+2. Milestone 4: Level 2 - Wells at the Ridge. Player builds/places the base. Prove terrain chokes, resource race, tower walls, enemy power/extractor routes, and Barracks Guardian upgrade.
+3. Milestone 5: Level 3 - Mobile Response. Add Vehicle Bay/Rover production and prove mobility without replacing infantry.
+4. Milestone 6: Level 4/5 greybox lock. Build Broken Outpost as partial damaged base/equipment takeover and Frozen Breakout as no-base siege/extraction.
+5. Demo readability pass. Tighten briefings, objective tracker, warnings, map callouts, failure/success text, localization coverage, and restart flow.
+6. Playtest build. Package, test, collect feedback, then rebalance.
+
+Guardrail:
+
+- Do not build Level 2 before Milestone 3 gives the project reusable mission-start and content-schema seams. Otherwise the next missions risk becoming scene exceptions instead of repeatable authored scenarios.

@@ -36,6 +36,7 @@ Current locked vision choices:
 - Defense Towers create an energy wall when placed near another compatible Defense Tower, blocking enemy pathing until a tower is destroyed.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers; they can still act as wall anchors, but cost more because they are armed.
 - Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records, but should only enter missions when their support/siege roles improve tactical clarity.
+- Neutral Repair Platform is cut from the first demo.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Level 1 enemy pressure should be slow and readable: small groups of 1-3 attackers, some defenders left at base, and no omniscient HUD warnings about hidden enemy plans.
 - Future base-building pressure triggers should have grace, cooldown, or coalescing rules so normal early actions such as Barracks built and first Extractor built do not fire back-to-back raids.
@@ -50,7 +51,7 @@ Current locked vision choices:
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
 - Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
 - Ancient-tech mystery is out of scope for now.
-- Med Hall, Logistics / Repair Pad, and Artillery Battery are later-mission systems unless First Landing playtests prove a hard need.
+- Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless the roadmap is explicitly reopened. Artillery Battery remains a preferred Mission 5 siege candidate.
 - Visual tone is military-industrial with restrained near-future utility tech.
 - Art production should assume AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames while paid art is out of reach.
 - The first public build target is a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.

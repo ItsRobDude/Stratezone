@@ -257,7 +257,8 @@ Acceptance checks:
 - at least one later mission start pattern is named if used: player-built base, partial base, no-base moving force, allotted/irreplaceable troops, or normal base start
 - Vehicle Bay/Rover production is assigned to Mission 3 or Mission 4
 - Mission 5 is no-base in the current demo outline
-- the demo uses no more than one or two support/siege systems unless the roadmap is deliberately reopened
+- the demo uses the preferred support/siege pair unless the roadmap is deliberately reopened: powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5
+- Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo
 - each mission has a clear failure-condition mix and restart expectation, with no timer-expiry mission failure unless the roadmap is explicitly reopened
 - briefing, objective, warning, map callout, failure, and success copy is planned as localization-keyed player-facing text
 - cut systems are named instead of left as vague future work

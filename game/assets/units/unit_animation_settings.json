@@ -5,7 +5,16 @@
         "atlas_path": "res://assets/units/rifleman/animations/run_directional/rifleman_run_directional_atlas.png",
         "frame_count": 16,
         "frames_per_second": 12.0,
-        "sprite_scale": 0.12
+        "sprite_scale": 0.12,
+        "movement_grace_seconds": 0.18
+      },
+      "attack": {
+        "atlas_path": "res://assets/units/rifleman/animations/attack_directional/rifleman_attack_directional_atlas.png",
+        "frame_count": 8,
+        "frames_per_second": 10.0,
+        "sprite_scale": 0.12,
+        "sustain_loop_start_frame": 5,
+        "engagement_grace_seconds": 0.35
       }
     }
   }

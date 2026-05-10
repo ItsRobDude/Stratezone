@@ -21,19 +21,23 @@ Runtime loading prefers each unit's packed atlas:
 
 - `game/assets/units/<unit>/<unit>_directional_atlas.png`
 
-Units with movement animation may also provide a directional run atlas:
+Units with directional animations may also provide packed animation atlases:
 
 - `game/assets/units/<unit>/animations/run_directional/<unit>_run_directional_atlas.png`
+- `game/assets/units/<unit>/animations/attack_directional/<unit>_attack_directional_atlas.png`
 - `game/assets/units/unit_animation_settings.json`
 
-Run atlases use eight rows in the same compass order and sixteen columns for the run-cycle frames. Keep every cell on one shared transparent canvas and preserve the same bottom-center foot anchor.
+Animation atlases use eight rows in the same compass order and one column per animation frame. Keep every cell on one shared transparent canvas and preserve the same bottom-center foot anchor.
 
-Prototype run atlases may use a smaller fixed cell than idle frames to keep texture memory reasonable. If they do, presentation code must scale that run atlas back to the same displayed size and preserve the bottom-center foot anchor.
+Prototype animation atlases may use a smaller fixed cell than idle frames to keep texture memory reasonable. If they do, presentation code must scale that atlas back to the same displayed size and preserve the bottom-center foot anchor.
 
-Build a run atlas from a `N-360/1x/*.png` pose export:
+Animation settings can define grace windows so presentation does not snap back to idle during tiny simulation gaps. Use `movement_grace_seconds` for run/walk loops and `engagement_grace_seconds` plus `sustain_loop_start_frame` for attack loops that should hold a firing stance.
+
+Build an atlas from a `N-360/1x/*.png` pose export:
 
 ```powershell
 python tools\build_unit_run_atlas.py --unit rifleman --source C:\Users\Rob\Pictures\stratezone\rmrun --preview-out C:\Users\Rob\Pictures\stratezone\rmrun_review\runtime_rifleman_run_directional_preview.png
+python tools\build_unit_run_atlas.py --unit rifleman --animation attack --frame-count 8 --source C:\Users\Rob\Pictures\stratezone\rmshoot --preview-out C:\Users\Rob\Pictures\stratezone\rmshoot_review\runtime_rifleman_attack_directional_preview.png
 ```
 
 The default source view order is `4,3,2,1,8,7,6,5`, mapped into the game compass rows `000,045,090,135,180,225,270,315`. Override `--source-view-order` if a future turntable export starts from a different angle.

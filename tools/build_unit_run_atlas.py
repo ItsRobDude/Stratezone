@@ -178,8 +178,9 @@ def save_preview(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build a directional unit run atlas from N-360 turntable pose folders.")
+    parser = argparse.ArgumentParser(description="Build a directional unit animation atlas from N-360 turntable pose folders.")
     parser.add_argument("--unit", required=True, help="Unit asset slug, for example rifleman.")
+    parser.add_argument("--animation", default="run", help="Animation slug, for example run or attack.")
     parser.add_argument("--source", type=Path, required=True, help="Source folder containing 1-360, 2-360, ... folders.")
     parser.add_argument(
         "--assets-root",
@@ -219,21 +220,25 @@ def main() -> int:
     )
     atlas = build_atlas(normalized, args.cell_size)
 
-    output_dir = args.assets_root / args.unit / "animations" / "run_directional"
+    animation_slug = args.animation.strip().lower()
+    if not re.fullmatch(r"[a-z0-9_]+", animation_slug):
+        raise ValueError("--animation must contain only lowercase letters, numbers, and underscores.")
+
+    output_dir = args.assets_root / args.unit / "animations" / f"{animation_slug}_directional"
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{args.unit}_run_directional_atlas.png"
+    output_path = output_dir / f"{args.unit}_{animation_slug}_directional_atlas.png"
     atlas.save(output_path, optimize=True)
 
     atlas_bytes = output_path.stat().st_size
     if atlas_bytes > args.max_atlas_bytes:
         raise ValueError(
-            f"Run atlas is {atlas_bytes:,} bytes, above max {args.max_atlas_bytes:,}: {output_path}"
+            f"{animation_slug} atlas is {atlas_bytes:,} bytes, above max {args.max_atlas_bytes:,}: {output_path}"
         )
 
     print(f"Wrote {output_path} ({atlas_bytes:,} bytes)")
 
     if args.preview_out is not None:
-        save_preview(normalized, args.preview_out, f"{args.unit} run atlas preview")
+        save_preview(normalized, args.preview_out, f"{args.unit} {animation_slug} atlas preview")
         print(f"Wrote {args.preview_out}")
 
     return 0

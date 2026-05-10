@@ -13,8 +13,9 @@ public partial class GreyboxSimUnit : Node2D
     private const float PathDebugZoomThreshold = 0.75f;
     private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
     private static readonly Dictionary<string, IReadOnlyDictionary<int, Texture2D>> DirectionalTextureCache = [];
-    private static readonly Dictionary<string, IReadOnlyDictionary<int, IReadOnlyList<Texture2D>>> RunAnimationTextureCache = [];
+    private static readonly Dictionary<string, IReadOnlyDictionary<int, IReadOnlyList<Texture2D>>> DirectionalAnimationTextureCache = [];
     private static readonly Dictionary<string, UnitRunAnimationConfig?> RunAnimationConfigCache = [];
+    private static readonly Dictionary<string, UnitRunAnimationConfig?> AttackAnimationConfigCache = [];
     private static UnitAnimationSettingsFile? UnitAnimationSettings;
 
     private UnitState? _state;
@@ -23,6 +24,7 @@ public partial class GreyboxSimUnit : Node2D
     private Sprite2D? _directionalSprite;
     private string? _directionalAssetSlug;
     private UnitRunAnimationConfig? _runAnimationConfig;
+    private UnitRunAnimationConfig? _attackAnimationConfig;
     private bool _selected;
     private bool _useRiflemanPlaceholder;
     private bool _useCadetPlaceholder;
@@ -31,8 +33,14 @@ public partial class GreyboxSimUnit : Node2D
     private float _cameraZoom = 1.0f;
     private Vector2? _lastPosition;
     private bool _isMoving;
+    private bool _isAttacking;
+    private string? _attackTargetKey;
+    private float _runMovementGraceSeconds;
+    private float _attackEngagementGraceSeconds;
     private float _runAnimationSeconds;
+    private float _attackAnimationSeconds;
     private int _runAnimationFrameIndex;
+    private int _attackAnimationFrameIndex;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
@@ -79,15 +87,8 @@ public partial class GreyboxSimUnit : Node2D
     public void UpdateFromState(UnitState state)
     {
         var nextPosition = new Vector2(state.Position.X, state.Position.Y);
-        var wasMoving = _isMoving;
-        _isMoving = IsMoving(nextPosition);
-        if (_isMoving != wasMoving)
-        {
-            _runAnimationSeconds = 0.0f;
-            _runAnimationFrameIndex = 0;
-            UpdateDirectionalTexture();
-        }
-
+        UpdateRunAnimationState(nextPosition);
+        UpdateAttackAnimationState(state);
         UpdateFacing(state, nextPosition);
 
         _state = state;
@@ -115,22 +116,61 @@ public partial class GreyboxSimUnit : Node2D
 
     public override void _Process(double delta)
     {
-        if (!_isMoving || _runAnimationConfig is null || _directionalSprite is null || _directionalAssetSlug is null)
+        if (_directionalSprite is null || _directionalAssetSlug is null)
         {
             return;
         }
 
-        _runAnimationSeconds += (float)delta;
-        var nextFrameIndex = Mathf.PosMod(
-            Mathf.FloorToInt(_runAnimationSeconds * _runAnimationConfig.FramesPerSecond),
-            _runAnimationConfig.FrameCount);
-        if (nextFrameIndex == _runAnimationFrameIndex)
+        var deltaSeconds = (float)delta;
+        if (_runMovementGraceSeconds > 0.0f)
         {
+            _runMovementGraceSeconds = MathF.Max(0.0f, _runMovementGraceSeconds - deltaSeconds);
+        }
+
+        if (_attackEngagementGraceSeconds > 0.0f)
+        {
+            _attackEngagementGraceSeconds = MathF.Max(0.0f, _attackEngagementGraceSeconds - deltaSeconds);
+        }
+
+        if (_isMoving && _runMovementGraceSeconds <= 0.0f && !IsMoving(Position))
+        {
+            _isMoving = false;
+            UpdateDirectionalTexture();
+        }
+
+        if (_isAttacking &&
+            _attackEngagementGraceSeconds <= 0.0f &&
+            _state?.AttackFlashSeconds <= 0.0f &&
+            _state?.AttackCooldownRemaining <= 0.0f)
+        {
+            _isAttacking = false;
+            _attackTargetKey = null;
+            UpdateDirectionalTexture();
+        }
+
+        if (_isAttacking && _attackAnimationConfig is not null)
+        {
+            _attackAnimationSeconds += deltaSeconds;
+            var nextFrameIndex = GetAnimationFrameIndex(_attackAnimationConfig, _attackAnimationSeconds);
+            if (nextFrameIndex != _attackAnimationFrameIndex)
+            {
+                _attackAnimationFrameIndex = nextFrameIndex;
+                UpdateDirectionalTexture();
+            }
+
             return;
         }
 
-        _runAnimationFrameIndex = nextFrameIndex;
-        UpdateDirectionalTexture();
+        if (_isMoving && _runAnimationConfig is not null)
+        {
+            _runAnimationSeconds += deltaSeconds;
+            var nextFrameIndex = GetAnimationFrameIndex(_runAnimationConfig, _runAnimationSeconds);
+            if (nextFrameIndex != _runAnimationFrameIndex)
+            {
+                _runAnimationFrameIndex = nextFrameIndex;
+                UpdateDirectionalTexture();
+            }
+        }
     }
 
     public override void _Draw()
@@ -204,13 +244,15 @@ public partial class GreyboxSimUnit : Node2D
         }
 
         _directionalAssetSlug = assetSlug;
-        _runAnimationConfig = LoadRunAnimationConfig(assetSlug);
+        _runAnimationConfig = LoadAnimationConfig(assetSlug, UnitAnimationKind.Run);
+        _attackAnimationConfig = LoadAnimationConfig(assetSlug, UnitAnimationKind.Attack);
         var textures = LoadDirectionalTextures(assetSlug);
         if (!textures.TryGetValue(_facingAngle, out var initialTexture))
         {
             GD.PushWarning($"No directional unit sprites found for {unitId}; using greybox placeholder.");
             _directionalAssetSlug = null;
             _runAnimationConfig = null;
+            _attackAnimationConfig = null;
             return;
         }
 
@@ -278,11 +320,13 @@ public partial class GreyboxSimUnit : Node2D
         return textures;
     }
 
-    private static IReadOnlyDictionary<int, IReadOnlyList<Texture2D>> LoadRunAnimationTextures(
+    private static IReadOnlyDictionary<int, IReadOnlyList<Texture2D>> LoadDirectionalAnimationTextures(
         string assetSlug,
+        UnitAnimationKind animationKind,
         UnitRunAnimationConfig config)
     {
-        if (RunAnimationTextureCache.TryGetValue(assetSlug, out var cached))
+        var cacheKey = $"{assetSlug}:{animationKind}";
+        if (DirectionalAnimationTextureCache.TryGetValue(cacheKey, out var cached))
         {
             return cached;
         }
@@ -291,7 +335,7 @@ public partial class GreyboxSimUnit : Node2D
         if (atlas is null)
         {
             var missing = new Dictionary<int, IReadOnlyList<Texture2D>>();
-            RunAnimationTextureCache[assetSlug] = missing;
+            DirectionalAnimationTextureCache[cacheKey] = missing;
             return missing;
         }
 
@@ -300,9 +344,9 @@ public partial class GreyboxSimUnit : Node2D
         var frameHeight = atlasSize.Y / DirectionalAngles.Length;
         if (frameWidth <= 0.0f || frameHeight <= 0.0f)
         {
-            GD.PushWarning($"Run animation atlas for {assetSlug} has invalid size {atlasSize}.");
+            GD.PushWarning($"{animationKind} animation atlas for {assetSlug} has invalid size {atlasSize}.");
             var invalid = new Dictionary<int, IReadOnlyList<Texture2D>>();
-            RunAnimationTextureCache[assetSlug] = invalid;
+            DirectionalAnimationTextureCache[cacheKey] = invalid;
             return invalid;
         }
 
@@ -323,7 +367,7 @@ public partial class GreyboxSimUnit : Node2D
             textures[angle] = frames;
         }
 
-        RunAnimationTextureCache[assetSlug] = textures;
+        DirectionalAnimationTextureCache[cacheKey] = textures;
         return textures;
     }
 
@@ -418,34 +462,50 @@ public partial class GreyboxSimUnit : Node2D
             return;
         }
 
-        var texture = GetCurrentDirectionalTexture(out var isRunFrame);
+        var texture = GetCurrentDirectionalTexture(out var animationConfig);
         if (texture is null)
         {
             return;
         }
 
-        var spriteScale = isRunFrame && _runAnimationConfig is not null
-            ? _runAnimationConfig.SpriteScale
+        var spriteScale = animationConfig is not null
+            ? animationConfig.SpriteScale
             : DirectionalSpriteScale;
         _directionalSprite.Texture = texture;
         _directionalSprite.Scale = Vector2.One * spriteScale;
         _directionalSprite.Position = GetSpriteOriginOffset(texture, spriteScale);
     }
 
-    private Texture2D? GetCurrentDirectionalTexture(out bool isRunFrame)
+    private Texture2D? GetCurrentDirectionalTexture(out UnitRunAnimationConfig? animationConfig)
     {
-        isRunFrame = false;
+        animationConfig = null;
         if (_directionalAssetSlug is null)
         {
             return null;
         }
 
+        if (_isAttacking && _attackAnimationConfig is not null)
+        {
+            var attackTextures = LoadDirectionalAnimationTextures(
+                _directionalAssetSlug,
+                UnitAnimationKind.Attack,
+                _attackAnimationConfig);
+            if (attackTextures.TryGetValue(_facingAngle, out var frames) && frames.Count > 0)
+            {
+                animationConfig = _attackAnimationConfig;
+                return frames[Mathf.PosMod(_attackAnimationFrameIndex, frames.Count)];
+            }
+        }
+
         if (_isMoving && _runAnimationConfig is not null)
         {
-            var runTextures = LoadRunAnimationTextures(_directionalAssetSlug, _runAnimationConfig);
+            var runTextures = LoadDirectionalAnimationTextures(
+                _directionalAssetSlug,
+                UnitAnimationKind.Run,
+                _runAnimationConfig);
             if (runTextures.TryGetValue(_facingAngle, out var frames) && frames.Count > 0)
             {
-                isRunFrame = true;
+                animationConfig = _runAnimationConfig;
                 return frames[Mathf.PosMod(_runAnimationFrameIndex, frames.Count)];
             }
         }
@@ -454,37 +514,47 @@ public partial class GreyboxSimUnit : Node2D
         return textures.TryGetValue(_facingAngle, out var texture) ? texture : null;
     }
 
-    private static UnitRunAnimationConfig? LoadRunAnimationConfig(string assetSlug)
+    private static UnitRunAnimationConfig? LoadAnimationConfig(string assetSlug, UnitAnimationKind animationKind)
     {
-        if (RunAnimationConfigCache.TryGetValue(assetSlug, out var cached))
+        var cache = animationKind == UnitAnimationKind.Attack
+            ? AttackAnimationConfigCache
+            : RunAnimationConfigCache;
+        if (cache.TryGetValue(assetSlug, out var cached))
         {
             return cached;
         }
 
         var settings = LoadUnitAnimationSettings();
         if (settings.UnitAnimations is null ||
-            !settings.UnitAnimations.TryGetValue(assetSlug, out var unitSettings) ||
-            unitSettings.Run is null)
+            !settings.UnitAnimations.TryGetValue(assetSlug, out var unitSettings))
         {
-            RunAnimationConfigCache[assetSlug] = null;
+            cache[assetSlug] = null;
             return null;
         }
 
-        var config = unitSettings.Run;
+        var config = animationKind == UnitAnimationKind.Attack
+            ? unitSettings.Attack
+            : unitSettings.Run;
+        if (config is null)
+        {
+            cache[assetSlug] = null;
+            return null;
+        }
+
         if (!config.IsValid())
         {
-            GD.PushWarning($"Run animation settings for {assetSlug} are invalid.");
-            RunAnimationConfigCache[assetSlug] = null;
+            GD.PushWarning($"{animationKind} animation settings for {assetSlug} are invalid.");
+            cache[assetSlug] = null;
             return null;
         }
 
         if (!ResourceOrFileExists(config.AtlasPath))
         {
-            RunAnimationConfigCache[assetSlug] = null;
+            cache[assetSlug] = null;
             return null;
         }
 
-        RunAnimationConfigCache[assetSlug] = config;
+        cache[assetSlug] = config;
         return config;
     }
 
@@ -540,6 +610,106 @@ public partial class GreyboxSimUnit : Node2D
     {
         return _lastPosition is not null &&
             (nextPosition - _lastPosition.Value).LengthSquared() > 0.01f;
+    }
+
+    private void UpdateRunAnimationState(Vector2 nextPosition)
+    {
+        if (_runAnimationConfig is null)
+        {
+            _isMoving = false;
+            _runMovementGraceSeconds = 0.0f;
+            return;
+        }
+
+        var movedThisTick = IsMoving(nextPosition);
+        if (movedThisTick)
+        {
+            _runMovementGraceSeconds = MathF.Max(
+                _runMovementGraceSeconds,
+                _runAnimationConfig.MovementGraceSeconds);
+        }
+
+        var nextIsMoving = movedThisTick || _runMovementGraceSeconds > 0.0f;
+        if (nextIsMoving && !_isMoving)
+        {
+            _runAnimationSeconds = 0.0f;
+            _runAnimationFrameIndex = 0;
+        }
+
+        if (_isMoving != nextIsMoving)
+        {
+            _isMoving = nextIsMoving;
+            UpdateDirectionalTexture();
+            return;
+        }
+
+        _isMoving = nextIsMoving;
+    }
+
+    private void UpdateAttackAnimationState(UnitState state)
+    {
+        if (_attackAnimationConfig is null)
+        {
+            _isAttacking = false;
+            _attackTargetKey = null;
+            _attackEngagementGraceSeconds = 0.0f;
+            return;
+        }
+
+        var targetKey = GetAttackTargetKey(state);
+        var hasRecentAttack = state.LastAttackTargetPosition is not null &&
+            (state.AttackFlashSeconds > 0.0f || state.AttackCooldownRemaining > 0.0f);
+        if (hasRecentAttack)
+        {
+            _attackEngagementGraceSeconds = MathF.Max(
+                _attackEngagementGraceSeconds,
+                _attackAnimationConfig.EngagementGraceSeconds);
+        }
+
+        var nextIsAttacking = hasRecentAttack || (targetKey is not null && _attackEngagementGraceSeconds > 0.0f);
+        var targetChanged = targetKey is not null && targetKey != _attackTargetKey;
+        if (nextIsAttacking && (!_isAttacking || targetChanged))
+        {
+            _attackAnimationSeconds = 0.0f;
+            _attackAnimationFrameIndex = 0;
+        }
+
+        var changed = _isAttacking != nextIsAttacking || targetChanged;
+        _isAttacking = nextIsAttacking;
+        _attackTargetKey = nextIsAttacking ? targetKey ?? _attackTargetKey : null;
+
+        if (changed)
+        {
+            UpdateDirectionalTexture();
+        }
+    }
+
+    private static string? GetAttackTargetKey(UnitState state)
+    {
+        if (state.TargetUnitEntityId is not null)
+        {
+            return $"unit:{state.TargetUnitEntityId.Value}";
+        }
+
+        if (state.TargetBuildingEntityId is not null)
+        {
+            return $"building:{state.TargetBuildingEntityId.Value}";
+        }
+
+        return null;
+    }
+
+    private static int GetAnimationFrameIndex(UnitRunAnimationConfig config, float animationSeconds)
+    {
+        var rawFrame = Mathf.FloorToInt(animationSeconds * config.FramesPerSecond);
+        var sustainLoopStartIndex = config.SustainLoopStartFrame - 1;
+        if (sustainLoopStartIndex > 0 && sustainLoopStartIndex < config.FrameCount && rawFrame >= sustainLoopStartIndex)
+        {
+            var loopLength = config.FrameCount - sustainLoopStartIndex;
+            return sustainLoopStartIndex + Mathf.PosMod(rawFrame - sustainLoopStartIndex, loopLength);
+        }
+
+        return Mathf.PosMod(rawFrame, config.FrameCount);
     }
 
     private void ApplyZoomDetailVisibility()
@@ -885,6 +1055,9 @@ public partial class GreyboxSimUnit : Node2D
     {
         [JsonPropertyName("run")]
         public UnitRunAnimationConfig? Run { get; set; }
+
+        [JsonPropertyName("attack")]
+        public UnitRunAnimationConfig? Attack { get; set; }
     }
 
     private sealed class UnitRunAnimationConfig
@@ -901,12 +1074,31 @@ public partial class GreyboxSimUnit : Node2D
         [JsonPropertyName("sprite_scale")]
         public float SpriteScale { get; set; }
 
+        [JsonPropertyName("sustain_loop_start_frame")]
+        public int SustainLoopStartFrame { get; set; }
+
+        [JsonPropertyName("movement_grace_seconds")]
+        public float MovementGraceSeconds { get; set; }
+
+        [JsonPropertyName("engagement_grace_seconds")]
+        public float EngagementGraceSeconds { get; set; }
+
         public bool IsValid()
         {
             return !string.IsNullOrWhiteSpace(AtlasPath) &&
                 FrameCount > 0 &&
                 FramesPerSecond > 0.0f &&
-                SpriteScale > 0.0f;
+                SpriteScale > 0.0f &&
+                SustainLoopStartFrame >= 0 &&
+                SustainLoopStartFrame <= FrameCount &&
+                MovementGraceSeconds >= 0.0f &&
+                EngagementGraceSeconds >= 0.0f;
         }
+    }
+
+    private enum UnitAnimationKind
+    {
+        Run,
+        Attack
     }
 }

@@ -38,6 +38,7 @@ Current locked vision choices:
 - Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records, but should only enter missions when their support/siege roles improve tactical clarity.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Level 1 enemy pressure should be slow and readable: small groups of 1-3 attackers, some defenders left at base, and no omniscient HUD warnings about hidden enemy plans.
+- Future base-building pressure triggers should have grace, cooldown, or coalescing rules so normal early actions such as Barracks built and first Extractor built do not fire back-to-back raids.
 - Enemy rival-officer behavior should stay internal and mission-local: it may remember events and adjust actions, but it must not create player-facing adaptation text or alerts.
 - Level 1 trainable troop rules are slice-specific: the player and first enemy AI may train Grunt, Cadet, and Rifleman; the player starts with exactly one Guardian, one Commander, one Grunt, and one provided Rover; the player cannot train more Guardians, Rovers, or Commanders in Level 1.
 - Mission starts are authored, with no player-selected loadouts for now. Later missions may start with partial bases, allotted or irreplaceable troops, or no base at all.
@@ -52,7 +53,7 @@ Current locked vision choices:
 - Visual tone is military-industrial with restrained near-future utility tech.
 - Art production should assume AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames while paid art is out of reach.
 - The first public build target is a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
-- Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, objective timer expired, or combinations of those.
+- Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, required Grunt/equipment lost, or combinations of those. Timer-expiry failures are not planned for the first demo unless the user explicitly reopens that scope.
 
 ## Source of Truth
 

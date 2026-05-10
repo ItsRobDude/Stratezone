@@ -393,6 +393,7 @@ Prototype behavior:
 - Level 1's forward enemy Pylon powers the central Extractor and tower-wall route, so destroying it should visibly shut off that infrastructure route
 - Level 1 attacks commit only a small group of 1-3 units and leave defenders at the enemy base
 - enemy can dispatch a small scout/rally movement before the first committed attack
+- base-building pressure triggers must respect mission grace windows, cooldowns, or trigger groups so normal early actions such as Barracks built and first Extractor built do not fire back-to-back raids
 - damaged committed attackers may retreat toward base instead of fighting to the last hit point
 - wiped attack groups create an internal regroup delay before the next attack commitment
 - a small internal rival-officer state may remember battlefield facts such as lost attack groups, exposed Commander sightings, power strikes, wall blocks, scouting, and retreats
@@ -415,6 +416,7 @@ Acceptance checks:
 - enemy can pressure the contested well
 - destroying an enemy pylon can disable an enemy tower path and shut off the central Extractor route when mission data wires that Pylon as the forward power source
 - enemy attack commitment is capped to the mission profile instead of sending the whole enemy base
+- early pressure triggers can coalesce or queue behind a cooldown rather than stacking immediate raids
 - enemy target selection favors visible tactical targets before simple Colony Hub base-cracking
 - exposed Commander sightings are internal AI knowledge only and do not create adaptation alerts
 - alerts are fog-safe and do not reveal hidden enemy intent

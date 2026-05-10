@@ -517,6 +517,8 @@ Prototype rules:
 - events should be inspectable and tunable
 - Level 1 pressure should be tame but active
 - event warnings should appear before danger when practical
+- mission events should support pacing guards such as opening grace, cooldowns, or trigger groups before Level 2 relies on multiple base-building triggers
+- early base-building triggers such as Barracks built and first Extractor built should coalesce into one pressure beat instead of firing back-to-back raids
 
 ## Objective Definition
 
@@ -537,6 +539,12 @@ Prototype objective types:
 - destroy required enemy targets
 - protect mission-critical unit
 - survive event pressure, if needed for a mission beat
+
+First-demo failure-condition guidance:
+
+- authored missions may fail on declared critical units, Colony Hub/base loss, transport/extraction loss, required Grunt/equipment loss, or combinations that remain readable
+- timer-expiry mission failure is not planned for the first demo unless the roadmap is explicitly reopened
+- countdown-style events may exist for warnings, arrivals, extraction pacing, or optional pressure, but not as hidden mission-loss timers
 
 ## Validation Expectations
 

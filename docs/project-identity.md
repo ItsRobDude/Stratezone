@@ -202,7 +202,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - The first public build should be a demo, not an Early Access or sellable release claim. The current target for that demo is the first five levels, but the project is still pre-demo and does not yet have a reliable finished level-design pipeline.
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.
-- Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
+- Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, required Grunt/equipment lost, or combined conditions. Timer-expiry mission failures are not planned for the first demo.
 - Quick RTS restart is the expected first-demo failure model. Persistent campaign consequences are later scope.
 - Mission starts are authored, with no player-selected loadouts for now. Some missions can begin with partial bases, allotted or irreplaceable troops, or no base at all.
 - Level 2 should lean toward a resource race with strategic base-building terrain such as cliffs, water, chokepoints, useful Defense Tower wall positions, and likely first Armory Annex / Guardian production if the mission can carry it.

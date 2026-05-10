@@ -183,6 +183,7 @@ Acceptance checks:
 - mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
 - map data can represent first-pass terrain regions, passability blockers, buildable clearings, resource basins, and chokepoint markers
 - new mission setup can be added through data plus narrow simulation/presentation seams
+- event trigger pacing has a planned grace/cooldown/coalescing rule so normal early build milestones cannot stack immediate raids
 - map preview/debug output exists if JSON-only map authoring is too hard to inspect
 - root or documented validation commands cover content validation, C# build, simulation smoke, and Godot headless launch
 - new objective, warning, command, and blocked-action text uses localization keys
@@ -209,6 +210,8 @@ Acceptance checks:
 - enemy power or extractor infrastructure can be scouted and attacked
 - Armory Annex and Guardian production are included if the Level 2 route can carry the first unlock without losing the resource-race proof
 - Guardian remains anti-armor / anti-defense specialist if introduced here
+- player-facing warnings report only known events, not hidden attack planning
+- early raid triggers coalesce or queue behind cooldowns instead of stacking when Barracks and first Extractor appear back to back
 - pressure creates a choice between repair, defense, expansion, or attack
 - quick fail/retry flow is acceptable; no persistent campaign consequence is required
 - Vehicle Bay remains absent from Level 2 unless the roadmap is deliberately reopened
@@ -252,7 +255,7 @@ Acceptance checks:
 - at least one later mission start pattern is named if used: partial base, no-base moving force, allotted/irreplaceable troops, or normal base start
 - Vehicle Bay/Rover production is assigned to Mission 3 or Mission 4
 - the demo uses no more than one or two support/siege systems unless the roadmap is deliberately reopened
-- each mission has a clear failure-condition mix and restart expectation
+- each mission has a clear failure-condition mix and restart expectation, with no timer-expiry mission failure unless the roadmap is explicitly reopened
 - cut systems are named instead of left as vague future work
 
 Evidence:
@@ -260,6 +263,7 @@ Evidence:
 - five-level demo sequence outline
 - per-mission proof target list
 - per-mission start-pattern list
+- per-mission failure-condition list
 - explicit cut/defer list for systems outside the first public demo
 
 ## Public Build Checklist

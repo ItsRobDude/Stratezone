@@ -1031,6 +1031,277 @@ Guardrails:
 - no Vehicle Bay in Level 1
 - no broad tank roster just because Vehicle Bay enters the demo
 
+## Mission Start and Failure-Condition Patterns
+
+Mission starts and failure conditions should create variety without turning every level into an escort mission. Each mission should have one primary failure idea, with secondary failure rules used only when they are obvious and fair.
+
+### Full Base Start
+
+Purpose: preserve the classic RTS spine.
+
+Direction:
+
+- Start with a Colony Hub, Commander, at least one Grunt, basic resources, and a path to build outward.
+- Use this when the mission teaches economy, power, wells, Defense Tower walls, add-ons, or enemy-base pressure.
+- Normal failure conditions are Commander death, Colony Hub destruction, or loss of another clearly declared critical structure.
+
+Fit:
+
+- Default pattern for First Landing and Resource Race.
+- Best when the mission's main verb is build, scout, expand, defend, or attack.
+
+### Partial Base Start
+
+Purpose: make recovery and repair feel like real RTS pressure.
+
+Direction:
+
+- Start with a damaged, unpowered, or incomplete base.
+- Use damaged towers, broken Pylons, offline Barracks, low resources, or a vulnerable Grunt to make recovery readable.
+- Failure can come from Commander death if present, critical structure destruction, required equipment loss, or all required Grunts dying when the mission explicitly depends on Grunt work.
+
+Fit:
+
+- Strong candidate for Mission 4.
+- Good for Broken Outpost Recovery, powered hackable defense equipment, and Grunt-value proof.
+
+### No-Base Moving Force
+
+Purpose: vary pacing with a fixed force and no production.
+
+Direction:
+
+- Start with a fixed group and no base.
+- Use for a snow extraction, patrol, survivor recovery, or route-survival mission.
+- Failure should be tied to a visible critical unit, transport, extraction target, or squad-survival requirement.
+
+Fit:
+
+- Use at most once in the five-level demo.
+- Strong change of pace, but too much of it would pull Stratezone toward squad tactics instead of mission RTS.
+
+### Allotted or Irreplaceable Troops
+
+Purpose: create tension without adding a loadout system.
+
+Direction:
+
+- Mission data can grant specific units that cannot be replaced in that scenario.
+- Use this for rare Guardians, Rovers before production is unlocked, a required Grunt, or a mission-critical Commander.
+- Player-facing messaging must make irreplaceable units clear.
+
+Fit:
+
+- Good for recovery, extraction, and early vehicle showcase missions.
+- Use sparingly so losses feel like tactical stakes, not hidden punishment.
+
+### Commander Failure
+
+Purpose: keep command presence important without making the Commander a recurring escort chore.
+
+Direction:
+
+- Commander death can fail missions where the Commander is declared mission-critical.
+- Full-base missions can keep the Commander near home base as the sensible play.
+- Avoid combining Commander failure with too many other instant-loss conditions.
+
+Fit:
+
+- Core to First Landing.
+- Good as an anchor failure rule for some base missions, not every mission variant.
+
+### Transport and Extraction Failure
+
+Purpose: add movement and urgency without long escort slog.
+
+Direction:
+
+- Prefer short, authored transport or extraction phases.
+- Strong forms include destroying an enemy transport before it escapes, holding a landing zone, reaching extraction, or protecting a transport during a brief final phase.
+- Avoid long transport babysitting routes unless the map is built tightly around that one idea.
+
+Fit:
+
+- Good Mission 5 candidate.
+- Pairs well with snow extraction, siege closeout, or no-base moving-force scenarios.
+
+### Timer Failures
+
+Purpose: clarify that timed mission loss is not part of the current plan.
+
+Direction:
+
+- Do not use timer-expiry loss conditions in the first demo unless the roadmap is explicitly reopened.
+- Timers may still exist as visible pacing feedback for arrivals, extraction countdowns, attack warnings, or optional pressure, but they should not be the mission failure condition.
+- Avoid hidden timers entirely.
+
+Fit:
+
+- This preserves experimentation and keeps failures tactical rather than schedule-driven.
+
+### Base Destruction Failure
+
+Purpose: match failure rules to the mission fantasy.
+
+Direction:
+
+- In build-and-hold missions, Colony Hub destruction usually means loss.
+- In recovery or extraction missions, losing a forward outpost may not be instant failure if the objective is to evacuate or complete a route.
+- Critical structures should be called out by objective text before their loss can fail the mission.
+
+Fit:
+
+- Strong baseline for base missions.
+- Should vary only when the mission is clearly not about holding a base.
+
+## Mission Start Priority
+
+Working first-demo pattern:
+
+1. Level 1: full base start; Commander and Hub failure.
+2. Level 2: full base start; Commander and Hub failure; resource race plus likely Armory/Guardian.
+3. Level 3: full or partial base start; Vehicle Bay/Rover unlock candidate.
+4. Level 4: partial base, equipment takeover, recovery, or Vehicle Bay fallback.
+5. Level 5: siege, extraction, snow extraction, or no-base moving force, with one clear alternate failure rule.
+
+Guardrails:
+
+- no player-selected loadouts
+- no timer-expiry mission failures for the first demo
+- no stacking every failure type into one mission
+- no long repeated escort structure
+- no hidden critical-unit punishment without clear objective messaging
+
+## Encounter Pacing and Enemy Pressure
+
+Enemy pressure should feel like a rival RTS force operating under authored mission rules, not like invisible wave math. The player should infer threat from scouting, visible movement, visible infrastructure, and attacks on known assets.
+
+### Pressure Rhythm
+
+Purpose: make missions tense without becoming constant waves.
+
+Direction:
+
+- Use a readable rhythm: opening grace, scout/probe, contested objective, main pressure, then mission-specific pressure beat.
+- Leave breathing room after meaningful attacks so the player can repair, rebuild, scout, or counterattack.
+- Early danger should come more from target choice and map route than from raw enemy count.
+
+Fit:
+
+- Core first-demo pacing rule.
+- Keeps pressure compatible with quick RTS restart and authored mission learning.
+
+### Enemy Group Sizes
+
+Purpose: keep fights legible while the player is still learning the game's grammar.
+
+Direction:
+
+- Level 1: 1-3 attackers, mostly Cadet/Rifleman, with defenders kept at enemy base.
+- Level 2: 2-5 attackers plus resource-race behavior around wells, Extractors, Pylons, and Defense Tower wall routes.
+- Level 3: 3-6 attackers or one readable vehicle/armor pressure beat if Vehicle Bay/Rover or Guardian counters are being taught.
+- Level 4/5: larger pressure only when the mission has already provided the tools and map shape to answer it.
+
+Fit:
+
+- Keeps old-school RTS readability without making early missions passive.
+
+### Readable Targeting
+
+Purpose: make enemy pressure teach infrastructure value.
+
+Direction:
+
+- Enemy should prefer meaningful visible targets before simply cracking the Colony Hub: exposed Grunts, Extractors, Pylons, Power Plants, lonely Defense Towers, forward Barracks/add-ons, mission equipment, or transports.
+- Commander can be prioritized only if visible and reachable.
+- Player-facing warnings should be classic known-event warnings: enemy spotted, own asset under attack, power offline, construction complete, training complete.
+- Do not add alerts like "enemy is planning to attack your Pylon." Let the map show it.
+
+Fit:
+
+- Strong identity fit. Stratezone should make power, wells, and Grunts feel tactically exposed.
+
+### Raid Triggers and Coalescing
+
+Purpose: prevent early base-building milestones from stacking into unfair back-to-back raids.
+
+Direction:
+
+- Condition triggers are useful, but they need mission-level pacing guards.
+- Building Barracks and building the first Extractor can happen back to back in normal base starts, so they must not independently fire immediate separate raids.
+- Opening pressure triggers should share a grace window, cooldown, or trigger group.
+- Multiple early triggers should coalesce into one planned pressure beat, increase future interest, or be ignored if a raid is already queued.
+- Prefer condition triggers for authored beats, but avoid "every event fires as soon as its condition is true" behavior.
+
+Fit:
+
+- Required for Level 2 and later base-building missions.
+- Protects fairness without removing authored reactivity.
+
+### Enemy Rebuilding
+
+Purpose: make pressure feel fair and raidable.
+
+Direction:
+
+- Enemy rebuilds only from resources and only when the mission profile allows it.
+- Rebuild cadence should be slower in early missions.
+- Destroying enemy Extractors, Pylons, or power should visibly slow pressure.
+- Any pacing cheat must be explicitly documented as a scenario exception.
+
+Fit:
+
+- Strong Level 2 proof target.
+- Keeps infrastructure strikes more important than pure unit trading.
+
+### Early Armor
+
+Purpose: introduce armor as a readable lesson, not a surprise punishment.
+
+Direction:
+
+- Armor or hardened defense should appear only after the player has, can unlock, or has been taught the intended answer.
+- Level 2 can use hardened defenses, tower anchors, or one light armor beat if Armory/Guardian enters there.
+- Level 3 can use vehicle pressure if Vehicle Bay/Rover is being taught.
+- Telegraph armor through mission setup, visible enemy tech, wrecks, or scouted structures.
+
+Fit:
+
+- Keeps Guardian and Rover unlocks meaningful instead of arbitrary.
+
+### Retreat and Regroup
+
+Purpose: make the enemy feel smarter without requiring skirmish-grade AI.
+
+Direction:
+
+- Damaged committed attackers may retreat if the mission profile allows it.
+- Wiped attack groups create a regroup delay before the next committed attack.
+- Defenders should not all abandon the enemy base.
+- Rival-officer memory can tune regroup timing or target weights internally, but never produces player-facing hidden-plan alerts.
+
+Fit:
+
+- Good first-demo AI polish once basic pressure is stable.
+
+## Encounter Pressure Priority
+
+Working first-demo pressure pattern:
+
+1. Level 1: slow probes, one small committed group, visible defenders, protect Grunts and power.
+2. Level 2: resource-race pressure, well contesting, Extractor/Pylon targeting, trigger coalescing, possible Guardian-justifying hardened target.
+3. Level 3: route pressure and mobile/vehicle pressure that explains Vehicle Bay/Rover.
+4. Level 4: recovery or equipment-takeover pressure aimed at the Grunt route or restored equipment after the objective is readable.
+5. Level 5: fortified enemy, siege pressure, extraction pressure, or final counterattack after the player has the tools to respond.
+
+Guardrails:
+
+- no omniscient hidden-plan alerts
+- no stacked opening raids from back-to-back base-building triggers
+- no free enemy rebuild unless explicitly documented
+- no surprise armor before the counter is available or readable
+- no constant wave-spawner feel
+
 ## Next Content Planning Topic
 
-The next planning section should be mission start and failure-condition patterns: when to use partial bases, no-base moving-force scenarios, irreplaceable troops, commander failure, transport/extraction failure, timers, and base destruction without making every mission feel like an escort mission.
+The next planning section should be player-facing mission presentation: briefings, objective text, warning language, map callouts, and how much story flavor to use without turning the demo into a cutscene campaign.

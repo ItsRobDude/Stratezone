@@ -74,7 +74,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - First-pass combat balance should follow the old-school RTS formula: basic infantry die quickly, base structures take a long time to crack with small arms, armor shrugs off ballistics, and explosives are the siege lane.
 - Ancient tech is out of scope for now.
 - The tone is military-industrial with restrained future utility tech, such as rocket towers and laser-armed troops.
-- Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, or combined fail states.
+- Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, required Grunt/equipment lost, or combined fail states. Timer-expiry mission failures are not planned for the first demo.
 
 ## Near-Term Priorities
 
@@ -229,6 +229,7 @@ Exit criteria:
 - map data can express blocked terrain, buildable areas, resource basins, and tower-wall chokepoint candidates without relying on scene-only placement
 - `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together
 - scenario checks can prove a mission route without replaying every unrelated system assertion
+- event triggers have grace/cooldown or coalescing rules before Level 2 relies on multiple base-building pressure triggers
 - no new major mechanic has been added just to make the roadmap look larger
 
 ## Milestone 4: Level 2 - Resource Race, Terrain Chokes, and First Armory
@@ -244,6 +245,7 @@ Mission shape:
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
 - likely first Armory Annex and Guardian production, justified by enemy armor, hardened defense, or tower-anchor pressure
+- pressure triggers do not stack immediate raids when normal base-building milestones happen close together
 - quick RTS failure/retry expectations rather than persistent campaign consequences
 - no Vehicle Bay requirement
 - no Med Hall, Logistics / Repair Pad, or Artillery unless one is clearly needed to make the mission work
@@ -288,6 +290,7 @@ Deliverables:
 - one additional mission archetype beyond resource race / first Armory and Vehicle Bay / Rover
 - Vehicle Bay / Rover production is assigned to Mission 3 or Mission 4
 - authored start patterns are named: full base, partial base, no-base moving force, or allotted/irreplaceable troops
+- timer-expiry failure stays out of the first demo unless the roadmap is deliberately reopened
 - a decision on whether the demo uses one or two support/siege systems total
 - a written cut line for systems that stay after the first public demo
 
@@ -296,6 +299,7 @@ Exit criteria:
 - the first five-level demo has a coherent sequence of playable lessons
 - each mission has one primary proof target and one clear reason to exist
 - no player loadout system is needed for the first demo
+- failure conditions are clear, mission-specific, and not hidden timers
 - no mission depends on lore or cutscenes to explain its mechanical purpose
 
 ## Milestone 7: Playtest Build

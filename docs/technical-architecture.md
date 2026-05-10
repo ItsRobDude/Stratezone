@@ -358,7 +358,7 @@ Early requirements:
 - defend an on-map commander unit
 - support a Level 1 Medium Tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
 - support mission data choosing whether Barracks add-ons are player-built, prebuilt, or locked for the mission
-- fail if mission-specific critical conditions are broken, such as colony hub destroyed, commander killed, transport lost, convoy escaped, or objective timer expired
+- fail if mission-specific critical conditions are broken, such as Colony Hub destroyed, Commander killed, transport lost, convoy escaped, or required Grunt/equipment lost; timer-expiry mission failure is not planned for the first demo unless the roadmap is explicitly reopened
 
 ### Event Director
 
@@ -371,6 +371,7 @@ Early requirements:
 - event start/end
 - event consequences
 - classic RTS command warnings for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete
+- trigger coalescing, grace windows, and cooldowns so multiple early mission conditions do not stack into unfair back-to-back raids
 
 Events should be inspectable and tunable. Avoid opaque random chaos early. Do not surface omniscient hidden enemy intent in the normal HUD; enemy plans should be inferred from scouting, fog, visible units, attacks, and visible infrastructure state unless a future radar/scanner system grants extra information.
 

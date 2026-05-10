@@ -169,71 +169,85 @@ Evidence:
 - one commander-death loss run; deterministic smoke coverage currently proves Commander death and the F7/debug loss path
 - smoke coverage for central well retake, enemy Pylon weak point, and tower-wall shutdown
 - smoke coverage for Guardian-vs-armor damage math, Medium Tank reveal on both sides, and Rocket Tower anti-armor tuning
-- repair smoke coverage for proportional material cost and no-negative-spend behavior once repair is implemented
+- repair smoke coverage for command start, switching targets, friendly-only restriction, proportional material cost, and no-negative-spend behavior
 - notes for any missing or intentionally placeholder behavior
 - localization key coverage for mission result, objective, command, and blocked-action text
-- closeout notes should distinguish verified playable behavior from deferred systems such as repair, final balance, and final art
+- closeout notes should distinguish verified playable behavior from deferred systems such as Med Hall, Logistics / Repair Pad, final balance, and final art
 
-## Milestone 3 Checklist: Colony Pressure Pass
+## Milestone 3 Checklist: Mission Grammar and Architecture Hardening
 
 Acceptance checks:
 
-- grunt loss creates a real resource/time setback
-- grunt replacement is possible if affordable
-- pressure warning appears before major danger
+- hand-written files over the 900-line review trigger are split or have a documented reason to stay together
+- broad smoke coverage is split or grouped enough that a failed mission route points to the relevant system quickly
+- mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
+- new mission setup can be added through data plus narrow simulation/presentation seams
+- root or documented validation commands cover content validation, C# build, simulation smoke, and Godot headless launch
+- new objective, warning, command, and blocked-action text uses localization keys
+- no new major mechanic is added only to make the milestone feel larger
+
+Evidence:
+
+- file-size and ownership notes for any remaining large files
+- smoke/test organization notes showing how Level 2 routes will be proven
+- one dry-run plan for adding a second mission without copying First Landing scene logic
+- validation command output
+
+## Milestone 4 Checklist: Level 2 - Resource Race and Terrain Chokes
+
+Acceptance checks:
+
+- Level 2 uses the same-tech human enemy family with red or alternate-color presentation
+- scarce wells force a visible resource race
+- cliffs, water, or other impassable terrain create readable chokepoints without a complex terrain-simulation expansion
+- Defense Tower wall placement matters because of the map shape
+- enemy power or extractor infrastructure can be scouted and attacked
 - pressure creates a choice between repair, defense, expansion, or attack
-- pressure does not turn into deep colonist simulation
-- RTS pace remains active during pressure events
+- quick fail/retry flow is acceptable; no persistent campaign consequence is required
+- Med Hall, Logistics / Repair Pad, and Artillery remain absent unless one is needed for the mission's primary proof
 
 Evidence:
 
-- before/after notes showing pressure changed player decisions
-- tests or debug output for event triggers where available
+- one expansion/resource-race route note
+- one defensive wall/chokepoint route note
+- smoke or debug evidence for any new terrain/passability rule
+- notes for any support/siege system deliberately kept out
 
-## Milestone 4 Checklist: Tactical Identity Pass
+## Milestone 5 Checklist: Armory and Guardian Tactical Unlock
 
 Acceptance checks:
 
-- infrastructure strikes matter in at least one mission route
-- scouting reveals useful tactical information
-- Cadet, Rifleman, Guardian, Rover, Commander, Medium Tank, and Heavy Tank roles are distinct
-- Guardian is proven as anti-armor infantry without becoming a better anti-infantry Rifleman
-- Level 1 starts the player with one Grunt, one Guardian, one Rover, and one Commander, while only Grunt, Cadet, and Rifleman are trainable
-- first enemy AI production can choose between Level 1-available combat troops based on resources and requirements
-- enemy can scout/rally before first pressure, retreat damaged attackers, avoid immediately recommitting badly damaged returnees, and regroup after a wiped attack group
-- rival-officer memory stays internal and does not add adaptation alerts or hidden-plan UI text
-- troop train times vary by unit, with more expensive or heavier units generally taking longer
-- train-time tuning preserves the intended fast Dominion / classic RTS feel instead of making early infantry feel like slow colony-sim recruits
-- explosive friendly fire works if explosive units are present
-- normal gunfire does not friendly-fire
-- player can win through something smarter than direct unit spam
-- Med Hall heals infantry slowly, requires power, and spends resources only while healing
-- Logistics / Repair Pad repairs parked vehicles, requires power, and spends resources only while repairing
-- Artillery Battery is fragile, long-range, explosive, has a minimum range, and cannot defend itself up close
+- Armory Annex is a physical powered Barracks add-on in the mission, not only a menu upgrade
+- Guardian production or Guardian access is earned through mission setup
+- Guardian remains proven as anti-armor infantry without becoming a better anti-infantry Rifleman
+- power disruption can affect the unlock path
+- troop train times preserve fast classic-RTS pacing
+- enemy still uses the same human tech family unless a later art/design pass deliberately changes it
+- at most one support/siege system enters this milestone, and only if the mission needs it
 
 Evidence:
 
-- one brute-force route note
-- one infrastructure-strike route note
-- combat/system tests for role-specific rules where practical
+- one route note showing why Armory/Guardian mattered
+- smoke coverage for the unlock path and anti-armor role
+- notes explaining whether Med Hall, Logistics / Repair Pad, or Artillery stayed deferred
 
-## Milestone 5 Checklist: Vertical Slice
+## Milestone 6 Checklist: Demo Mission Set Shape
 
 Acceptance checks:
 
-- one mission has coherent art direction, sound, UI, and feedback
-- basic settings exist
-- packaged Windows build runs outside the editor
-- known issues are documented
-- build version is visible
-- first 20 minutes communicate Stratezone's identity
-- build is clearly marked prototype, not sellable release
+- Level 4 and Level 5 have mission briefs or greybox starts
+- each demo mission has one primary proof target
+- the first demo remains a campaign-like arc of authored simulation scenarios, not a story-heavy cutscene plan
+- Vehicle Bay/Rover production is either assigned to a mission or explicitly deferred
+- the demo uses no more than one or two support/siege systems unless the roadmap is deliberately reopened
+- each mission has a clear failure-condition mix and restart expectation
+- cut systems are named instead of left as vague future work
 
 Evidence:
 
-- packaged build smoke notes
-- playtest feedback notes
-- known issues list
+- five-level demo sequence outline
+- per-mission proof target list
+- explicit cut/defer list for systems outside the first public demo
 
 ## Public Build Checklist
 

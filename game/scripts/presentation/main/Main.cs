@@ -809,11 +809,13 @@ public partial class Main : Node2D
 
         if (selectedBuilding is not null)
         {
-            var hint = selectedBarracks
-                ? L("ui.command.barracks_hint")
-                : selectedDefenseTower
-                    ? L("ui.command.defense_tower_hint")
-                    : L("ui.command.no_direct_commands");
+            var hint = selectedBuilding.IsDamaged
+                ? L("ui.command.damaged_building_hint")
+                : selectedBarracks
+                    ? L("ui.command.barracks_hint")
+                    : selectedDefenseTower
+                        ? L("ui.command.defense_tower_hint")
+                        : L("ui.command.no_direct_commands");
             _commandPanel.UpdateActions(BuildingName(selectedBuilding.Definition), actions.ToArray(), hint);
             return;
         }

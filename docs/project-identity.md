@@ -123,6 +123,8 @@ Authored missions let the game test:
 
 Sandbox, procedural generation, persistence, and large campaigns can come later if the mission loop earns them.
 
+The first demo should feel like a campaign arc because the missions are authored and ordered, not because the project needs a heavy story layer. Stratezone can remain simulator-like inside each mission: the player should solve real base, power, resource, terrain, and enemy-pressure problems rather than follow scripted cutscenes.
+
 ### 6. Maintainable ambition
 
 The project should be ambitious in the experience, not reckless in implementation.
@@ -172,14 +174,16 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 
 - Stratezone is mission RTS first, not survival sandbox first.
 - Each level starts as a fresh scenario, closer to a classic RTS campaign structure than a persistent colony.
+- The first demo should be a campaign-like sequence of authored simulation scenarios. Story can stay light until the mission grammar is proven.
 - Grunts are expensive recruitable units. They can die like troops, but replacing them costs resources and slows the outpost.
 - Grunts are useless in combat and flee from attackers.
 - Grunts require player command for construction and repair in the first prototype.
+- Grunts read as combat engineers or expedition technicians: valuable utility troops, not life-sim colonists.
 - Combat uses individual units with varied cost, strength, and specialty.
 - Some units should be stronger when grouped or supported; expensive specialist units may stand a better chance alone.
 - Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
-- The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
-- The first mission includes a controllable on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- The first enemy faction is a private military force with the same basic technology and buildings as the player, reskinned in red or another alternate color until the art direction proves a stronger need.
+- Commander units are controllable troops, not abstract heroes. They should be used in the practical Dominion-style RTS spirit: valuable, vulnerable, mission-relevant units on the map.
 - The first mission is a small 5-10 minute top-down scenario set in bright readable meadows/fields with light forest.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
@@ -199,13 +203,17 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.
 - Failure criteria can vary by mission, including commander killed, main base destroyed, transport lost, convoy objective failed, or combined conditions.
+- Quick RTS restart is the expected first-demo failure model. Persistent campaign consequences are later scope.
+- Level 2 should lean toward a resource race with strategic base-building terrain such as cliffs, water, chokepoints, and useful Defense Tower wall positions.
+- Level 3 should prove Armory Annex and Guardian access before broadening into multiple unlock systems.
+- Med Hall, Logistics / Repair Pad, and Artillery Battery may enter the first demo one or two at most, and only when a specific mission needs that role.
 
 ## Open Vision Questions
 
 These are intentionally unresolved:
 
-- Is the wider world mostly human factions fighting each other, or are non-human factions central later?
 - Exact grunt replacement cost relative to basic combat units.
-- Should the midlevel twist usually be environmental, enemy-driven, logistics-driven, or objective-driven?
-- How many mission archetypes belong in the first campaign slice?
+- Exact Level 4 and Level 5 mission archetypes.
+- Whether Vehicle Bay/Rover production enters the first demo or stays later.
+- Which one or two support/siege systems, if any, earn a place in the first demo.
 - Exact Level 1 enemy production speed and resource handicap.

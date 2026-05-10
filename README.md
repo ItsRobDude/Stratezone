@@ -22,13 +22,14 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 - Build a playable prototype before chasing full-game scope.
 - Focus on one strong mission-style RTS loop: land, stabilize, expand, survive, strike.
 - Keep colony stakes light enough to support RTS pacing; this is not a survival game.
+- Shape the first demo like an authored campaign arc of simulation-driven missions, not a story-heavy cutscene campaign.
 - Build the first prototype in Godot 4 with C#.
 - Keep visuals readable and production-friendly: top-down 2D, chunky silhouettes, strong UI, particles, terrain texture work, and a realistic AI/vector/turntable asset pipeline.
 - Prefer systems that can become a real packaged indie game for itch.io or Steam.
 
 ## Core Fantasy
 
-You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable grunts, barracks-controlled training rules, powered Barracks add-ons, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Enemy forces, resource pressure, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
+You command an expedition on a dangerous frontier world. Each level is a fresh scenario. Your outpost depends on a Colony Hub, recruitable grunts, barracks-controlled training rules, powered Barracks add-ons, power plants, pylons, extractors/refineries, defensive wall towers, and military production. Same-tech human enemy forces, resource pressure, terrain chokepoints, and mission threats push back while you scout, defend, escort, intercept, and dismantle hostile infrastructure.
 
 ## Primary Player Verbs
 
@@ -61,6 +62,7 @@ First prototype roster:
 - **Support and siege:** Med Hall, Logistics / Repair Pad, and Artillery Battery have prototype content records but are later-mission systems unless First Landing playtests prove a hard need.
 - **Units:** Grunt, Cadet, Rifleman, Guardian anti-armor infantry, Rover, Commander.
 - **Current Level 1 training:** Grunt, Cadet, and Rifleman are trainable by the player and available to the first enemy AI. Guardian, Rover, and Commander can be authored into the scenario, but the player cannot train more of them in Level 1.
+- **Roadmap shape:** Level 2 should prove a resource race with terrain chokepoints and Defense Tower walls; Level 3 should prove Armory Annex and Guardian access before broader unlocks.
 - **Public build target:** the first public build should be a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
 
 For this pass, placeholder shapes are acceptable, art direction can wait until gameplay works, and no story cutscenes are required.

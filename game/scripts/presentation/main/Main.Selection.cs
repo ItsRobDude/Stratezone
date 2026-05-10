@@ -58,8 +58,11 @@ public partial class Main
                 view.SetSelected(true);
             }
 
+            var selectedBuildingMessageKey = building.IsDamaged
+                ? "ui.action.selected_damaged_building"
+                : "ui.action.selected_building";
             _lastActionMessage = L(
-                "ui.action.selected_building",
+                selectedBuildingMessageKey,
                 SimulationMessage.Args(
                     ("building", BuildingName(building.Definition)),
                     ("health", $"{building.Health:0}"),

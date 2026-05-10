@@ -156,6 +156,12 @@ The exact names can change by domain, but the ownership should stay legible:
 
 When a hand-written code file reaches 900 lines, treat that as an architecture review point. Split it if it has more than one reason to change, especially if scene code is starting to own simulation behavior, or document why the file should stay together.
 
+Current architecture pressure points:
+
+- `game/scripts/presentation/main/Main.cs` is past the review trigger and should be split or explicitly justified before Level 2 adds more presentation behavior.
+- `tests/SimulationSmoke/Program.cs` has become the broad proof harness for many systems; before new missions expand it further, group or split checks so failures point to the relevant scenario or system.
+- Mission 2 should be a data-plus-seams exercise. If it requires copying First Landing setup logic into scene code, pause and improve the mission setup architecture first.
+
 ## Simulation Boundary
 
 The simulation owns all rules that must survive save/load and all decisions the player should be able to trust.

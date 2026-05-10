@@ -14,6 +14,7 @@ The intended product is:
 - RTS-readable enough that the player can command quickly
 - packageable as a desktop indie game
 - scoped around authored missions before sandbox or procedural expansion
+- shaped like a campaign arc of simulation-driven missions, not a story-heavy cutscene campaign
 - visually practical for AI-assisted concept art plus Photoshop cleanup
 - realistic about asset production: AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames are valid working paths while paid art is out of reach
 - grounded in restrained near-future military utility rather than ancient-tech mystery
@@ -48,12 +49,12 @@ The first prototype stack is locked as Godot 4 with C#.
 
 - Grunts are important recruitable units. They are useless in combat, flee from attackers, and replacing them costs resources and slows the outpost.
 - The primary format is mission RTS, not survival sandbox.
-- Each level starts as a fresh scenario, closer to a classic RTS campaign.
+- Each level starts as a fresh scenario, closer to a classic RTS campaign. The project can still feel like a simulator inside each mission, but the first demo should be a structured mission arc rather than an open-ended sandbox.
 - Combat uses individual units with varied cost, strength, and specialty.
 - Some units should perform best grouped or supported; elite/expensive units can stand alone better.
 - Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
-- The first enemy faction is a private military force with similar technology/troops, reskinned and tuned differently.
-- The first mission includes a controllable on-map commander troop who must be defended. He is fragile, carries a pistol, and currently exists mainly as a fail condition.
+- The first enemy faction is a private military force using the same basic buildings and technology as the player, reskinned in red or an alternate color until later art direction proves a stronger need.
+- Commander units are controllable troops, not abstract heroes. They should be used in the same practical RTS spirit as Dominion-style commanders: valuable, vulnerable, mission-relevant units on the map.
 - The first mission is a small 5-10 minute top-down RTS scenario in bright readable meadows/fields with light forest.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
@@ -88,12 +89,17 @@ The first prototype stack is locked as Godot 4 with C#.
    - Keep content validation passing as data grows.
    - Expand automated checks only when they protect deterministic behavior found during playability passes.
 
-3. Tactical proof follow-up
-   - Tune the enemy pylon weak point, central well pressure, tower-wall route, and attack pacing from additional playtest evidence.
-   - Implement repair for First Landing, with material cost scaling by missing health percentage.
-   - Add a midlevel twist only after the basic win/loss run is reliably understandable.
+3. Mission grammar and architecture hardening
+   - Make the next authored mission cheaper to add before introducing another broad gameplay layer.
+   - Split or justify large hand-written files that are already over the review trigger, especially `Main.cs` and broad smoke coverage.
+   - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, and scenario-specific tests.
 
-4. Release runway
+4. Level 2 planning target
+   - Build a resource-race mission with more strategic base-building terrain: cliffs, water, chokepoints, and Defense Tower wall opportunities.
+   - Keep the first enemy same-tech and same-building for now, using red or alternate-color presentation.
+   - Use environmental layout and resource competition before adding Med Hall, Repair Pad, or Artillery.
+
+5. Release runway
    - Keep `docs/release-roadmap.md` current as build tooling appears.
    - Add packaged-build checks before any public demo.
    - Separate prototype completeness from sellable release readiness.
@@ -180,7 +186,7 @@ Systems:
 - enemy raid event
 - basic combat
 - building damage
-- repair deferred unless playtesting shows First Landing needs it
+- player-commanded Grunt repair for damaged friendly structures
 - win/loss conditions
 - at least one non-base-destruction failure criterion
 - on-map commander defend condition
@@ -198,72 +204,88 @@ Exit criteria:
 - the player understands what went wrong when failing
 - the colony and combat sides both matter
 
-## Milestone 3: Colony Pressure Pass
+## Milestone 3: Mission Grammar and Architecture Hardening
 
-Goal: make the outpost feel alive without becoming a deep colony sim.
+Goal: make new authored missions maintainable before the project adds more mechanics.
 
-Candidate systems:
+This milestone is intentionally not a content-expansion milestone. It exists because the first mission now proves enough runtime truth that future work needs stronger seams before Level 2 grows.
 
-- expensive grunt units and replacement cost
-- supply/stability/morale as a compact outpost health layer
-- injuries or repair strain
-- event warnings and consequences
-- environmental pressure
+Architecture work:
 
-Exit criteria:
-
-- colony pressure creates decisions
-- pressure is readable before it becomes dangerous
-- the RTS pace remains active
-
-## Milestone 4: Tactical Identity Pass
-
-Goal: make combat and level design about more than direct fights.
-
-Candidate systems:
-
-- scout unit
-- infantry/security unit
-- armored vehicle
-- artillery or siege unit
-- Med Hall content record for slow infantry healing that spends resources while active
-- Logistics / Repair Pad content record for powered vehicle maintenance
-- Artillery Battery content record as fragile static siege infrastructure with a minimum range
-- engineer/repair/capture unit
-- enemy power dependencies
-- neutral map objects
-- fog/scouting layer
+- split or explicitly justify hand-written files over the 900-line review trigger
+- separate broad smoke coverage into mission/scenario-focused checks when it starts slowing diagnosis
+- create a repeatable mission data pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
+- keep all new mission rules in simulation/data layers rather than Godot scene-only code
+- add or document root-level validation commands so future runs do not depend on remembered command sequences
+- keep localization keys mandatory for new objective, warning, command, and blocked-action text
 
 Exit criteria:
 
-- infrastructure strikes matter
-- scouting creates useful information
-- unit roles feel distinct
-- the player has multiple viable approaches
+- Level 2 can be added mostly through data plus narrow simulation/presentation seams
+- `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together
+- scenario checks can prove a mission route without replaying every unrelated system assertion
+- no new major mechanic has been added just to make the roadmap look larger
 
-## Milestone 5: Vertical Slice
+## Milestone 4: Level 2 - Resource Race and Terrain Chokes
 
-Goal: make one mission feel like a small, coherent game slice.
+Goal: prove strategic base-building pressure through terrain and resource competition.
+
+Mission shape:
+
+- same-tech human opponent using player-like structures and units with red or alternate-color presentation
+- scarce resource wells that force a race for expansion timing
+- cliffs, water, or other impassable terrain that create readable chokepoints without requiring complex terrain simulation
+- Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
+- enemy power dependencies and extractor routes that can be scouted and attacked
+- quick RTS failure/retry expectations rather than persistent campaign consequences
+- no Med Hall, Logistics / Repair Pad, or Artillery unless one is clearly needed to make the mission work
+
+Exit criteria:
+
+- the player makes a real choice between expanding, walling, repairing, or attacking
+- the resource race is legible before it becomes punishing
+- at least one chokepoint can be shaped with Defense Tower walls
+- infrastructure strikes matter without requiring a new faction or story system
+- the mission proves a second repeatable level-design pattern after First Landing
+
+## Milestone 5: Level 3 - Armory and Guardian Tactical Unlock
+
+Goal: prove the first deliberate tech unlock mission.
 
 Deliverables:
 
-- one polished-ish mission
-- first pass art direction
-- first pass sound and UI
-- basic settings
-- packaged Windows build
-- known issues list
-- playtest feedback notes
-- build version display
+- an authored mission where the Armory Annex matters as a powered physical add-on
+- Guardian production or Guardian access that is earned through mission setup rather than assumed globally
+- anti-armor or anti-defense pressure that makes Guardian useful without turning it into the default anti-infantry answer
+- at most one support/siege system from Med Hall, Logistics / Repair Pad, or Artillery Battery if the mission proves a hard need
+- enemy use of the same tech family unless a later art/design pass deliberately changes that
 
 Exit criteria:
 
-- a tester can run and play without developer explanation
-- the first 20 minutes communicate Stratezone's identity
-- the build produces actionable feedback
-- the build is still a prototype, not a sellable release
+- the player understands why the Armory Annex exists
+- Guardian remains distinct from Rifleman and Cadet
+- power disruption can affect the unlock path
+- the mission adds tactical identity without broad roster bloat
 
-## Milestone 6: Playtest Build
+## Milestone 6: Demo Mission Set Shape
+
+Goal: decide and prove the remaining first-demo mission archetypes before packaging work dominates.
+
+Deliverables:
+
+- Level 4 and Level 5 mission briefs or greybox starts
+- one additional mission archetype beyond resource race and Armory unlock
+- a decision on whether Vehicle Bay/Rover production enters the demo or stays later
+- a decision on whether the demo uses one or two support/siege systems total
+- a written cut line for systems that stay after the first public demo
+
+Exit criteria:
+
+- the first five-level demo has a coherent sequence of playable lessons
+- each mission has one primary proof target and one clear reason to exist
+- no mission depends on lore or cutscenes to explain its mechanical purpose
+
+## Milestone 7: Playtest Build
 
 Goal: let a small private tester play without the developer narrating.
 
@@ -283,7 +305,7 @@ Exit criteria:
 - one 20-30 minute session produces useful feedback
 - known issues are tracked in writing
 
-## Milestone 7: Public Demo / Itch Build
+## Milestone 8: Public Demo / Itch Build
 
 Goal: prepare a public or semi-public downloadable build through itch.io.
 
@@ -311,7 +333,7 @@ Exit criteria:
 - the itch page does not claim features missing from the build
 - strangers can give gameplay feedback instead of setup feedback
 
-## Milestone 8: Steam Page Candidate
+## Milestone 9: Steam Page Candidate
 
 Goal: prepare for Steam visibility before a full release claim.
 
@@ -337,7 +359,7 @@ Exit criteria:
 - Steam submission work has a checklist
 - missing features are not hidden inside marketing copy
 
-## Milestone 9: Steam Demo or Early Access Candidate
+## Milestone 10: Steam Demo or Early Access Candidate
 
 Goal: submit a build and page that can survive platform review.
 
@@ -363,7 +385,7 @@ Exit criteria:
 - the build launches and plays outside the editor
 - remaining blockers are platform/process issues, not missing basics
 
-## Milestone 10: Sellable Release Candidate
+## Milestone 11: Sellable Release Candidate
 
 Goal: make a build that can reasonably be sold.
 
@@ -409,8 +431,8 @@ These are not first-prototype commitments:
 
 - Exact building footprint/buffer values for constrained maps.
 - Grunt replacement cost relative to basic combat units.
-- Exact later-mission use of Armory Annex and Vehicle Bay. Vehicle Bay is hidden in Level 1.
-- Med Hall, Logistics / Repair Pad, and Artillery Battery should wait for later missions unless First Landing playtests prove a hard need.
-- First campaign mission archetypes and failure-condition mix.
+- Exact Vehicle Bay/Rover production mission. Vehicle Bay is hidden in Level 1 and should not enter Level 2 unless the resource-race mission needs it.
+- Whether the first demo uses one or two support/siege systems from Med Hall, Logistics / Repair Pad, and Artillery Battery.
+- Level 4 and Level 5 mission archetypes and failure-condition mix.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.
 - Whether the first paid release targets itch.io first, Steam first, or both after the demo proves itself.

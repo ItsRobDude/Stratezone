@@ -21,6 +21,23 @@ Runtime loading prefers each unit's packed atlas:
 
 - `game/assets/units/<unit>/<unit>_directional_atlas.png`
 
+Units with movement animation may also provide a directional run atlas:
+
+- `game/assets/units/<unit>/animations/run_directional/<unit>_run_directional_atlas.png`
+- `game/assets/units/unit_animation_settings.json`
+
+Run atlases use eight rows in the same compass order and sixteen columns for the run-cycle frames. Keep every cell on one shared transparent canvas and preserve the same bottom-center foot anchor.
+
+Prototype run atlases may use a smaller fixed cell than idle frames to keep texture memory reasonable. If they do, presentation code must scale that run atlas back to the same displayed size and preserve the bottom-center foot anchor.
+
+Build a run atlas from a `N-360/1x/*.png` pose export:
+
+```powershell
+python tools\build_unit_run_atlas.py --unit rifleman --source C:\Users\Rob\Pictures\stratezone\rmrun --preview-out C:\Users\Rob\Pictures\stratezone\rmrun_review\runtime_rifleman_run_directional_preview.png
+```
+
+The default source view order is `4,3,2,1,8,7,6,5`, mapped into the game compass rows `000,045,090,135,180,225,270,315`. Override `--source-view-order` if a future turntable export starts from a different angle.
+
 Build or refresh atlases after changing directional frames:
 
 ```powershell

@@ -1,4 +1,6 @@
 using Godot;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Stratezone.Localization;
 using Stratezone.Simulation;
 
@@ -6,16 +8,21 @@ public partial class GreyboxSimUnit : Node2D
 {
     private const float DirectionalSpriteScale = 0.06f;
     private const int DirectionalAtlasColumns = 4;
+    private const string UnitAnimationSettingsPath = "res://assets/units/unit_animation_settings.json";
     private const float UnitLabelZoomThreshold = 0.85f;
     private const float PathDebugZoomThreshold = 0.75f;
     private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
     private static readonly Dictionary<string, IReadOnlyDictionary<int, Texture2D>> DirectionalTextureCache = [];
+    private static readonly Dictionary<string, IReadOnlyDictionary<int, IReadOnlyList<Texture2D>>> RunAnimationTextureCache = [];
+    private static readonly Dictionary<string, UnitRunAnimationConfig?> RunAnimationConfigCache = [];
+    private static UnitAnimationSettingsFile? UnitAnimationSettings;
 
     private UnitState? _state;
     private Label? _label;
     private LocalizationCatalog? _localization;
     private Sprite2D? _directionalSprite;
     private string? _directionalAssetSlug;
+    private UnitRunAnimationConfig? _runAnimationConfig;
     private bool _selected;
     private bool _useRiflemanPlaceholder;
     private bool _useCadetPlaceholder;
@@ -23,6 +30,9 @@ public partial class GreyboxSimUnit : Node2D
     private int _facingAngle = 180;
     private float _cameraZoom = 1.0f;
     private Vector2? _lastPosition;
+    private bool _isMoving;
+    private float _runAnimationSeconds;
+    private int _runAnimationFrameIndex;
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
@@ -69,6 +79,15 @@ public partial class GreyboxSimUnit : Node2D
     public void UpdateFromState(UnitState state)
     {
         var nextPosition = new Vector2(state.Position.X, state.Position.Y);
+        var wasMoving = _isMoving;
+        _isMoving = IsMoving(nextPosition);
+        if (_isMoving != wasMoving)
+        {
+            _runAnimationSeconds = 0.0f;
+            _runAnimationFrameIndex = 0;
+            UpdateDirectionalTexture();
+        }
+
         UpdateFacing(state, nextPosition);
 
         _state = state;
@@ -92,6 +111,26 @@ public partial class GreyboxSimUnit : Node2D
 
         Visible = !state.IsDestroyed;
         QueueRedraw();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (!_isMoving || _runAnimationConfig is null || _directionalSprite is null || _directionalAssetSlug is null)
+        {
+            return;
+        }
+
+        _runAnimationSeconds += (float)delta;
+        var nextFrameIndex = Mathf.PosMod(
+            Mathf.FloorToInt(_runAnimationSeconds * _runAnimationConfig.FramesPerSecond),
+            _runAnimationConfig.FrameCount);
+        if (nextFrameIndex == _runAnimationFrameIndex)
+        {
+            return;
+        }
+
+        _runAnimationFrameIndex = nextFrameIndex;
+        UpdateDirectionalTexture();
     }
 
     public override void _Draw()
@@ -165,11 +204,13 @@ public partial class GreyboxSimUnit : Node2D
         }
 
         _directionalAssetSlug = assetSlug;
+        _runAnimationConfig = LoadRunAnimationConfig(assetSlug);
         var textures = LoadDirectionalTextures(assetSlug);
         if (!textures.TryGetValue(_facingAngle, out var initialTexture))
         {
             GD.PushWarning($"No directional unit sprites found for {unitId}; using greybox placeholder.");
             _directionalAssetSlug = null;
+            _runAnimationConfig = null;
             return;
         }
 
@@ -234,6 +275,55 @@ public partial class GreyboxSimUnit : Node2D
             };
         }
 
+        return textures;
+    }
+
+    private static IReadOnlyDictionary<int, IReadOnlyList<Texture2D>> LoadRunAnimationTextures(
+        string assetSlug,
+        UnitRunAnimationConfig config)
+    {
+        if (RunAnimationTextureCache.TryGetValue(assetSlug, out var cached))
+        {
+            return cached;
+        }
+
+        var atlas = LoadTexture(config.AtlasPath);
+        if (atlas is null)
+        {
+            var missing = new Dictionary<int, IReadOnlyList<Texture2D>>();
+            RunAnimationTextureCache[assetSlug] = missing;
+            return missing;
+        }
+
+        var atlasSize = atlas.GetSize();
+        var frameWidth = atlasSize.X / config.FrameCount;
+        var frameHeight = atlasSize.Y / DirectionalAngles.Length;
+        if (frameWidth <= 0.0f || frameHeight <= 0.0f)
+        {
+            GD.PushWarning($"Run animation atlas for {assetSlug} has invalid size {atlasSize}.");
+            var invalid = new Dictionary<int, IReadOnlyList<Texture2D>>();
+            RunAnimationTextureCache[assetSlug] = invalid;
+            return invalid;
+        }
+
+        var textures = new Dictionary<int, IReadOnlyList<Texture2D>>();
+        for (var row = 0; row < DirectionalAngles.Length; row++)
+        {
+            var angle = DirectionalAngles[row];
+            var frames = new List<Texture2D>(config.FrameCount);
+            for (var column = 0; column < config.FrameCount; column++)
+            {
+                frames.Add(new AtlasTexture
+                {
+                    Atlas = atlas,
+                    Region = new Rect2(column * frameWidth, row * frameHeight, frameWidth, frameHeight)
+                });
+            }
+
+            textures[angle] = frames;
+        }
+
+        RunAnimationTextureCache[assetSlug] = textures;
         return textures;
     }
 
@@ -328,20 +418,128 @@ public partial class GreyboxSimUnit : Node2D
             return;
         }
 
-        var textures = LoadDirectionalTextures(_directionalAssetSlug);
-        if (!textures.TryGetValue(_facingAngle, out var texture))
+        var texture = GetCurrentDirectionalTexture(out var isRunFrame);
+        if (texture is null)
         {
             return;
         }
 
+        var spriteScale = isRunFrame && _runAnimationConfig is not null
+            ? _runAnimationConfig.SpriteScale
+            : DirectionalSpriteScale;
         _directionalSprite.Texture = texture;
-        _directionalSprite.Position = GetSpriteOriginOffset(texture);
+        _directionalSprite.Scale = Vector2.One * spriteScale;
+        _directionalSprite.Position = GetSpriteOriginOffset(texture, spriteScale);
     }
 
-    private static Vector2 GetSpriteOriginOffset(Texture2D texture)
+    private Texture2D? GetCurrentDirectionalTexture(out bool isRunFrame)
     {
-        var size = texture.GetSize() * DirectionalSpriteScale;
+        isRunFrame = false;
+        if (_directionalAssetSlug is null)
+        {
+            return null;
+        }
+
+        if (_isMoving && _runAnimationConfig is not null)
+        {
+            var runTextures = LoadRunAnimationTextures(_directionalAssetSlug, _runAnimationConfig);
+            if (runTextures.TryGetValue(_facingAngle, out var frames) && frames.Count > 0)
+            {
+                isRunFrame = true;
+                return frames[Mathf.PosMod(_runAnimationFrameIndex, frames.Count)];
+            }
+        }
+
+        var textures = LoadDirectionalTextures(_directionalAssetSlug);
+        return textures.TryGetValue(_facingAngle, out var texture) ? texture : null;
+    }
+
+    private static UnitRunAnimationConfig? LoadRunAnimationConfig(string assetSlug)
+    {
+        if (RunAnimationConfigCache.TryGetValue(assetSlug, out var cached))
+        {
+            return cached;
+        }
+
+        var settings = LoadUnitAnimationSettings();
+        if (settings.UnitAnimations is null ||
+            !settings.UnitAnimations.TryGetValue(assetSlug, out var unitSettings) ||
+            unitSettings.Run is null)
+        {
+            RunAnimationConfigCache[assetSlug] = null;
+            return null;
+        }
+
+        var config = unitSettings.Run;
+        if (!config.IsValid())
+        {
+            GD.PushWarning($"Run animation settings for {assetSlug} are invalid.");
+            RunAnimationConfigCache[assetSlug] = null;
+            return null;
+        }
+
+        if (!ResourceOrFileExists(config.AtlasPath))
+        {
+            RunAnimationConfigCache[assetSlug] = null;
+            return null;
+        }
+
+        RunAnimationConfigCache[assetSlug] = config;
+        return config;
+    }
+
+    private static UnitAnimationSettingsFile LoadUnitAnimationSettings()
+    {
+        if (UnitAnimationSettings is not null)
+        {
+            return UnitAnimationSettings;
+        }
+
+        if (!Godot.FileAccess.FileExists(UnitAnimationSettingsPath))
+        {
+            UnitAnimationSettings = new UnitAnimationSettingsFile();
+            return UnitAnimationSettings;
+        }
+
+        using var file = Godot.FileAccess.Open(UnitAnimationSettingsPath, Godot.FileAccess.ModeFlags.Read);
+        if (file is null)
+        {
+            UnitAnimationSettings = new UnitAnimationSettingsFile();
+            return UnitAnimationSettings;
+        }
+
+        try
+        {
+            UnitAnimationSettings = JsonSerializer.Deserialize<UnitAnimationSettingsFile>(
+                file.GetAsText(),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new UnitAnimationSettingsFile();
+        }
+        catch (JsonException exception)
+        {
+            GD.PushWarning($"Could not parse unit animation settings: {exception.Message}");
+            UnitAnimationSettings = new UnitAnimationSettingsFile();
+        }
+
+        return UnitAnimationSettings;
+    }
+
+    private static bool ResourceOrFileExists(string resourcePath)
+    {
+        return ResourceLoader.Exists(resourcePath) ||
+            Godot.FileAccess.FileExists(resourcePath) ||
+            File.Exists(ProjectSettings.GlobalizePath(resourcePath));
+    }
+
+    private static Vector2 GetSpriteOriginOffset(Texture2D texture, float spriteScale = DirectionalSpriteScale)
+    {
+        var size = texture.GetSize() * spriteScale;
         return new Vector2(-size.X * 0.5f, -size.Y * 0.5f);
+    }
+
+    private bool IsMoving(Vector2 nextPosition)
+    {
+        return _lastPosition is not null &&
+            (nextPosition - _lastPosition.Value).LengthSquared() > 0.01f;
     }
 
     private void ApplyZoomDetailVisibility()
@@ -675,5 +873,40 @@ public partial class GreyboxSimUnit : Node2D
         return state.Definition.Health <= 0
             ? 0.0f
             : (state.Health / state.Definition.Health) * 100.0f;
+    }
+
+    private sealed class UnitAnimationSettingsFile
+    {
+        [JsonPropertyName("unit_animations")]
+        public Dictionary<string, UnitAnimationEntry>? UnitAnimations { get; set; }
+    }
+
+    private sealed class UnitAnimationEntry
+    {
+        [JsonPropertyName("run")]
+        public UnitRunAnimationConfig? Run { get; set; }
+    }
+
+    private sealed class UnitRunAnimationConfig
+    {
+        [JsonPropertyName("atlas_path")]
+        public string AtlasPath { get; set; } = string.Empty;
+
+        [JsonPropertyName("frame_count")]
+        public int FrameCount { get; set; }
+
+        [JsonPropertyName("frames_per_second")]
+        public float FramesPerSecond { get; set; }
+
+        [JsonPropertyName("sprite_scale")]
+        public float SpriteScale { get; set; }
+
+        public bool IsValid()
+        {
+            return !string.IsNullOrWhiteSpace(AtlasPath) &&
+                FrameCount > 0 &&
+                FramesPerSecond > 0.0f &&
+                SpriteScale > 0.0f;
+        }
     }
 }

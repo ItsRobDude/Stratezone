@@ -216,6 +216,8 @@ Architecture work:
 - split or explicitly justify hand-written files over the 900-line review trigger
 - separate broad smoke coverage into mission/scenario-focused checks when it starts slowing diagnosis
 - create a repeatable mission data pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
+- define first-pass map logic for terrain regions, passability, buildable clearings, resource basins, and chokepoint markers
+- add a lightweight map preview/debug path if terrain authorship becomes hard to inspect from JSON alone
 - keep all new mission rules in simulation/data layers rather than Godot scene-only code
 - add or document root-level validation commands so future runs do not depend on remembered command sequences
 - keep localization keys mandatory for new objective, warning, command, and blocked-action text
@@ -223,6 +225,7 @@ Architecture work:
 Exit criteria:
 
 - Level 2 can be added mostly through data plus narrow simulation/presentation seams
+- map data can express blocked terrain, buildable areas, resource basins, and tower-wall chokepoint candidates without relying on scene-only placement
 - `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together
 - scenario checks can prove a mission route without replaying every unrelated system assertion
 - no new major mechanic has been added just to make the roadmap look larger
@@ -236,6 +239,7 @@ Mission shape:
 - same-tech human opponent using player-like structures and units with red or alternate-color presentation
 - scarce resource wells that force a race for expansion timing
 - cliffs, water, or other impassable terrain that create readable chokepoints without requiring complex terrain simulation
+- authored buildable clearings and resource basins that make base expansion readable without a visible grid
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
 - quick RTS failure/retry expectations rather than persistent campaign consequences
@@ -246,6 +250,7 @@ Exit criteria:
 - the player makes a real choice between expanding, walling, repairing, or attacking
 - the resource race is legible before it becomes punishing
 - at least one chokepoint can be shaped with Defense Tower walls
+- blocked terrain affects placement and/or movement in a way smoke checks can prove
 - infrastructure strikes matter without requiring a new faction or story system
 - the mission proves a second repeatable level-design pattern after First Landing
 
@@ -425,6 +430,7 @@ These are not first-prototype commitments:
 - persistent expedition progression, only if mission-first structure earns it
 - sandbox/skirmish
 - map editor
+- polished terrain-art pipeline beyond the first greybox/prototype terrain kit
 - mod support
 - multiplayer
 

@@ -181,7 +181,9 @@ Acceptance checks:
 - hand-written files over the 900-line review trigger are split or have a documented reason to stay together
 - broad smoke coverage is split or grouped enough that a failed mission route points to the relevant system quickly
 - mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
+- map data can represent first-pass terrain regions, passability blockers, buildable clearings, resource basins, and chokepoint markers
 - new mission setup can be added through data plus narrow simulation/presentation seams
+- map preview/debug output exists if JSON-only map authoring is too hard to inspect
 - root or documented validation commands cover content validation, C# build, simulation smoke, and Godot headless launch
 - new objective, warning, command, and blocked-action text uses localization keys
 - no new major mechanic is added only to make the milestone feel larger
@@ -190,6 +192,7 @@ Evidence:
 
 - file-size and ownership notes for any remaining large files
 - smoke/test organization notes showing how Level 2 routes will be proven
+- map-data validation or preview notes for terrain/passability authoring
 - one dry-run plan for adding a second mission without copying First Landing scene logic
 - validation command output
 
@@ -200,6 +203,8 @@ Acceptance checks:
 - Level 2 uses the same-tech human enemy family with red or alternate-color presentation
 - scarce wells force a visible resource race
 - cliffs, water, or other impassable terrain create readable chokepoints without a complex terrain-simulation expansion
+- buildable clearings give the player practical base spaces without a visible grid
+- resource basins make important wells read as tactical map pockets
 - Defense Tower wall placement matters because of the map shape
 - enemy power or extractor infrastructure can be scouted and attacked
 - pressure creates a choice between repair, defense, expansion, or attack
@@ -210,7 +215,7 @@ Evidence:
 
 - one expansion/resource-race route note
 - one defensive wall/chokepoint route note
-- smoke or debug evidence for any new terrain/passability rule
+- smoke or debug evidence for any new terrain/passability/buildability rule
 - notes for any support/siege system deliberately kept out
 
 ## Milestone 5 Checklist: Armory and Guardian Tactical Unlock

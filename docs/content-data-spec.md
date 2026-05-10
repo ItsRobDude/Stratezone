@@ -404,6 +404,15 @@ Required fields:
 - `required_features`
 - `tags`
 
+Planned first-pass map logic fields:
+
+- `terrain_regions`: authored rectangles, polygons, or circles with stable IDs, terrain kind, and gameplay flags
+- `buildable_regions`: authored base/expansion clearings where normal footprint/buffer rules still apply
+- `blocked_regions`: impassable terrain such as cliffs, ridges, deep water, wreck fields, or map-edge blockers
+- `resource_basins`: visual/logical pockets around important wells
+- `chokepoint_markers`: authored spots intended for Defense Tower wall play, attack lanes, or route proof
+- `visual_lanes`: roads, dirt paths, or open corridors that guide the player visually before any movement-speed bonus exists
+
 First-pass map ID:
 
 - `map_first_landing_greybox`
@@ -413,6 +422,8 @@ Prototype rules:
 - First Landing starts as a small greybox map.
 - The map should include a player start, enemy edge-of-fog reveal, central choke, contested well, and enemy pylon weak point.
 - Terrain and art values are placeholders until the first playable map exists.
+- Milestone 3 should make terrain regions real enough to support Level 2 route proof without a full map editor.
+- Milestone 4 should prove at least one blocked terrain feature, one buildable clearing/expansion pocket, one resource basin, and one Defense Tower wall chokepoint.
 
 ## Faction Definition
 

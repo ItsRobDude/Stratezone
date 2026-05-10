@@ -10,6 +10,7 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 - [Technical Architecture](docs/technical-architecture.md): intended stack, system ownership, simulation boundaries, and repo shape.
 - [Engineering Standards](docs/engineering-standards.md): contributor process, code quality rules, validation expectations, and AI-assisted development guardrails.
 - [Product Roadmap](docs/product-roadmap.md): milestone direction and open decisions.
+- [Content Roadmap](docs/content-roadmap.md): mission archetypes, map-content direction, and first-demo content-shape decisions.
 - [Scaffold Plan](docs/scaffold-plan.md): locked Godot 4 C# scaffold target and repo shape.
 - [First Landing Mission Spec](docs/first-landing-mission-spec.md): Level 1 target, pacing, map beats, objectives, and fail state.
 - [System Contracts](docs/system-contracts.md): first-pass behavior contracts for prototype systems.

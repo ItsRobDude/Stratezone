@@ -62,9 +62,10 @@ Read the focused docs before making broad changes:
 5. `docs/engineering-standards.md` for coding, validation, and contribution standards.
 6. `docs/first-landing-mission-spec.md` for Level 1 details.
 7. `docs/product-roadmap.md` for milestone direction and unresolved decisions.
-8. `docs/implementation-checklists.md` for acceptance checks, done rules, and baseline content IDs.
-9. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
-10. Code and assets once implementation begins.
+8. `docs/content-roadmap.md` for mission archetypes, map-content direction, and first-demo content-shape decisions.
+9. `docs/implementation-checklists.md` for acceptance checks, done rules, and baseline content IDs.
+10. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
+11. Code and assets once implementation begins.
 
 If code and docs drift, fix the drift deliberately. Do not silently turn current implementation accidents into product truth.
 
@@ -149,6 +150,7 @@ When adding or changing game direction, update the smallest relevant doc:
 - `docs/technical-architecture.md` for stack or system-boundary changes.
 - `docs/scaffold-plan.md` for first Godot scaffold expectations.
 - `docs/first-landing-mission-spec.md` for Level 1 mission changes.
+- `docs/content-roadmap.md` for mission archetypes, map-content decisions, and first-demo content shape.
 - `docs/system-contracts.md` for first-pass system behavior changes.
 - `docs/content-data-spec.md` for content schema, stable IDs, or tunable data changes.
 - `docs/implementation-checklists.md` for acceptance checks, done rules, or content ID changes.

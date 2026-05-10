@@ -32,6 +32,7 @@ Current docs in place:
 - `docs/technical-architecture.md`
 - `docs/engineering-standards.md`
 - `docs/product-roadmap.md`
+- `docs/content-roadmap.md`
 - `docs/scaffold-plan.md`
 - `docs/first-landing-mission-spec.md`
 - `docs/system-contracts.md`

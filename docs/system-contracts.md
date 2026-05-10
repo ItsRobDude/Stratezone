@@ -268,7 +268,7 @@ Prototype behavior:
 
 - Med Hall heals infantry within a radius, requires power, and spends resources only while actually healing.
 - Logistics / Repair Pad repairs mechanical units parked on it, requires power, and spends resources only while actually repairing.
-- Repair Pad should reduce the need to send fragile Grunts to the front line to fix vehicles.
+- Vehicle repair belongs to the Repair Pad or another dedicated infrastructure system. Grunts repair buildings only and cannot repair vehicles.
 - Artillery Battery is fragile, expensive, powered, static, and cannot target enemies inside its minimum range.
 - Artillery Battery is a siege tool for cracking bases and forcing assaults, not a self-defending turret.
 - Artillery explosive damage can cause friendly fire.
@@ -287,7 +287,7 @@ Acceptance checks:
 
 - an unpowered Med Hall or Repair Pad provides no healing or repair
 - Med Hall spends resources only when healing damaged infantry
-- Repair Pad repairs vehicles only when they are parked on or near the pad
+- Repair Pad repairs vehicles only when they are parked within the pad's authored repair radius
 - Artillery Battery cannot fire at targets inside its minimum range
 - Artillery Battery can damage buildings at long range and can harm friendly units in its blast radius
 

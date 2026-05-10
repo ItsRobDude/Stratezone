@@ -359,7 +359,7 @@ tags: tower, wall_anchor, armed, explosive, powered, upgrade
 Support and siege building placeholder intent:
 
 - `building_med_hall` heals infantry within a radius, slowly spends resources while healing, and requires power.
-- `building_logistics_repair_pad` is a powered platform that repairs mechanical units parked on it, keeping Grunts out of front-line vehicle repair when the player plans ahead.
+- `building_logistics_repair_pad` is a powered platform that repairs mechanical units parked on it. Grunts repair buildings only; vehicle repair belongs to the pad or another dedicated system, not the Grunt repair command.
 - `building_artillery_battery` is a fragile, expensive static siege emplacement with long range, explosive damage, friendly fire, and a minimum range that prevents close self-defense.
 
 ## Resource and Well Definitions

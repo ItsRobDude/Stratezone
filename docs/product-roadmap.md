@@ -439,7 +439,7 @@ These are not first-prototype commitments:
 - Exact building footprint/buffer values for constrained maps.
 - Grunt replacement cost relative to basic combat units.
 - Exact Vehicle Bay/Rover production mission. Vehicle Bay is hidden in Level 1 and should not enter Level 2 unless the resource-race mission needs it.
-- Whether the first demo uses one or two support/siege systems from Med Hall, Logistics / Repair Pad, and Artillery Battery.
+- Exact support/siege mission slots. Current direction is no more than one or two in the first demo: Artillery Battery and powered Grunt-hacked defense equipment are the strongest candidates, Med Hall fits a possible later snow/extraction scenario, and Logistics / Repair Pad waits until vehicles are mission-critical.
 - Level 4 and Level 5 mission archetypes and failure-condition mix.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.
 - Whether the first paid release targets itch.io first, Steam first, or both after the demo proves itself.

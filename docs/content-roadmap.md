@@ -706,10 +706,6 @@ Guardrails:
 - No free enemy rebuild unless explicitly documented.
 - Same-tech first enemy stays red/alternate-color until art direction proves a stronger need.
 
-## Next Content Planning Topic
-
-The next planning section should be support and siege entry gates: when Med Hall, Logistics / Repair Pad, Artillery Battery, Repair Platforms, and related sustain/siege ideas earn a mission slot without bloating the first demo.
-
 ## Commander Use Direction
 
 Commander units should be real RTS troops: visible on the map, controllable, vulnerable, mission-relevant, and not abstract hero powers. Their role should support Dominion-style battlefield presence without turning every mission into an escort chore.
@@ -856,3 +852,123 @@ Guardrails:
 - no repeated escort/convoy crutch
 - no omniscient enemy targeting
 - no global production dependency until a mission proves it is worth the complexity
+
+## Support and Siege Entry Gates
+
+Support and siege systems should enter when they create a clear mission verb: hold, extract, break a fortified base, recover damaged infrastructure, or escort a Grunt to restore critical equipment. They should not enter just because their prototype records already exist.
+
+### Med Hall
+
+Purpose: provide slow infantry sustain when a mission's attrition would otherwise make the scenario feel brittle.
+
+Direction:
+
+- Keep Med Hall out of Level 1 and probably Level 2.
+- Best current fit is a later authored scenario, possibly a snow-map extraction or withdrawal mission.
+- The snow setting should start as mission framing and readability, not an automatic new temperature-survival system.
+- Med Hall should require power, heal infantry slowly, and spend resources only while healing.
+
+Fit:
+
+- Good later if infantry losses are the intended pressure.
+- Not needed until a mission proves basic infantry attrition is the actual problem.
+
+### Logistics / Repair Pad
+
+Purpose: repair vehicles through infrastructure rather than turning Grunts into front-line vehicle mechanics.
+
+Direction:
+
+- Recommendation accepted, with one hard boundary: Grunts repair buildings only, not vehicles.
+- Logistics / Repair Pad repairs mechanical units parked on it, requires power, and spends resources only while actually repairing.
+- It should enter only after vehicles matter enough to justify a dedicated sustain structure.
+- It should not replace Grunt building repair or make vehicle mistakes cheap everywhere on the map.
+
+Fit:
+
+- Better after Vehicle Bay/Rover or tank-focused missions exist.
+- Keep deferred unless a vehicle-heavy mission needs it.
+
+### Artillery Battery
+
+Purpose: give the player a siege answer to fortified bases without making infantry blobs the best solution.
+
+Direction:
+
+- Recommended and approved as the strongest first-demo siege candidate.
+- It should be static, powered, fragile, expensive, long-range, and unable to defend itself at close range.
+- It should use explosive damage and friendly fire so positioning still matters.
+
+Fit:
+
+- Strong candidate for a later Siege Breaker mission.
+- Should arrive only when the map has a fortified target, power vulnerability, and enemy counterplay.
+
+### Powered Hackable Defense Equipment
+
+Purpose: turn support/siege into a scenario objective instead of a generic capture-point layer.
+
+Direction:
+
+- Defense or support equipment must be powered first, then hacked or controlled by a physically present Grunt.
+- The Grunt action should take time and leave the Grunt vulnerable.
+- The object can be a ruined turret, defense console, neutral repair platform, or other authored mission device.
+- The object should not be active and hostile while the player is expected to hack it unless the mission gives a fair way to cut power first.
+
+Fit:
+
+- Strong scenario hook: escort a Grunt to take over defense equipment under pressure.
+- Works especially well for recovery, extraction, or fortified-position missions.
+
+### Neutral Repair Platform
+
+Purpose: provide rare mission-specific sustain without exposing player-built Logistics / Repair Pad too early.
+
+Direction:
+
+- Use only as authored mission infrastructure.
+- It must be powered first, then hacked or controlled by a Grunt before it functions.
+- It may repair vehicles once active, but the repair comes from the platform, not from Grunt vehicle repair.
+- Keep it rare so it does not become a generic free-heal station.
+
+Fit:
+
+- Good for a vehicle-heavy recovery or extraction scenario.
+- Lower priority than Artillery Battery and powered hackable defense equipment.
+
+### Support as Mission Objective
+
+Purpose: make support systems produce missions instead of passive tech bloat.
+
+Direction:
+
+- Preferred form: escort a Grunt to restore, hack, or control a specific piece of defense equipment.
+- Success should open a defense route, stabilize an extraction, or give the player a temporary foothold.
+- Avoid making this a repeated escort gimmick; one mission can use it strongly, then move on.
+
+Fit:
+
+- Strong candidate for Level 4 or Level 5.
+- Pairs well with a damaged outpost, snow extraction, bridge route, or fortified enemy push.
+
+## Support and Siege Priority
+
+Approved direction:
+
+1. First demo uses no more than one or two support/siege systems unless the roadmap is deliberately reopened.
+2. Artillery Battery is the strongest siege candidate.
+3. Powered hackable defense equipment is the strongest support-objective candidate.
+4. Med Hall can fit a later snow/extraction scenario if infantry attrition needs support.
+5. Logistics / Repair Pad waits until vehicles are central, and Grunts still cannot repair vehicles.
+6. Neutral Repair Platform is rare authored infrastructure, powered first and Grunt-controlled after that.
+
+Guardrails:
+
+- no support system in First Landing unless playtests prove a hard need
+- no Grunt vehicle repair
+- no generic capture-point economy
+- no support/siege layer added without a mission proof target
+
+## Next Content Planning Topic
+
+The next planning section should be progression and unlock pacing: what the player starts with, what each demo mission unlocks, what stays hidden, and how mission rewards avoid becoming a broad campaign-tech system too early.

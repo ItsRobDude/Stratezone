@@ -1,5 +1,14 @@
 {
   "unit_animations": {
+    "cadet": {
+      "run": {
+        "atlas_path": "res://assets/units/cadet/animations/run_directional/cadet_run_directional_atlas.png",
+        "frame_count": 16,
+        "frames_per_second": 12.0,
+        "sprite_scale": 0.12,
+        "movement_grace_seconds": 0.18
+      }
+    },
     "rifleman": {
       "run": {
         "atlas_path": "res://assets/units/rifleman/animations/run_directional/rifleman_run_directional_atlas.png",

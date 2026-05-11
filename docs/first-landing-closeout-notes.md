@@ -14,7 +14,7 @@ Generated with `python plugins\stratezone-mission-steward\scripts\mission_truth_
 - Level 1 trainable units remain Grunt, Cadet, and Rifleman.
 - Commander, Guardian, and Rover remain authored-only player units for Level 1.
 - Hidden/deferred Level 1 buildings remain Armory Annex, Vehicle Bay, Med Hall, Logistics / Repair Pad, and Artillery Battery.
-- Mission rules remain destroy all enemies, protect Commander, black unexplored fog, explored terrain stays visible, and Colony Hub destruction reveals a Medium Tank.
+- Mission rules remain destroy all enemies, protect Commander, black unexplored fog, explored terrain stays visible, and the permanent Colony Hub destruction rule reveals a Medium Tank occupant.
 - Enemy AI profile remains slow/readable: first attack at 115 seconds, attack group size 1, pressure slowdown 0.55, train time multiplier 1.8.
 
 ## Automated Evidence
@@ -40,7 +40,7 @@ Checks covered:
 - Content validation: passed, 38 records.
 - Godot C# build: passed with 0 warnings and 0 errors.
 - Simulation smoke: passed.
-- Content drift check: passed, including Medium Tank reveal-only drift rule.
+- Content drift check: passed, including the permanent Medium Tank Hub-occupant drift rule.
 - Godot headless smoke: passed, loading `mission_first_landing` and the F5 map editor/tuner overlays.
 
 ## Remaining Risks

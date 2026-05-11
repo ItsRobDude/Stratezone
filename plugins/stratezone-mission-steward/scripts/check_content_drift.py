@@ -118,7 +118,7 @@ def main() -> int:
     )
     require(
         "colony_hub_destroyed_reveals_tank" in mission.get("special_rules", []),
-        "Level 1 must keep colony_hub_destroyed_reveals_tank as a special rule.",
+        "First Landing data should acknowledge the permanent Colony Hub Medium Tank occupant rule.",
     )
 
     fog_rules = mission.get("fog_rules", {})
@@ -166,11 +166,17 @@ def main() -> int:
     medium_tank = units.get("unit_medium_tank", {})
     require(
         medium_tank.get("spawn_rule") == "colony_hub_destroyed_reveal",
-        "Medium Tank should stay reveal-only for the Level 1 hub-destruction rule.",
+        "Medium Tank should stay the permanent Colony Hub destruction occupant.",
     )
     require(
-        "level_1_reveal_only" in medium_tank.get("tags", []),
-        "Medium Tank should keep the level_1_reveal_only tag.",
+        "hub_destroy_reveal" in medium_tank.get("tags", []),
+        "Medium Tank should keep the permanent Hub-destruction reveal tag.",
+    )
+
+    heavy_tank = units.get("unit_tank", {})
+    require(
+        heavy_tank.get("spawn_rule") != "colony_hub_destroyed_reveal",
+        "Heavy Tank should not be the Colony Hub destruction occupant.",
     )
 
     barracks = buildings.get("building_barracks", {})

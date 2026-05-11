@@ -153,8 +153,8 @@ Prototype rules:
 - `unit_guardian` requires `barracks_upgrade_guardian_retrofit` where the mission enables Guardian production.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
 - In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
-- `unit_medium_tank` is the Hub-destruction occupant tank. It is not normally trainable in the early demo, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
-- `unit_tank` is now the Heavy Tank record. It is the promoted old tank profile and should remain a heavier later answer with stronger explosive splash and high ballistic resistance.
+- `unit_medium_tank` is the permanent Hub-destruction occupant tank for every mission. It is not normally trainable in the early demo, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
+- `unit_tank` is now the Heavy Tank record. It is the promoted old tank profile, is not the Colony Hub occupant, and should remain a heavier later answer with stronger explosive splash and high ballistic resistance.
 - Troop training time varies by unit. Cadet is fastest, Rifleman is only slightly slower, and Guardian is slower because it is a specialized anti-armor / anti-defense unit.
 - Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
 - Units have health and resistances; armor is not a pickup or separate equipment system in the first prototype.

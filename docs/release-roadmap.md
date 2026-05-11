@@ -19,9 +19,10 @@ Stratezone should reach public release through honest build gates:
 1. prove the RTS loop
 2. make one mission understandable
 3. prove the first demo mission set shape
-4. make a build that survives strangers playing it
-5. make a public demo or itch build
-6. only then prepare a Steam-facing release track
+4. make the demo readable and localizable without developer narration
+5. make a build that survives strangers playing it
+6. make a public demo or itch build
+7. only then prepare a Steam-facing release track
 
 Do not promise store-page features that are not in the build. The game should never rely on a storefront description to explain missing basics.
 
@@ -57,7 +58,25 @@ Before any public build, Stratezone needs:
 - asset provenance notes for generated, purchased, or edited art/audio
 - a clean install/run test on a machine or folder outside the repo
 
-## Milestone 7: Playtest Build
+## Milestone 7: Demo Readability and Localization Gate
+
+Goal: make the five-mission demo understandable before packaging creates distribution noise.
+
+Required before private playtest packaging:
+
+- concise briefing, objective, warning, map callout, failure, and success copy for every demo mission
+- localization-key coverage for new player-facing mission presentation strings
+- clear quick restart/quit flow
+- known cut/defer list reflected in mission copy and store-facing notes
+- no hidden-plan enemy warnings or timer-loss messaging
+
+Exit criteria:
+
+- a player can understand the active objective and failure cause in each demo mission
+- new mission-presentation text is localizable
+- the demo reads as a five-mission arc without cutscene dependency
+
+## Milestone 8: Playtest Build
 
 Goal: let a small private tester play without the developer narrating.
 
@@ -76,7 +95,7 @@ Exit criteria:
 - one 20-30 minute session does not require editor access
 - known bugs are written down instead of kept in memory
 
-## Milestone 8: Public Demo / Itch Build
+## Milestone 9: Public Demo / Itch Build
 
 Goal: produce a public or semi-public build that can be distributed through itch.io.
 
@@ -103,7 +122,7 @@ Exit criteria:
 - the page does not claim features missing from the build
 - feedback from strangers would be useful, not mostly blocked by setup problems
 
-## Milestone 9: Steam Page Candidate
+## Milestone 10: Steam Page Candidate
 
 Goal: prepare for Steam visibility without pretending the full release is done.
 
@@ -129,7 +148,7 @@ Exit criteria:
 - missing features are described as future plans only if the chosen release type allows that expectation
 - a future Steam submission pass has a checklist, not guesswork
 
-## Milestone 10: Steam Demo or Early Access Candidate
+## Milestone 11: Steam Demo or Early Access Candidate
 
 Goal: submit a build and page that can survive platform review.
 
@@ -156,7 +175,7 @@ Exit criteria:
 - the build launches and plays outside the editor
 - release blockers are platform/account/process issues, not missing game basics
 
-## Milestone 11: Sellable Release Candidate
+## Milestone 12: Sellable Release Candidate
 
 Goal: make a build that can reasonably be sold.
 

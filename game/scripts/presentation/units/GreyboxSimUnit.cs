@@ -11,6 +11,8 @@ public partial class GreyboxSimUnit : Node2D
     private const string UnitAnimationSettingsPath = "res://assets/units/unit_animation_settings.json";
     private const float UnitLabelZoomThreshold = 0.85f;
     private const float PathDebugZoomThreshold = 0.75f;
+    private const float PlaceholderDetailZoomThreshold = 0.72f;
+    private const float AttackFlashZoomThreshold = 0.68f;
     private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
     private static readonly Dictionary<string, IReadOnlyDictionary<int, Texture2D>> DirectionalTextureCache = [];
     private static readonly Dictionary<string, IReadOnlyDictionary<int, IReadOnlyList<Texture2D>>> DirectionalAnimationTextureCache = [];
@@ -184,6 +186,10 @@ public partial class GreyboxSimUnit : Node2D
         {
             // Real unit art is drawn by the child Sprite2D; keep overlays and debug cues in this node.
         }
+        else if (ShouldUseLowDetailToken())
+        {
+            DrawUnitToken();
+        }
         else if (_useCadetPlaceholder)
         {
             DrawCadetPlaceholder();
@@ -209,8 +215,11 @@ public partial class GreyboxSimUnit : Node2D
             DrawArc(Vector2.Zero, 24.0f, 0, Mathf.Tau, 48, outline, 2.0f);
         }
 
-        DrawOutgoingAttackFlash();
-        DrawIncomingAttackFlash();
+        if (ShouldDrawAttackFlashes())
+        {
+            DrawOutgoingAttackFlash();
+            DrawIncomingAttackFlash();
+        }
 
         if (_selected)
         {
@@ -728,6 +737,16 @@ public partial class GreyboxSimUnit : Node2D
     private bool ShouldDrawPathDebug()
     {
         return _selected && _cameraZoom >= PathDebugZoomThreshold;
+    }
+
+    private bool ShouldUseLowDetailToken()
+    {
+        return _cameraZoom < PlaceholderDetailZoomThreshold && !_selected;
+    }
+
+    private bool ShouldDrawAttackFlashes()
+    {
+        return _selected || _cameraZoom >= AttackFlashZoomThreshold;
     }
 
     private static int DirectionToCompassAngle(Vector2 direction)

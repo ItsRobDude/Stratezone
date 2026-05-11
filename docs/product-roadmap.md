@@ -92,8 +92,10 @@ The first prototype stack is locked as Godot 4 with C#.
 
 3. Mission grammar and architecture hardening
    - Make the next authored mission cheaper to add before introducing another broad gameplay layer.
+   - Replace the current Armory Annex Guardian placeholder with a Barracks Guardian upgrade path before Level 2 depends on it.
+   - Add reusable start-pattern support for deployed, player-built, partial-base, allotted-troop, and no-base missions.
    - Split or justify large hand-written files that are already over the review trigger, especially `Main.cs` and broad smoke coverage.
-   - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, and scenario-specific tests.
+   - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, scenario-specific tests, event trigger coalescing, and localization-key paths for mission presentation.
 
 4. Level 2 planning target
    - Build a resource-race mission with more strategic base-building terrain: cliffs, water, chokepoints, and Defense Tower wall opportunities.
@@ -101,7 +103,12 @@ The first prototype stack is locked as Godot 4 with C#.
    - Keep the first enemy same-tech and same-building for now, using red or alternate-color presentation.
    - Use environmental layout and resource competition before adding Med Hall, Repair Pad, or Artillery.
 
-5. Release runway
+5. Demo mission spine
+   - Treat `docs/content-roadmap.md` as the working five-mission demo outline.
+   - Build Level 3 around Vehicle Bay/Rover, then lock Level 4 Broken Outpost and Level 5 Frozen Breakout as greybox starts.
+   - Put the demo readability/localization pass before the private playtest build.
+
+6. Release runway
    - Keep `docs/release-roadmap.md` current as build tooling appears.
    - Add packaged-build checks before any public demo.
    - Separate prototype completeness from sellable release readiness.
@@ -217,8 +224,12 @@ Architecture work:
 - split or explicitly justify hand-written files over the 900-line review trigger
 - separate broad smoke coverage into mission/scenario-focused checks when it starts slowing diagnosis
 - create a repeatable mission data pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
+- replace the current Armory Annex Guardian placeholder with a Barracks Guardian upgrade schema/runtime path
+- support deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force start patterns without scene-copying
 - define first-pass map logic for terrain regions, passability, buildable clearings, resource basins, and chokepoint markers
 - add a lightweight map preview/debug path if terrain authorship becomes hard to inspect from JSON alone
+- add event trigger grace/cooldown/coalescing so normal early build milestones cannot fire stacked immediate raids
+- define localization-key paths for briefings, objectives, warnings, map callouts, failure/success text, retry hints, and tactical notes
 - keep all new mission rules in simulation/data layers rather than Godot scene-only code
 - add or document root-level validation commands so future runs do not depend on remembered command sequences
 - keep localization keys mandatory for new objective, warning, command, and blocked-action text
@@ -227,12 +238,15 @@ Exit criteria:
 
 - Level 2 can be added mostly through data plus narrow simulation/presentation seams
 - map data can express blocked terrain, buildable areas, resource basins, and tower-wall chokepoint candidates without relying on scene-only placement
+- Barracks Guardian upgrade has replaced Armory Annex as the planned Level 2 Guardian unlock path
+- mission starts can support the approved demo shapes without duplicating scene setup logic
 - `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together
 - scenario checks can prove a mission route without replaying every unrelated system assertion
 - event triggers have grace/cooldown or coalescing rules before Level 2 relies on multiple base-building pressure triggers
+- mission-presentation fields have a localization-ready data path
 - no new major mechanic has been added just to make the roadmap look larger
 
-## Milestone 4: Level 2 - Resource Race, Terrain Chokes, and First Guardian Upgrade
+## Milestone 4: Level 2 - Wells at the Ridge
 
 Goal: prove player-built strategic base pressure through terrain and resource competition, with a Barracks Guardian upgrade as the likely first powered unlock if the mission can carry it.
 
@@ -261,16 +275,15 @@ Exit criteria:
 - infrastructure strikes matter without requiring a new faction or story system
 - the mission proves a second repeatable level-design pattern after First Landing
 
-## Milestone 5: Level 3 - Vehicle Bay and Rover Tactical Unlock Candidate
+## Milestone 5: Level 3 - Mobile Response
 
-Goal: assign and prove the first Vehicle Bay / Rover production mission, with Level 3 as the working slot and Level 4 as the fallback if mission shape demands it.
+Goal: prove Vehicle Bay / Rover production through a mission where mobility, scouting distance, route pressure, or response timing matters without replacing infantry.
 
 Deliverables:
 
 - an authored mission where the Vehicle Bay matters as a powered physical add-on
 - Rover production or Rover access earned through mission setup rather than assumed globally
 - route, scouting, transport, crush, or vehicle-pressure design that makes Rover access useful without invalidating infantry
-- confirmation that Barracks Guardian upgrade either landed cleanly in Level 2 or was deliberately moved
 - at most one support/siege system from Med Hall, Logistics / Repair Pad, or Artillery Battery if the mission proves a hard need
 - enemy use of the same tech family unless a later art/design pass deliberately changes that
 
@@ -281,32 +294,48 @@ Exit criteria:
 - power disruption can affect the unlock path
 - the mission adds tactical identity without broad roster bloat
 
-## Milestone 6: Demo Mission Set Shape
+## Milestone 6: Level 4/5 Greybox Lock
 
-Goal: decide and prove the remaining first-demo mission archetypes before packaging work dominates.
+Goal: lock the last two demo mission starts and proof loops before packaging/readability work dominates.
 
 Deliverables:
 
-- Level 4 and Level 5 mission briefs or greybox starts
-- one additional mission archetype beyond resource race / first Guardian upgrade and Vehicle Bay / Rover
-- Vehicle Bay / Rover production is assigned to Mission 3 or Mission 4
-- authored start patterns are named: player-built base, full/deployed base, partial base, no-base moving force, or allotted/irreplaceable troops
-- Mission 5 is no-base in the current demo outline
-- timer-expiry failure stays out of the first demo unless the roadmap is deliberately reopened
-- player-facing mission presentation needs are named: briefing, objective text, warnings, map callouts, failure text, success text, and localization keys
-- a decision on whether the demo uses one or two support/siege systems total
-- a written cut line for systems that stay after the first public demo
+- Level 4 Broken Outpost greybox start: partial damaged base, broken power, Grunt repair, powered hack/control of defense equipment
+- Level 5 Frozen Breakout greybox start: no-base force, snow route, extraction/siege objective, authored siege equipment or Artillery Battery scenario object
+- preferred support/siege pair only: powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5
+- Med Hall, Logistics / Repair Pad, Neutral Repair Platform, timer-loss missions, player loadouts, broad campaign tech tree, and broad tank roster remain cut from the first demo
+- per-mission failure conditions are clear before implementation expands the missions
 
 Exit criteria:
 
-- the first five-level demo has a coherent sequence of playable lessons
-- each mission has one primary proof target and one clear reason to exist
-- no player loadout system is needed for the first demo
-- failure conditions are clear, mission-specific, and not hidden timers
-- new player-facing mission presentation copy is localizable
+- Broken Outpost proves recovery/equipment-takeover shape without becoming a long escort slog
+- Frozen Breakout proves no-base finale shape without temperature survival or full-mission timer failure
+- each Level 4/5 mission has one primary proof target, start state, failure rule, enemy pressure note, and presentation need
+- no new support/siege system is added outside the approved pair
 - no mission depends on lore or cutscenes to explain its mechanical purpose
 
-## Milestone 7: Playtest Build
+## Milestone 7: Demo Readability and Localization Pass
+
+Goal: make the five-mission demo understandable without developer narration.
+
+Presentation/readability work:
+
+- concise field-command briefing for each mission
+- objective tracker text that uses verbs and names critical fail objects before they can fail the mission
+- classic RTS warnings for known events only
+- sparse map callouts for wells, ridges, chokes, power lines, equipment, and extraction/siege areas
+- truthful success/failure text with short tactical retry hints where useful
+- localization keys for briefing, objective, warning, map callout, failure, success, retry, and tactical-note strings
+- quick restart/quit flow checked across the demo
+
+Exit criteria:
+
+- a player can understand the current objective and failure cause in each mission
+- hidden enemy plans are not announced through UI copy
+- all new player-facing mission-presentation copy is localizable
+- the demo can be read as a five-mission arc without story cutscene dependency
+
+## Milestone 8: Playtest Build
 
 Goal: let a small private tester play without the developer narrating.
 
@@ -326,7 +355,7 @@ Exit criteria:
 - one 20-30 minute session produces useful feedback
 - known issues are tracked in writing
 
-## Milestone 8: Public Demo / Itch Build
+## Milestone 9: Public Demo / Itch Build
 
 Goal: prepare a public or semi-public downloadable build through itch.io.
 
@@ -354,7 +383,7 @@ Exit criteria:
 - the itch page does not claim features missing from the build
 - strangers can give gameplay feedback instead of setup feedback
 
-## Milestone 9: Steam Page Candidate
+## Milestone 10: Steam Page Candidate
 
 Goal: prepare for Steam visibility before a full release claim.
 
@@ -380,7 +409,7 @@ Exit criteria:
 - Steam submission work has a checklist
 - missing features are not hidden inside marketing copy
 
-## Milestone 10: Steam Demo or Early Access Candidate
+## Milestone 11: Steam Demo or Early Access Candidate
 
 Goal: submit a build and page that can survive platform review.
 
@@ -406,7 +435,7 @@ Exit criteria:
 - the build launches and plays outside the editor
 - remaining blockers are platform/process issues, not missing basics
 
-## Milestone 11: Sellable Release Candidate
+## Milestone 12: Sellable Release Candidate
 
 Goal: make a build that can reasonably be sold.
 
@@ -439,7 +468,7 @@ Exit criteria:
 
 These are not first-prototype commitments:
 
-- second through fifth missions for the first public demo
+- missions beyond the first five-level demo
 - second faction
 - campaign layer
 - persistent expedition progression, only if mission-first structure earns it
@@ -453,9 +482,9 @@ These are not first-prototype commitments:
 
 - Exact building footprint/buffer values for constrained maps.
 - Grunt replacement cost relative to basic combat units.
-- Exact Vehicle Bay/Rover production mission slot. Current direction is that Vehicle Bay enters the first demo in Mission 3 or Mission 4, never Level 1.
+- Exact Level 3 route/map shape for making Vehicle Bay/Rover matter without replacing infantry.
 - Runtime/data path for replacing the current Armory Annex placeholder with the approved Barracks Guardian upgrade.
 - Exact Artillery/authored siege implementation for Mission 5. Current first-demo support/siege direction is powered Grunt-hacked defense equipment in Mission 4 plus Artillery/authored siege equipment in Mission 5. Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless playtests deliberately reopen them.
-- Level 4 and Level 5 mission archetypes and failure-condition mix.
+- Exact Level 4 and Level 5 encounter layouts and failure-condition details.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.
 - Whether the first paid release targets itch.io first, Steam first, or both after the demo proves itself.

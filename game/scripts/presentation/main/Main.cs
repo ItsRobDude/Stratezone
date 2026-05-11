@@ -9,6 +9,8 @@ public partial class Main : Node2D
     private const float MinUiScale = 1.0f;
     private const float MaxUiScale = 2.6f;
     private const int HudBaseFontSize = 18;
+    private const float OffscreenCullPaddingWorld = 180.0f;
+    private const float HudRefreshIntervalSeconds = 0.12f;
 
     private static readonly string[] BuildHotkeyOrder =
     [
@@ -57,6 +59,7 @@ public partial class Main : Node2D
     private float _uiScale = DefaultUiScale;
     private Vector2 _lastViewportSize;
     private string _lastActionMessage = string.Empty;
+    private float _hudRefreshElapsedSeconds = HudRefreshIntervalSeconds;
 
     public override void _Ready()
     {
@@ -82,18 +85,24 @@ public partial class Main : Node2D
 
     public override void _Process(double delta)
     {
+        var deltaSeconds = (float)delta;
         HandleCameraPan(delta);
         ApplyUiScaleIfViewportChanged();
 
         if (_simulation is not null)
         {
-            _simulation.Tick((float)delta);
+            _simulation.Tick(deltaSeconds);
             SyncWorldViews();
             PollPlayerKnowledgeAlerts();
         }
 
         UpdatePlacementGhost();
-        UpdateHud();
+        _hudRefreshElapsedSeconds += deltaSeconds;
+        if (_placementBuildingId is not null || _hudRefreshElapsedSeconds >= HudRefreshIntervalSeconds)
+        {
+            UpdateHud();
+            _hudRefreshElapsedSeconds = 0.0f;
+        }
     }
 
     public override void _UnhandledInput(InputEvent inputEvent)
@@ -582,6 +591,9 @@ public partial class Main : Node2D
             return;
         }
 
+        var visibleWorldBounds = GetExpandedCameraWorldBounds(OffscreenCullPaddingWorld);
+        var cameraZoom = CurrentCameraZoom();
+
         foreach (var building in _simulation.Buildings)
         {
             if (!_buildingViews.TryGetValue(building.EntityId, out var view))
@@ -600,9 +612,12 @@ public partial class Main : Node2D
                 view.UpdateFromState(building);
             }
 
+            var knownToPlayer = building.FactionId != ContentIds.Factions.PrivateMilitary ||
+                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position);
+            view.SetCameraZoom(cameraZoom);
             view.Visible = !building.IsDestroyed &&
-                (building.FactionId != ContentIds.Factions.PrivateMilitary ||
-                    _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position));
+                knownToPlayer &&
+                IsCircleInsideWorldBounds(building.Position, building.FootprintWorldRadius, visibleWorldBounds);
         }
 
         while (_resourceWellViews.Count < _simulation.ResourceWells.Count)
@@ -620,7 +635,11 @@ public partial class Main : Node2D
 
         for (var index = 0; index < _resourceWellViews.Count; index++)
         {
-            _resourceWellViews[index].UpdateFromState(_simulation.ResourceWells[index]);
+            var well = _simulation.ResourceWells[index];
+            var view = _resourceWellViews[index];
+            view.UpdateFromState(well);
+            view.SetCameraZoom(cameraZoom);
+            view.Visible = IsCircleInsideWorldBounds(well.Position, 48.0f, visibleWorldBounds);
         }
 
         _selectedUnitEntityIds.RemoveWhere(unitId => !_simulation.Units.Any(unit => unit.EntityId == unitId && !unit.IsDestroyed));
@@ -642,15 +661,17 @@ public partial class Main : Node2D
                 view.UpdateFromState(unit);
             }
 
+            var knownToPlayer = unit.FactionId != ContentIds.Factions.PrivateMilitary ||
+                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position);
             view.Visible = !unit.IsDestroyed &&
-                (unit.FactionId != ContentIds.Factions.PrivateMilitary ||
-                    _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position));
+                knownToPlayer &&
+                IsCircleInsideWorldBounds(unit.Position, view.SelectionRadius, visibleWorldBounds);
             view.SetSelected(_selectedUnitEntityIds.Contains(unit.EntityId));
-            view.SetCameraZoom(CurrentCameraZoom());
+            view.SetCameraZoom(cameraZoom);
         }
 
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
-        _fogOfWarView?.UpdateFromState(_simulation.PlayerFog);
+        _fogOfWarView?.UpdateFromState(_simulation.PlayerFog, visibleWorldBounds);
     }
 
     private void UpdatePlacementGhost()
@@ -1005,12 +1026,22 @@ public partial class Main : Node2D
 
         var zoomValue = Mathf.Clamp(_camera.Zoom.X + delta, 0.55f, 1.8f);
         _camera.Zoom = new Vector2(zoomValue, zoomValue);
-        ApplyUnitPresentationZoom();
+        ApplyPresentationZoom();
     }
 
-    private void ApplyUnitPresentationZoom()
+    private void ApplyPresentationZoom()
     {
         var cameraZoom = CurrentCameraZoom();
+        foreach (var buildingView in _buildingViews.Values)
+        {
+            buildingView.SetCameraZoom(cameraZoom);
+        }
+
+        foreach (var wellView in _resourceWellViews)
+        {
+            wellView.SetCameraZoom(cameraZoom);
+        }
+
         foreach (var unitView in _simUnitViews.Values)
         {
             unitView.SetCameraZoom(cameraZoom);
@@ -1020,6 +1051,26 @@ public partial class Main : Node2D
     private float CurrentCameraZoom()
     {
         return _camera?.Zoom.X ?? 1.0f;
+    }
+
+    private Rect2 GetExpandedCameraWorldBounds(float padding)
+    {
+        if (_camera is null)
+        {
+            return new Rect2(new Vector2(-100000.0f, -100000.0f), new Vector2(200000.0f, 200000.0f));
+        }
+
+        var viewportSize = GetViewport().GetVisibleRect().Size;
+        var zoom = new Vector2(Mathf.Max(0.01f, _camera.Zoom.X), Mathf.Max(0.01f, _camera.Zoom.Y));
+        var worldSize = new Vector2(viewportSize.X / zoom.X, viewportSize.Y / zoom.Y);
+        return new Rect2(
+            _camera.GlobalPosition - (worldSize * 0.5f) - new Vector2(padding, padding),
+            worldSize + new Vector2(padding * 2.0f, padding * 2.0f));
+    }
+
+    private static bool IsCircleInsideWorldBounds(SimVector2 position, float radius, Rect2 bounds)
+    {
+        return bounds.Grow(radius).HasPoint(new Vector2(position.X, position.Y));
     }
 
     private static SimVector2 ToSim(Vector2 vector)

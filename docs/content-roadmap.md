@@ -1599,8 +1599,8 @@ These are implementation debts created by the approved outline:
 2. Milestone 4: Level 2 - Wells at the Ridge. Player builds/places the base. Prove terrain chokes, resource race, tower walls, enemy power/extractor routes, and Barracks Guardian upgrade.
 3. Milestone 5: Level 3 - Mobile Response. Add Vehicle Bay/Rover production and prove mobility without replacing infantry.
 4. Milestone 6: Level 4/5 greybox lock. Build Broken Outpost as partial damaged base/equipment takeover and Frozen Breakout as no-base siege/extraction.
-5. Demo readability pass. Tighten briefings, objective tracker, warnings, map callouts, failure/success text, localization coverage, and restart flow.
-6. Playtest build. Package, test, collect feedback, then rebalance.
+5. Milestone 7: Demo readability and localization pass. Tighten briefings, objective tracker, warnings, map callouts, failure/success text, localization coverage, and restart flow.
+6. Milestone 8: Playtest build. Package, test, collect feedback, then rebalance.
 
 Guardrail:
 

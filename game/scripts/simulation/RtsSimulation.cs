@@ -266,7 +266,6 @@ public sealed partial class RtsSimulation
         RecomputeFog();
         RevealCadetsForDestroyedBuildings();
         RevealTanksForDestroyedHubs();
-        RecomputeFog();
         UpdateEnemyOfficerState();
         UpdateMissionState();
     }

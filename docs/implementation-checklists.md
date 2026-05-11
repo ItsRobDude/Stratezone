@@ -181,9 +181,12 @@ Acceptance checks:
 - hand-written files over the 900-line review trigger are split or have a documented reason to stay together
 - broad smoke coverage is split or grouped enough that a failed mission route points to the relevant system quickly
 - mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
+- the current Armory Annex Guardian placeholder has a documented replacement path for a Barracks Guardian upgrade
+- mission setup supports deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force starts without copying scene logic
 - map data can represent first-pass terrain regions, passability blockers, buildable clearings, resource basins, and chokepoint markers
 - new mission setup can be added through data plus narrow simulation/presentation seams
 - event trigger pacing has a planned grace/cooldown/coalescing rule so normal early build milestones cannot stack immediate raids
+- mission presentation fields have a localization-ready data path for briefings, objectives, warnings, map callouts, failure/success messages, retry hints, and tactical notes
 - map preview/debug output exists if JSON-only map authoring is too hard to inspect
 - root or documented validation commands cover content validation, C# build, simulation smoke, and Godot headless launch
 - new objective, warning, command, and blocked-action text uses localization keys
@@ -193,11 +196,13 @@ Evidence:
 
 - file-size and ownership notes for any remaining large files
 - smoke/test organization notes showing how Level 2 routes will be proven
+- start-pattern proof notes
 - map-data validation or preview notes for terrain/passability authoring
 - one dry-run plan for adding a second mission without copying First Landing scene logic
+- implementation follow-up list for any runtime/data seams not completed in this milestone
 - validation command output
 
-## Milestone 4 Checklist: Level 2 - Resource Race, Terrain Chokes, and First Guardian Upgrade
+## Milestone 4 Checklist: Level 2 - Wells at the Ridge
 
 Acceptance checks:
 
@@ -227,14 +232,13 @@ Evidence:
 - smoke or debug evidence for any new terrain/passability/buildability rule
 - notes for any support/siege system deliberately kept out
 
-## Milestone 5 Checklist: Vehicle Bay and Rover Tactical Unlock Candidate
+## Milestone 5 Checklist: Level 3 - Mobile Response
 
 Acceptance checks:
 
 - Vehicle Bay is a physical powered Barracks add-on in the mission, not only a menu upgrade
 - Rover production or Rover access is earned through mission setup
 - Rover role is useful without replacing infantry or turning the mission into a vehicle-only test
-- Barracks Guardian upgrade placement is resolved: either proven in Level 2 or deliberately carried into this mission
 - power disruption can affect the unlock path
 - troop train times preserve fast classic-RTS pacing
 - enemy still uses the same human tech family unless a later art/design pass deliberately changes it
@@ -246,32 +250,48 @@ Evidence:
 - smoke coverage for the unlock path and Rover role
 - notes explaining whether Med Hall, Logistics / Repair Pad, or Artillery stayed deferred
 
-## Milestone 6 Checklist: Demo Mission Set Shape
+## Milestone 6 Checklist: Level 4/5 Greybox Lock
 
 Acceptance checks:
 
-- Level 4 and Level 5 have mission briefs or greybox starts
-- each demo mission has one primary proof target
+- Level 4 Broken Outpost has a greybox start or mission brief with partial damaged base, broken power, Grunt repair, and powered hack/control of defense equipment
+- Level 5 Frozen Breakout has a greybox start or mission brief with no-base force, snow route, extraction/siege objective, and authored siege equipment or Artillery Battery scenario object
+- each Level 4/5 mission has one primary proof target
 - the first demo remains a campaign-like arc of authored simulation scenarios, not a story-heavy cutscene plan
 - mission starts are authored; no player loadout screen is required for the first demo
 - at least one later mission start pattern is named if used: player-built base, partial base, no-base moving force, allotted/irreplaceable troops, or normal base start
-- Vehicle Bay/Rover production is assigned to Mission 3 or Mission 4
 - Mission 5 is no-base in the current demo outline
 - the demo uses the preferred support/siege pair unless the roadmap is deliberately reopened: powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5
 - Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo
 - each mission has a clear failure-condition mix and restart expectation, with no timer-expiry mission failure unless the roadmap is explicitly reopened
-- briefing, objective, warning, map callout, failure, and success copy is planned as localization-keyed player-facing text
 - cut systems are named instead of left as vague future work
 
 Evidence:
 
-- five-level demo sequence outline
-- per-mission proof target list
-- per-mission start-pattern list
-- per-mission failure-condition list
-- per-mission presentation/localization string list
+- Level 4 and Level 5 greybox/brief notes
+- per-mission proof target, start-pattern, and failure-condition list for Levels 4 and 5
 - implementation follow-up for replacing the current Armory Annex placeholder with the Barracks Guardian upgrade path
 - explicit cut/defer list for systems outside the first public demo
+
+## Milestone 7 Checklist: Demo Readability and Localization Pass
+
+Acceptance checks:
+
+- each demo mission has a concise briefing title/body and one tactical note only when useful
+- objective tracker text is direct, verb-led, and names mission-critical fail objects before they can fail the mission
+- warnings report known events only and do not reveal hidden enemy planning, rebuilding, or targeting
+- map callouts are sparse and support wells, ridges, chokes, power lines, equipment, extraction, or siege areas
+- failure messages name the cause and, where useful, include a short tactical retry hint
+- success messages state one truthful consequence leading into the next authored mission
+- all new briefing, objective, warning, callout, failure, success, retry, and tactical-note copy uses localization keys
+- quick restart/quit flow is checked across the demo
+- no mission depends on cutscenes or heavy story text to explain its mechanical purpose
+
+Evidence:
+
+- per-mission presentation/localization string list
+- localization validation output
+- notes from at least one full demo readability pass, even if greybox assets remain rough
 
 ## Public Build Checklist
 

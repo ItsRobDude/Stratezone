@@ -10,6 +10,8 @@ public partial class GreyboxBuilding : Node2D
     private const float PylonDirectionalSpriteScale = 0.42f;
     private const int DirectionalSpriteAngle = 180;
     private const int DirectionalAtlasColumns = 4;
+    private const float BuildingLabelZoomThreshold = 0.78f;
+    private const float PowerRadiusZoomThreshold = 0.92f;
 
     private static readonly int[] DirectionalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
     private static readonly Dictionary<string, Texture2D> DirectionalTextureCache = [];
@@ -19,6 +21,7 @@ public partial class GreyboxBuilding : Node2D
     private Label? _label;
     private LocalizationCatalog? _localization;
     private bool _selected;
+    private float _cameraZoom = 1.0f;
 
     public void Initialize(BuildingState state, LocalizationCatalog? localization = null)
     {
@@ -58,12 +61,27 @@ public partial class GreyboxBuilding : Node2D
             UpdateLabelPosition();
         }
 
+        ApplyZoomDetailVisibility();
         QueueRedraw();
     }
 
     public void SetSelected(bool selected)
     {
         _selected = selected;
+        ApplyZoomDetailVisibility();
+        QueueRedraw();
+    }
+
+    public void SetCameraZoom(float cameraZoom)
+    {
+        var nextZoom = Mathf.Max(0.01f, cameraZoom);
+        if (Mathf.IsEqualApprox(_cameraZoom, nextZoom))
+        {
+            return;
+        }
+
+        _cameraZoom = nextZoom;
+        ApplyZoomDetailVisibility();
         QueueRedraw();
     }
 
@@ -110,7 +128,7 @@ public partial class GreyboxBuilding : Node2D
             DrawBuildingSilhouette(_state, fill, outline);
         }
 
-        if (!_state.IsDestroyed && _state.Definition.ProvidesPower && _state.IsPowered && _state.Definition.PowerRadius > 0)
+        if (ShouldDrawPowerRadius(_state))
         {
             DrawArc(Vector2.Zero, RtsSimulation.ToWorldRadius(_state.Definition.PowerRadius), 0, Mathf.Tau, 96, new Color(0.35f, 0.8f, 1.0f, 0.35f), 2.0f);
         }
@@ -280,6 +298,28 @@ public partial class GreyboxBuilding : Node2D
         }
 
         _label.Position = new Vector2(-54, -72);
+    }
+
+    private void ApplyZoomDetailVisibility()
+    {
+        if (_label is not null)
+        {
+            _label.Visible = ShouldShowLabel();
+        }
+    }
+
+    private bool ShouldShowLabel()
+    {
+        return _selected || _cameraZoom >= BuildingLabelZoomThreshold || _state?.IsDamaged == true || _state?.IsPowered == false;
+    }
+
+    private bool ShouldDrawPowerRadius(BuildingState state)
+    {
+        return !state.IsDestroyed &&
+            state.Definition.ProvidesPower &&
+            state.IsPowered &&
+            state.Definition.PowerRadius > 0 &&
+            (_selected || _cameraZoom >= PowerRadiusZoomThreshold);
     }
 
     private static Color GetSpriteModulate(BuildingState state)

@@ -256,7 +256,7 @@
       "can_run_over_infantry": true,
       "run_over_damage": 130,
       "run_over_damage_type": "crush",
-      "tags": ["vehicle", "medium", "hub_destroy_reveal"],
+      "tags": ["vehicle", "medium", "hub_destroy_reveal", "level_1_reveal_only"],
       "balance_status": "tunable_placeholder"
     },
     {

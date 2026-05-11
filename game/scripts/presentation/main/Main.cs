@@ -246,19 +246,6 @@ public partial class Main : Node2D
         UpdateMapEditorOverlayData();
     }
 
-    private void SetupCamera()
-    {
-        _camera = new Camera2D
-        {
-            Name = "GreyboxCamera",
-            Position = new Vector2(140, 20),
-            Zoom = new Vector2(1.0f, 1.0f),
-            Enabled = true
-        };
-        AddChild(_camera);
-        _camera.MakeCurrent();
-    }
-
     private void SetupHud()
     {
         var uiRoot = GetNode<CanvasLayer>("UiRoot");
@@ -294,83 +281,6 @@ public partial class Main : Node2D
         };
         _uiLayoutRoot.AddChild(_commandPanel);
         ApplyUiScale();
-    }
-
-    private void SetupPlacementGhost()
-    {
-        if (_worldRoot is null)
-        {
-            return;
-        }
-
-        _placementGhost = new PlacementGhost
-        {
-            Name = "PlacementGhost",
-            Visible = false,
-            ZIndex = 3
-        };
-        _worldRoot.AddChild(_placementGhost);
-    }
-
-    private void SetupEnergyWallView()
-    {
-        if (_worldRoot is null)
-        {
-            return;
-        }
-
-        _energyWallView = new EnergyWallView
-        {
-            Name = "EnergyWallView",
-            ZIndex = -1
-        };
-        _worldRoot.AddChild(_energyWallView);
-    }
-
-    private void SetupMapRegionView()
-    {
-        if (_worldRoot is null)
-        {
-            return;
-        }
-
-        _mapRegionView = new MapRegionView
-        {
-            Name = "MapRegionView",
-            ZIndex = -10
-        };
-        _worldRoot.AddChild(_mapRegionView);
-        _mapRegionView.UpdateFromMap(_simulation?.Map);
-    }
-
-    private void SetupFogOfWarView()
-    {
-        if (_worldRoot is null)
-        {
-            return;
-        }
-
-        _fogOfWarView = new FogOfWarView
-        {
-            Name = "FogOfWarView",
-            ZIndex = 20
-        };
-        _worldRoot.AddChild(_fogOfWarView);
-    }
-
-    private void SetupSelectionBoxView()
-    {
-        if (_worldRoot is null)
-        {
-            return;
-        }
-
-        _selectionBoxView = new SelectionBoxView
-        {
-            Name = "SelectionBoxView",
-            ZIndex = 30
-        };
-        _worldRoot.AddChild(_selectionBoxView);
     }
 
     private void HandleBuildHotkey(Key keycode)
@@ -419,28 +329,6 @@ public partial class Main : Node2D
         UpdateMapEditorOverlayData();
         SyncWorldViews();
         UpdateHud();
-    }
-
-    private void ClearWorldViews()
-    {
-        foreach (var view in _buildingViews.Values)
-        {
-            view.QueueFree();
-        }
-
-        foreach (var view in _simUnitViews.Values)
-        {
-            view.QueueFree();
-        }
-
-        foreach (var view in _resourceWellViews)
-        {
-            view.QueueFree();
-        }
-
-        _buildingViews.Clear();
-        _simUnitViews.Clear();
-        _resourceWellViews.Clear();
     }
 
     private bool HandleUiScaleHotkey(Key keycode)
@@ -665,96 +553,6 @@ public partial class Main : Node2D
         }
     }
 
-    private void SyncWorldViews()
-    {
-        if (_simulation is null || _worldRoot is null)
-        {
-            return;
-        }
-
-        var visibleWorldBounds = GetExpandedCameraWorldBounds(OffscreenCullPaddingWorld);
-        var cameraZoom = CurrentCameraZoom();
-
-        foreach (var building in _simulation.Buildings)
-        {
-            if (!_buildingViews.TryGetValue(building.EntityId, out var view))
-            {
-                view = new GreyboxBuilding
-                {
-                    Name = $"Building_{building.EntityId}_{building.Definition.Id}",
-                    ZIndex = -1
-                };
-                _worldRoot.AddChild(view);
-                view.Initialize(building, _localization);
-                _buildingViews.Add(building.EntityId, view);
-            }
-            else
-            {
-                view.UpdateFromState(building);
-            }
-
-            var knownToPlayer = building.FactionId != ContentIds.Factions.PrivateMilitary ||
-                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position);
-            view.SetCameraZoom(cameraZoom);
-            view.Visible = !building.IsDestroyed &&
-                knownToPlayer &&
-                IsCircleInsideWorldBounds(building.Position, building.FootprintWorldRadius, visibleWorldBounds);
-        }
-
-        while (_resourceWellViews.Count < _simulation.ResourceWells.Count)
-        {
-            var well = _simulation.ResourceWells[_resourceWellViews.Count];
-            var view = new ResourceWellView
-            {
-                Name = well.Definition.Id,
-                ZIndex = -2
-            };
-            _worldRoot.AddChild(view);
-            view.Initialize(well);
-            _resourceWellViews.Add(view);
-        }
-
-        for (var index = 0; index < _resourceWellViews.Count; index++)
-        {
-            var well = _simulation.ResourceWells[index];
-            var view = _resourceWellViews[index];
-            view.UpdateFromState(well);
-            view.SetCameraZoom(cameraZoom);
-            view.Visible = IsCircleInsideWorldBounds(well.Position, 48.0f, visibleWorldBounds);
-        }
-
-        _selectedUnitEntityIds.RemoveWhere(unitId => !_simulation.Units.Any(unit => unit.EntityId == unitId && !unit.IsDestroyed));
-        foreach (var unit in _simulation.Units)
-        {
-            if (!_simUnitViews.TryGetValue(unit.EntityId, out var view))
-            {
-                view = new GreyboxSimUnit
-                {
-                    Name = $"SimUnit_{unit.EntityId}_{unit.Definition.Id}",
-                    ZIndex = 2
-                };
-                _worldRoot.AddChild(view);
-                view.Initialize(unit, _localization);
-                _simUnitViews.Add(unit.EntityId, view);
-            }
-            else
-            {
-                view.UpdateFromState(unit);
-            }
-
-            var knownToPlayer = unit.FactionId != ContentIds.Factions.PrivateMilitary ||
-                _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position);
-            view.Visible = !unit.IsDestroyed &&
-                knownToPlayer &&
-                IsCircleInsideWorldBounds(unit.Position, view.SelectionRadius, visibleWorldBounds);
-            view.SetSelected(_selectedUnitEntityIds.Contains(unit.EntityId));
-            view.SetCameraZoom(cameraZoom);
-        }
-
-        _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
-        _fogOfWarView?.UpdateFromState(_simulation.PlayerFog, visibleWorldBounds);
-    }
-
     private void UpdatePlacementGhost()
     {
         if (_catalog is null || _simulation is null || _placementGhost is null)
@@ -811,97 +609,6 @@ public partial class Main : Node2D
             $"{placementLine} | {_lastActionMessage}";
         UpdateCommandPanel();
         UpdateMissionResultOverlay();
-    }
-
-    private void HandleCameraPan(double delta)
-    {
-        if (_camera is null)
-        {
-            return;
-        }
-
-        var direction = Vector2.Zero;
-
-        if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left))
-        {
-            direction.X -= 1;
-        }
-        if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right))
-        {
-            direction.X += 1;
-        }
-        if (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.Up))
-        {
-            direction.Y -= 1;
-        }
-        if (Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.Down))
-        {
-            direction.Y += 1;
-        }
-
-        if (direction == Vector2.Zero)
-        {
-            return;
-        }
-
-        var speed = 520.0f / _camera.Zoom.X;
-        _camera.Position += direction.Normalized() * speed * (float)delta;
-    }
-
-    private void AdjustZoom(float delta)
-    {
-        if (_camera is null)
-        {
-            return;
-        }
-
-        var zoomValue = Mathf.Clamp(_camera.Zoom.X + delta, 0.55f, 1.8f);
-        _camera.Zoom = new Vector2(zoomValue, zoomValue);
-        ApplyPresentationZoom();
-    }
-
-    private void ApplyPresentationZoom()
-    {
-        var cameraZoom = CurrentCameraZoom();
-        foreach (var buildingView in _buildingViews.Values)
-        {
-            buildingView.SetCameraZoom(cameraZoom);
-        }
-
-        foreach (var wellView in _resourceWellViews)
-        {
-            wellView.SetCameraZoom(cameraZoom);
-        }
-
-        foreach (var unitView in _simUnitViews.Values)
-        {
-            unitView.SetCameraZoom(cameraZoom);
-        }
-    }
-
-    private float CurrentCameraZoom()
-    {
-        return _camera?.Zoom.X ?? 1.0f;
-    }
-
-    private Rect2 GetExpandedCameraWorldBounds(float padding)
-    {
-        if (_camera is null)
-        {
-            return new Rect2(new Vector2(-100000.0f, -100000.0f), new Vector2(200000.0f, 200000.0f));
-        }
-
-        var viewportSize = GetViewport().GetVisibleRect().Size;
-        var zoom = new Vector2(Mathf.Max(0.01f, _camera.Zoom.X), Mathf.Max(0.01f, _camera.Zoom.Y));
-        var worldSize = new Vector2(viewportSize.X / zoom.X, viewportSize.Y / zoom.Y);
-        return new Rect2(
-            _camera.GlobalPosition - (worldSize * 0.5f) - new Vector2(padding, padding),
-            worldSize + new Vector2(padding * 2.0f, padding * 2.0f));
-    }
-
-    private static bool IsCircleInsideWorldBounds(SimVector2 position, float radius, Rect2 bounds)
-    {
-        return bounds.Grow(radius).HasPoint(new Vector2(position.X, position.Y));
     }
 
     private static SimVector2 ToSim(Vector2 vector)

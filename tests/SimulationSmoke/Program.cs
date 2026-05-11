@@ -7,6 +7,7 @@ var gameRoot = Path.Combine(repoRoot, "game");
 var catalog = ContentCatalog.LoadFromGameData(gameRoot);
 var localization = LocalizationCatalog.LoadFromGameData(gameRoot);
 var mission = catalog.GetMission(ContentIds.Missions.FirstLanding);
+var ridgeMission = catalog.GetMission(ContentIds.Missions.WellsAtTheRidge);
 var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Materials];
 
 Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
@@ -47,6 +48,19 @@ Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.F
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Grunt) == 1, "Level 1 starts the player with one Grunt");
 Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rover) == 1, "Level 1 starts the player with one provided Rover");
 Assert(!mission.StartingEntities.Any(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rifleman), "Level 1 does not start the player with extra Riflemen");
+Assert(catalog.Missions.Count >= 2, "catalog loads more than one playable mission file");
+Assert(ridgeMission.MapId == "map_wells_at_the_ridge_greybox", "Level 2 mission data points at the ridge greybox map");
+Assert(ridgeMission.AvailableBuildingIds.Contains(ContentIds.Buildings.ColonyHub), "Level 2 exposes Colony Hub placement");
+Assert(!ridgeMission.StartingEntities.Any(entity =>
+    entity.FactionId == ContentIds.Factions.PlayerExpedition &&
+    entity.ContentId == ContentIds.Buildings.ColonyHub), "Level 2 does not start with the player base already built");
+Assert(ridgeMission.StartingEntities.Count(entity =>
+    entity.FactionId == ContentIds.Factions.PlayerExpedition &&
+    entity.ContentId == ContentIds.Units.Cadet) == 2, "Level 2 starts with two Cadets in the landing party");
+Assert(ridgeMission.StartingEntities.Count(entity =>
+    entity.FactionId == ContentIds.Factions.PlayerExpedition &&
+    entity.ContentId == ContentIds.Units.Rifleman) == 1, "Level 2 starts with one Rifleman escort");
+Assert(ridgeMission.ObjectiveIds.Contains(ContentIds.Objectives.DestroyEnemyColonyHub), "Level 2 wins through the enemy Colony Hub objective rather than well control");
 
 var simulation = new RtsSimulation(
     catalog,
@@ -569,12 +583,11 @@ Assert(fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hi
 var enemyInBlackFog = fogSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(900, -360));
 Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, enemyInBlackFog.Position), "enemy in unexplored black fog remains hidden");
 
-var missionMarkers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
+var missionRuntime = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.FirstLanding);
+var missionMarkers = missionRuntime.Markers;
 Assert(mission.ResourceWellPlacements.Count == 2, "mission data owns resource well placements");
 Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Units.Grunt), "mission data owns starting player units");
-var missionWellPlacements = mission.ResourceWellPlacements
-    .Select(placement => (placement.WellId, missionMarkers[placement.MarkerId] + placement.Offset))
-    .ToArray();
+var missionWellPlacements = missionRuntime.ResourceWellPlacements;
 Assert(mission.Markers.Any(marker => marker.Id == "enemy_pylon_weak_point"), "mission data exposes an enemy pylon weak-point marker");
 Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Buildings.Pylon && entity.MarkerId == "enemy_pylon_weak_point"), "mission starts with a real enemy Pylon weak point");
 var missionStartingBuildings = mission.StartingEntities
@@ -603,7 +616,7 @@ foreach (var left in missionStartingBuildings)
     }
 }
 
-var routeSimulation = CreateMissionSimulation(catalog, mission, startingMaterials, missionMarkers, missionWellPlacements);
+var routeSimulation = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.FirstLanding).Simulation;
 var enemyForwardPylon = routeSimulation.Buildings.Single(building =>
     building.FactionId == ContentIds.Factions.PrivateMilitary &&
     building.Definition.Id == ContentIds.Buildings.Pylon &&
@@ -644,7 +657,7 @@ Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVecto
 var centralRetakeValidation = routeSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, missionMarkers["central_well"]);
 Assert(centralRetakeValidation.IsLegal, $"destroyed enemy Extractor releases the central well for player retake ({centralRetakeValidation.MessageKey}: {centralRetakeValidation.Reason})");
 
-var pacedMissionSimulation = CreateMissionSimulation(catalog, mission, startingMaterials, missionMarkers, missionWellPlacements);
+var pacedMissionSimulation = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.FirstLanding).Simulation;
 
 TickFor(pacedMissionSimulation, mission.EnemyAiProfile.FirstAttackDelaySeconds - 5.0f);
 Assert(!pacedMissionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.TargetBuildingEntityId is not null), "mission AI profile delays first enemy pressure");
@@ -669,6 +682,38 @@ Assert(pacedMissionSimulation.Units.Any(unit =>
     unit.Definition.CanAttack &&
     !unit.IsDestroyed &&
     !unit.IsEnemyAttackCommitted), "mission AI leaves defenders at the enemy base");
+
+var ridgeRuntime = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.WellsAtTheRidge);
+var ridgeSimulation = ridgeRuntime.Simulation;
+Assert(!ridgeSimulation.Buildings.Any(building =>
+    building.FactionId == ContentIds.Factions.PlayerExpedition &&
+    building.Definition.Id == ContentIds.Buildings.ColonyHub), "Level 2 runtime starts without a player Colony Hub");
+var beforeHubPowerPlant = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
+Assert(!beforeHubPowerPlant.IsLegal, "Level 2 requires Colony Hub deployment before other player structures");
+Assert(beforeHubPowerPlant.MessageKey == "sim.placement.requires_colony_hub", "pre-Hub structure placement returns a stable message key");
+var hubPlacement = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"]);
+Assert(hubPlacement.Success, $"Level 2 lets the player deploy the Colony Hub from mission data ({hubPlacement.MessageKey}: {hubPlacement.Message})");
+Assert(!ridgeSimulation.ValidatePlacement(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(150, 0)).IsLegal, "Level 2 rejects a second player Colony Hub");
+var afterHubPowerPlant = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
+Assert(afterHubPowerPlant.Success, $"Level 2 allows normal building after the Colony Hub is deployed ({afterHubPowerPlant.MessageKey}: {afterHubPowerPlant.Message})");
+Assert(ridgeSimulation.Buildings.Any(building =>
+    building.FactionId == ContentIds.Factions.PrivateMilitary &&
+    building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
+    building.ResourceWellId == "well_wells_ridge_enemy" &&
+    building.IsPowered), "Level 2 starts the enemy entrenched on its own powered well");
+TickFor(ridgeSimulation, 0.1f);
+Assert(ridgeSimulation.Buildings.Any(building =>
+    building.FactionId == ContentIds.Factions.PrivateMilitary &&
+    building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
+    building.ResourceWellId == "well_wells_ridge_contested"), "Level 2 enemy AI races for the contested ridge well");
+Assert(ridgeSimulation.MissionState.PrimaryTextKey == "mission.objective.destroy_enemy_colony_hub", "Level 2 objective text targets the enemy Colony Hub");
+var ridgeEnemyHub = ridgeSimulation.Buildings.Single(building =>
+    building.FactionId == ContentIds.Factions.PrivateMilitary &&
+    building.Definition.Id == ContentIds.Buildings.ColonyHub &&
+    !building.IsDestroyed);
+ridgeEnemyHub.ApplyDamage(9999, "explosive");
+TickFor(ridgeSimulation, 0.1f);
+Assert(ridgeSimulation.MissionState.Status == MissionStatus.Won, "destroying the Level 2 enemy Colony Hub wins the skeletal mission");
 
 Console.WriteLine("Simulation smoke checks passed.");
 
@@ -717,38 +762,6 @@ static void TickFor(RtsSimulation simulation, float seconds)
         simulation.Tick(MathF.Min(step, seconds - elapsed));
         elapsed += step;
     }
-}
-
-static RtsSimulation CreateMissionSimulation(
-    ContentCatalog catalog,
-    MissionDefinition mission,
-    int startingMaterials,
-    IReadOnlyDictionary<string, SimVector2> missionMarkers,
-    IEnumerable<(string WellId, SimVector2 Position)> missionWellPlacements)
-{
-    var simulation = new RtsSimulation(
-        catalog,
-        startingMaterials,
-        missionWellPlacements,
-        mission.EnemyStartingResources[ContentIds.Resources.Materials],
-        EnemyAiMarkers.FromMission(mission),
-        mission.EnemyAiProfile,
-        mission.AvailableUnitIds);
-
-    foreach (var entity in mission.StartingEntities)
-    {
-        var position = missionMarkers[entity.MarkerId] + entity.Offset;
-        if (entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
-        {
-            simulation.AddStartingBuilding(entity.ContentId, position, entity.FactionId);
-        }
-        else if (entity.ContentId.StartsWith("unit_", StringComparison.Ordinal))
-        {
-            simulation.AddUnit(entity.ContentId, entity.FactionId, position);
-        }
-    }
-
-    return simulation;
 }
 
 static string FindRepoRoot()

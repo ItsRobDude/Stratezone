@@ -8,7 +8,14 @@
       "target_size": "small",
       "required_features": ["player_start", "enemy_edge_of_fog", "central_choke", "contested_well", "enemy_pylon_weak_point"],
       "tags": ["first_landing", "placeholder"]
+    },
+    {
+      "id": "map_wells_at_the_ridge_greybox",
+      "display_name": "Wells at the Ridge Greybox",
+      "biome": "ridge_meadow_light_forest",
+      "target_size": "medium",
+      "required_features": ["player_landing_zone", "ridge_chokepoints", "buildable_clearings", "enemy_claimed_well", "contested_well", "enemy_colony_hub"],
+      "tags": ["wells_at_the_ridge", "placeholder"]
     }
   ]
 }
-

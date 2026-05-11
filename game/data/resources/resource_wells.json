@@ -20,7 +20,36 @@
       "depletes": true,
       "tags": ["first_landing", "contested"],
       "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "well_wells_ridge_player",
+      "resource_id": "resource_materials",
+      "capacity": 1600,
+      "extraction_rate": 9,
+      "starts_claimed_by": null,
+      "depletes": true,
+      "tags": ["wells_at_the_ridge", "player_expansion"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "well_wells_ridge_enemy",
+      "resource_id": "resource_materials",
+      "capacity": 1900,
+      "extraction_rate": 10,
+      "starts_claimed_by": "faction_private_military",
+      "depletes": true,
+      "tags": ["wells_at_the_ridge", "enemy_entrenched"],
+      "balance_status": "tunable_placeholder"
+    },
+    {
+      "id": "well_wells_ridge_contested",
+      "resource_id": "resource_materials",
+      "capacity": 2200,
+      "extraction_rate": 11,
+      "starts_claimed_by": null,
+      "depletes": true,
+      "tags": ["wells_at_the_ridge", "contested"],
+      "balance_status": "tunable_placeholder"
     }
   ]
 }
-

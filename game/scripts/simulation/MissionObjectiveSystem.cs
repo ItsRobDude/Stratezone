@@ -2,9 +2,19 @@ namespace Stratezone.Simulation;
 
 internal sealed class MissionObjectiveSystem
 {
+    private readonly HashSet<string> _objectiveIds;
+
+    public MissionObjectiveSystem(IEnumerable<string>? objectiveIds = null)
+    {
+        _objectiveIds = objectiveIds is null
+            ? []
+            : new HashSet<string>(objectiveIds, StringComparer.Ordinal);
+    }
+
     public MissionState Evaluate(IReadOnlyList<UnitState> units, IReadOnlyList<BuildingState> buildings)
     {
-        if (units.Any(unit =>
+        var protectCommander = HasObjective(ContentIds.Objectives.ProtectCommander) || _objectiveIds.Count == 0;
+        if (protectCommander && units.Any(unit =>
             unit.FactionId == ContentIds.Factions.PlayerExpedition &&
             unit.Definition.Id == ContentIds.Units.Commander &&
             unit.IsDestroyed))
@@ -19,6 +29,22 @@ internal sealed class MissionObjectiveSystem
                 "mission.failure.commander_killed");
         }
 
+        var hasEnemyPresence =
+            units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary) ||
+            buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary);
+
+        if (HasObjective(ContentIds.Objectives.DestroyEnemyColonyHub) &&
+            hasEnemyPresence &&
+            !HasLiveEnemyColonyHub(buildings))
+        {
+            return new MissionState(
+                MissionStatus.Won,
+                "Mission won: enemy Colony Hub destroyed.",
+                null,
+                0,
+                "mission.won.enemy_colony_hub_destroyed");
+        }
+
         var remainingEnemyTargets =
             units.Count(unit =>
                 unit.FactionId == ContentIds.Factions.PrivateMilitary &&
@@ -26,11 +52,8 @@ internal sealed class MissionObjectiveSystem
                 IsRequiredEnemyTarget(unit)) +
             buildings.Count(building => building.FactionId == ContentIds.Factions.PrivateMilitary && !building.IsDestroyed);
 
-        var hasEnemyPresence =
-            units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary) ||
-            buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary);
-
-        if (hasEnemyPresence && remainingEnemyTargets == 0)
+        var destroyAllEnemies = HasObjective(ContentIds.Objectives.DestroyAllEnemies) || _objectiveIds.Count == 0;
+        if (destroyAllEnemies && hasEnemyPresence && remainingEnemyTargets == 0)
         {
             return new MissionState(
                 MissionStatus.Won,
@@ -38,6 +61,17 @@ internal sealed class MissionObjectiveSystem
                 null,
                 0,
                 "mission.won.enemy_force_eliminated");
+        }
+
+        if (HasObjective(ContentIds.Objectives.DestroyEnemyColonyHub))
+        {
+            var remainingHubs = HasLiveEnemyColonyHub(buildings) ? 1 : 0;
+            return new MissionState(
+                MissionStatus.Active,
+                "Objective: destroy enemy Colony Hub.",
+                null,
+                remainingHubs,
+                "mission.objective.destroy_enemy_colony_hub");
         }
 
         var text = remainingEnemyTargets > 0
@@ -50,6 +84,19 @@ internal sealed class MissionObjectiveSystem
             ? SimulationMessage.Args(("remaining", remainingEnemyTargets))
             : null;
         return new MissionState(MissionStatus.Active, text, null, remainingEnemyTargets, key, args);
+    }
+
+    private bool HasObjective(string objectiveId)
+    {
+        return _objectiveIds.Contains(objectiveId);
+    }
+
+    private static bool HasLiveEnemyColonyHub(IReadOnlyList<BuildingState> buildings)
+    {
+        return buildings.Any(building =>
+            building.FactionId == ContentIds.Factions.PrivateMilitary &&
+            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
+            !building.IsDestroyed);
     }
 
     private static bool IsRequiredEnemyTarget(UnitState unit)

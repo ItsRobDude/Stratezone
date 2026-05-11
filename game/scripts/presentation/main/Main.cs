@@ -11,9 +11,11 @@ public partial class Main : Node2D
     private const int HudBaseFontSize = 18;
     private const float OffscreenCullPaddingWorld = 180.0f;
     private const float HudRefreshIntervalSeconds = 0.12f;
+    private const string DefaultMissionId = ContentIds.Missions.FirstLanding;
 
     private static readonly string[] BuildHotkeyOrder =
     [
+        ContentIds.Buildings.ColonyHub,
         ContentIds.Buildings.PowerPlant,
         ContentIds.Buildings.Pylon,
         ContentIds.Buildings.Barracks,
@@ -54,6 +56,7 @@ public partial class Main : Node2D
     private readonly HashSet<int> _selectedUnitEntityIds = [];
     private int? _selectedBuildingEntityId;
     private string? _placementBuildingId;
+    private string _activeMissionId = DefaultMissionId;
     private bool _leftMouseSelecting;
     private Vector2 _selectionStartWorld;
     private float _uiScale = DefaultUiScale;
@@ -69,7 +72,7 @@ public partial class Main : Node2D
         _lastActionMessage = L("ui.action.initial_hint");
         _worldRoot = GetNode<Node2D>("WorldRoot");
 
-        SetupSimulation();
+        SetupSimulation(_activeMissionId);
         SetupCamera();
         SetupHud();
         SetupMissionResultOverlay();
@@ -191,14 +194,16 @@ public partial class Main : Node2D
         }
     }
 
-    private void SetupSimulation()
+    private void SetupSimulation(string missionId)
     {
         if (_catalog is null)
         {
             return;
         }
 
-        var mission = _catalog.GetMission(ContentIds.Missions.FirstLanding);
+        _activeMissionId = missionId;
+        var runtime = MissionRuntimeFactory.Create(_catalog, missionId);
+        var mission = runtime.Mission;
         _availableUnitIds.Clear();
         _availableBuildingIds.Clear();
         foreach (var unitId in mission.AvailableUnitIds)
@@ -211,50 +216,7 @@ public partial class Main : Node2D
             _availableBuildingIds.Add(buildingId);
         }
 
-        var startingMaterials = mission.PlayerStartingResources.TryGetValue(ContentIds.Resources.Materials, out var materials)
-            ? materials
-            : 0;
-        var enemyStartingMaterials = mission.EnemyStartingResources.TryGetValue(ContentIds.Resources.Materials, out var enemyMaterials)
-            ? enemyMaterials
-            : 0;
-
-        var markers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
-        var wellPlacements = mission.ResourceWellPlacements.Count > 0
-            ? mission.ResourceWellPlacements
-                .Select(placement => (placement.WellId, ResolveMissionPosition(markers, placement.MarkerId, placement.Offset)))
-                .ToArray()
-            : mission.ResourceWellIds
-                .Select((wellId, index) => (wellId, index == 0 ? new SimVector2(-350, 170) : new SimVector2(220, 30)))
-                .ToArray();
-
-        _simulation = new RtsSimulation(
-            _catalog,
-            startingMaterials,
-            wellPlacements,
-            enemyStartingMaterials,
-            EnemyAiMarkers.FromMission(mission),
-            mission.EnemyAiProfile,
-            mission.AvailableUnitIds);
-
-        foreach (var entity in mission.StartingEntities)
-        {
-            var position = ResolveMissionPosition(markers, entity.MarkerId, entity.Offset);
-            if (entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
-            {
-                _simulation.AddStartingBuilding(entity.ContentId, position, entity.FactionId);
-            }
-            else if (entity.ContentId.StartsWith("unit_", StringComparison.Ordinal))
-            {
-                _simulation.AddUnit(entity.ContentId, entity.FactionId, position);
-            }
-        }
-    }
-
-    private static SimVector2 ResolveMissionPosition(IReadOnlyDictionary<string, SimVector2> markers, string markerId, SimVector2 offset)
-    {
-        return markers.TryGetValue(markerId, out var marker)
-            ? marker + offset
-            : offset;
+        _simulation = runtime.Simulation;
     }
 
     private void SetupCamera()
@@ -377,6 +339,7 @@ public partial class Main : Node2D
             Key.Key3 => 2,
             Key.Key4 => 3,
             Key.Key5 => 4,
+            Key.Key6 => 5,
             _ => -1
         };
 
@@ -385,7 +348,54 @@ public partial class Main : Node2D
             return;
         }
 
-        EnterPlacementMode(BuildHotkeyOrder[index]);
+        var availableBuildingIds = BuildHotkeyOrder
+            .Where(IsBuildingCommandAvailable)
+            .ToArray();
+        if (index >= availableBuildingIds.Length)
+        {
+            return;
+        }
+
+        EnterPlacementMode(availableBuildingIds[index]);
+    }
+
+    private void LoadMission(string missionId)
+    {
+        if (_catalog is null)
+        {
+            return;
+        }
+
+        ClearWorldViews();
+        _selectedUnitEntityIds.Clear();
+        _selectedBuildingEntityId = null;
+        _placementBuildingId = null;
+        _placementGhost?.Clear();
+        SetupSimulation(missionId);
+        SyncWorldViews();
+        UpdateHud();
+    }
+
+    private void ClearWorldViews()
+    {
+        foreach (var view in _buildingViews.Values)
+        {
+            view.QueueFree();
+        }
+
+        foreach (var view in _simUnitViews.Values)
+        {
+            view.QueueFree();
+        }
+
+        foreach (var view in _resourceWellViews)
+        {
+            view.QueueFree();
+        }
+
+        _buildingViews.Clear();
+        _simUnitViews.Clear();
+        _resourceWellViews.Clear();
     }
 
     private bool HandleUiScaleHotkey(Key keycode)
@@ -543,6 +553,13 @@ public partial class Main : Node2D
         if (!SelectedUnits().Any(unit => unit.Definition.CanConstruct))
         {
             _lastActionMessage = L("ui.action.select_grunt_before_building");
+            return;
+        }
+
+        var blockedReason = GetBuildingCommandBlockedReason(buildingId);
+        if (blockedReason is not null)
+        {
+            _lastActionMessage = blockedReason;
             return;
         }
 
@@ -752,10 +769,11 @@ public partial class Main : Node2D
             .Select((buildingId, index) =>
             {
                 var definition = _catalog.GetBuilding(buildingId);
-                var enabled = hasBuilder;
-                var hint = enabled
-                    ? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))))
-                    : L("ui.command.requires_grunt");
+                var blockedReason = GetBuildingCommandBlockedReason(buildingId);
+                var enabled = hasBuilder && blockedReason is null;
+                var hint = !hasBuilder
+                    ? L("ui.command.requires_grunt")
+                    : blockedReason ?? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))));
                 return new CommandPanelAction(
                     $"{index + 1} {BuildingShortName(definition)}",
                     BuildingDetail(definition, hint),
@@ -824,7 +842,7 @@ public partial class Main : Node2D
             _commandPanel.UpdateActions(
                 L("ui.action_bar.title_unit_selection", SimulationMessage.Args(("count", selectedUnits.Length))),
                 actions.ToArray(),
-                hasBuilder ? L("ui.command.grunt_selection_hint") : L("ui.command.combat_selection_hint"));
+                hasBuilder ? GetBuilderCommandPanelHint() : L("ui.command.combat_selection_hint"));
             return;
         }
 

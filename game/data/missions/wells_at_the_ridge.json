@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "mission_wells_at_the_ridge",
+      "display_name": "Wells at the Ridge",
+      "target_duration_minutes": {
+        "min": 8,
+        "max": 14
+      },
+      "map_id": "map_wells_at_the_ridge_greybox",
+      "player_faction_id": "faction_player_expedition",
+      "enemy_faction_ids": ["faction_private_military"],
+      "mission_markers": [
+        { "id": "player_landing_zone", "position": { "x": -620, "y": 185 } },
+        { "id": "player_grunt", "position": { "x": -600, "y": 140 } },
+        { "id": "player_commander", "position": { "x": -655, "y": 205 } },
+        { "id": "player_cadet_north", "position": { "x": -560, "y": 120 } },
+        { "id": "player_cadet_south", "position": { "x": -545, "y": 230 } },
+        { "id": "player_rifleman", "position": { "x": -505, "y": 180 } },
+        { "id": "player_start_well", "position": { "x": -460, "y": 250 } },
+        { "id": "contested_ridge_well", "position": { "x": 230, "y": -40 } },
+        { "id": "enemy_well", "position": { "x": 700, "y": 230 } },
+        { "id": "enemy_base", "position": { "x": 760, "y": -140 } },
+        { "id": "enemy_power", "position": { "x": 620, "y": -230 } },
+        { "id": "enemy_base_pylon", "position": { "x": 620, "y": -70 } },
+        { "id": "enemy_well_pylon", "position": { "x": 670, "y": 90 } },
+        { "id": "enemy_pylon_weak_point", "position": { "x": 400, "y": -70 } },
+        { "id": "enemy_barracks", "position": { "x": 780, "y": 40 } },
+        { "id": "enemy_extractor", "position": { "x": 230, "y": -40 } },
+        { "id": "enemy_defense", "position": { "x": 350, "y": -140 } },
+        { "id": "enemy_defense_south", "position": { "x": 350, "y": 20 } },
+        { "id": "enemy_rally", "position": { "x": 470, "y": 20 } }
+      ],
+      "starting_entities": [
+        {
+          "content_id": "unit_commander",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_commander"
+        },
+        {
+          "content_id": "unit_grunt",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_grunt"
+        },
+        {
+          "content_id": "unit_cadet",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_cadet_north"
+        },
+        {
+          "content_id": "unit_cadet",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_cadet_south"
+        },
+        {
+          "content_id": "unit_rifleman",
+          "faction_id": "faction_player_expedition",
+          "marker": "player_rifleman"
+        },
+        {
+          "content_id": "building_colony_hub",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base"
+        },
+        {
+          "content_id": "building_power_plant",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_power"
+        },
+        {
+          "content_id": "building_pylon",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base_pylon"
+        },
+        {
+          "content_id": "building_pylon",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_well_pylon"
+        },
+        {
+          "content_id": "building_pylon",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_pylon_weak_point"
+        },
+        {
+          "content_id": "building_barracks",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_barracks"
+        },
+        {
+          "content_id": "building_extractor_refinery",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_well"
+        },
+        {
+          "content_id": "building_defense_tower",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_defense"
+        },
+        {
+          "content_id": "building_defense_tower",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_defense_south"
+        },
+        {
+          "content_id": "unit_rifleman",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_base",
+          "offset": { "x": -45, "y": 35 }
+        },
+        {
+          "content_id": "unit_rifleman",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_barracks",
+          "offset": { "x": 40, "y": 40 }
+        },
+        {
+          "content_id": "unit_cadet",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_well_pylon",
+          "offset": { "x": -35, "y": 35 }
+        }
+      ],
+      "starting_resources": [
+        {
+          "faction_id": "faction_player_expedition",
+          "resource_id": "resource_materials",
+          "amount": 1350
+        },
+        {
+          "faction_id": "faction_private_military",
+          "resource_id": "resource_materials",
+          "amount": 750
+        }
+      ],
+      "resource_wells": ["well_wells_ridge_player", "well_wells_ridge_enemy", "well_wells_ridge_contested"],
+      "resource_well_placements": [
+        {
+          "well_id": "well_wells_ridge_player",
+          "marker": "player_start_well"
+        },
+        {
+          "well_id": "well_wells_ridge_enemy",
+          "marker": "enemy_well"
+        },
+        {
+          "well_id": "well_wells_ridge_contested",
+          "marker": "contested_ridge_well"
+        }
+      ],
+      "available_unit_ids": ["unit_grunt", "unit_cadet", "unit_rifleman"],
+      "available_building_ids": [
+        "building_colony_hub",
+        "building_power_plant",
+        "building_pylon",
+        "building_barracks",
+        "building_extractor_refinery",
+        "building_defense_tower",
+        "building_gun_tower",
+        "building_rocket_tower"
+      ],
+      "enemy_ai_profile": {
+        "id": "ai_profile_level_2_private_military_ridge",
+        "first_attack_delay_seconds": 130,
+        "rebuild_cooldown_seconds": 24,
+        "production_cooldown_seconds": 32,
+        "attack_group_size": 2,
+        "central_well_interest": 1.0,
+        "pressure_slowdown_multiplier": 0.8,
+        "train_time_multiplier": 1.4,
+        "hub_marker": "enemy_base",
+        "power_plant_marker": "enemy_power",
+        "barracks_marker": "enemy_barracks",
+        "extractor_marker": "enemy_extractor",
+        "defense_tower_marker": "enemy_defense",
+        "rally_marker": "enemy_rally"
+      },
+      "objectives": ["objective_destroy_enemy_colony_hub", "objective_protect_commander"],
+      "failure_conditions": ["commander_killed"],
+      "event_ids": [],
+      "fog_rules": {
+        "unexplored": "black",
+        "explored_terrain_stays_visible": true,
+        "track_last_known_enemies": false
+      },
+      "special_rules": ["player_places_colony_hub", "ridge_chokepoints_pending_map_logic"],
+      "tags": ["wells_at_the_ridge", "greybox_demo", "playable_ugly"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}

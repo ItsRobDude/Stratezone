@@ -31,7 +31,7 @@ public sealed partial class RtsSimulation
     private readonly HashSet<int> _hubTankReveals = [];
     private readonly HashSet<int> _buildingCadetReveals = [];
     private readonly EnemyAiSystem _enemyAi;
-    private readonly MissionObjectiveSystem _missionObjectives = new();
+    private readonly MissionObjectiveSystem _missionObjectives;
     private readonly EnemyOfficerState _enemyOfficer = new();
     private readonly HashSet<int> _knownCommittedEnemyIds = [];
     private readonly HashSet<int> _knownDestroyedEnemyPowerIds = [];
@@ -46,12 +46,14 @@ public sealed partial class RtsSimulation
         int enemyStartingMaterials = 0,
         EnemyAiMarkers? enemyAiMarkers = null,
         EnemyAiProfileDefinition? enemyAiProfile = null,
-        IEnumerable<string>? trainableUnitIds = null)
+        IEnumerable<string>? trainableUnitIds = null,
+        IEnumerable<string>? objectiveIds = null)
     {
         _catalog = catalog;
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
+        _missionObjectives = new MissionObjectiveSystem(objectiveIds);
         _trainableUnitIds = trainableUnitIds is null
             ? null
             : new HashSet<string>(trainableUnitIds, StringComparer.Ordinal);
@@ -93,12 +95,18 @@ public sealed partial class RtsSimulation
     public BuildingState AddStartingBuilding(string buildingId, SimVector2 position, string factionId = ContentIds.Factions.PlayerExpedition)
     {
         var definition = _catalog.GetBuilding(buildingId);
-        var building = new BuildingState(_nextEntityId++, definition, factionId, position, null)
+        var targetWell = FindCompatibleResourceWell(definition, position);
+        var building = new BuildingState(_nextEntityId++, definition, factionId, position, targetWell?.Definition.Id)
         {
             IsPowered = !definition.RequiresPower
         };
 
         _buildings.Add(building);
+        if (targetWell is not null)
+        {
+            targetWell.ExtractorEntityId = building.EntityId;
+        }
+
         RecomputePower();
         RecomputeFog();
         UpdateMissionState();
@@ -113,6 +121,26 @@ public sealed partial class RtsSimulation
     private PlacementValidation ValidatePlacementForFaction(string factionId, string buildingId, SimVector2 position, float availableMaterials)
     {
         var definition = _catalog.GetBuilding(buildingId);
+
+        if (definition.Id == ContentIds.Buildings.ColonyHub &&
+            HasLiveBuilding(factionId, ContentIds.Buildings.ColonyHub))
+        {
+            return new PlacementValidation(
+                false,
+                "Colony Hub already deployed.",
+                null,
+                "sim.placement.colony_hub_exists");
+        }
+
+        if (definition.Id != ContentIds.Buildings.ColonyHub &&
+            !HasLiveBuilding(factionId, ContentIds.Buildings.ColonyHub))
+        {
+            return new PlacementValidation(
+                false,
+                "Deploy a Colony Hub first.",
+                null,
+                "sim.placement.requires_colony_hub");
+        }
 
         if (availableMaterials < definition.Cost)
         {

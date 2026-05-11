@@ -22,7 +22,17 @@
       "hud_text": "Keep the Commander alive.",
       "completion_behavior": "fail_mission_on_failure",
       "tags": ["first_landing"]
+    },
+    {
+      "id": "objective_destroy_enemy_colony_hub",
+      "display_name": "Destroy Enemy Colony Hub",
+      "objective_type": "destroy_enemy_colony_hub",
+      "target_filters": ["building_colony_hub", "faction_private_military"],
+      "success_condition": "enemy_colony_hub_destroyed",
+      "failure_condition": null,
+      "hud_text": "Destroy the enemy Colony Hub.",
+      "completion_behavior": "win_mission",
+      "tags": ["wells_at_the_ridge"]
     }
   ]
 }
-

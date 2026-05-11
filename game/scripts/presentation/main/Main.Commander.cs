@@ -5,6 +5,17 @@ public partial class Main
 {
     private bool HandleDebugHotkey(Key keycode)
     {
+        if (keycode == Key.F6)
+        {
+            var nextMissionId = _activeMissionId == ContentIds.Missions.FirstLanding
+                ? ContentIds.Missions.WellsAtTheRidge
+                : ContentIds.Missions.FirstLanding;
+            LoadMission(nextMissionId);
+            var missionName = _localization?.ContentName(nextMissionId, _catalog?.GetMission(nextMissionId).DisplayName) ?? nextMissionId;
+            _lastActionMessage = L("ui.action.debug_mission_loaded", SimulationMessage.Args(("mission", missionName)));
+            return true;
+        }
+
         if (keycode != Key.F7)
         {
             return false;

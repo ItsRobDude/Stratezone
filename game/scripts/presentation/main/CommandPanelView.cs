@@ -80,7 +80,7 @@ public partial class CommandPanelView : Panel
             var button = new Button
             {
                 Text = FormatButtonText(action),
-                Disabled = false,
+                Disabled = !action.Enabled,
                 TooltipText = action.Hint,
                 CustomMinimumSize = new Vector2(buttonWidth, 54.0f * _uiScale)
             };

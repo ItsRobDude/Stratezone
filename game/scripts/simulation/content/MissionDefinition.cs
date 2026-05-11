@@ -5,6 +5,7 @@ namespace Stratezone.Simulation.Content;
 public sealed record MissionDefinition(
     string Id,
     string DisplayName,
+    string MapId,
     IReadOnlyDictionary<string, int> PlayerStartingResources,
     IReadOnlyDictionary<string, int> EnemyStartingResources,
     IReadOnlyList<string> ResourceWellIds,
@@ -13,6 +14,8 @@ public sealed record MissionDefinition(
     IReadOnlyList<MissionResourceWellPlacementDefinition> ResourceWellPlacements,
     IReadOnlyList<string> AvailableUnitIds,
     IReadOnlyList<string> AvailableBuildingIds,
+    IReadOnlyList<string> ObjectiveIds,
+    IReadOnlyList<string> FailureConditionIds,
     EnemyAiProfileDefinition EnemyAiProfile
 );
 

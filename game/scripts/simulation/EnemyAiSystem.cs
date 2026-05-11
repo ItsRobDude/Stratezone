@@ -37,7 +37,7 @@ internal sealed class EnemyAiSystem
             EnsureBuilding(simulation, ContentIds.Buildings.Barracks, _markers.BarracksPosition);
             if (_profile.CentralWellInterest > 0.0f)
             {
-                EnsureBuilding(simulation, ContentIds.Buildings.ExtractorRefinery, _markers.ExtractorPosition);
+                EnsureBuildingAt(simulation, ContentIds.Buildings.ExtractorRefinery, _markers.ExtractorPosition);
             }
 
             EnsureBuilding(simulation, ContentIds.Buildings.DefenseTower, _markers.DefenseTowerPosition);

@@ -5,6 +5,14 @@ public static class ContentIds
     public static class Missions
     {
         public const string FirstLanding = "mission_first_landing";
+        public const string WellsAtTheRidge = "mission_wells_at_the_ridge";
+    }
+
+    public static class Objectives
+    {
+        public const string DestroyAllEnemies = "objective_destroy_all_enemies";
+        public const string DestroyEnemyColonyHub = "objective_destroy_enemy_colony_hub";
+        public const string ProtectCommander = "objective_protect_commander";
     }
 
     public static class Factions

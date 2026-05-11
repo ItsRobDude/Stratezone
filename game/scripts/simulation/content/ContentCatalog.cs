@@ -60,12 +60,12 @@ public sealed class ContentCatalog
         var unitsPath = Path.Combine(gameRoot, "data", "units", "units.json");
         var buildingsPath = Path.Combine(gameRoot, "data", "buildings", "buildings.json");
         var resourceWellsPath = Path.Combine(gameRoot, "data", "resources", "resource_wells.json");
-        var firstLandingPath = Path.Combine(gameRoot, "data", "missions", "first_landing.json");
+        var missionsPath = Path.Combine(gameRoot, "data", "missions");
 
         var units = LoadUnits(unitsPath);
         var buildings = LoadBuildings(buildingsPath);
         var resourceWells = LoadResourceWells(resourceWellsPath);
-        var missions = LoadMissions(firstLandingPath);
+        var missions = LoadMissions(missionsPath);
         return new ContentCatalog(units, buildings, resourceWells, missions);
     }
 
@@ -180,14 +180,30 @@ public sealed class ContentCatalog
         return wells;
     }
 
-    private static Dictionary<string, MissionDefinition> LoadMissions(string path)
+    private static Dictionary<string, MissionDefinition> LoadMissions(string missionsPath)
+    {
+        var missions = new Dictionary<string, MissionDefinition>(StringComparer.Ordinal);
+        foreach (var path in Directory.EnumerateFiles(missionsPath, "*.json").OrderBy(path => path, StringComparer.Ordinal))
+        {
+            LoadMissionFile(path, missions);
+        }
+
+        return missions;
+    }
+
+    private static void LoadMissionFile(string path, Dictionary<string, MissionDefinition> missions)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
-        var missions = new Dictionary<string, MissionDefinition>(StringComparer.Ordinal);
 
         foreach (var record in records.EnumerateArray())
         {
+            var id = record.GetProperty("id").GetString() ?? string.Empty;
+            if (!IsPlayableMissionRecord(id, record))
+            {
+                continue;
+            }
+
             var startingResources = new Dictionary<string, int>(StringComparer.Ordinal);
             var enemyStartingResources = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var resource in record.GetProperty("starting_resources").EnumerateArray())
@@ -216,11 +232,14 @@ public sealed class ContentCatalog
             var wellPlacements = LoadMissionResourceWellPlacements(record);
             var availableUnitIds = LoadStringArray(record, "available_unit_ids");
             var availableBuildingIds = LoadStringArray(record, "available_building_ids");
+            var objectiveIds = LoadStringArray(record, "objectives");
+            var failureConditionIds = LoadStringArray(record, "failure_conditions");
             var enemyAiProfile = LoadEnemyAiProfile(record);
 
             var mission = new MissionDefinition(
-                record.GetProperty("id").GetString() ?? string.Empty,
+                id,
                 record.GetProperty("display_name").GetString() ?? string.Empty,
+                record.GetProperty("map_id").GetString() ?? string.Empty,
                 startingResources,
                 enemyStartingResources,
                 wellIds,
@@ -229,13 +248,22 @@ public sealed class ContentCatalog
                 wellPlacements,
                 availableUnitIds,
                 availableBuildingIds,
+                objectiveIds,
+                failureConditionIds,
                 enemyAiProfile
             );
 
             missions.Add(mission.Id, mission);
         }
+    }
 
-        return missions;
+    private static bool IsPlayableMissionRecord(string id, JsonElement record)
+    {
+        return id.StartsWith("mission_", StringComparison.Ordinal) &&
+            record.TryGetProperty("starting_resources", out _) &&
+            record.TryGetProperty("resource_wells", out _) &&
+            record.TryGetProperty("available_unit_ids", out _) &&
+            record.TryGetProperty("available_building_ids", out _);
     }
 
     private static IReadOnlyList<MissionMarkerDefinition> LoadMissionMarkers(JsonElement record)

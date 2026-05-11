@@ -12,6 +12,34 @@ public partial class Main
         return _availableBuildingIds.Count == 0 || _availableBuildingIds.Contains(buildingId);
     }
 
+    private string? GetBuildingCommandBlockedReason(string buildingId)
+    {
+        if (buildingId == ContentIds.Buildings.ColonyHub ||
+            _simulation is null ||
+            !IsBuildingCommandAvailable(ContentIds.Buildings.ColonyHub) ||
+            HasPlayerColonyHub())
+        {
+            return null;
+        }
+
+        return L("sim.placement.requires_colony_hub");
+    }
+
+    private bool HasPlayerColonyHub()
+    {
+        return _simulation?.Buildings.Any(building =>
+            building.FactionId == ContentIds.Factions.PlayerExpedition &&
+            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
+            !building.IsDestroyed) == true;
+    }
+
+    private string GetBuilderCommandPanelHint()
+    {
+        return !HasPlayerColonyHub() && IsBuildingCommandAvailable(ContentIds.Buildings.ColonyHub)
+            ? L("sim.placement.requires_colony_hub")
+            : L("ui.command.grunt_selection_hint");
+    }
+
     private string GetTrainingCommandSummary()
     {
         if (_catalog is null)

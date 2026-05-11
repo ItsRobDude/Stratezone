@@ -19,6 +19,15 @@ internal static class MapEditorSmoke
         Assert(session.SelectedId == "enemy_defense", "map editor selects the nearest Defense Tower marker");
         Assert(session.SelectedMarker?.ContentIds.Contains(ContentIds.Buildings.DefenseTower) == true, "marker content links include starting-entity content ids");
 
+        session.ClearSelection();
+        Assert(session.SelectNext(), "map editor can cycle to the first editable item");
+        Assert(session.SelectedId == "player_landing_zone", "map editor forward cycling starts at the first marker");
+        Assert(session.SelectPrevious(), "map editor can cycle backward");
+        Assert(session.SelectedId == "southern_forest_lane", "map editor backward cycling wraps to the final terrain region");
+        Assert(session.SelectNext(), "map editor can cycle from final region back to first marker");
+        Assert(session.SelectedId == "player_landing_zone", "map editor forward cycling wraps back to first marker");
+
+        Assert(session.SelectMarker("enemy_defense"), "map editor can select marker by stable id");
         Assert(session.NudgeSelected(new SimVector2(10, -5)), "map editor can nudge the selected marker");
         var markerExport = session.ExportSelectedSnippet();
         Assert(markerExport.Contains("\"id\": \"enemy_defense\"", StringComparison.Ordinal), "marker export includes stable id");
@@ -42,11 +51,20 @@ internal static class MapEditorSmoke
 
         session.ClearSelection();
         Assert(session.ExportSelectedSnippet() == "No map editor selection.", "map editor reports missing selection plainly");
+        Assert(session.Diagnostics.Any(entry => entry.Level == MapEditorLogLevel.Warning && entry.Operation == "export_selected"), "map editor logs missing-selection export warnings");
 
         var fullExport = session.ExportAllSnippets();
         Assert(fullExport.Contains("Mission: mission_wells_at_the_ridge", StringComparison.Ordinal), "full export includes mission context");
         Assert(fullExport.Contains("Map: map_wells_at_the_ridge_greybox", StringComparison.Ordinal), "full export includes map context");
         Assert(fullExport.Contains("\"mission_markers\": [", StringComparison.Ordinal), "full export includes marker block");
         Assert(fullExport.Contains("\"terrain_regions\": [", StringComparison.Ordinal), "full export includes terrain block");
+
+        var brokenSession = new MapEditorSession();
+        brokenSession.Load(null, null);
+        Assert(brokenSession.Diagnostics.Count(entry => entry.Level == MapEditorLogLevel.Error && entry.Operation == "load") == 2, "map editor logs missing mission and map load errors");
+
+        var diagnostic = brokenSession.Diagnostics.First(entry => entry.Level == MapEditorLogLevel.Error);
+        Assert(diagnostic.ToConsoleLine().Contains("[MapEditor:Error]", StringComparison.Ordinal), "map editor diagnostic console line includes severity");
+        Assert(diagnostic.ToConsoleLine().Contains("op=load", StringComparison.Ordinal), "map editor diagnostic console line includes operation");
     }
 }

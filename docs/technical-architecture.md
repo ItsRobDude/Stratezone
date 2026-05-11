@@ -479,7 +479,7 @@ Avoid making the first prototype depend on full 3D modeling, complex animation, 
 
 ## Debugging and Developer Tools
 
-Current development tooling includes a first-pass in-game map editor/tuner overlay. A plain C# editor session owns the mutable tool state and JSON export path, while the Godot overlay owns rendering and input. It reads the current mission, map, content, and simulation state, copies/prints reviewable JSON snippets rather than writing source files directly, and keeps authored map truth in content data while making terrain, markers, pylon ranges, resource wells, and wall links visible during playtest tuning.
+Current development tooling includes a first-pass in-game map editor/tuner overlay. A plain C# editor session owns the mutable tool state, diagnostics, keyboard selection, and JSON export path, while the Godot overlay owns rendering and input. It reads the current mission, map, content, and simulation state, copies/prints reviewable JSON snippets rather than writing source files directly, and keeps authored map truth in content data while making terrain, markers, pylon ranges, resource wells, and wall links visible during playtest tuning.
 
 The project should continue growing:
 

@@ -7,16 +7,21 @@ namespace Stratezone.Simulation.Tools;
 public sealed class MapEditorSession
 {
     public const float DefaultMarkerHitRadius = 26.0f;
+    private const int MaxDiagnostics = 200;
 
     private readonly List<MapEditorMarker> _markers = [];
     private readonly List<MapEditorRegion> _regions = [];
+    private readonly List<MapEditorLogEntry> _diagnostics = [];
     private MapEditorSelectionKind _selectionKind = MapEditorSelectionKind.None;
     private int _selectionIndex = -1;
+
+    public event Action<MapEditorLogEntry>? DiagnosticEmitted;
 
     public string MissionId { get; private set; } = string.Empty;
     public string MapId { get; private set; } = string.Empty;
     public IReadOnlyList<MapEditorMarker> Markers => _markers;
     public IReadOnlyList<MapEditorRegion> Regions => _regions;
+    public IReadOnlyList<MapEditorLogEntry> Diagnostics => _diagnostics;
     public MapEditorSelectionKind SelectionKind => _selectionKind;
 
     public string? SelectedId => SelectedMarker?.Id ?? SelectedRegion?.Id;
@@ -77,6 +82,16 @@ public sealed class MapEditorSession
         _regions.Clear();
         ClearSelection();
 
+        if (mission is null)
+        {
+            LogError("load", "No mission definition was provided; map editor has no mission markers.");
+        }
+
+        if (map is null)
+        {
+            LogError("load", "No map definition was provided; map editor has no terrain regions.");
+        }
+
         if (mission is not null)
         {
             foreach (var marker in mission.Markers)
@@ -95,6 +110,8 @@ public sealed class MapEditorSession
             }
         }
 
+        LogDuplicateIds(_markers.Select(marker => marker.Id), "mission marker");
+
         if (map is not null)
         {
             foreach (var region in map.TerrainRegions)
@@ -112,6 +129,19 @@ public sealed class MapEditorSession
                     region.Tags.ToArray()));
             }
         }
+
+        LogDuplicateIds(_regions.Select(region => region.Id), "terrain region");
+        if (mission is not null && _markers.Count == 0)
+        {
+            LogWarning("load", $"Mission '{MissionId}' has no mission markers.");
+        }
+
+        if (map is not null && _regions.Count == 0)
+        {
+            LogInfo("load", $"Map '{MapId}' has no terrain regions; editor will show markers and live simulation overlays only.");
+        }
+
+        LogInfo("load", $"Loaded map editor session: mission='{MissionId}', map='{MapId}', markers={_markers.Count}, regions={_regions.Count}.");
     }
 
     public bool SelectAt(SimVector2 position, float markerHitRadius = DefaultMarkerHitRadius)
@@ -133,6 +163,7 @@ public sealed class MapEditorSession
             return true;
         }
 
+        LogInfo("select_at", $"No marker or region at {FormatVector(position)}.");
         return false;
     }
 
@@ -141,6 +172,7 @@ public sealed class MapEditorSession
         var index = _markers.FindIndex(marker => string.Equals(marker.Id, id, StringComparison.Ordinal));
         if (index < 0)
         {
+            LogWarning("select_marker", $"Marker '{id}' does not exist in mission '{MissionId}'.");
             return false;
         }
 
@@ -154,12 +186,23 @@ public sealed class MapEditorSession
         var index = _regions.FindIndex(region => string.Equals(region.Id, id, StringComparison.Ordinal));
         if (index < 0)
         {
+            LogWarning("select_region", $"Region '{id}' does not exist in map '{MapId}'.");
             return false;
         }
 
         _selectionKind = MapEditorSelectionKind.Region;
         _selectionIndex = index;
         return true;
+    }
+
+    public bool SelectNext()
+    {
+        return SelectRelative(1, "select_next");
+    }
+
+    public bool SelectPrevious()
+    {
+        return SelectRelative(-1, "select_previous");
     }
 
     public void ClearSelection()
@@ -182,13 +225,20 @@ public sealed class MapEditorSession
             return true;
         }
 
+        LogWarning("move_selected", $"Cannot move to {FormatVector(center)} because no marker or region is selected.");
         return false;
     }
 
     public bool NudgeSelected(SimVector2 delta)
     {
         var center = SelectedCenter;
-        return center is not null && MoveSelectedTo(center.Value + delta);
+        if (center is null)
+        {
+            LogWarning("nudge_selected", $"Cannot nudge by {FormatVector(delta)} because no marker or region is selected.");
+            return false;
+        }
+
+        return MoveSelectedTo(center.Value + delta);
     }
 
     public string ExportSelectedSnippet()
@@ -203,11 +253,17 @@ public sealed class MapEditorSession
             return FormatTerrainRegion(SelectedRegion);
         }
 
+        LogWarning("export_selected", "Cannot export selection because no marker or region is selected.");
         return "No map editor selection.";
     }
 
     public string ExportAllSnippets()
     {
+        if (_markers.Count == 0 && _regions.Count == 0)
+        {
+            LogWarning("export_all", "Full export requested with no mission markers or terrain regions loaded.");
+        }
+
         var builder = new StringBuilder();
         builder.AppendLine($"Mission: {MissionId}");
         builder.AppendLine("\"mission_markers\": [");
@@ -228,6 +284,31 @@ public sealed class MapEditorSession
 
         builder.AppendLine("]");
         return builder.ToString();
+    }
+
+    public void LogInfo(string operation, string message)
+    {
+        EmitDiagnostic(MapEditorLogLevel.Info, operation, message);
+    }
+
+    public void LogWarning(string operation, string message)
+    {
+        EmitDiagnostic(MapEditorLogLevel.Warning, operation, message);
+    }
+
+    public void LogError(string operation, string message)
+    {
+        EmitDiagnostic(MapEditorLogLevel.Error, operation, message);
+    }
+
+    public void LogException(string operation, Exception exception, string? message = null)
+    {
+        EmitDiagnostic(
+            MapEditorLogLevel.Error,
+            operation,
+            message ?? "Unhandled map editor exception.",
+            exception.GetType().Name,
+            exception.Message);
     }
 
     public static string FormatMissionMarker(MapEditorMarker marker)
@@ -310,10 +391,83 @@ public sealed class MapEditorSession
         return bestIndex;
     }
 
+    private bool SelectRelative(int delta, string operation)
+    {
+        var total = _markers.Count + _regions.Count;
+        if (total == 0)
+        {
+            LogWarning(operation, "Cannot cycle selection because no markers or regions are loaded.");
+            return false;
+        }
+
+        var currentIndex = SelectionKind switch
+        {
+            MapEditorSelectionKind.Marker => _selectionIndex,
+            MapEditorSelectionKind.Region => _markers.Count + _selectionIndex,
+            _ => delta > 0 ? -1 : 0
+        };
+        var nextIndex = ((currentIndex + delta) % total + total) % total;
+        if (nextIndex < _markers.Count)
+        {
+            _selectionKind = MapEditorSelectionKind.Marker;
+            _selectionIndex = nextIndex;
+        }
+        else
+        {
+            _selectionKind = MapEditorSelectionKind.Region;
+            _selectionIndex = nextIndex - _markers.Count;
+        }
+
+        LogInfo(operation, $"Selected {SelectedSummary}.");
+        return true;
+    }
+
     private void AddMarkerContent(string markerId, string contentId)
     {
         var marker = _markers.FirstOrDefault(marker => string.Equals(marker.Id, markerId, StringComparison.Ordinal));
-        marker?.AddContentId(contentId);
+        if (marker is null)
+        {
+            LogError("load_marker_reference", $"Content '{contentId}' references missing mission marker '{markerId}'.");
+            return;
+        }
+
+        marker.AddContentId(contentId);
+    }
+
+    private void LogDuplicateIds(IEnumerable<string> ids, string label)
+    {
+        foreach (var group in ids.GroupBy(id => id, StringComparer.Ordinal).Where(group => group.Count() > 1))
+        {
+            LogError("load_duplicate_id", $"Duplicate {label} id '{group.Key}' appears {group.Count()} times.");
+        }
+    }
+
+    private void EmitDiagnostic(
+        MapEditorLogLevel level,
+        string operation,
+        string message,
+        string? exceptionType = null,
+        string? exceptionMessage = null)
+    {
+        var entry = new MapEditorLogEntry(
+            level,
+            operation,
+            message,
+            MissionId,
+            MapId,
+            SelectionKind,
+            SelectedId,
+            _markers.Count,
+            _regions.Count,
+            exceptionType,
+            exceptionMessage);
+        _diagnostics.Add(entry);
+        if (_diagnostics.Count > MaxDiagnostics)
+        {
+            _diagnostics.RemoveAt(0);
+        }
+
+        DiagnosticEmitted?.Invoke(entry);
     }
 
     private static string Indent(string value, int spaces)
@@ -428,4 +582,36 @@ public enum MapEditorSelectionKind
     None,
     Marker,
     Region
+}
+
+public sealed record MapEditorLogEntry(
+    MapEditorLogLevel Level,
+    string Operation,
+    string Message,
+    string MissionId,
+    string MapId,
+    MapEditorSelectionKind SelectionKind,
+    string? SelectionId,
+    int MarkerCount,
+    int RegionCount,
+    string? ExceptionType,
+    string? ExceptionMessage)
+{
+    public string ToConsoleLine()
+    {
+        var selection = SelectionId is null
+            ? SelectionKind.ToString()
+            : $"{SelectionKind}:{SelectionId}";
+        var exception = ExceptionType is null
+            ? string.Empty
+            : $" exception={ExceptionType}: {ExceptionMessage}";
+        return $"[MapEditor:{Level}] op={Operation} mission={MissionId} map={MapId} selection={selection} markers={MarkerCount} regions={RegionCount} message=\"{Message}\"{exception}";
+    }
+}
+
+public enum MapEditorLogLevel
+{
+    Info,
+    Warning,
+    Error
 }

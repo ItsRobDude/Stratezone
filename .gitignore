@@ -9,9 +9,9 @@ obj/
 # Export/build artifacts
 builds/
 exports/
+artifacts/
 
 # Logs and temporary files
 *.log
 *.tmp
 *.temp
-

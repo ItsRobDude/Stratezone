@@ -31,6 +31,7 @@ Current greybox demo controls:
 - Mouse wheel zooms. `WASD` or arrow keys pan.
 - `F9` decreases debug UI scale, `F10` increases it, and `F8` resets it.
 - `F6` toggles between First Landing and Wells at the Ridge for local greybox checks.
+- `F5` toggles the dev map editor/tuner. In editor mode, `Tab` cycles forward through editable markers/regions, `Q` cycles backward, arrow keys nudge the selected item, `E` copies the selected JSON snippet, `J` copies all marker/region snippets, `R` reloads from mission/map data, and `Esc` or `F5` closes the editor.
 - The demo starts with extra materials so the construction loop can be tested without waiting on income.
 - Powered buildings show a small `⚡` prefix in their label.
 - A first-pass enemy base starts with its own materials, powered Barracks, and production queue.

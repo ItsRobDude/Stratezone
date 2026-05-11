@@ -21,6 +21,11 @@ public partial class MapEditorOverlay : Node2D
     public bool IsDragging => _isDragging;
     public string SelectedSummary => _session.SelectedSummary;
 
+    public MapEditorOverlay()
+    {
+        _session.DiagnosticEmitted += LogSessionDiagnostic;
+    }
+
     public void Load(
         MissionDefinition? mission,
         MapDefinition? map,
@@ -28,20 +33,52 @@ public partial class MapEditorOverlay : Node2D
         RtsSimulation? simulation)
     {
         _simulation = simulation;
-        _session.Load(mission, map);
         _isDragging = false;
+        try
+        {
+            _session.Load(mission, map);
+        }
+        catch (Exception exception)
+        {
+            _session.LogException("load", exception, "Map editor session load failed.");
+        }
 
+        _pylonLinkWorldRange = 0.0f;
+        _powerPlantWorldRange = 0.0f;
+        _defenseWallWorldRange = 0.0f;
         if (catalog is not null)
         {
-            var pylon = catalog.GetBuilding(ContentIds.Buildings.Pylon);
-            var powerPlant = catalog.GetBuilding(ContentIds.Buildings.PowerPlant);
-            var defenseTower = catalog.GetBuilding(ContentIds.Buildings.DefenseTower);
-            _pylonLinkWorldRange = RtsSimulation.ToWorldRadius(pylon.PylonLinkRange);
-            _powerPlantWorldRange = RtsSimulation.ToWorldRadius(powerPlant.PowerRadius);
-            _defenseWallWorldRange = RtsSimulation.ToWorldRadius(defenseTower.WallLinkRange);
+            try
+            {
+                var pylon = catalog.GetBuilding(ContentIds.Buildings.Pylon);
+                var powerPlant = catalog.GetBuilding(ContentIds.Buildings.PowerPlant);
+                var defenseTower = catalog.GetBuilding(ContentIds.Buildings.DefenseTower);
+                _pylonLinkWorldRange = RtsSimulation.ToWorldRadius(pylon.PylonLinkRange);
+                _powerPlantWorldRange = RtsSimulation.ToWorldRadius(powerPlant.PowerRadius);
+                _defenseWallWorldRange = RtsSimulation.ToWorldRadius(defenseTower.WallLinkRange);
+                _session.LogInfo("load_ranges", $"Loaded range overlays: pylon={_pylonLinkWorldRange:0.###}, power={_powerPlantWorldRange:0.###}, wall={_defenseWallWorldRange:0.###}.");
+            }
+            catch (Exception exception)
+            {
+                _session.LogException("load_ranges", exception, "Map editor range overlay load failed.");
+            }
+        }
+        else
+        {
+            _session.LogWarning("load_ranges", "No content catalog was provided; range overlays are disabled.");
         }
 
         QueueRedraw();
+    }
+
+    public void LogWarning(string operation, string message)
+    {
+        _session.LogWarning(operation, message);
+    }
+
+    public void LogException(string operation, Exception exception, string? message = null)
+    {
+        _session.LogException(operation, exception, message);
     }
 
     public void SetEditorEnabled(bool enabled)
@@ -97,6 +134,19 @@ public partial class MapEditorOverlay : Node2D
         }
 
         return false;
+    }
+
+    public bool CycleSelection(bool forward)
+    {
+        var selected = forward
+            ? _session.SelectNext()
+            : _session.SelectPrevious();
+        if (selected)
+        {
+            QueueRedraw();
+        }
+
+        return selected;
     }
 
     public string ExportSelectedSnippet()
@@ -350,5 +400,22 @@ public partial class MapEditorOverlay : Node2D
     private static SimVector2 ToSim(Vector2 vector)
     {
         return new SimVector2(vector.X, vector.Y);
+    }
+
+    private static void LogSessionDiagnostic(MapEditorLogEntry entry)
+    {
+        var line = entry.ToConsoleLine();
+        switch (entry.Level)
+        {
+            case MapEditorLogLevel.Error:
+                GD.PushError(line);
+                break;
+            case MapEditorLogLevel.Warning:
+                GD.Print(line);
+                break;
+            default:
+                GD.Print(line);
+                break;
+        }
     }
 }

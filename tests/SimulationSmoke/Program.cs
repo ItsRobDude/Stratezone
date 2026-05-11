@@ -631,5 +631,6 @@ Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, e
 FirstLandingMissionSmoke.Run(context);
 WellsAtTheRidgeSmoke.Run(context);
 MissionTriggerSmoke.Run(context);
+MapEditorSmoke.Run(context);
 
 Console.WriteLine("Simulation smoke checks passed.");

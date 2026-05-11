@@ -9,6 +9,7 @@ public partial class Main
     private Panel? _mapEditorPanel;
     private Label? _mapEditorLabel;
     private bool _mapEditorEnabled;
+    private string _lastMapEditorExportSummary = "No export yet.";
 
     private void SetupMapEditorOverlay()
     {
@@ -157,7 +158,7 @@ public partial class Main
         }
 
         _lastActionMessage = _mapEditorEnabled
-            ? "Map editor active. Left-drag markers/regions, arrows nudge, E exports selection, J exports all, R reloads."
+            ? "Map editor active. Left-drag markers/regions, arrows nudge, E copies selection, J copies all, R reloads."
             : "Map editor closed.";
         RefreshMapEditorPanel();
     }
@@ -185,8 +186,7 @@ public partial class Main
         }
 
         var snippet = _mapEditorOverlay.ExportSelectedSnippet();
-        GD.Print($"Map editor selection export:{System.Environment.NewLine}{snippet}");
-        _lastActionMessage = "Map editor selection exported to the Godot console.";
+        CopyMapEditorExport("selection", snippet);
         RefreshMapEditorPanel();
     }
 
@@ -198,9 +198,23 @@ public partial class Main
         }
 
         var snippet = _mapEditorOverlay.ExportAllSnippets();
-        GD.Print($"Map editor full export:{System.Environment.NewLine}{snippet}");
-        _lastActionMessage = "Map editor full export printed to the Godot console.";
+        CopyMapEditorExport("full", snippet);
         RefreshMapEditorPanel();
+    }
+
+    private void CopyMapEditorExport(string label, string snippet)
+    {
+        GD.Print($"Map editor {label} export:{System.Environment.NewLine}{snippet}");
+        if (snippet == "No map editor selection.")
+        {
+            _lastMapEditorExportSummary = "No export: select a marker or region first.";
+            _lastActionMessage = _lastMapEditorExportSummary;
+            return;
+        }
+
+        DisplayServer.ClipboardSet(snippet);
+        _lastMapEditorExportSummary = $"Last {label} export copied to clipboard and printed to console.";
+        _lastActionMessage = _lastMapEditorExportSummary;
     }
 
     private void RefreshMapEditorPanel()
@@ -214,7 +228,8 @@ public partial class Main
             "F5 Map Editor/Tuner\n" +
             $"{_mapEditorOverlay.SelectedSummary}\n" +
             "Left-drag: move marker/region center | Arrows: nudge 10\n" +
-            "E/right-click: export selected | J: export all | R: reload | Esc/F5: close";
+            "E/right-click: copy selected | J: copy all | R: reload | Esc/F5: close\n" +
+            _lastMapEditorExportSummary;
     }
 
     private void ApplyMapEditorPanelScale()
@@ -225,10 +240,10 @@ public partial class Main
         }
 
         var viewportSize = GetSafeHudSize();
-        var panelSize = new Vector2(520, 124) * _uiScale;
+        var panelSize = new Vector2(560, 148) * _uiScale;
         _mapEditorPanel.Size = panelSize;
         _mapEditorPanel.Position = new Vector2(16, Mathf.Max(16.0f, viewportSize.Y - panelSize.Y - 16.0f));
-        _mapEditorLabel.Size = new Vector2(496, 104) * _uiScale;
+        _mapEditorLabel.Size = new Vector2(536, 128) * _uiScale;
         _mapEditorLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(12 * _uiScale));
     }
 }

@@ -470,9 +470,13 @@ public sealed class ContentCatalog
             GetOptionalFloat(profile, "first_rebuild_delay_seconds"),
             GetOptionalFloat(profile, "first_central_well_rebuild_delay_seconds"),
             GetOptionalFloat(profile, "first_attack_delay_seconds"),
+            GetOptionalFloat(profile, "first_patrol_delay_seconds"),
+            GetOptionalFloat(profile, "patrol_interval_seconds"),
             GetOptionalFloat(profile, "rebuild_cooldown_seconds"),
             GetOptionalFloat(profile, "production_cooldown_seconds"),
             profile.TryGetProperty("attack_group_size", out var attackGroupSize) ? attackGroupSize.GetInt32() : 1,
+            profile.TryGetProperty("patrol_group_size", out var patrolGroupSize) ? patrolGroupSize.GetInt32() : 1,
+            profile.TryGetProperty("max_patrol_dispatches", out var maxPatrolDispatches) ? maxPatrolDispatches.GetInt32() : 0,
             GetOptionalFloat(profile, "central_well_interest"),
             GetOptionalFloat(profile, "central_well_rebuild_cooldown_seconds"),
             GetOptionalInt(profile, "max_central_well_rebuilds", int.MaxValue),
@@ -483,7 +487,8 @@ public sealed class ContentCatalog
             GetOptionalString(profile, "barracks_marker") ?? EnemyAiProfileDefinition.Default.BarracksMarkerId,
             GetOptionalString(profile, "extractor_marker") ?? EnemyAiProfileDefinition.Default.ExtractorMarkerId,
             GetOptionalString(profile, "defense_tower_marker") ?? EnemyAiProfileDefinition.Default.DefenseTowerMarkerId,
-            GetOptionalString(profile, "rally_marker") ?? EnemyAiProfileDefinition.Default.RallyMarkerId);
+            GetOptionalString(profile, "rally_marker") ?? EnemyAiProfileDefinition.Default.RallyMarkerId,
+            LoadStringArray(profile, "patrol_markers"));
     }
 
     private static SimVector2 LoadVector(JsonElement record)

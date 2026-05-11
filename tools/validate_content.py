@@ -322,6 +322,8 @@ def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
         "first_rebuild_delay_seconds",
         "first_central_well_rebuild_delay_seconds",
         "first_attack_delay_seconds",
+        "first_patrol_delay_seconds",
+        "patrol_interval_seconds",
         "rebuild_cooldown_seconds",
         "production_cooldown_seconds",
         "central_well_interest",
@@ -353,6 +355,31 @@ def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
             errors.append(
                 f"{record['_source_path']}: {record_id}.enemy_ai_profile.max_central_well_rebuilds must be a non-negative integer"
             )
+
+        for integer_field in ("patrol_group_size", "max_patrol_dispatches"):
+            value = profile.get(integer_field)
+            if value is not None and (not isinstance(value, int) or value < 0):
+                errors.append(
+                    f"{record['_source_path']}: {record_id}.enemy_ai_profile.{integer_field} must be a non-negative integer"
+                )
+
+        patrol_markers = profile.get("patrol_markers")
+        if patrol_markers is not None:
+            if not isinstance(patrol_markers, list) or not all(isinstance(marker_id, str) and marker_id for marker_id in patrol_markers):
+                errors.append(
+                    f"{record['_source_path']}: {record_id}.enemy_ai_profile.patrol_markers must be a list of marker id strings"
+                )
+            else:
+                marker_ids = {
+                    marker.get("id")
+                    for marker in record.get("mission_markers", [])
+                    if isinstance(marker, dict)
+                }
+                for marker_id in patrol_markers:
+                    if marker_id not in marker_ids:
+                        errors.append(
+                            f"{record['_source_path']}: {record_id}.enemy_ai_profile.patrol_markers references missing mission marker '{marker_id}'"
+                        )
 
     return errors
 

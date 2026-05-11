@@ -62,9 +62,13 @@ public sealed record EnemyAiProfileDefinition(
     float FirstRebuildDelaySeconds,
     float FirstCentralWellRebuildDelaySeconds,
     float FirstAttackDelaySeconds,
+    float FirstPatrolDelaySeconds,
+    float PatrolIntervalSeconds,
     float RebuildCooldownSeconds,
     float ProductionCooldownSeconds,
     int AttackGroupSize,
+    int PatrolGroupSize,
+    int MaxPatrolDispatches,
     float CentralWellInterest,
     float CentralWellRebuildCooldownSeconds,
     int MaxCentralWellRebuilds,
@@ -75,7 +79,8 @@ public sealed record EnemyAiProfileDefinition(
     string BarracksMarkerId,
     string ExtractorMarkerId,
     string DefenseTowerMarkerId,
-    string RallyMarkerId
+    string RallyMarkerId,
+    IReadOnlyList<string> PatrolMarkerIds
 )
 {
     public static EnemyAiProfileDefinition Default { get; } = new(
@@ -85,7 +90,11 @@ public sealed record EnemyAiProfileDefinition(
         0.0f,
         0.0f,
         0.0f,
+        0.0f,
+        0.0f,
         1,
+        1,
+        0,
         1.0f,
         0.0f,
         int.MaxValue,
@@ -96,5 +105,6 @@ public sealed record EnemyAiProfileDefinition(
         "enemy_barracks",
         "enemy_extractor",
         "enemy_defense",
-        "enemy_rally");
+        "enemy_rally",
+        []);
 }

@@ -489,7 +489,7 @@ Prototype rules:
 - includes a central choke that can be blocked with tower-wall play
 - includes an enemy pylon weak point that can disable an enemy tower route
 - includes authored mission markers for base positions, wells, AI build slots, rally points, and choke points
-- includes an enemy AI profile for first rebuild delay, first central-well claim delay, first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, contested-well rebuild cooldown/limit, pressure slowdown, and train-time multiplier
+- includes an enemy AI profile for first rebuild delay, first central-well claim delay, first attack delay, optional early patrol delay/interval/count, rebuild cadence, production cadence, attack group size, patrol group size, central-well interest, contested-well rebuild cooldown/limit, pressure slowdown, train-time multiplier, and authored patrol marker list
 - may include `presentation` keys for briefing title/body, start objective, success, and failure text; these keys must exist in localization once wired
 - may include `mission_triggers` for authored pacing beats such as coalesced base-building pressure
 - uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission

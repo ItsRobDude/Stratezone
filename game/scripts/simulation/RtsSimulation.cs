@@ -38,7 +38,12 @@ public sealed partial class RtsSimulation
     private readonly HashSet<int> _knownCommittedEnemyIds = [];
     private readonly HashSet<int> _knownDestroyedEnemyPowerIds = [];
     private readonly HashSet<int> _knownWallBlockedEnemyIds = [];
+    private readonly HashSet<int> _enemyPatrolDestinationIndexes = [];
+    private readonly Random _enemyPatrolRandom = new(42);
     private float _elapsedSeconds;
+    private float _nextEnemyPatrolDispatchSeconds;
+    private int _enemyPatrolDispatches;
+    private int _enemyPatrolDestinationOffset = -1;
     private int _nextEntityId = 1;
 
     public RtsSimulation(
@@ -58,6 +63,7 @@ public sealed partial class RtsSimulation
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
+        _nextEnemyPatrolDispatchSeconds = _enemyAi.Profile.FirstPatrolDelaySeconds;
         _missionObjectives = new MissionObjectiveSystem(objectiveIds);
         _missionTriggers = new MissionTriggerSystem(missionTriggers);
         _trainableUnitIds = trainableUnitIds is null

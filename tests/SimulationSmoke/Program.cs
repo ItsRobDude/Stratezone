@@ -464,7 +464,7 @@ var retreatingEnemy = retreatSimulation.AddUnit(ContentIds.Units.Rifleman, Conte
 TickFor(retreatSimulation, 0.2f);
 retreatingEnemy.ApplyDamage(34, "ballistic");
 var retreatDistanceBefore = retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition);
-TickFor(retreatSimulation, 1.0f);
+TickFor(retreatSimulation, 0.3f);
 Assert(retreatingEnemy.IsEnemyRetreating, "badly damaged committed enemies can retreat toward base");
 Assert(retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition) < retreatDistanceBefore, "retreating enemy moves closer to its base");
 TickFor(retreatSimulation, 20.0f);

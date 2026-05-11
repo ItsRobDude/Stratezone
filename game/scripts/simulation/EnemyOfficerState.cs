@@ -7,6 +7,8 @@ public sealed class EnemyOfficerState
     public int PowerStrikesTaken { get; internal set; }
     public int WallBlocksEncountered { get; internal set; }
     public int RetreatsOrdered { get; internal set; }
+    public int PatrolDispatches { get; internal set; }
+    public int PatrolAreasVisited { get; internal set; }
     public bool CommanderSighted { get; internal set; }
     public bool ScoutDispatched { get; internal set; }
     public float NextAttackAllowedSeconds { get; internal set; }

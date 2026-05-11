@@ -12,23 +12,23 @@ internal static class WellsAtTheRidgeSmoke
         Assert(!ridgeSimulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PlayerExpedition &&
             building.Definition.Id == ContentIds.Buildings.ColonyHub), "Level 2 runtime starts without a player Colony Hub");
-        var beforeHubPowerPlant = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
+        var beforeHubPowerPlant = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(-240, 170));
         Assert(!beforeHubPowerPlant.IsLegal, "Level 2 requires Colony Hub deployment before other player structures");
         Assert(beforeHubPowerPlant.MessageKey == "sim.placement.requires_colony_hub", "pre-Hub structure placement returns a stable message key");
         var hubPlacement = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"]);
         Assert(hubPlacement.Success, $"Level 2 lets the player deploy the Colony Hub from mission data ({hubPlacement.MessageKey}: {hubPlacement.Message})");
         Assert(!ridgeSimulation.ValidatePlacement(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(150, 0)).IsLegal, "Level 2 rejects a second player Colony Hub");
-        var afterHubPowerPlant = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
+        var afterHubPowerPlant = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(-240, 170));
         Assert(afterHubPowerPlant.Success, $"Level 2 allows normal building after the Colony Hub is deployed ({afterHubPowerPlant.MessageKey}: {afterHubPowerPlant.Message})");
         var northRidgeBlocker = ridgeRuntime.Map.TerrainRegions.Single(region => region.Id == "ridge_north_blocker");
         var southRidgeBlocker = ridgeRuntime.Map.TerrainRegions.Single(region => region.Id == "ridge_south_blocker");
         var blockedTerrainPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, northRidgeBlocker.Center);
         Assert(!blockedTerrainPlacement.IsLegal, "Level 2 blocked terrain rejects building placement");
         Assert(blockedTerrainPlacement.MessageKey == "sim.placement.blocked_by_terrain", "blocked terrain placement returns a stable message key");
-        var outsideMarkedRegionPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-240, 185));
+        var outsideMarkedRegionPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-1060, 190));
         Assert(outsideMarkedRegionPlacement.IsLegal, $"Level 2 allows powered Pylon placement outside marked base regions ({outsideMarkedRegionPlacement.MessageKey}: {outsideMarkedRegionPlacement.Reason})");
-        var ridgePathProbe = ridgeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-520, -210));
-        ridgeSimulation.CommandUnitMove(ridgePathProbe.EntityId, new SimVector2(500, -210));
+        var ridgePathProbe = ridgeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-640, -290));
+        ridgeSimulation.CommandUnitMove(ridgePathProbe.EntityId, new SimVector2(860, -290));
         Assert(ridgePathProbe.PathWaypoints.Count > 1, "Level 2 pathfinding routes around ridge blockers instead of taking the direct line");
         Assert(!ridgePathProbe.PathWaypoints.Any(waypoint => northRidgeBlocker.Contains(waypoint, 0.0f)), "Level 2 path waypoints stay out of blocked terrain");
         ridgePathProbe.ApplyDamage(9999, "debug");
@@ -56,8 +56,8 @@ internal static class WellsAtTheRidgeSmoke
             return start.FactionId == ContentIds.Factions.PrivateMilitary &&
                 end.FactionId == ContentIds.Factions.PrivateMilitary;
         });
-        Assert(ridgeSimulation.IsLineBlockedByEnergyWall(new SimVector2(350, -150), new SimVector2(500, -150)), "Level 2 enemy wall buffer blocks the north walk-around lane");
-        Assert(ridgeSimulation.IsLineBlockedByEnergyWall(new SimVector2(350, 70), new SimVector2(500, 70)), "Level 2 enemy wall buffer blocks the south walk-around lane");
+        Assert(ridgeSimulation.IsLineBlockedByEnergyWall(new SimVector2(640, -185), new SimVector2(820, -185)), "Level 2 enemy wall buffer blocks the north walk-around lane");
+        Assert(ridgeSimulation.IsLineBlockedByEnergyWall(new SimVector2(640, 60), new SimVector2(820, 60)), "Level 2 enemy wall buffer blocks the south walk-around lane");
         Assert(northRidgeBlocker.Contains(enemyWall.ExtendedStart, EnergyWallSegment.BlockingClearance), "Level 2 enemy wall north buffer overlaps the ridge blocker instead of leaving a walk-around gap");
         Assert(southRidgeBlocker.Contains(enemyWall.ExtendedEnd, EnergyWallSegment.BlockingClearance), "Level 2 enemy wall south buffer overlaps the ridge blocker instead of leaving a walk-around gap");
         var enemyPylons = ridgeSimulation.Buildings.Where(building =>
@@ -130,6 +130,7 @@ internal static class WellsAtTheRidgeSmoke
         ValidateNaturalPlayerPylonRoute(context);
         ValidateBaseBreachRebuildPriority(context);
         ValidateEnemyBaseDefenseResponse(context);
+        ValidateEnemyPatrolsExploreFlanks(context);
         ValidateWallDoesNotBlockFire(context);
         ValidatePlayerGuardianRoute(context);
 
@@ -210,6 +211,26 @@ internal static class WellsAtTheRidgeSmoke
             order.UnitId != ContentIds.Units.Grunt), "Level 2 enemy queues combat production immediately during a base breach");
     }
 
+    private static void ValidateEnemyPatrolsExploreFlanks(SmokeTestContext context)
+    {
+        var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
+        var simulation = runtime.Simulation;
+        var patrolPositions = runtime.Mission.EnemyAiProfile.PatrolMarkerIds
+            .Select(markerId => runtime.Markers[markerId])
+            .ToArray();
+
+        Assert(runtime.Mission.EnemyAiProfile.MaxPatrolDispatches == 3, "Level 2 enemy profile dispatches a few early patrols instead of a single lane scout");
+        Assert(patrolPositions.Length == 3, "Level 2 enemy profile has three authored patrol areas for top/bottom exploration pressure");
+        TickFor(simulation, runtime.Mission.EnemyAiProfile.FirstPatrolDelaySeconds + 0.2f);
+        Assert(simulation.EnemyOfficer.PatrolDispatches == 1, "Level 2 sends its first patrol to an authored exploration marker before the main attack timer");
+        Assert(EnemyPatrolsAtAuthoredDestinations(simulation, patrolPositions).Count >= 1, "Level 2 first patrol uses an authored exploration destination");
+        TickFor(simulation, runtime.Mission.EnemyAiProfile.PatrolIntervalSeconds + 0.2f);
+        Assert(simulation.EnemyOfficer.PatrolDispatches == 2, "Level 2 sends a second early patrol instead of collapsing all pressure into the bridge lane");
+        TickFor(simulation, runtime.Mission.EnemyAiProfile.PatrolIntervalSeconds + 0.2f);
+        Assert(simulation.EnemyOfficer.PatrolDispatches == 3, "Level 2 sends a third early patrol before normal attack pressure starts");
+        Assert(simulation.EnemyOfficer.PatrolAreasVisited == 3, "Level 2 patrols fan out across all three authored exploration areas");
+    }
+
     private static void ValidateWallDoesNotBlockFire(SmokeTestContext context)
     {
         var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
@@ -232,6 +253,19 @@ internal static class WellsAtTheRidgeSmoke
         Assert(!rifleman.IsBlockedByEnergyWall, "Level 2 rifleman attacks a through-wall Pylon from a reachable firing point instead of getting stuck on the wall");
     }
 
+    private static List<int> EnemyPatrolsAtAuthoredDestinations(RtsSimulation simulation, IReadOnlyList<SimVector2> patrolPositions)
+    {
+        return simulation.Units
+            .Where(unit =>
+                unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+                !unit.IsDestroyed &&
+                unit.IsEnemyScout &&
+                unit.MoveTarget is not null)
+            .Select(unit => Array.FindIndex(patrolPositions.ToArray(), position => position.DistanceTo(unit.MoveTarget!.Value) < 0.01f))
+            .Where(index => index >= 0)
+            .ToList();
+    }
+
     private static void ValidateNaturalPlayerPylonRoute(SmokeTestContext context)
     {
         var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
@@ -239,9 +273,10 @@ internal static class WellsAtTheRidgeSmoke
         var landingZone = runtime.Markers["player_landing_zone"];
 
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, landingZone).Success, "Level 2 natural route deploys the Colony Hub at the landing marker");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, landingZone + new SimVector2(220, 0)).Success, "Level 2 natural route places a forward Power Plant from the landing marker");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-245, 185)).Success, "Level 2 natural route can start a Pylon chain east from base");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-245, 20)).Success, "Level 2 natural route can turn the Pylon chain toward the midfield well");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, landingZone + new SimVector2(-240, 170)).Success, "Level 2 natural route places a forward Power Plant from the landing marker");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1060, 190)).Success, "Level 2 natural route can start a Pylon chain east from base");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-360, 25)).Success, "Level 2 natural route can cross the longer bridge approach");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-60, 25)).Success, "Level 2 natural route can turn the Pylon chain toward the midfield well");
         var contestedWellPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["contested_ridge_well"]);
         Assert(contestedWellPlacement.Success, $"Level 2 natural route can power the midfield Extractor without exact designer-only coordinates ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Message})");
         var enemyForwardPylon = simulation.Buildings.Single(building =>
@@ -270,8 +305,8 @@ internal static class WellsAtTheRidgeSmoke
         var barracks = simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(200, -170));
         Assert(barracks.Success, $"Level 2 route places Barracks ({barracks.MessageKey}: {barracks.Message})");
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, playerWell).Success, "Level 2 route captures the safe start well");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-390, 25)).Success, "Level 2 route can extend a Pylon into the western power corridor");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 0)).Success, "Level 2 route can continue Pylon power through the central corridor without blocking the well");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-560, 75)).Success, "Level 2 route can extend a Pylon into the western power corridor");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-60, 25)).Success, "Level 2 route can continue Pylon power through the central corridor without blocking the well");
         var contestedWellPlacement = simulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["contested_ridge_well"]);
         Assert(contestedWellPlacement.IsLegal, $"Level 2 route can legally power an Extractor at the midfield well ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Reason})");
         Assert(simulation.TryQueueUnit(ContentIds.Units.Grunt, barracks.Building!.EntityId).Success, "Level 2 route trains the second Grunt needed for retrofit staffing");

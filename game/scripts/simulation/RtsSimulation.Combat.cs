@@ -10,6 +10,7 @@ public sealed partial class RtsSimulation
 
     private void TickEnemyPressure(float deltaSeconds)
     {
+        DispatchEnemyPatrol();
         DispatchEnemyScout();
         CommitEnemyAttackGroup();
 
@@ -98,6 +99,11 @@ public sealed partial class RtsSimulation
 
     private void DispatchEnemyScout()
     {
+        if (_enemyAi.PatrolPositions.Count > 0)
+        {
+            return;
+        }
+
         if (_enemyOfficer.ScoutDispatched ||
             _elapsedSeconds < EnemyScoutDispatchDelaySeconds ||
             _elapsedSeconds >= _enemyAi.Profile.FirstAttackDelaySeconds)
@@ -123,6 +129,69 @@ public sealed partial class RtsSimulation
         scout.IsEnemyScout = true;
         _enemyOfficer.ScoutDispatched = true;
         SetUnitPathTo(scout, _enemyAi.RallyPosition);
+    }
+
+    private void DispatchEnemyPatrol()
+    {
+        if (_enemyAi.PatrolPositions.Count == 0 ||
+            _enemyAi.Profile.MaxPatrolDispatches <= 0 ||
+            _enemyPatrolDispatches >= _enemyAi.Profile.MaxPatrolDispatches ||
+            _elapsedSeconds < _nextEnemyPatrolDispatchSeconds ||
+            _elapsedSeconds >= _enemyAi.Profile.FirstAttackDelaySeconds)
+        {
+            return;
+        }
+
+        var patrolGroupSize = Math.Max(1, _enemyAi.Profile.PatrolGroupSize);
+        var idleCombatUnits = _units
+            .Where(unit =>
+                unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+                !unit.IsDestroyed &&
+                unit.Definition.CanAttack &&
+                unit.HealthRatio >= EnemyRetreatRecoverRatio &&
+                !unit.IsEnemyAttackCommitted &&
+                !unit.IsEnemyScout)
+            .OrderBy(unit => unit.Position.DistanceTo(_enemyAi.HubPosition))
+            .Take(patrolGroupSize)
+            .ToArray();
+        if (idleCombatUnits.Length == 0)
+        {
+            _nextEnemyPatrolDispatchSeconds = _elapsedSeconds + Math.Max(1.0f, _enemyAi.Profile.PatrolIntervalSeconds);
+            return;
+        }
+
+        var destinationIndex = SelectEnemyPatrolDestinationIndex();
+        var destination = _enemyAi.PatrolPositions[destinationIndex];
+        foreach (var unit in idleCombatUnits)
+        {
+            unit.IsEnemyScout = true;
+            unit.IsEnemyRetreating = false;
+            unit.TargetUnitEntityId = null;
+            unit.TargetBuildingEntityId = null;
+            SetUnitPathTo(unit, destination);
+        }
+
+        _enemyPatrolDestinationIndexes.Add(destinationIndex);
+        _enemyPatrolDispatches++;
+        _enemyOfficer.PatrolDispatches = _enemyPatrolDispatches;
+        _enemyOfficer.PatrolAreasVisited = _enemyPatrolDestinationIndexes.Count;
+        _nextEnemyPatrolDispatchSeconds = _elapsedSeconds + Math.Max(1.0f, _enemyAi.Profile.PatrolIntervalSeconds);
+    }
+
+    private int SelectEnemyPatrolDestinationIndex()
+    {
+        var positions = _enemyAi.PatrolPositions;
+        if (positions.Count == 0)
+        {
+            return 0;
+        }
+
+        if (_enemyPatrolDestinationOffset < 0)
+        {
+            _enemyPatrolDestinationOffset = _enemyPatrolRandom.Next(positions.Count);
+        }
+
+        return (_enemyPatrolDispatches + _enemyPatrolDestinationOffset) % positions.Count;
     }
 
     private void TickBuildingAttacks(float deltaSeconds)

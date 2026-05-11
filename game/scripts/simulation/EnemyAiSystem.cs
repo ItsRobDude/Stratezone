@@ -45,6 +45,7 @@ internal sealed class EnemyAiSystem
     public EnemyAiProfileDefinition Profile => _profile;
     public SimVector2 HubPosition => _markers.HubPosition;
     public SimVector2 RallyPosition => _markers.RallyPosition;
+    public IReadOnlyList<SimVector2> PatrolPositions => _markers.PatrolPositions;
 
     public void Tick(RtsSimulation simulation, float deltaSeconds)
     {

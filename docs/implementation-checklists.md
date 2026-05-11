@@ -213,6 +213,7 @@ Acceptance checks:
 - Level 2 has the player build and place the base instead of starting with a finished base
 - scarce wells force a visible resource race
 - cliffs, water, or other impassable terrain create readable chokepoints without a complex terrain-simulation expansion
+- Level 2 is meaningfully larger than Level 1, with a farther enemy base, a longer bridge/choke, and top/bottom exploration lanes
 - readable clearings give the player practical base-space cues without becoming hidden build whitelists
 - resource basins make important wells read as tactical map pockets
 - Defense Tower wall placement matters because of the map shape
@@ -222,6 +223,7 @@ Acceptance checks:
 - Armory Annex is not used as the Guardian unlock path
 - player-facing warnings report only known events, not hidden attack planning
 - early raid triggers coalesce or queue behind cooldowns instead of stacking when Barracks and first Extractor appear back to back
+- early enemy patrols visit a few authored exploration areas before the main attack timer, encouraging scouting without hidden-plan alerts
 - pressure creates a choice between repair, defense, expansion, or attack
 - quick fail/retry flow is acceptable; no persistent campaign consequence is required
 - Vehicle Bay remains absent from Level 2 unless the roadmap is deliberately reopened
@@ -235,7 +237,7 @@ Evidence:
 - smoke or debug evidence for any new terrain/passability/buildability rule
 - smoke evidence that the Mission 2 player can deploy an offset Hub inside the landing clearing, build Power/Barracks/Extractor, chain Pylons through the authored power corridor to the midfield well, train the second Grunt, complete Guardian Retrofit, and train a Guardian
 - smoke evidence that the enemy does not claim the midfield well on its normal rebuild beat and waits for the mission-profile central-well claim delay
-- smoke evidence that Mission 2 starts with a real enemy defense wall, the wall buffer overlaps nearby ridge blockers and blocks intended walk-around lanes, units can shoot through a wall when range allows, idle combat units auto-fire at visible hostile troops/tanks but not buildings, enemy forward expansion pylons are not rebuilt after the player owns the linked midfield well, base-breach rebuilds prefer defense/wall power over expansion pylons, and idle enemy defenders pursue base intruders before the scheduled attack timer
+- smoke evidence that Mission 2 starts with a real enemy defense wall, the wall buffer overlaps nearby ridge blockers and blocks intended walk-around lanes, units can shoot through a wall when range allows, idle combat units auto-fire at visible hostile troops/tanks but not buildings, enemy forward expansion pylons are not rebuilt after the player owns the linked midfield well, base-breach rebuilds prefer defense/wall power over expansion pylons, idle enemy defenders pursue base intruders before the scheduled attack timer, and early enemy patrols fan out across multiple authored exploration markers
 - notes for any support/siege system deliberately kept out
 
 ## Milestone 5 Checklist: Level 3 - Mobile Response

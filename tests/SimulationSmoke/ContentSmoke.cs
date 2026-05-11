@@ -60,6 +60,8 @@ internal static class ContentSmoke
 
         Assert(catalog.Missions.Count >= 2, "catalog loads more than one playable mission file");
         Assert(ridgeMission.MapId == "map_wells_at_the_ridge_greybox", "Level 2 mission data points at the ridge greybox map");
+        Assert(ridgeMap.TargetSize == "large", "Level 2 map is authored as a larger battlefield than the first greybox");
+        Assert(ridgeMission.Markers.Single(marker => marker.Id == "enemy_base").Position.X - ridgeMission.Markers.Single(marker => marker.Id == "player_landing_zone").Position.X > 1700.0f, "Level 2 places the enemy base far enough away to read as a real expansion operation");
         Assert(ridgeMission.AvailableUnitIds.Contains(ContentIds.Units.Guardian), "Level 2 exposes Guardian training behind the Barracks retrofit");
         Assert(ridgeMission.AvailableBuildingIds.Contains(ContentIds.Buildings.ColonyHub), "Level 2 exposes Colony Hub placement");
         Assert(!ridgeMission.StartingEntities.Any(entity =>
@@ -76,6 +78,7 @@ internal static class ContentSmoke
         Assert(ridgeMission.MissionTriggers.Count == 1, "Level 2 declares one coalesced base-building pressure trigger");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.Barracks), "Level 2 pressure trigger watches Barracks construction");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.ExtractorRefinery), "Level 2 pressure trigger coalesces first Extractor construction");
+        Assert(ridgeMission.EnemyAiProfile.PatrolMarkerIds.Count == 3, "Level 2 owns three authored enemy patrol markers to encourage top/bottom scouting");
         Assert(ridgeMission.Markers.Count >= 15, "Level 2 exposes enough authored mission markers for map editor/tuner route work");
         Assert(ridgeMission.Markers.Any(marker => marker.Id == "enemy_wall_power_pylon"), "Level 2 has a stable wall-power Pylon marker for map editor/tuner work");
         Assert(ridgeMission.Markers.Any(marker => marker.Id == "enemy_defense") && ridgeMission.Markers.Any(marker => marker.Id == "enemy_defense_south"), "Level 2 has stable Defense Tower markers for wall-link tuning");

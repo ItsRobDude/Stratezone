@@ -4,10 +4,10 @@ namespace Stratezone.Simulation;
 
 internal static class PathfindingSystem
 {
-    private const float MinX = -760.0f;
-    private const float MaxX = 940.0f;
-    private const float MinY = -420.0f;
-    private const float MaxY = 420.0f;
+    private const float MinX = -1120.0f;
+    private const float MaxX = 1320.0f;
+    private const float MinY = -760.0f;
+    private const float MaxY = 700.0f;
     private const float CellSize = 32.0f;
     private const float UnitClearance = 18.0f;
     private const int DestinationFallbackRadiusCells = 6;

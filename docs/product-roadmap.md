@@ -257,9 +257,12 @@ Mission shape:
 - the player builds and places the base instead of starting with a finished base
 - scarce resource wells that force a race for expansion timing
 - cliffs, water, or other impassable terrain that create readable chokepoints without requiring complex terrain simulation
+- larger battlefield spacing than Level 1, with the enemy base far enough away that expansion and scouting matter before the base assault
+- a longer central bridge/choke route, plus northern and southern exploration lanes that can reveal enemy movement instead of making the mission a straight middle-lane push
 - authored clearings and resource basins that make base expansion readable without becoming hidden build whitelists
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
+- early enemy patrols can visit two or three authored exploration areas before the main attack timer, with no omniscient HUD warning about their plan
 - likely first Barracks Guardian upgrade, justified by enemy armor, hardened defense, or tower-anchor pressure; enemy Guardian production must use the same runtime upgrade gate instead of pre-granted access
 - pressure triggers do not stack immediate raids when normal base-building milestones happen close together
 - quick RTS failure/retry expectations rather than persistent campaign consequences
@@ -272,6 +275,7 @@ Exit criteria:
 - the resource race is legible before it becomes punishing
 - at least one chokepoint can be shaped with Defense Tower walls
 - blocked terrain affects placement and/or movement in a way smoke checks can prove
+- early patrols make top/bottom scouting worthwhile without replacing the main resource-race pressure
 - Guardian production remains a specialist answer if the Barracks upgrade enters this mission
 - infrastructure strikes matter without requiring a new faction or story system
 - the mission proves a second repeatable level-design pattern after First Landing

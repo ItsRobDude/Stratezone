@@ -9,7 +9,8 @@ public sealed record EnemyAiMarkers(
     SimVector2 BarracksPosition,
     SimVector2 ExtractorPosition,
     SimVector2 DefenseTowerPosition,
-    SimVector2 RallyPosition
+    SimVector2 RallyPosition,
+    IReadOnlyList<SimVector2> PatrolPositions
 )
 {
     public static EnemyAiMarkers FirstLanding { get; } = new(
@@ -21,7 +22,8 @@ public sealed record EnemyAiMarkers(
         new SimVector2(650, -90),
         new SimVector2(390, 30),
         new SimVector2(110, -45),
-        new SimVector2(300, 80));
+        new SimVector2(300, 80),
+        []);
 
     public static EnemyAiMarkers FromMission(Content.MissionDefinition mission)
     {
@@ -36,11 +38,22 @@ public sealed record EnemyAiMarkers(
             GetMarker(markers, profile.BarracksMarkerId, FirstLanding.BarracksPosition),
             GetMarker(markers, profile.ExtractorMarkerId, FirstLanding.ExtractorPosition),
             GetMarker(markers, profile.DefenseTowerMarkerId, FirstLanding.DefenseTowerPosition),
-            GetMarker(markers, profile.RallyMarkerId, FirstLanding.RallyPosition));
+            GetMarker(markers, profile.RallyMarkerId, FirstLanding.RallyPosition),
+            ResolvePatrolPositions(markers, profile));
     }
 
     private static SimVector2 GetMarker(IReadOnlyDictionary<string, SimVector2> markers, string id, SimVector2 fallback)
     {
         return markers.TryGetValue(id, out var position) ? position : fallback;
+    }
+
+    private static IReadOnlyList<SimVector2> ResolvePatrolPositions(
+        IReadOnlyDictionary<string, SimVector2> markers,
+        Content.EnemyAiProfileDefinition profile)
+    {
+        var rally = GetMarker(markers, profile.RallyMarkerId, FirstLanding.RallyPosition);
+        return profile.PatrolMarkerIds
+            .Select(markerId => GetMarker(markers, markerId, rally))
+            .ToArray();
     }
 }

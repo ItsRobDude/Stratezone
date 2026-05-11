@@ -11,7 +11,7 @@ public partial class Main
             Name = "MissionResultPanel",
             Visible = false,
             Position = new Vector2(360, 250),
-            Size = new Vector2(560, 160)
+            Size = new Vector2(620, 210)
         };
         uiRoot.AddChild(_missionResultPanel);
 
@@ -19,7 +19,7 @@ public partial class Main
         {
             Name = "MissionResultLabel",
             Position = new Vector2(24, 24),
-            Size = new Vector2(512, 112),
+            Size = new Vector2(572, 162),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             AutowrapMode = TextServer.AutowrapMode.WordSmart
@@ -45,7 +45,20 @@ public partial class Main
         var titleKey = _simulation.MissionState.Status == MissionStatus.Won
             ? "ui.mission_result.won_title"
             : "ui.mission_result.lost_title";
-        _missionResultLabel.Text = $"{L(titleKey)}\n{LocalizedMissionResultText(_simulation.MissionState)}";
+        var lines = new List<string>
+        {
+            L(titleKey),
+            LocalizedMissionResultText(_simulation.MissionState)
+        };
+
+        var retryHint = LocalizedMissionRetryHint();
+        if (_simulation.MissionState.Status == MissionStatus.Lost && !string.IsNullOrWhiteSpace(retryHint))
+        {
+            lines.Add(L("ui.mission_result.retry_hint", SimulationMessage.Args(("hint", retryHint))));
+        }
+
+        lines.Add(L("ui.mission_result.controls_hint"));
+        _missionResultLabel.Text = string.Join("\n", lines);
     }
 
     private void ApplyMissionResultScale()
@@ -57,7 +70,7 @@ public partial class Main
 
         var viewportSize = GetViewport().GetVisibleRect().Size;
         var margin = 24.0f * _uiScale;
-        var desiredPanelSize = new Vector2(560, 160) * _uiScale;
+        var desiredPanelSize = new Vector2(620, 210) * _uiScale;
         var maxPanelSize = new Vector2(
             Mathf.Max(260.0f, viewportSize.X - (margin * 2.0f)),
             Mathf.Max(120.0f, viewportSize.Y - (margin * 2.0f)));

@@ -63,6 +63,10 @@ def main() -> int:
 
     expected_trainable = ["unit_grunt", "unit_cadet", "unit_rifleman"]
     require(
+        mission.get("start_pattern") == "deployed_base",
+        "First Landing should keep the deployed-base start pattern.",
+    )
+    require(
         mission.get("available_unit_ids") == expected_trainable,
         "Level 1 trainable units must stay exactly: unit_grunt, unit_cadet, unit_rifleman.",
     )
@@ -231,6 +235,21 @@ def main() -> int:
             f"event.{event_id}.name" in i18n_strings,
             f"Missing localization name key for {event_id}.",
         )
+
+    presentation = mission.get("presentation", {})
+    require(
+        presentation.get("retry_hint_key") == "mission.mission_first_landing.retry_hint",
+        "First Landing should keep its localized retry hint key.",
+    )
+    require(
+        presentation.get("tactical_note_key") == "mission.mission_first_landing.tactical_note",
+        "First Landing should keep its localized tactical note key.",
+    )
+    for callout in presentation.get("map_callouts", []):
+        marker_id = callout.get("marker")
+        text_key = callout.get("text_key")
+        require(marker_id in marker_ids, f"First Landing presentation callout references missing marker: {marker_id}")
+        require(text_key in i18n_strings, f"First Landing presentation callout has missing text key: {text_key}")
 
     doc_text = "\n".join(
         [

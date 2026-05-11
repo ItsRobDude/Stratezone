@@ -6,6 +6,7 @@ public sealed record MissionDefinition(
     string Id,
     string DisplayName,
     string MapId,
+    string StartPattern,
     IReadOnlyDictionary<string, int> PlayerStartingResources,
     IReadOnlyDictionary<string, int> EnemyStartingResources,
     IReadOnlyList<string> ResourceWellIds,
@@ -44,7 +45,15 @@ public sealed record MissionPresentationDefinition(
     string BriefingBodyKey,
     string StartObjectiveKey,
     string SuccessKey,
-    string FailureKey
+    string FailureKey,
+    string RetryHintKey,
+    string TacticalNoteKey,
+    IReadOnlyList<MissionMapCalloutDefinition> MapCallouts
+);
+
+public sealed record MissionMapCalloutDefinition(
+    string MarkerId,
+    string TextKey
 );
 
 public sealed record MissionTriggerDefinition(

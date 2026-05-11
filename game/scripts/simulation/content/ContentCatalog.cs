@@ -342,6 +342,7 @@ public sealed class ContentCatalog
                 id,
                 record.GetProperty("display_name").GetString() ?? string.Empty,
                 record.GetProperty("map_id").GetString() ?? string.Empty,
+                GetOptionalString(record, "start_pattern") ?? "deployed_base",
                 startingResources,
                 enemyStartingResources,
                 wellIds,
@@ -427,7 +428,10 @@ public sealed class ContentCatalog
                 string.Empty,
                 string.Empty,
                 string.Empty,
-                string.Empty);
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                []);
         }
 
         return new MissionPresentationDefinition(
@@ -435,7 +439,25 @@ public sealed class ContentCatalog
             GetOptionalString(presentation, "briefing_body_key") ?? string.Empty,
             GetOptionalString(presentation, "start_objective_key") ?? string.Empty,
             GetOptionalString(presentation, "success_key") ?? string.Empty,
-            GetOptionalString(presentation, "failure_key") ?? string.Empty);
+            GetOptionalString(presentation, "failure_key") ?? string.Empty,
+            GetOptionalString(presentation, "retry_hint_key") ?? string.Empty,
+            GetOptionalString(presentation, "tactical_note_key") ?? string.Empty,
+            LoadMissionMapCallouts(presentation));
+    }
+
+    private static IReadOnlyList<MissionMapCalloutDefinition> LoadMissionMapCallouts(JsonElement presentation)
+    {
+        if (!presentation.TryGetProperty("map_callouts", out var callouts) || callouts.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return callouts.EnumerateArray()
+            .Select(callout => new MissionMapCalloutDefinition(
+                callout.GetProperty("marker").GetString() ?? string.Empty,
+                callout.GetProperty("text_key").GetString() ?? string.Empty))
+            .Where(callout => callout.MarkerId.Length > 0 && callout.TextKey.Length > 0)
+            .ToArray();
     }
 
     private static IReadOnlyList<MissionTriggerDefinition> LoadMissionTriggers(JsonElement record)

@@ -83,11 +83,15 @@ REQUIRED_I18N_KEYS = {
     "ui.action.debug_commander_killed",
     "ui.action.debug_commander_missing",
     "ui.action.debug_mission_loaded",
+    "ui.action.mission_restarted",
+    "ui.action.quit_requested",
     "ui.hud.build_line",
     "ui.hud.placing_line",
     "ui.hud.status_line",
     "ui.hud.mission_line",
     "ui.hud.briefing_line",
+    "ui.hud.tactical_line",
+    "ui.hud.callout_line",
     "ui.hud.commander_line",
     "ui.hud.commander_missing_line",
     "ui.hud.commander_alive_status",
@@ -115,6 +119,8 @@ REQUIRED_I18N_KEYS = {
     "ui.detail.barracks_upgrade",
     "ui.mission_result.won_title",
     "ui.mission_result.lost_title",
+    "ui.mission_result.retry_hint",
+    "ui.mission_result.controls_hint",
     "ui.alert.none",
     "ui.alert.enemy_units_spotted",
     "ui.alert.enemy_structures_spotted",
@@ -318,6 +324,13 @@ def validate_unit_and_building_combat_fields(records: dict[str, dict[str, Any]])
 
 def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
     errors: list[str] = []
+    allowed_start_patterns = {
+        "deployed_base",
+        "player_places_colony_hub",
+        "partial_damaged_base",
+        "no_base_force",
+        "allotted_force",
+    }
     numeric_fields = {
         "first_rebuild_delay_seconds",
         "first_central_well_rebuild_delay_seconds",
@@ -335,6 +348,39 @@ def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
     for record_id, record in records.items():
         if not record_id.startswith("mission_"):
             continue
+
+        start_pattern = record.get("start_pattern")
+        if start_pattern not in allowed_start_patterns:
+            errors.append(
+                f"{record['_source_path']}: {record_id}.start_pattern must be one of {', '.join(sorted(allowed_start_patterns))}"
+            )
+
+        presentation = record.get("presentation")
+        if isinstance(presentation, dict):
+            marker_ids = {
+                marker.get("id")
+                for marker in record.get("mission_markers", [])
+                if isinstance(marker, dict)
+            }
+            map_callouts = presentation.get("map_callouts")
+            if map_callouts is not None:
+                if not isinstance(map_callouts, list):
+                    errors.append(f"{record['_source_path']}: {record_id}.presentation.map_callouts must be a list")
+                else:
+                    for index, callout in enumerate(map_callouts):
+                        if not isinstance(callout, dict):
+                            errors.append(f"{record['_source_path']}: {record_id}.presentation.map_callouts[{index}] must be an object")
+                            continue
+                        marker_id = callout.get("marker")
+                        text_key = callout.get("text_key")
+                        if marker_id not in marker_ids:
+                            errors.append(
+                                f"{record['_source_path']}: {record_id}.presentation.map_callouts[{index}] references missing mission marker '{marker_id}'"
+                            )
+                        if not isinstance(text_key, str) or not text_key:
+                            errors.append(
+                                f"{record['_source_path']}: {record_id}.presentation.map_callouts[{index}].text_key must be a localization key"
+                            )
 
         profile = record.get("enemy_ai_profile")
         if profile is None:
@@ -415,6 +461,13 @@ def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
             for key_name, key_value in presentation.items():
                 if key_name.endswith("_key") and isinstance(key_value, str) and key_value:
                     required_keys.add(key_value)
+            map_callouts = presentation.get("map_callouts")
+            if isinstance(map_callouts, list):
+                for callout in map_callouts:
+                    if isinstance(callout, dict):
+                        text_key = callout.get("text_key")
+                        if isinstance(text_key, str) and text_key:
+                            required_keys.add(text_key)
 
     for key in sorted(required_keys):
         value = strings.get(key)

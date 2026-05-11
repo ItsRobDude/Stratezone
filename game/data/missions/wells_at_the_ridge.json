@@ -9,6 +9,7 @@
         "max": 14
       },
       "map_id": "map_wells_at_the_ridge_greybox",
+      "start_pattern": "player_places_colony_hub",
       "player_faction_id": "faction_player_expedition",
       "enemy_faction_ids": ["faction_private_military"],
       "presentation": {
@@ -16,7 +17,23 @@
         "briefing_body_key": "mission.mission_wells_at_the_ridge.briefing_body",
         "start_objective_key": "mission.mission_wells_at_the_ridge.start_objective",
         "success_key": "mission.mission_wells_at_the_ridge.success",
-        "failure_key": "mission.mission_wells_at_the_ridge.failure"
+        "failure_key": "mission.mission_wells_at_the_ridge.failure",
+        "retry_hint_key": "mission.mission_wells_at_the_ridge.retry_hint",
+        "tactical_note_key": "mission.mission_wells_at_the_ridge.tactical_note",
+        "map_callouts": [
+          {
+            "marker": "player_start_well",
+            "text_key": "mission.mission_wells_at_the_ridge.callout.start_well"
+          },
+          {
+            "marker": "contested_ridge_well",
+            "text_key": "mission.mission_wells_at_the_ridge.callout.contested_well"
+          },
+          {
+            "marker": "enemy_wall_power_pylon",
+            "text_key": "mission.mission_wells_at_the_ridge.callout.enemy_wall_power"
+          }
+        ]
       },
       "mission_markers": [
         { "id": "player_landing_zone", "position": { "x": -820, "y": 220 } },

@@ -5,6 +5,14 @@ public partial class Main
 {
     private bool HandleDebugHotkey(Key keycode)
     {
+        if (keycode == Key.F4)
+        {
+            LoadMission(_activeMissionId);
+            var missionName = _localization?.ContentName(_activeMissionId, _activeMission?.DisplayName) ?? _activeMissionId;
+            _lastActionMessage = L("ui.action.mission_restarted", SimulationMessage.Args(("mission", missionName)));
+            return true;
+        }
+
         if (keycode == Key.F6)
         {
             var nextMissionId = _activeMissionId == ContentIds.Missions.FirstLanding
@@ -13,6 +21,13 @@ public partial class Main
             LoadMission(nextMissionId);
             var missionName = _localization?.ContentName(nextMissionId, _catalog?.GetMission(nextMissionId).DisplayName) ?? nextMissionId;
             _lastActionMessage = L("ui.action.debug_mission_loaded", SimulationMessage.Args(("mission", missionName)));
+            return true;
+        }
+
+        if (keycode == Key.F12)
+        {
+            _lastActionMessage = L("ui.action.quit_requested");
+            GetTree().Quit();
             return true;
         }
 

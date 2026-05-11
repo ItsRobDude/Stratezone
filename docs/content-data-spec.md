@@ -461,6 +461,7 @@ Required fields:
 - `display_name`
 - `target_duration_minutes`
 - `map_id`
+- `start_pattern`
 - `player_faction_id`
 - `enemy_faction_ids`
 - `starting_entities`
@@ -479,6 +480,22 @@ First-pass mission ID:
 
 - `mission_first_landing`
 
+Allowed `start_pattern` values:
+
+- `deployed_base`: the player begins with an authored live base.
+- `player_places_colony_hub`: the player starts with a force and must place the first Colony Hub.
+- `partial_damaged_base`: the player begins with a damaged or disrupted authored base.
+- `no_base_force`: the player begins with units/equipment and no normal base.
+- `allotted_force`: the mission starts from a fixed authored force, with limited or no production assumptions.
+
+Mission presentation fields:
+
+- `presentation.briefing_title_key`, `briefing_body_key`, `start_objective_key`, `success_key`, and `failure_key` are localized text hooks for the core mission flow.
+- `presentation.retry_hint_key` is an optional localized hint shown on mission failure.
+- `presentation.tactical_note_key` is an optional localized HUD/debug note for player-known tactical framing.
+- `presentation.map_callouts` is an optional list of sparse callouts with `marker` and `text_key`; each marker must match an authored mission marker and each text key must exist in localization.
+- Presentation fields must not reveal hidden enemy plans. They should name known terrain, known risks, or concise retry advice.
+
 Prototype rules:
 
 - starts already landed
@@ -490,7 +507,7 @@ Prototype rules:
 - includes an enemy pylon weak point that can disable an enemy tower route
 - includes authored mission markers for base positions, wells, AI build slots, rally points, and choke points
 - includes an enemy AI profile for first rebuild delay, first central-well claim delay, first attack delay, optional early patrol delay/interval/count, rebuild cadence, production cadence, attack group size, patrol group size, central-well interest, contested-well rebuild cooldown/limit, pressure slowdown, train-time multiplier, and authored patrol marker list
-- may include `presentation` keys for briefing title/body, start objective, success, and failure text; these keys must exist in localization once wired
+- may include `presentation` keys for briefing title/body, start objective, success, failure, retry hints, tactical notes, and map callouts; these keys must exist in localization once wired
 - may include `mission_triggers` for authored pacing beats such as coalesced base-building pressure
 - uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission
 - uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records

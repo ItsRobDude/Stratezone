@@ -34,6 +34,38 @@ public partial class Main
                 ("briefing", L(_activeMission.Presentation.BriefingBodyKey))));
     }
 
+    private string GetMissionReadabilityHudLine()
+    {
+        if (_activeMission is null)
+        {
+            return string.Empty;
+        }
+
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(_activeMission.Presentation.TacticalNoteKey))
+        {
+            lines.Add(L(
+                "ui.hud.tactical_line",
+                SimulationMessage.Args(("note", L(_activeMission.Presentation.TacticalNoteKey)))));
+        }
+
+        if (_activeMission.Presentation.MapCallouts.Count > 0)
+        {
+            var callouts = _activeMission.Presentation.MapCallouts
+                .Select(callout => L(callout.TextKey))
+                .Where(callout => !string.IsNullOrWhiteSpace(callout))
+                .ToArray();
+            if (callouts.Length > 0)
+            {
+                lines.Add(L(
+                    "ui.hud.callout_line",
+                    SimulationMessage.Args(("callouts", string.Join(" / ", callouts)))));
+            }
+        }
+
+        return string.Join("\n", lines);
+    }
+
     private string LocalizedMissionResultText(MissionState state)
     {
         if (_activeMission is not null &&
@@ -51,5 +83,13 @@ public partial class Main
         }
 
         return LocalizedMissionText(state);
+    }
+
+    private string LocalizedMissionRetryHint()
+    {
+        return _activeMission is not null &&
+            !string.IsNullOrWhiteSpace(_activeMission.Presentation.RetryHintKey)
+                ? L(_activeMission.Presentation.RetryHintKey)
+                : string.Empty;
     }
 }

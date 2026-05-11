@@ -82,6 +82,7 @@ def main() -> int:
     duration = mission.get("target_duration_minutes", {})
     print(f"Target duration: {duration.get('min')} to {duration.get('max')} minutes")
     print(f"Map: {mission.get('map_id')}")
+    print(f"Start pattern: {mission.get('start_pattern', 'deployed_base')}")
     print(f"Player faction: {player_faction}")
     print(f"Enemy factions: {', '.join(mission.get('enemy_faction_ids', []))}")
     print("")
@@ -101,6 +102,15 @@ def main() -> int:
     print(f"- Objectives: {', '.join(mission.get('objectives', []))}")
     print(f"- Failure conditions: {', '.join(mission.get('failure_conditions', []))}")
     print(f"- Special rules: {', '.join(mission.get('special_rules', []))}")
+    presentation = mission.get("presentation", {})
+    callouts = [
+        callout.get("marker", "")
+        for callout in presentation.get("map_callouts", [])
+        if isinstance(callout, dict) and callout.get("marker")
+    ]
+    print(f"- Retry hint key: {presentation.get('retry_hint_key', 'none')}")
+    print(f"- Tactical note key: {presentation.get('tactical_note_key', 'none')}")
+    print(f"- Map callout markers: {', '.join(callouts) or 'none'}")
     fog_rules = mission.get("fog_rules", {})
     print(
         "- Fog: "

@@ -56,10 +56,14 @@ internal static class ContentSmoke
         Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Grunt) == 1, "Level 1 starts the player with one Grunt");
         Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rover) == 1, "Level 1 starts the player with one provided Rover");
         Assert(!mission.StartingEntities.Any(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rifleman), "Level 1 does not start the player with extra Riflemen");
+        Assert(mission.StartPattern == "deployed_base", "Level 1 declares the deployed-base start pattern");
         Assert(mission.Presentation.BriefingTitleKey == "mission.mission_first_landing.briefing_title", "Level 1 has localized briefing title data");
+        Assert(mission.Presentation.RetryHintKey == "mission.mission_first_landing.retry_hint", "Level 1 owns localized retry hint data");
+        Assert(mission.Presentation.MapCallouts.Count == 2, "Level 1 owns sparse marker-backed map callouts");
 
         Assert(catalog.Missions.Count >= 2, "catalog loads more than one playable mission file");
         Assert(ridgeMission.MapId == "map_wells_at_the_ridge_greybox", "Level 2 mission data points at the ridge greybox map");
+        Assert(ridgeMission.StartPattern == "player_places_colony_hub", "Level 2 declares the player-placed Colony Hub start pattern");
         Assert(ridgeMap.TargetSize == "large", "Level 2 map is authored as a larger battlefield than the first greybox");
         Assert(ridgeMission.Markers.Single(marker => marker.Id == "enemy_base").Position.X - ridgeMission.Markers.Single(marker => marker.Id == "player_landing_zone").Position.X > 1700.0f, "Level 2 places the enemy base far enough away to read as a real expansion operation");
         Assert(ridgeMission.AvailableUnitIds.Contains(ContentIds.Units.Guardian), "Level 2 exposes Guardian training behind the Barracks retrofit");
@@ -75,6 +79,8 @@ internal static class ContentSmoke
             entity.ContentId == ContentIds.Units.Rifleman) == 1, "Level 2 starts with one Rifleman escort");
         Assert(ridgeMission.ObjectiveIds.Contains(ContentIds.Objectives.DestroyEnemyColonyHub), "Level 2 wins through the enemy Colony Hub objective rather than well control");
         Assert(ridgeMission.Presentation.StartObjectiveKey == "mission.mission_wells_at_the_ridge.start_objective", "Level 2 owns localized start objective data");
+        Assert(ridgeMission.Presentation.TacticalNoteKey == "mission.mission_wells_at_the_ridge.tactical_note", "Level 2 owns localized tactical note data");
+        Assert(ridgeMission.Presentation.MapCallouts.Any(callout => callout.MarkerId == "contested_ridge_well"), "Level 2 callouts are tied to stable mission markers");
         Assert(ridgeMission.MissionTriggers.Count == 1, "Level 2 declares one coalesced base-building pressure trigger");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.Barracks), "Level 2 pressure trigger watches Barracks construction");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.ExtractorRefinery), "Level 2 pressure trigger coalesces first Extractor construction");

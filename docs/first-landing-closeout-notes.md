@@ -9,12 +9,14 @@ This note records the current closeout evidence for the First Landing greybox ro
 Generated with `python plugins\stratezone-mission-steward\scripts\mission_truth_report.py`.
 
 - Mission: `mission_first_landing` / Greybox Demo, target duration 5-10 minutes.
+- Start pattern: `deployed_base`.
 - Player starts with 1 Commander, 1 Grunt, 1 Guardian, 1 Rover, and 1 Colony Hub.
 - Enemy starts with 3 Riflemen, 1 Colony Hub, 1 Barracks, 1 Power Plant, 2 Pylons, and 2 Defense Towers.
 - Level 1 trainable units remain Grunt, Cadet, and Rifleman.
 - Commander, Guardian, and Rover remain authored-only player units for Level 1.
 - Hidden/deferred Level 1 buildings remain Armory Annex, Vehicle Bay, Med Hall, Logistics / Repair Pad, and Artillery Battery.
 - Mission rules remain destroy all enemies, protect Commander, black unexplored fog, explored terrain stays visible, and the permanent Colony Hub destruction rule reveals a Medium Tank occupant.
+- Mission presentation now includes localized retry hint, tactical note, and sparse map callouts for the central well and enemy power line.
 - Enemy AI profile remains slow/readable: first attack at 115 seconds, attack group size 1, pressure slowdown 0.55, train time multiplier 1.8.
 
 ## Automated Evidence
@@ -24,6 +26,14 @@ Generated with `python plugins\stratezone-mission-steward\scripts\mission_truth_
 - Destroying the enemy central Extractor releases the central well for player retake, and the smoke route proves a powered player Pylon chain can reach that well.
 - The mission AI profile delays first committed pressure, sends a scout before the first attack, commits only the small configured attack group, and leaves defenders at base.
 - The broader simulation smoke suite proves Commander death loss, F7/debug Commander loss, destroy-all-enemies win, hostile Colony Hub Medium Tank occupant release, repair behavior, fog visibility, production, tower upgrades, explosive friendly fire, and crush behavior.
+- The mission result overlay now shows a localized retry hint on loss, and F4/F12 provide quick restart and dev quit coverage for rapid replay.
+- `tests/SimulationSmoke/ContentSmoke.cs` proves First Landing loads the `deployed_base` start pattern and its new presentation keys.
+
+## Manual Route Status
+
+- Natural win route: not replayed manually from this terminal session; current route confidence comes from the existing user win-run evidence plus deterministic mission smoke coverage.
+- Commander-loss route: covered by deterministic Commander-loss and F7/debug Commander kill smoke checks; not replayed manually through natural enemy combat in this terminal session.
+- Anything confusing: no new blocker surfaced during automated/headless validation, but the Pylon weak point and wall shutdown remain discovery risks for the next human pass.
 
 ## Validation
 

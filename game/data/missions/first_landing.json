@@ -9,6 +9,7 @@
         "max": 10
       },
       "map_id": "map_first_landing_greybox",
+      "start_pattern": "deployed_base",
       "player_faction_id": "faction_player_expedition",
       "enemy_faction_ids": ["faction_private_military"],
       "presentation": {
@@ -16,7 +17,19 @@
         "briefing_body_key": "mission.mission_first_landing.briefing_body",
         "start_objective_key": "mission.mission_first_landing.start_objective",
         "success_key": "mission.mission_first_landing.success",
-        "failure_key": "mission.mission_first_landing.failure"
+        "failure_key": "mission.mission_first_landing.failure",
+        "retry_hint_key": "mission.mission_first_landing.retry_hint",
+        "tactical_note_key": "mission.mission_first_landing.tactical_note",
+        "map_callouts": [
+          {
+            "marker": "central_well",
+            "text_key": "mission.mission_first_landing.callout.central_well"
+          },
+          {
+            "marker": "enemy_pylon_weak_point",
+            "text_key": "mission.mission_first_landing.callout.enemy_power_line"
+          }
+        ]
       },
       "mission_markers": [
         { "id": "player_base", "position": { "x": -300, "y": -140 } },

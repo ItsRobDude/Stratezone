@@ -603,6 +603,7 @@ public partial class Main : Node2D
                     ("walls", _simulation.EnergyWalls.Count))) + "\n" +
             GetMissionHudLine() + "\n" +
             GetMissionBriefingHudLine() + "\n" +
+            GetMissionReadabilityHudLine() + "\n" +
             GetCommanderHudLine() + "\n" +
             L("ui.hud.alert_line", SimulationMessage.Args(("alerts", GetAlertSummary()))) + "\n" +
             L("ui.hud.scale_line", SimulationMessage.Args(("scale", $"{_uiScale:0.0}"))) + "\n" +

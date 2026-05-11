@@ -395,6 +395,7 @@ Prototype behavior:
 - Level 1's forward enemy Pylon powers the central Extractor and tower-wall route, so destroying it should visibly shut off that infrastructure route
 - Level 1 attacks commit only a small group of 1-3 units and leave defenders at the enemy base
 - enemy can dispatch a small scout/rally movement before the first committed attack
+- if a mission explicitly enables Guardian production, enemy AI must earn that production by staffing and completing the Barracks Guardian upgrade before training Guardians
 - base-building pressure triggers must respect mission grace windows, cooldowns, or trigger groups so normal early actions such as Barracks built and first Extractor built do not fire back-to-back raids
 - damaged committed attackers may retreat toward base instead of fighting to the last hit point
 - wiped attack groups create an internal regroup delay before the next attack commitment

@@ -40,7 +40,7 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, grunt-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
+The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, grunt-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, Barracks Guardian Retrofit unlock state for later missions, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
 
 Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. Content validation, the Godot C# build, simulation smoke checks, and a Godot headless smoke check pass locally.
 
@@ -92,7 +92,7 @@ The first prototype stack is locked as Godot 4 with C#.
 
 3. Mission grammar and architecture hardening
    - Make the next authored mission cheaper to add before introducing another broad gameplay layer.
-   - Replace the current Armory Annex Guardian placeholder with a Barracks Guardian upgrade path before Level 2 depends on it.
+   - Keep the Barracks Guardian upgrade path data-driven enough for Level 2 without expanding into a broad research tree.
    - Add reusable start-pattern support for deployed, player-built, partial-base, allotted-troop, and no-base missions.
    - Split or justify large hand-written files that are already over the review trigger, especially `Main.cs` and broad smoke coverage.
    - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, scenario-specific tests, event trigger coalescing, and localization-key paths for mission presentation.
@@ -224,7 +224,7 @@ Architecture work:
 - split or explicitly justify hand-written files over the 900-line review trigger
 - separate broad smoke coverage into mission/scenario-focused checks when it starts slowing diagnosis
 - create a repeatable mission data pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
-- replace the current Armory Annex Guardian placeholder with a Barracks Guardian upgrade schema/runtime path
+- keep the Barracks Guardian upgrade schema/runtime path covered by smoke checks and mission data
 - support deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force start patterns without scene-copying
 - define first-pass map logic for terrain regions, passability, buildable clearings, resource basins, and chokepoint markers
 - add a lightweight map preview/debug path if terrain authorship becomes hard to inspect from JSON alone
@@ -238,7 +238,7 @@ Exit criteria:
 
 - Level 2 can be added mostly through data plus narrow simulation/presentation seams
 - map data can express blocked terrain, buildable areas, resource basins, and tower-wall chokepoint candidates without relying on scene-only placement
-- Barracks Guardian upgrade has replaced Armory Annex as the planned Level 2 Guardian unlock path
+- Barracks Guardian upgrade has replaced Armory Annex as the Level 2 Guardian unlock path in runtime, data, and smoke coverage
 - mission starts can support the approved demo shapes without duplicating scene setup logic
 - `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together
 - scenario checks can prove a mission route without replaying every unrelated system assertion
@@ -259,7 +259,7 @@ Mission shape:
 - authored buildable clearings and resource basins that make base expansion readable without a visible grid
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
-- likely first Barracks Guardian upgrade, justified by enemy armor, hardened defense, or tower-anchor pressure
+- likely first Barracks Guardian upgrade, justified by enemy armor, hardened defense, or tower-anchor pressure; enemy Guardian production must use the same runtime upgrade gate instead of pre-granted access
 - pressure triggers do not stack immediate raids when normal base-building milestones happen close together
 - quick RTS failure/retry expectations rather than persistent campaign consequences
 - no Vehicle Bay requirement
@@ -483,7 +483,7 @@ These are not first-prototype commitments:
 - Exact building footprint/buffer values for constrained maps.
 - Grunt replacement cost relative to basic combat units.
 - Exact Level 3 route/map shape for making Vehicle Bay/Rover matter without replacing infantry.
-- Runtime/data path for replacing the current Armory Annex placeholder with the approved Barracks Guardian upgrade.
+- Exact Guardian Retrofit cost, build time, and Grunt-count tuning after Level 2 playtests.
 - Exact Artillery/authored siege implementation for Mission 5. Current first-demo support/siege direction is powered Grunt-hacked defense equipment in Mission 4 plus Artillery/authored siege equipment in Mission 5. Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless playtests deliberately reopen them.
 - Exact Level 4 and Level 5 encounter layouts and failure-condition details.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.

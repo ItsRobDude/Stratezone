@@ -25,10 +25,12 @@ Current greybox demo controls:
 - Select one or more Grunts, then press `1` Power Plant, `2` Pylon, `3` Barracks, `4` Extractor/Refinery, or `5` Defense Tower.
 - Select a powered Barracks, then press `W` Grunt, `C` Cadet, or `R` Rifleman to queue Level 1 training.
 - The Level 1 player starts with one Guardian, one Commander, one Grunt, and one provided Rover; Guardian, Rover, and Commander are not trainable in this mission.
+- In Wells at the Ridge, Guardian training is enabled after a powered Barracks completes Guardian Retrofit: keep two Grunts at the base, select the Barracks, press `U`, then train Guardians with `G`.
 - Select a Defense Tower, then press `G` Gun Tower or `T` Rocket Tower to upgrade in place.
 - The command panel mirrors the same build, train, and upgrade actions with disabled-state tooltips.
 - Mouse wheel zooms. `WASD` or arrow keys pan.
 - `F9` decreases debug UI scale, `F10` increases it, and `F8` resets it.
+- `F6` toggles between First Landing and Wells at the Ridge for local greybox checks.
 - The demo starts with extra materials so the construction loop can be tested without waiting on income.
 - Powered buildings show a small `⚡` prefix in their label.
 - A first-pass enemy base starts with its own materials, powered Barracks, and production queue.

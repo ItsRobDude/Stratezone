@@ -50,6 +50,11 @@ public static class ContentIds
         public const string ArtilleryBattery = "building_artillery_battery";
     }
 
+    public static class BarracksUpgrades
+    {
+        public const string GuardianRetrofit = "barracks_upgrade_guardian_retrofit";
+    }
+
     public static class Resources
     {
         public const string Materials = "resource_materials";

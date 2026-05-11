@@ -8,6 +8,7 @@ var catalog = ContentCatalog.LoadFromGameData(gameRoot);
 var localization = LocalizationCatalog.LoadFromGameData(gameRoot);
 var mission = catalog.GetMission(ContentIds.Missions.FirstLanding);
 var ridgeMission = catalog.GetMission(ContentIds.Missions.WellsAtTheRidge);
+var ridgeMap = catalog.GetMap(ridgeMission.MapId);
 var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Materials];
 
 Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
@@ -19,6 +20,7 @@ var riflemanDefinition = catalog.GetUnit(ContentIds.Units.Rifleman);
 var guardianDefinition = catalog.GetUnit(ContentIds.Units.Guardian);
 var mediumTankDefinition = catalog.GetUnit(ContentIds.Units.MediumTank);
 var tankDefinition = catalog.GetUnit(ContentIds.Units.Tank);
+var armoryAnnexDefinition = catalog.GetBuilding(ContentIds.Buildings.ArmoryAnnex);
 var gunTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.GunTower);
 var rocketTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.RocketTower);
 Assert(cadetDefinition.Cost < riflemanDefinition.Cost, "Cadet costs less than Rifleman");
@@ -29,6 +31,9 @@ Assert(riflemanDefinition.TrainTimeSeconds == 4.0f, "Rifleman recruits only slig
 Assert(guardianDefinition.TrainTimeSeconds == 9.0f, "Guardian trains slower as a specialist");
 Assert(catalog.GetUnit(ContentIds.Units.Grunt).TrainTimeSeconds > guardianDefinition.TrainTimeSeconds, "Grunt stays slow and expensive compared with infantry");
 Assert(guardianDefinition.Role == "anti_armor_infantry", "Guardian content role is the anti-armor infantry proof role");
+Assert(guardianDefinition.RequiredAddonBuildingId is null, "Guardian no longer uses the legacy Armory Annex training gate");
+Assert(guardianDefinition.RequiredBarracksUpgradeId == ContentIds.BarracksUpgrades.GuardianRetrofit, "Guardian training requires the Barracks Guardian Retrofit");
+Assert(!armoryAnnexDefinition.TrainingUnlockUnitIds.Contains(ContentIds.Units.Guardian), "Armory Annex no longer declares the Guardian unlock");
 Assert(guardianDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Guardian keeps lower raw damage than Rifleman");
 Assert(DamagePerSecondAgainst(guardianDefinition, riflemanDefinition) < DamagePerSecondAgainst(riflemanDefinition, riflemanDefinition), "Guardian is not a better anti-infantry Rifleman");
 Assert(DamagePerSecondAgainst(guardianDefinition, mediumTankDefinition) > DamagePerSecondAgainst(riflemanDefinition, mediumTankDefinition) * 2.0f, "Guardian energy fire outperforms Rifleman ballistics against Medium Tanks");
@@ -50,6 +55,7 @@ Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.F
 Assert(!mission.StartingEntities.Any(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rifleman), "Level 1 does not start the player with extra Riflemen");
 Assert(catalog.Missions.Count >= 2, "catalog loads more than one playable mission file");
 Assert(ridgeMission.MapId == "map_wells_at_the_ridge_greybox", "Level 2 mission data points at the ridge greybox map");
+Assert(ridgeMission.AvailableUnitIds.Contains(ContentIds.Units.Guardian), "Level 2 exposes Guardian training behind the Barracks retrofit");
 Assert(ridgeMission.AvailableBuildingIds.Contains(ContentIds.Buildings.ColonyHub), "Level 2 exposes Colony Hub placement");
 Assert(!ridgeMission.StartingEntities.Any(entity =>
     entity.FactionId == ContentIds.Factions.PlayerExpedition &&
@@ -61,6 +67,9 @@ Assert(ridgeMission.StartingEntities.Count(entity =>
     entity.FactionId == ContentIds.Factions.PlayerExpedition &&
     entity.ContentId == ContentIds.Units.Rifleman) == 1, "Level 2 starts with one Rifleman escort");
 Assert(ridgeMission.ObjectiveIds.Contains(ContentIds.Objectives.DestroyEnemyColonyHub), "Level 2 wins through the enemy Colony Hub objective rather than well control");
+Assert(ridgeMap.TerrainRegions.Any(region => region.BlocksMovement && region.BlocksBuilding), "Level 2 map has blocked terrain regions");
+Assert(ridgeMap.TerrainRegions.Count(region => region.AllowsBuilding) >= 3, "Level 2 map has buildable clearings and resource basins");
+Assert(ridgeMap.TerrainRegions.Any(region => region.RegionType == "chokepoint_marker"), "Level 2 map marks chokepoint candidates");
 
 var simulation = new RtsSimulation(
     catalog,
@@ -213,21 +222,34 @@ lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, Rt
 TickFor(lowResourceEnemySimulation, 0.1f);
 Assert(lowResourceEnemySimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Cadet), "enemy production can choose Cadets when resources are too low for Riflemen");
 
-var enabledGuardianEnemySimulation = new RtsSimulation(
+var enemyGuardianRetrofitSimulation = new RtsSimulation(
     catalog,
     startingMaterials,
     [],
-    900,
+    2000,
     null,
     null,
-    [ContentIds.Units.Cadet, ContentIds.Units.Rifleman, ContentIds.Units.Guardian]);
-enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
-enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
-enabledGuardianEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, RtsSimulation.EnemyPowerPlantPosition + new SimVector2(20, 160), ContentIds.Factions.PrivateMilitary);
-TickFor(enabledGuardianEnemySimulation, 0.1f);
-Assert(enabledGuardianEnemySimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Guardian), "enemy production can choose a later enabled Guardian when resources and add-ons allow it");
+    [ContentIds.Units.Grunt, ContentIds.Units.Cadet, ContentIds.Units.Rifleman, ContentIds.Units.Guardian]);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Pylon, EnemyAiMarkers.FirstLanding.BasePylonPosition, ContentIds.Factions.PrivateMilitary);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Pylon, EnemyAiMarkers.FirstLanding.ForwardPylonPosition, ContentIds.Factions.PrivateMilitary);
+var enemyRetrofitBarracks = enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.DefenseTower, EnemyAiMarkers.FirstLanding.DefenseTowerPosition, ContentIds.Factions.PrivateMilitary);
+TickFor(enemyGuardianRetrofitSimulation, 0.1f);
+Assert(enemyGuardianRetrofitSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Grunt), "enemy AI trains Grunts first when Guardian Retrofit is mission-enabled but understaffed");
+var enemyGruntTrainSeconds = catalog.GetUnit(ContentIds.Units.Grunt).TrainTimeSeconds * enemyGuardianRetrofitSimulation.EnemyAiProfile.TrainTimeMultiplier;
+TickFor(enemyGuardianRetrofitSimulation, (enemyGruntTrainSeconds * 2.0f) + 0.6f);
+Assert(enemyGuardianRetrofitSimulation.Units.Count(unit =>
+    unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+    unit.Definition.Id == ContentIds.Units.Grunt &&
+    !unit.IsDestroyed) >= 2, "enemy AI produces the two Grunts required for Guardian Retrofit");
+Assert(enemyRetrofitBarracks.IsBarracksUpgradeInProgress, "enemy AI starts Guardian Retrofit after staffing requirements are met");
+TickFor(enemyGuardianRetrofitSimulation, catalog.GetBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit).DurationSeconds + 0.2f);
+Assert(enemyRetrofitBarracks.HasBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit), "enemy AI completes Guardian Retrofit instead of assuming the unlock");
+TickFor(enemyGuardianRetrofitSimulation, 0.2f);
+Assert(enemyGuardianRetrofitSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Guardian), "enemy production can choose Guardian after the AI-completed Barracks retrofit");
 
 var playerProductionSimulation = new RtsSimulation(catalog, 2000, []);
 playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -252,19 +274,46 @@ Assert(!playerProductionSimulation.Units.Any(unit => unit.FactionId == ContentId
 TickFor(playerProductionSimulation, 4.2f);
 Assert(playerProductionSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Rifleman) == 1, "queued Riflemen train one after another from one Barracks");
 Assert(playerProductionSimulation.DrainEvents().Any(item => item.MessageKey == "sim.event.training_complete"), "player production emits a training-complete event");
-Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "Guardian training requires powered Armory Annex");
-playerProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));
-Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "powered Armory Annex unlocks Guardian training");
+Assert(!playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "Guardian training requires completed Barracks retrofit");
+playerBarracks.Building.CompleteBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit);
+Assert(playerProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, playerBarracks.Building.EntityId).Success, "completed Barracks retrofit unlocks Guardian training");
 
 var levelOneProductionSimulation = new RtsSimulation(catalog, 3000, [], 0, null, null, mission.AvailableUnitIds);
 levelOneProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
 Assert(levelOneProductionSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-220, 0)).Success, "Level 1 production test places power");
 var levelOneBarracks = levelOneProductionSimulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, new SimVector2(-20, 0));
 Assert(levelOneBarracks.Success, levelOneBarracks.Message);
-levelOneProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ArmoryAnnex, new SimVector2(-40, 80));
-Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, levelOneBarracks.Building!.EntityId).Success, "Level 1 mission rules block training extra Guardians even if an Armory Annex exists");
+levelOneBarracks.Building!.CompleteBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit);
+Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Guardian, levelOneBarracks.Building.EntityId).Success, "Level 1 mission rules block training extra Guardians even if a Barracks has the retrofit");
 Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Rover, levelOneBarracks.Building.EntityId).Success, "Level 1 mission rules block training extra Rovers");
 Assert(!levelOneProductionSimulation.TryQueueUnit(ContentIds.Units.Commander, levelOneBarracks.Building.EntityId).Success, "Level 1 mission rules block training extra Commanders");
+
+var guardianRetrofitSimulation = new RtsSimulation(catalog, 2000, [], 0, null, null, ridgeMission.AvailableUnitIds);
+var retrofitHub = guardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
+var retrofitPower = guardianRetrofitSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-220, 0));
+Assert(retrofitPower.Success, retrofitPower.Message);
+var retrofitBarracksResult = guardianRetrofitSimulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, new SimVector2(-20, 0));
+Assert(retrofitBarracksResult.Success, retrofitBarracksResult.Message);
+var retrofitBarracks = retrofitBarracksResult.Building!;
+Assert(guardianRetrofitSimulation.ValidateGuardianRetrofit(retrofitBarracks.EntityId).MessageKey == "sim.barracks_upgrade.requires_grunts", "Guardian Retrofit requires two live Grunts at the base");
+guardianRetrofitSimulation.AddUnit(ContentIds.Units.Grunt, ContentIds.Factions.PlayerExpedition, retrofitBarracks.Position + new SimVector2(40, 0));
+Assert(!guardianRetrofitSimulation.ValidateGuardianRetrofit(retrofitBarracks.EntityId).Success, "one Grunt is not enough to start Guardian Retrofit");
+guardianRetrofitSimulation.AddUnit(ContentIds.Units.Grunt, ContentIds.Factions.PlayerExpedition, retrofitHub.Position + new SimVector2(40, 0));
+var retrofitMaterialsBefore = guardianRetrofitSimulation.Materials;
+var retrofitStart = guardianRetrofitSimulation.TryStartGuardianRetrofit(retrofitBarracks.EntityId);
+Assert(retrofitStart.Success, retrofitStart.Message);
+Assert(retrofitStart.MessageKey == "sim.barracks_upgrade.started", "Guardian Retrofit start returns a stable message key");
+Assert(Math.Abs(guardianRetrofitSimulation.Materials - (retrofitMaterialsBefore - catalog.GetBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit).Cost)) < 0.01f, "Guardian Retrofit spends materials immediately");
+Assert(!guardianRetrofitSimulation.TryQueueUnit(ContentIds.Units.Cadet, retrofitBarracks.EntityId).Success, "Barracks cannot train while Guardian Retrofit is in progress");
+retrofitPower.Building!.ApplyDamage(9999, "explosive");
+var pausedSeconds = retrofitBarracks.ActiveBarracksUpgradeRemainingSeconds;
+TickFor(guardianRetrofitSimulation, 5.0f);
+Assert(Math.Abs(retrofitBarracks.ActiveBarracksUpgradeRemainingSeconds - pausedSeconds) < 0.01f, "Guardian Retrofit pauses while the Barracks is unpowered");
+guardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-120, 0));
+TickFor(guardianRetrofitSimulation, pausedSeconds + 0.2f);
+Assert(retrofitBarracks.HasBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit), "Guardian Retrofit completes after powered build time");
+Assert(guardianRetrofitSimulation.DrainEvents().Any(item => item.MessageKey == "sim.event.barracks_upgrade_complete"), "Guardian Retrofit completion emits a player-known event");
+Assert(guardianRetrofitSimulation.TryQueueUnit(ContentIds.Units.Guardian, retrofitBarracks.EntityId).Success, "Guardian training queues after the Barracks retrofit completes");
 
 var unpoweredProductionSimulation = new RtsSimulation(catalog, 1000, []);
 unpoweredProductionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -696,6 +745,17 @@ Assert(hubPlacement.Success, $"Level 2 lets the player deploy the Colony Hub fro
 Assert(!ridgeSimulation.ValidatePlacement(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(150, 0)).IsLegal, "Level 2 rejects a second player Colony Hub");
 var afterHubPowerPlant = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
 Assert(afterHubPowerPlant.Success, $"Level 2 allows normal building after the Colony Hub is deployed ({afterHubPowerPlant.MessageKey}: {afterHubPowerPlant.Message})");
+var northRidgeBlocker = ridgeRuntime.Map.TerrainRegions.Single(region => region.Id == "ridge_north_blocker");
+var blockedTerrainPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, northRidgeBlocker.Center);
+Assert(!blockedTerrainPlacement.IsLegal, "Level 2 blocked terrain rejects building placement");
+Assert(blockedTerrainPlacement.MessageKey == "sim.placement.blocked_by_terrain", "blocked terrain placement returns a stable message key");
+var outsideClearingPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-80, 330));
+Assert(!outsideClearingPlacement.IsLegal, "Level 2 requires base structures to stay in buildable clearings");
+Assert(outsideClearingPlacement.MessageKey == "sim.placement.requires_buildable_clearing", "non-clearing placement returns a stable message key");
+var ridgePathProbe = ridgeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-520, -210));
+ridgeSimulation.CommandUnitMove(ridgePathProbe.EntityId, new SimVector2(500, -210));
+Assert(ridgePathProbe.PathWaypoints.Count > 1, "Level 2 pathfinding routes around ridge blockers instead of taking the direct line");
+Assert(!ridgePathProbe.PathWaypoints.Any(waypoint => northRidgeBlocker.Contains(waypoint, 0.0f)), "Level 2 path waypoints stay out of blocked terrain");
 Assert(ridgeSimulation.Buildings.Any(building =>
     building.FactionId == ContentIds.Factions.PrivateMilitary &&
     building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&

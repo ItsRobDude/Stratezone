@@ -11,6 +11,7 @@ public sealed record UnitDefinition(
     float SightRange,
     string? AllowedByBuildingId,
     string? RequiredAddonBuildingId,
+    string? RequiredBarracksUpgradeId,
     string? SpawnBuildingId,
     int Health,
     float AttackDamage,

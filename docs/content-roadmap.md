@@ -1500,6 +1500,7 @@ Direction:
 - The player still builds and places the base; do not start with a finished base.
 - Prove scarce wells, cliffs/water/ridges, buildable clearings, resource basins, Defense Tower wall placement, and enemy power/extractor routes.
 - Guardian production is unlocked through a Barracks upgrade, not an Armory Annex.
+- Enemy Guardian production follows the same runtime gate: train/staff Grunts, complete the Barracks upgrade, then train Guardians.
 - Use enemy armor, hardened defense, or tower anchors only if needed to justify Guardian use.
 - Enemy contests wells, rebuilds only with resources, and targets known infrastructure without hidden-plan warnings.
 - No Vehicle Bay, no Med Hall, no Logistics / Repair Pad, no Artillery.
@@ -1586,7 +1587,7 @@ These are not planned for the first demo, but can be reconsidered if a specific 
 
 These are implementation debts created by the approved outline:
 
-1. Replace the current Armory Annex placeholder path with a Barracks Guardian upgrade.
+1. Tune and playtest the Barracks Guardian upgrade path now that player and enemy runtime/data both use it instead of the Armory Annex placeholder path.
 2. Support mission start patterns without scene-copying: deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force.
 3. Add Level 2 map logic for blocked terrain, buildable clearings, resource basins, chokepoint markers, and Defense Tower wall route proof.
 4. Add event trigger grace/cooldown/coalescing so normal early build milestones do not stack immediate raids.

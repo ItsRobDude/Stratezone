@@ -72,7 +72,7 @@
     {
       "id": "building_armory_annex",
       "display_name": "Armory Annex",
-      "role": "barracks_addon_unlock",
+      "role": "legacy_barracks_addon_reserved",
       "cost": 180,
       "build_time_seconds": 0,
       "health": 260,
@@ -93,7 +93,7 @@
       "provides_resource_extraction": false,
       "extractor_resource_id": null,
       "requires_adjacent_building_id": "building_barracks",
-      "training_unlock_unit_ids": ["unit_guardian"],
+      "training_unlock_unit_ids": [],
       "troop_capacity_delta": 0,
       "heavy_armor_capacity_delta": 0,
       "wall_anchor": false,
@@ -104,7 +104,7 @@
       "area_radius": 0,
       "friendly_fire": false,
       "target_filters": [],
-      "tags": ["production", "addon", "powered", "unlock"],
+      "tags": ["production", "addon", "powered", "legacy"],
       "balance_status": "tunable_placeholder"
     },
     {

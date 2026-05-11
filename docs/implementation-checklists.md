@@ -181,7 +181,7 @@ Acceptance checks:
 - hand-written files over the 900-line review trigger are split or have a documented reason to stay together
 - broad smoke coverage is split or grouped enough that a failed mission route points to the relevant system quickly
 - mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
-- the current Armory Annex Guardian placeholder has a documented replacement path for a Barracks Guardian upgrade
+- Barracks Guardian upgrade has a runtime/data path that replaces the old Armory Annex Guardian gate
 - mission setup supports deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force starts without copying scene logic
 - map data can represent first-pass terrain regions, passability blockers, buildable clearings, resource basins, and chokepoint markers
 - new mission setup can be added through data plus narrow simulation/presentation seams
@@ -270,7 +270,7 @@ Evidence:
 
 - Level 4 and Level 5 greybox/brief notes
 - per-mission proof target, start-pattern, and failure-condition list for Levels 4 and 5
-- implementation follow-up for replacing the current Armory Annex placeholder with the Barracks Guardian upgrade path
+- implementation follow-up for tuning the Barracks Guardian upgrade route after Level 2 playtests
 - explicit cut/defer list for systems outside the first public demo
 
 ## Milestone 7 Checklist: Demo Readability and Localization Pass

@@ -44,6 +44,7 @@ internal sealed class EnemyAiSystem
             _nextRebuildSeconds = _elapsedSeconds + _profile.RebuildCooldownSeconds;
         }
 
+        simulation.TryStartEnemyGuardianRetrofitIfReady();
         TryStartProduction(simulation);
     }
 
@@ -80,15 +81,19 @@ internal sealed class EnemyAiSystem
             return;
         }
 
-        var selectedUnit = simulation.SelectEnemyProductionUnit();
-        if (selectedUnit is null)
+        var selectedUnitId = simulation.ShouldEnemyTrainGuardianRetrofitGrunt()
+            ? ContentIds.Units.Grunt
+            : simulation.ShouldEnemyHoldProductionForGuardianRetrofit()
+                ? null
+                : simulation.SelectEnemyProductionUnit()?.Id;
+        if (selectedUnitId is null)
         {
             return;
         }
 
         var result = simulation.TryQueueUnitForFaction(
             ContentIds.Factions.PrivateMilitary,
-            selectedUnit.Id,
+            selectedUnitId,
             null,
             _profile.TrainTimeMultiplier);
 

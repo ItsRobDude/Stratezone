@@ -101,7 +101,7 @@ Unit production rule for Level 1:
 - Cadets should recruit in only a few seconds. They are the fastest to build, cheapest combat troop, weakest troop, and easiest troop to kill.
 - Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel.
 - Guardians should be slower and more expensive than Riflemen because they are specialized anti-armor / anti-defense troops, not the default infantry upgrade.
-- Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other add-on production by changing mission availability and support buildings deliberately.
+- Level 1's training restrictions are slice rules, not global roster rules. Later authored missions may enable Guardian, Rover, or other upgraded/add-on production by changing mission availability and support deliberately.
 
 Grunts are expensive, recruitable, non-combat units. They require player command for construction and repair. Repair should work in First Landing: it spends materials based on the target's missing health percentage, so lightly damaged assets are cheap to patch while badly damaged assets cost meaningfully more to restore.
 
@@ -170,7 +170,7 @@ The enemy should:
 - spend limited resources to rebuild and produce
 - attack slowly with small committed groups of 1-3 units instead of sending the whole base at once
 - choose between mission-available combat troops it can afford and satisfy requirements for, not hardcode a single unit type
-- train Cadets and Riflemen in Level 1, while Guardian and Rover production stay locked until a later mission explicitly enables their add-ons
+- train Cadets and Riflemen in Level 1, while Guardian and Rover production stay locked until a later mission explicitly enables the relevant Barracks upgrade or add-on
 - send a limited scout/rally movement before the first committed attack if it has a suitable unit
 - let badly damaged committed attackers retreat toward base when a base still exists
 - keep badly damaged returned attackers out of new attack waves until they are above the recovery threshold, so retreat does not become back-and-forth indecision

@@ -32,6 +32,7 @@ public sealed partial class RtsSimulation
     private readonly HashSet<int> _buildingCadetReveals = [];
     private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives;
+    private readonly MapDefinition? _map;
     private readonly EnemyOfficerState _enemyOfficer = new();
     private readonly HashSet<int> _knownCommittedEnemyIds = [];
     private readonly HashSet<int> _knownDestroyedEnemyPowerIds = [];
@@ -47,9 +48,11 @@ public sealed partial class RtsSimulation
         EnemyAiMarkers? enemyAiMarkers = null,
         EnemyAiProfileDefinition? enemyAiProfile = null,
         IEnumerable<string>? trainableUnitIds = null,
-        IEnumerable<string>? objectiveIds = null)
+        IEnumerable<string>? objectiveIds = null,
+        MapDefinition? map = null)
     {
         _catalog = catalog;
+        _map = map;
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
@@ -73,6 +76,7 @@ public sealed partial class RtsSimulation
     public IReadOnlyList<EnergyWallSegment> EnergyWalls => _energyWalls;
     public IReadOnlyList<SimulationEvent> Events => _events;
     public FogOfWarState PlayerFog => _playerFog;
+    public MapDefinition? Map => _map;
     public MissionState MissionState { get; private set; } = new(MissionStatus.Active, "Objective: establish the outpost.");
     public float ElapsedSeconds => _elapsedSeconds;
     public EnemyAiProfileDefinition EnemyAiProfile => _enemyAi.Profile;
@@ -171,6 +175,25 @@ public sealed partial class RtsSimulation
             }
         }
 
+        var footprintRadius = ToWorldRadius(definition.FootprintRadius);
+        if (_map?.BlocksBuildingAt(position, footprintRadius) == true)
+        {
+            return new PlacementValidation(
+                false,
+                "Blocked by terrain.",
+                null,
+                "sim.placement.blocked_by_terrain");
+        }
+
+        if (_map?.AllowsBuildingAt(position, footprintRadius) == false)
+        {
+            return new PlacementValidation(
+                false,
+                "Must be placed in a buildable clearing.",
+                null,
+                "sim.placement.requires_buildable_clearing");
+        }
+
         var targetWell = FindCompatibleResourceWell(definition, position);
         if (definition.ProvidesResourceExtraction && targetWell is null)
         {
@@ -256,6 +279,7 @@ public sealed partial class RtsSimulation
         _elapsedSeconds += deltaSeconds;
         TickPresentationState(deltaSeconds);
         RecomputePower();
+        TickBarracksUpgrades(deltaSeconds);
         _enemyAi.Tick(this, deltaSeconds);
         TickProduction(deltaSeconds);
         TickEnemyPressure(deltaSeconds);
@@ -511,7 +535,8 @@ public sealed partial class RtsSimulation
             unit.Position,
             target,
             _buildings,
-            GetBlockingEnergyWallsForFaction(unit.FactionId));
+            GetBlockingEnergyWallsForFaction(unit.FactionId),
+            _map?.TerrainRegions ?? []);
 
         if (path.Success)
         {

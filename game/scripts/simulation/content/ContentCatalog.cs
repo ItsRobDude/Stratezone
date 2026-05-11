@@ -7,24 +7,32 @@ public sealed class ContentCatalog
 {
     private readonly Dictionary<string, UnitDefinition> _units;
     private readonly Dictionary<string, BuildingDefinition> _buildings;
+    private readonly Dictionary<string, BarracksUpgradeDefinition> _barracksUpgrades;
     private readonly Dictionary<string, ResourceWellDefinition> _resourceWells;
+    private readonly Dictionary<string, MapDefinition> _maps;
     private readonly Dictionary<string, MissionDefinition> _missions;
 
     private ContentCatalog(
         Dictionary<string, UnitDefinition> units,
         Dictionary<string, BuildingDefinition> buildings,
+        Dictionary<string, BarracksUpgradeDefinition> barracksUpgrades,
         Dictionary<string, ResourceWellDefinition> resourceWells,
+        Dictionary<string, MapDefinition> maps,
         Dictionary<string, MissionDefinition> missions)
     {
         _units = units;
         _buildings = buildings;
+        _barracksUpgrades = barracksUpgrades;
         _resourceWells = resourceWells;
+        _maps = maps;
         _missions = missions;
     }
 
     public IReadOnlyDictionary<string, UnitDefinition> Units => _units;
     public IReadOnlyDictionary<string, BuildingDefinition> Buildings => _buildings;
+    public IReadOnlyDictionary<string, BarracksUpgradeDefinition> BarracksUpgrades => _barracksUpgrades;
     public IReadOnlyDictionary<string, ResourceWellDefinition> ResourceWells => _resourceWells;
+    public IReadOnlyDictionary<string, MapDefinition> Maps => _maps;
     public IReadOnlyDictionary<string, MissionDefinition> Missions => _missions;
 
     public UnitDefinition GetUnit(string id)
@@ -41,11 +49,25 @@ public sealed class ContentCatalog
             : throw new KeyNotFoundException($"Unknown building id '{id}'.");
     }
 
+    public BarracksUpgradeDefinition GetBarracksUpgrade(string id)
+    {
+        return _barracksUpgrades.TryGetValue(id, out var upgrade)
+            ? upgrade
+            : throw new KeyNotFoundException($"Unknown Barracks upgrade id '{id}'.");
+    }
+
     public ResourceWellDefinition GetResourceWell(string id)
     {
         return _resourceWells.TryGetValue(id, out var well)
             ? well
             : throw new KeyNotFoundException($"Unknown resource well id '{id}'.");
+    }
+
+    public MapDefinition GetMap(string id)
+    {
+        return _maps.TryGetValue(id, out var map)
+            ? map
+            : throw new KeyNotFoundException($"Unknown map id '{id}'.");
     }
 
     public MissionDefinition GetMission(string id)
@@ -59,14 +81,18 @@ public sealed class ContentCatalog
     {
         var unitsPath = Path.Combine(gameRoot, "data", "units", "units.json");
         var buildingsPath = Path.Combine(gameRoot, "data", "buildings", "buildings.json");
+        var barracksUpgradesPath = Path.Combine(gameRoot, "data", "upgrades", "barracks_upgrades.json");
         var resourceWellsPath = Path.Combine(gameRoot, "data", "resources", "resource_wells.json");
+        var mapsPath = Path.Combine(gameRoot, "data", "maps", "maps.json");
         var missionsPath = Path.Combine(gameRoot, "data", "missions");
 
         var units = LoadUnits(unitsPath);
         var buildings = LoadBuildings(buildingsPath);
+        var barracksUpgrades = LoadBarracksUpgrades(barracksUpgradesPath);
         var resourceWells = LoadResourceWells(resourceWellsPath);
+        var maps = LoadMaps(mapsPath);
         var missions = LoadMissions(missionsPath);
-        return new ContentCatalog(units, buildings, resourceWells, missions);
+        return new ContentCatalog(units, buildings, barracksUpgrades, resourceWells, maps, missions);
     }
 
     private static Dictionary<string, UnitDefinition> LoadUnits(string path)
@@ -88,6 +114,7 @@ public sealed class ContentCatalog
                 record.GetProperty("sight_range").GetSingle(),
                 GetOptionalTrainRequirement(record, "allowed_by_building_id"),
                 GetOptionalTrainRequirement(record, "required_addon_building_id"),
+                GetOptionalTrainRequirement(record, "required_barracks_upgrade_id"),
                 GetOptionalTrainRequirement(record, "spawn_building_id"),
                 record.GetProperty("health").GetInt32(),
                 record.GetProperty("attack_damage").GetSingle(),
@@ -158,6 +185,32 @@ public sealed class ContentCatalog
         return buildings;
     }
 
+    private static Dictionary<string, BarracksUpgradeDefinition> LoadBarracksUpgrades(string path)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        var records = document.RootElement.GetProperty("records");
+        var upgrades = new Dictionary<string, BarracksUpgradeDefinition>(StringComparer.Ordinal);
+
+        foreach (var record in records.EnumerateArray())
+        {
+            var upgrade = new BarracksUpgradeDefinition(
+                record.GetProperty("id").GetString() ?? string.Empty,
+                record.GetProperty("display_name").GetString() ?? string.Empty,
+                record.GetProperty("cost").GetInt32(),
+                record.GetProperty("duration_seconds").GetSingle(),
+                record.GetProperty("required_grunt_count").GetInt32(),
+                record.GetProperty("required_grunt_range").GetSingle(),
+                record.GetProperty("requires_powered_barracks").GetBoolean(),
+                record.GetProperty("requires_colony_hub").GetBoolean(),
+                LoadStringArray(record, "unlock_unit_ids"),
+                LoadStringArray(record, "tags"));
+
+            upgrades.Add(upgrade.Id, upgrade);
+        }
+
+        return upgrades;
+    }
+
     private static Dictionary<string, ResourceWellDefinition> LoadResourceWells(string path)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(path));
@@ -189,6 +242,52 @@ public sealed class ContentCatalog
         }
 
         return missions;
+    }
+
+    private static Dictionary<string, MapDefinition> LoadMaps(string path)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        var records = document.RootElement.GetProperty("records");
+        var maps = new Dictionary<string, MapDefinition>(StringComparer.Ordinal);
+
+        foreach (var record in records.EnumerateArray())
+        {
+            var map = new MapDefinition(
+                record.GetProperty("id").GetString() ?? string.Empty,
+                record.GetProperty("display_name").GetString() ?? string.Empty,
+                record.GetProperty("biome").GetString() ?? string.Empty,
+                record.GetProperty("target_size").GetString() ?? string.Empty,
+                LoadStringArray(record, "required_features"),
+                LoadMapRegions(record),
+                LoadStringArray(record, "tags"));
+
+            maps.Add(map.Id, map);
+        }
+
+        return maps;
+    }
+
+    private static IReadOnlyList<MapRegionDefinition> LoadMapRegions(JsonElement record)
+    {
+        if (!record.TryGetProperty("terrain_regions", out var regions) || regions.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return regions.EnumerateArray()
+            .Select(region => new MapRegionDefinition(
+                region.GetProperty("id").GetString() ?? string.Empty,
+                region.GetProperty("region_type").GetString() ?? string.Empty,
+                region.GetProperty("shape").GetString() ?? string.Empty,
+                LoadVector(region.GetProperty("center")),
+                region.TryGetProperty("size", out var size) ? LoadVector(size) : new SimVector2(0, 0),
+                GetOptionalFloat(region, "radius"),
+                region.TryGetProperty("blocks_movement", out var blocksMovement) && blocksMovement.GetBoolean(),
+                region.TryGetProperty("blocks_building", out var blocksBuilding) && blocksBuilding.GetBoolean(),
+                region.TryGetProperty("allows_building", out var allowsBuilding) && allowsBuilding.GetBoolean(),
+                LoadStringArray(region, "tags")))
+            .Where(region => region.Id.Length > 0)
+            .ToArray();
     }
 
     private static void LoadMissionFile(string path, Dictionary<string, MissionDefinition> missions)

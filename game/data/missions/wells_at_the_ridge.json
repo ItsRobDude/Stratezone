@@ -149,7 +149,7 @@
           "marker": "contested_ridge_well"
         }
       ],
-      "available_unit_ids": ["unit_grunt", "unit_cadet", "unit_rifleman"],
+      "available_unit_ids": ["unit_grunt", "unit_cadet", "unit_rifleman", "unit_guardian"],
       "available_building_ids": [
         "building_colony_hub",
         "building_power_plant",
@@ -184,7 +184,7 @@
         "explored_terrain_stays_visible": true,
         "track_last_known_enemies": false
       },
-      "special_rules": ["player_places_colony_hub", "ridge_chokepoints_pending_map_logic"],
+      "special_rules": ["player_places_colony_hub", "ridge_chokepoints_map_logic"],
       "tags": ["wells_at_the_ridge", "greybox_demo", "playable_ugly"],
       "balance_status": "tunable_placeholder"
     }

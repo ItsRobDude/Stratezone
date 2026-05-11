@@ -1,3 +1,5 @@
+using Stratezone.Simulation.Content;
+
 namespace Stratezone.Simulation;
 
 internal static class PathfindingSystem
@@ -14,9 +16,10 @@ internal static class PathfindingSystem
         SimVector2 start,
         SimVector2 destination,
         IReadOnlyList<BuildingState> buildings,
-        IReadOnlyList<EnergyWallSegment> blockingWalls)
+        IReadOnlyList<EnergyWallSegment> blockingWalls,
+        IReadOnlyList<MapRegionDefinition> terrainRegions)
     {
-        var grid = new PathfindingGrid(buildings, blockingWalls, start);
+        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, start);
         var startCell = grid.ToCell(start);
         var preferredDestination = grid.ToCell(destination);
         var candidateDestinations = grid.GetDestinationCandidates(preferredDestination, startCell)
@@ -147,14 +150,20 @@ internal static class PathfindingSystem
 
         private readonly IReadOnlyList<BuildingState> _buildings;
         private readonly IReadOnlyList<EnergyWallSegment> _blockingWalls;
+        private readonly IReadOnlyList<MapRegionDefinition> _terrainRegions;
         private readonly HashSet<int> _ignoredStartBlockers;
         private readonly int _maxCellX = (int)MathF.Floor((MaxX - MinX) / CellSize);
         private readonly int _maxCellY = (int)MathF.Floor((MaxY - MinY) / CellSize);
 
-        public PathfindingGrid(IReadOnlyList<BuildingState> buildings, IReadOnlyList<EnergyWallSegment> blockingWalls, SimVector2 start)
+        public PathfindingGrid(
+            IReadOnlyList<BuildingState> buildings,
+            IReadOnlyList<EnergyWallSegment> blockingWalls,
+            IReadOnlyList<MapRegionDefinition> terrainRegions,
+            SimVector2 start)
         {
             _buildings = buildings;
             _blockingWalls = blockingWalls;
+            _terrainRegions = terrainRegions;
             _ignoredStartBlockers = buildings
                 .Where(building => !building.IsDestroyed)
                 .Where(building => building.Position.DistanceTo(start) <= building.FootprintWorldRadius + UnitClearance)
@@ -249,7 +258,8 @@ internal static class PathfindingSystem
             }
 
             var center = ToCenter(cell);
-            return _buildings.Any(building =>
+            return _terrainRegions.Any(region => region.BlocksMovement && region.Contains(center, UnitClearance)) ||
+                _buildings.Any(building =>
                 !building.IsDestroyed &&
                 !_ignoredStartBlockers.Contains(building.EntityId) &&
                 building.Position.DistanceTo(center) <= building.FootprintWorldRadius + UnitClearance);

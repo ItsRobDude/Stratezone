@@ -24,8 +24,12 @@ public sealed class BuildingState
     public float AttackCooldownRemaining { get; internal set; }
     public SimVector2? LastIncomingAttackOrigin { get; private set; }
     public float HitFlashSeconds { get; private set; }
+    private readonly HashSet<string> _completedBarracksUpgradeIds = [];
     public bool IsDestroyed => Health <= 0.0f;
     public bool IsDamaged => !IsDestroyed && Health < Definition.Health;
+    public string? ActiveBarracksUpgradeId { get; private set; }
+    public float ActiveBarracksUpgradeRemainingSeconds { get; private set; }
+    public bool IsBarracksUpgradeInProgress => ActiveBarracksUpgradeId is not null;
 
     public float FootprintWorldRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius);
     public float OccupancyRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius + Definition.PlacementBuffer);
@@ -65,6 +69,45 @@ public sealed class BuildingState
     internal void TickPresentation(float deltaSeconds)
     {
         HitFlashSeconds = MathF.Max(0.0f, HitFlashSeconds - deltaSeconds);
+    }
+
+    public bool HasBarracksUpgrade(string upgradeId)
+    {
+        return _completedBarracksUpgradeIds.Contains(upgradeId);
+    }
+
+    internal void StartBarracksUpgrade(string upgradeId, float durationSeconds)
+    {
+        ActiveBarracksUpgradeId = upgradeId;
+        ActiveBarracksUpgradeRemainingSeconds = MathF.Max(0.1f, durationSeconds);
+    }
+
+    internal bool TickBarracksUpgrade(float deltaSeconds)
+    {
+        if (ActiveBarracksUpgradeId is null)
+        {
+            return false;
+        }
+
+        ActiveBarracksUpgradeRemainingSeconds = MathF.Max(0.0f, ActiveBarracksUpgradeRemainingSeconds - deltaSeconds);
+        if (ActiveBarracksUpgradeRemainingSeconds > 0.0f)
+        {
+            return false;
+        }
+
+        _completedBarracksUpgradeIds.Add(ActiveBarracksUpgradeId);
+        ActiveBarracksUpgradeId = null;
+        return true;
+    }
+
+    internal void CompleteBarracksUpgrade(string upgradeId)
+    {
+        _completedBarracksUpgradeIds.Add(upgradeId);
+        if (ActiveBarracksUpgradeId == upgradeId)
+        {
+            ActiveBarracksUpgradeId = null;
+            ActiveBarracksUpgradeRemainingSeconds = 0.0f;
+        }
     }
 
     internal void UpgradeTo(BuildingDefinition definition)

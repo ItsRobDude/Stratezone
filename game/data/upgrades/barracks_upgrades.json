@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "id": "barracks_upgrade_guardian_retrofit",
+      "display_name": "Guardian Retrofit",
+      "cost": 350,
+      "duration_seconds": 25,
+      "required_grunt_count": 2,
+      "required_grunt_range": 10,
+      "requires_powered_barracks": true,
+      "requires_colony_hub": true,
+      "unlock_unit_ids": ["unit_guardian"],
+      "tags": ["barracks", "upgrade", "guardian_unlock"],
+      "balance_status": "tunable_placeholder"
+    }
+  ]
+}

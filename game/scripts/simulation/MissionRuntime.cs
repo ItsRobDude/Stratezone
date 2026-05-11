@@ -4,6 +4,7 @@ namespace Stratezone.Simulation;
 
 public sealed record MissionRuntime(
     MissionDefinition Mission,
+    MapDefinition Map,
     RtsSimulation Simulation,
     IReadOnlyDictionary<string, SimVector2> Markers,
     IReadOnlyList<(string WellId, SimVector2 Position)> ResourceWellPlacements);
@@ -13,6 +14,7 @@ public static class MissionRuntimeFactory
     public static MissionRuntime Create(ContentCatalog catalog, string missionId)
     {
         var mission = catalog.GetMission(missionId);
+        var map = catalog.GetMap(mission.MapId);
         var markers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
         var wellPlacements = ResolveResourceWellPlacements(mission, markers);
         var startingMaterials = mission.PlayerStartingResources.TryGetValue(ContentIds.Resources.Materials, out var materials)
@@ -30,7 +32,8 @@ public static class MissionRuntimeFactory
             EnemyAiMarkers.FromMission(mission),
             mission.EnemyAiProfile,
             mission.AvailableUnitIds,
-            mission.ObjectiveIds);
+            mission.ObjectiveIds,
+            map);
 
         foreach (var entity in mission.StartingEntities)
         {
@@ -45,7 +48,7 @@ public static class MissionRuntimeFactory
             }
         }
 
-        return new MissionRuntime(mission, simulation, markers, wellPlacements);
+        return new MissionRuntime(mission, map, simulation, markers, wellPlacements);
     }
 
     private static IReadOnlyList<(string WellId, SimVector2 Position)> ResolveResourceWellPlacements(

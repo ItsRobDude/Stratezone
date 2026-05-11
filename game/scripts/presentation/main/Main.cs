@@ -51,6 +51,7 @@ public partial class Main : Node2D
     private PlacementGhost? _placementGhost;
     private EnergyWallView? _energyWallView;
     private FogOfWarView? _fogOfWarView;
+    private MapRegionView? _mapRegionView;
     private SelectionBoxView? _selectionBoxView;
     private Node2D? _worldRoot;
     private readonly HashSet<int> _selectedUnitEntityIds = [];
@@ -76,6 +77,7 @@ public partial class Main : Node2D
         SetupCamera();
         SetupHud();
         SetupMissionResultOverlay();
+        SetupMapRegionView();
         SyncWorldViews();
         SetupEnergyWallView();
         SetupFogOfWarView();
@@ -217,6 +219,7 @@ public partial class Main : Node2D
         }
 
         _simulation = runtime.Simulation;
+        _mapRegionView?.UpdateFromMap(runtime.Map);
     }
 
     private void SetupCamera()
@@ -300,6 +303,22 @@ public partial class Main : Node2D
         _worldRoot.AddChild(_energyWallView);
     }
 
+    private void SetupMapRegionView()
+    {
+        if (_worldRoot is null)
+        {
+            return;
+        }
+
+        _mapRegionView = new MapRegionView
+        {
+            Name = "MapRegionView",
+            ZIndex = -10
+        };
+        _worldRoot.AddChild(_mapRegionView);
+        _mapRegionView.UpdateFromMap(_simulation?.Map);
+    }
+
     private void SetupFogOfWarView()
     {
         if (_worldRoot is null)
@@ -372,6 +391,7 @@ public partial class Main : Node2D
         _placementBuildingId = null;
         _placementGhost?.Clear();
         SetupSimulation(missionId);
+        _mapRegionView?.UpdateFromMap(_simulation?.Map);
         SyncWorldViews();
         UpdateHud();
     }
@@ -471,6 +491,24 @@ public partial class Main : Node2D
 
     private bool HandleUpgradeHotkey(Key keycode)
     {
+        if (keycode == Key.U)
+        {
+            if (!IsUnitCommandAvailable(ContentIds.Units.Guardian))
+            {
+                return false;
+            }
+
+            if (_simulation is null || _selectedBuildingEntityId is null)
+            {
+                _lastActionMessage = L("ui.action.select_barracks_before_retrofit");
+                return true;
+            }
+
+            var retrofitResult = _simulation.TryStartGuardianRetrofit(_selectedBuildingEntityId.Value);
+            _lastActionMessage = LocalizedUpgrade(retrofitResult);
+            return true;
+        }
+
         var upgradeId = keycode switch
         {
             Key.G => ContentIds.Buildings.GunTower,
@@ -814,6 +852,26 @@ public partial class Main : Node2D
                     TrainingCostLabel(unit, selectedBuilding));
             }));
 
+        if (selectedBarracks && IsUnitCommandAvailable(ContentIds.Units.Guardian))
+        {
+            var upgrade = _catalog.GetBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit);
+            if (!selectedBuilding!.HasBarracksUpgrade(upgrade.Id))
+            {
+                var validation = _simulation.ValidateGuardianRetrofit(selectedBuilding.EntityId);
+                actions.Add(new CommandPanelAction(
+                    L("ui.command.guardian_retrofit_label"),
+                    BarracksUpgradeDetail(upgrade, validation),
+                    validation.Success,
+                    () =>
+                    {
+                        var result = _simulation.TryStartGuardianRetrofit(selectedBuilding.EntityId);
+                        _lastActionMessage = LocalizedUpgrade(result);
+                    },
+                    "L2",
+                    BarracksUpgradeCostLabel(upgrade, selectedBuilding)));
+            }
+        }
+
         if (selectedDefenseTower)
         {
             actions.AddRange(new[] { ContentIds.Buildings.GunTower, ContentIds.Buildings.RocketTower }
@@ -946,6 +1004,31 @@ public partial class Main : Node2D
             : $"{cost} | {L("ui.action_bar.queued", SimulationMessage.Args(("count", queued)))}";
     }
 
+    private string BarracksUpgradeCostLabel(BarracksUpgradeDefinition upgrade, BuildingState barracks)
+    {
+        if (barracks.IsBarracksUpgradeInProgress && barracks.ActiveBarracksUpgradeId == upgrade.Id)
+        {
+            return L(
+                "ui.action_bar.progress_seconds",
+                SimulationMessage.Args(("seconds", $"{Mathf.CeilToInt(barracks.ActiveBarracksUpgradeRemainingSeconds)}")));
+        }
+
+        return L("ui.action_bar.cost", SimulationMessage.Args(("cost", upgrade.Cost)));
+    }
+
+    private string BarracksUpgradeDetail(BarracksUpgradeDefinition upgrade, UpgradeResult validation)
+    {
+        return L(
+            "ui.detail.barracks_upgrade",
+            SimulationMessage.Args(
+                ("upgradeId", upgrade.Id),
+                ("upgrade", BarracksUpgradeName(upgrade)),
+                ("cost", upgrade.Cost),
+                ("time", $"{upgrade.DurationSeconds:0}"),
+                ("requiredGrunts", upgrade.RequiredGruntCount),
+                ("hint", LocalizedUpgrade(validation))));
+    }
+
     private string BuildingDetail(Stratezone.Simulation.Content.BuildingDefinition building, string commandHint)
     {
         var roleLine = building.ProvidesPower
@@ -970,6 +1053,11 @@ public partial class Main : Node2D
                 ("health", building.Health),
                 ("role", roleLine),
                 ("hint", commandHint)));
+    }
+
+    private string BarracksUpgradeName(BarracksUpgradeDefinition definition)
+    {
+        return _localization?.ContentName(definition.Id, definition.DisplayName) ?? definition.DisplayName;
     }
 
     private static string UnitIcon(string unitId)

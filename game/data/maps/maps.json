@@ -7,6 +7,7 @@
       "biome": "meadow_light_forest",
       "target_size": "small",
       "required_features": ["player_start", "enemy_edge_of_fog", "central_choke", "contested_well", "enemy_pylon_weak_point"],
+      "terrain_regions": [],
       "tags": ["first_landing", "placeholder"]
     },
     {
@@ -15,6 +16,107 @@
       "biome": "ridge_meadow_light_forest",
       "target_size": "medium",
       "required_features": ["player_landing_zone", "ridge_chokepoints", "buildable_clearings", "enemy_claimed_well", "contested_well", "enemy_colony_hub"],
+      "terrain_regions": [
+        {
+          "id": "ridge_north_blocker",
+          "region_type": "blocked_terrain",
+          "shape": "rect",
+          "center": { "x": 0, "y": -210 },
+          "size": { "x": 700, "y": 80 },
+          "blocks_movement": true,
+          "blocks_building": true,
+          "allows_building": false,
+          "tags": ["ridge", "chokepoint_edge"]
+        },
+        {
+          "id": "ridge_south_blocker",
+          "region_type": "blocked_terrain",
+          "shape": "rect",
+          "center": { "x": 20, "y": 125 },
+          "size": { "x": 680, "y": 80 },
+          "blocks_movement": true,
+          "blocks_building": true,
+          "allows_building": false,
+          "tags": ["ridge", "chokepoint_edge"]
+        },
+        {
+          "id": "player_landing_clearing",
+          "region_type": "buildable_clearing",
+          "shape": "circle",
+          "center": { "x": -620, "y": 185 },
+          "radius": 270,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": true,
+          "tags": ["player_start", "buildable"]
+        },
+        {
+          "id": "player_start_well_basin",
+          "region_type": "resource_basin",
+          "shape": "circle",
+          "center": { "x": -460, "y": 250 },
+          "radius": 150,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": true,
+          "tags": ["resource_basin", "buildable"]
+        },
+        {
+          "id": "contested_ridge_well_basin",
+          "region_type": "resource_basin",
+          "shape": "circle",
+          "center": { "x": 230, "y": -40 },
+          "radius": 160,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": true,
+          "tags": ["resource_basin", "contested", "buildable"]
+        },
+        {
+          "id": "enemy_base_clearing",
+          "region_type": "buildable_clearing",
+          "shape": "circle",
+          "center": { "x": 700, "y": -60 },
+          "radius": 250,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": true,
+          "tags": ["enemy_base", "buildable"]
+        },
+        {
+          "id": "enemy_well_basin",
+          "region_type": "resource_basin",
+          "shape": "circle",
+          "center": { "x": 700, "y": 230 },
+          "radius": 155,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": true,
+          "tags": ["resource_basin", "enemy_claimed", "buildable"]
+        },
+        {
+          "id": "central_ridge_chokepoint",
+          "region_type": "chokepoint_marker",
+          "shape": "circle",
+          "center": { "x": 130, "y": -40 },
+          "radius": 95,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": false,
+          "tags": ["chokepoint", "tower_wall_candidate"]
+        },
+        {
+          "id": "southern_forest_lane",
+          "region_type": "chokepoint_marker",
+          "shape": "circle",
+          "center": { "x": -240, "y": 230 },
+          "radius": 110,
+          "blocks_movement": false,
+          "blocks_building": false,
+          "allows_building": false,
+          "tags": ["forest_lane", "alternate_route"]
+        }
+      ],
       "tags": ["wells_at_the_ridge", "placeholder"]
     }
   ]

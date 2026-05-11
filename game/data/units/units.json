@@ -127,7 +127,7 @@
       "sight_range": 7,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
-        "required_addon_building_id": "building_armory_annex",
+        "required_barracks_upgrade_id": "barracks_upgrade_guardian_retrofit",
         "spawn_building_id": "building_colony_hub"
       },
       "spawn_rule": "colony_hub",

@@ -93,7 +93,8 @@ public sealed partial class RtsSimulation
                     building.FactionId == factionId &&
                     building.Definition.Id == unit.AllowedByBuildingId &&
                     building.IsPowered &&
-                    !building.IsDestroyed)
+                    !building.IsDestroyed &&
+                    ProducerMeetsUnitUpgradeRequirements(building, unit))
                 .OrderBy(CountQueuedOrdersForProducer)
                 .FirstOrDefault()
             : _buildings.FirstOrDefault(building =>
@@ -123,6 +124,30 @@ public sealed partial class RtsSimulation
                 producer,
                 "sim.production.producer_unpowered",
                 SimulationMessage.Args(("buildingId", producer.Definition.Id), ("building", producer.Definition.DisplayName)));
+        }
+
+        if (producer.IsBarracksUpgradeInProgress)
+        {
+            return new ProductionValidation(
+                false,
+                $"{producer.Definition.DisplayName} is upgrading.",
+                null,
+                producer,
+                "sim.production.producer_upgrading",
+                SimulationMessage.Args(("buildingId", producer.Definition.Id), ("building", producer.Definition.DisplayName)));
+        }
+
+        if (unit.RequiredBarracksUpgradeId is not null &&
+            !producer.HasBarracksUpgrade(unit.RequiredBarracksUpgradeId))
+        {
+            var upgrade = _catalog.GetBarracksUpgrade(unit.RequiredBarracksUpgradeId);
+            return new ProductionValidation(
+                false,
+                $"Requires {upgrade.DisplayName}.",
+                null,
+                producer,
+                "sim.production.requires_barracks_upgrade",
+                SimulationMessage.Args(("upgradeId", upgrade.Id), ("upgrade", upgrade.DisplayName)));
         }
 
         if (unit.RequiredAddonBuildingId is not null &&
@@ -156,6 +181,12 @@ public sealed partial class RtsSimulation
             producer,
             "sim.production.can_train",
             SimulationMessage.Args(("unitId", unit.Id), ("unit", unit.DisplayName)));
+    }
+
+    private static bool ProducerMeetsUnitUpgradeRequirements(BuildingState producer, UnitDefinition unit)
+    {
+        return !producer.IsBarracksUpgradeInProgress &&
+            (unit.RequiredBarracksUpgradeId is null || producer.HasBarracksUpgrade(unit.RequiredBarracksUpgradeId));
     }
 
     private int CountQueuedOrdersForProducer(BuildingState producer)
@@ -193,6 +224,11 @@ public sealed partial class RtsSimulation
                 yield return unit;
             }
         }
+    }
+
+    private bool IsExplicitlyTrainableInMission(string unitId)
+    {
+        return _trainableUnitIds?.Contains(unitId) == true;
     }
 
     private int CountEnemyUnitsAndOrders(string unitId)

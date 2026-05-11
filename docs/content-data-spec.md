@@ -92,8 +92,9 @@ The first prototype should support these content categories:
 - missions
 - mission events
 - objectives
+- Barracks upgrades
 
-Future categories such as campaign progression, achievements, abstract upgrade trees, and store metadata should wait until the related milestone requires them. Vehicle Bay add-ons and armed tower upgrades should be represented as building records first, because they are physical map objects or in-place building conversions. Guardian production should be represented as a Barracks upgrade, not an Armory Annex building.
+Future categories such as campaign progression, achievements, broad abstract upgrade trees, and store metadata should wait until the related milestone requires them. Vehicle Bay add-ons and armed tower upgrades should be represented as building records first, because they are physical map objects or in-place building conversions. Guardian production is represented by one explicit Barracks upgrade record, not an Armory Annex building.
 
 ## Unit Definition
 
@@ -149,7 +150,7 @@ Prototype rules:
 - `unit_commander` is controllable, fragile, pistol-only, and mission-critical in First Landing.
 - `unit_rover` scouts, cannot shoot, and may run over enemy infantry.
 - `unit_guardian` is the anti-armor infantry proof role: slower and more expensive than Rifleman, lower raw damage than Rifleman, but energy damage that performs meaningfully better against Medium and Heavy Tanks than Rifleman ballistics.
-- `unit_guardian` should require a Barracks Guardian upgrade where the mission enables Guardian production. Current runtime JSON still uses the older `building_armory_annex` placeholder and needs an implementation refactor before Level 2.
+- `unit_guardian` requires `barracks_upgrade_guardian_retrofit` where the mission enables Guardian production.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
 - In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
 - `unit_medium_tank` is the Level 1 reveal tank. It is not normally trainable, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
@@ -250,7 +251,7 @@ First-pass building IDs:
 - `building_defense_tower`
 - `building_gun_tower`
 - `building_rocket_tower`
-- `building_armory_annex` (legacy placeholder in current data; not the planned first-demo Guardian unlock path)
+- `building_armory_annex` (legacy reserved record; not the first-demo Guardian unlock path)
 - `building_vehicle_bay`
 - `building_med_hall`
 - `building_logistics_repair_pad`
@@ -260,7 +261,7 @@ Prototype rules:
 
 - `building_colony_hub` is the spawn location for trained units.
 - `building_barracks` controls what can be trained by level, troop capacity, and unlocks.
-- `building_armory_annex` is a legacy placeholder in the current content records. The planned first-demo Guardian path is a Barracks upgrade, not an Armory Annex building.
+- `building_armory_annex` is a legacy reserved record. The first-demo Guardian path is a Barracks upgrade, not an Armory Annex building.
 - `building_vehicle_bay` is a powered Barracks add-on that unlocks Rover training and heavy-armor capacity where the mission allows it. In First Landing it is silently locked and hidden from the player.
 - `building_power_plant` provides local power.
 - `building_pylon` extends or links power.
@@ -314,26 +315,22 @@ tags: production, powered
 
 The example is not final balance.
 
-Legacy Barracks add-on placeholder example:
+Barracks upgrade example:
 
 ```text
-id: building_armory_annex
-display_name: Armory Annex
-role: barracks_addon_unlock
-cost: 180
-build_time_seconds: 0
-requires_power: true
-requires_adjacent_building_id: building_barracks
-training_unlock_unit_ids: unit_guardian
-troop_capacity_delta: 0
-heavy_armor_capacity_delta: 0
-upgrade_from_building_id: none
-upgrade_preserves_wall_anchor: false
-wall_anchor: false
-tags: production, addon, powered
+id: barracks_upgrade_guardian_retrofit
+display_name: Guardian Retrofit
+cost: 350
+duration_seconds: 25
+required_grunt_count: 2
+required_grunt_range: 10
+requires_powered_barracks: true
+requires_colony_hub: true
+unlock_unit_ids: unit_guardian
+tags: barracks, upgrade, guardian_unlock
 ```
 
-This Armory Annex example reflects the current placeholder content record, not the approved first-demo Guardian unlock direction. Level 2 should use a Barracks upgrade path once the runtime supports that schema.
+This is a concrete Barracks upgrade record, not the start of a broad research tree. The runtime requires a powered live Barracks, live Colony Hub, enough nearby Grunts, clear Barracks training queue, and materials before it starts the timed retrofit.
 
 In-place tower upgrade placeholder example:
 

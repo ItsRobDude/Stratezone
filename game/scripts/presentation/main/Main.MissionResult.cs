@@ -45,7 +45,7 @@ public partial class Main
         var titleKey = _simulation.MissionState.Status == MissionStatus.Won
             ? "ui.mission_result.won_title"
             : "ui.mission_result.lost_title";
-        _missionResultLabel.Text = $"{L(titleKey)}\n{LocalizedMissionText(_simulation.MissionState)}";
+        _missionResultLabel.Text = $"{L(titleKey)}\n{LocalizedMissionResultText(_simulation.MissionState)}";
     }
 
     private void ApplyMissionResultScale()

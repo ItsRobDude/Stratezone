@@ -11,6 +11,13 @@
       "map_id": "map_first_landing_greybox",
       "player_faction_id": "faction_player_expedition",
       "enemy_faction_ids": ["faction_private_military"],
+      "presentation": {
+        "briefing_title_key": "mission.mission_first_landing.briefing_title",
+        "briefing_body_key": "mission.mission_first_landing.briefing_body",
+        "start_objective_key": "mission.mission_first_landing.start_objective",
+        "success_key": "mission.mission_first_landing.success",
+        "failure_key": "mission.mission_first_landing.failure"
+      },
       "mission_markers": [
         { "id": "player_base", "position": { "x": -300, "y": -140 } },
         { "id": "player_grunt", "position": { "x": -180, "y": -60 } },

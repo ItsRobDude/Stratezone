@@ -7,11 +7,13 @@ public sealed record MapDefinition(
     string DisplayName,
     string Biome,
     string TargetSize,
+    bool RequiresBuildableRegions,
     IReadOnlyList<string> RequiredFeatures,
     IReadOnlyList<MapRegionDefinition> TerrainRegions,
     IReadOnlyList<string> Tags)
 {
     public bool HasBuildableClearings => TerrainRegions.Any(region => region.AllowsBuilding);
+    public bool UsesRestrictedBuildRegions => RequiresBuildableRegions && HasBuildableClearings;
 
     public bool BlocksMovementAt(SimVector2 position, float radius)
     {
@@ -25,7 +27,7 @@ public sealed record MapDefinition(
 
     public bool AllowsBuildingAt(SimVector2 position, float radius)
     {
-        return !HasBuildableClearings ||
+        return !UsesRestrictedBuildRegions ||
             TerrainRegions.Any(region => region.AllowsBuilding && region.Contains(position, radius));
     }
 }

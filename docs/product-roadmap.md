@@ -40,7 +40,7 @@ Current docs in place:
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
 
-The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, grunt-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, Barracks Guardian Retrofit unlock state for later missions, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, fog visibility, Defense Tower wall links, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, and a localized bottom action bar with command costs, queued-count feedback, and hover details.
+The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, idle combat-unit auto-fire against visible hostile troops and tanks, grunt-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, Barracks Guardian Retrofit unlock state for later missions, Mission 2 player-built-base route smoke coverage, mission trigger grace/coalescing, localized mission briefing/objective/result fields, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, strategic contested-well rebuild throttles, base-breach defensive response, fog visibility, Defense Tower wall links with hostile path blocking and end buffers, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, a localized bottom action bar with command costs, queued-count feedback, hover details, and a dev-only F5 in-game map editor/tuner overlay that visualizes authored markers, terrain regions, live resource wells, pylon ranges, and wall links while exporting JSON snippets for content edits.
 
 Godot .NET 4.6.2 and .NET SDK 8 are installed on this machine. Content validation, the Godot C# build, simulation smoke checks, and a Godot headless smoke check pass locally.
 
@@ -68,7 +68,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - Pylons link power over long distances.
 - Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
-- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a Medium Tank without changing win/loss conditions by itself; reveal-only tanks do not block destroy-all victory.
+- Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule; hostile Hub occupants must be killed before mission completion.
 - The first playable target is playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until gameplay works.
 - Explosive friendly fire exists; normal gunfire does not.
 - First-pass combat balance should follow the old-school RTS formula: basic infantry die quickly, base structures take a long time to crack with small arms, armor shrugs off ballistics, and explosives are the siege lane.
@@ -96,6 +96,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Add reusable start-pattern support for deployed, player-built, partial-base, allotted-troop, and no-base missions.
    - Split or justify large hand-written files that are already over the review trigger, especially `Main.cs` and broad smoke coverage.
    - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, scenario-specific tests, event trigger coalescing, and localization-key paths for mission presentation.
+   - Harden the F5 map editor/tuner only where it helps internal route and balance proof; keep direct file writes, palettes, and modder packaging as later steps.
 
 4. Level 2 planning target
    - Build a resource-race mission with more strategic base-building terrain: cliffs, water, chokepoints, and Defense Tower wall opportunities.
@@ -202,7 +203,7 @@ Systems:
 - enemy rebuild/production from limited resources
 - central contested well
 - enemy pylon weak point that can disable an enemy tower route
-- Colony Hub Medium Tank reveal without changing win/loss rules
+- permanent Colony Hub Medium Tank occupant release that blocks completion until hostile occupants are destroyed
 - Guardian anti-armor infantry tuning proven against Medium and Heavy Tanks without making Guardian a better anti-infantry Rifleman
 - defense tower wall path-blocking
 - HUD objective tracker
@@ -226,8 +227,8 @@ Architecture work:
 - create a repeatable mission data pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
 - keep the Barracks Guardian upgrade schema/runtime path covered by smoke checks and mission data
 - support deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force start patterns without scene-copying
-- define first-pass map logic for terrain regions, passability, buildable clearings, resource basins, and chokepoint markers
-- add a lightweight map preview/debug path if terrain authorship becomes hard to inspect from JSON alone
+- define first-pass map logic for terrain regions, passability, readable base/expansion pockets, resource basins, chokepoint markers, and explicit restricted-build scenarios
+- harden the in-game F5 map editor/tuner as the internal terrain and marker authoring aid, still exporting snippets instead of directly writing source files
 - add event trigger grace/cooldown/coalescing so normal early build milestones cannot fire stacked immediate raids
 - define localization-key paths for briefings, objectives, warnings, map callouts, failure/success text, retry hints, and tactical notes
 - keep all new mission rules in simulation/data layers rather than Godot scene-only code
@@ -237,13 +238,13 @@ Architecture work:
 Exit criteria:
 
 - Level 2 can be added mostly through data plus narrow simulation/presentation seams
-- map data can express blocked terrain, buildable areas, resource basins, and tower-wall chokepoint candidates without relying on scene-only placement
+- map data can express blocked terrain, readable base/expansion areas, resource basins, tower-wall chokepoint candidates, and explicit restricted-build maps without relying on scene-only placement, and the F5 editor/tuner can inspect those authored facts during a running mission
 - Barracks Guardian upgrade has replaced Armory Annex as the Level 2 Guardian unlock path in runtime, data, and smoke coverage
 - mission starts can support the approved demo shapes without duplicating scene setup logic
-- `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together
-- scenario checks can prove a mission route without replaying every unrelated system assertion
-- event triggers have grace/cooldown or coalescing rules before Level 2 relies on multiple base-building pressure triggers
-- mission-presentation fields have a localization-ready data path
+- `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together; current code has command-panel helpers split to `Main.CommandPanel.cs` and mission smoke grouped into scenario files
+- scenario checks can prove a mission route without replaying every unrelated system assertion; current smoke coverage proves a Mission 2 base/Extractor/Barracks/Pylon-corridor/Guardian route
+- event triggers have grace/cooldown or coalescing rules before Level 2 relies on multiple base-building pressure triggers; current Mission 2 data coalesces Barracks and first Extractor into one small pressure beat
+- mission-presentation fields have a localization-ready data path; current mission data carries briefing, start objective, success, and failure keys
 - no new major mechanic has been added just to make the roadmap look larger
 
 ## Milestone 4: Level 2 - Wells at the Ridge
@@ -256,7 +257,7 @@ Mission shape:
 - the player builds and places the base instead of starting with a finished base
 - scarce resource wells that force a race for expansion timing
 - cliffs, water, or other impassable terrain that create readable chokepoints without requiring complex terrain simulation
-- authored buildable clearings and resource basins that make base expansion readable without a visible grid
+- authored clearings and resource basins that make base expansion readable without becoming hidden build whitelists
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
 - likely first Barracks Guardian upgrade, justified by enemy armor, hardened defense, or tower-anchor pressure; enemy Guardian production must use the same runtime upgrade gate instead of pre-granted access
@@ -473,7 +474,7 @@ These are not first-prototype commitments:
 - campaign layer
 - persistent expedition progression, only if mission-first structure earns it
 - sandbox/skirmish
-- map editor
+- modder-facing map editor distribution and safe map-pack loading after the internal editor/tuner proves useful
 - polished terrain-art pipeline beyond the first greybox/prototype terrain kit
 - mod support
 - multiplayer

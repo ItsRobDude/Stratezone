@@ -137,8 +137,8 @@ Level 1 player units:
 Level 1 tank rule:
 
 - tanks are not normally trainable in Level 1
-- destroying either player's or enemy's Colony Hub reveals a Medium Tank from that hub
-- the Medium Tank reveal does not add, remove, or replace any win/loss condition; a reveal-only tank is not a required destroy-all target
+- destroying either player's or enemy's Colony Hub releases a Medium Tank occupant from that hub
+- enemy Hub occupants are required hostile targets; a mission cannot complete while one is still alive
 
 First-pass unit intent:
 
@@ -147,8 +147,8 @@ First-pass unit intent:
 - Cadets are cheaper and weaker than Riflemen, giving the player and enemy a disposable early infantry option.
 - Guardians are beefier than Riflemen and deal slightly less raw damage, but their energy fire is the first infantry anti-armor proof role: worse than Riflemen into basic infantry, meaningfully better into Medium and Heavy Tanks. In later missions, Guardian production should come from a powered/upgraded Barracks rather than an Armory Annex.
 - Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
-- Medium Tanks are the Level 1 reveal vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old reveal tank. A revealed Medium Tank should also be a better anti-armor answer than Rifleman fire.
-- Heavy Tanks are the promoted version of the old tank record and should stay later/heavier than the Level 1 reveal.
+- Medium Tanks are the Hub-destruction occupant vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old heavy tank record. A released Medium Tank should also be a better anti-armor answer than Rifleman fire.
+- Heavy Tanks are the promoted version of the old tank record and should stay later/heavier than the Hub occupant tank.
 - Tanks can run over enemy infantry on direct move orders, preserving vehicle micro instead of stopping to auto-fire before impact.
 - Tanks survive more punishment than infantry but are not part of normal Level 1 production.
 - Heavy Tanks should shrug off Rifleman fire and fire slowly as heavy burst weapons; the player should need Guardian energy fire, explosive towers, another tank, or infrastructure play to answer heavy armor cleanly.

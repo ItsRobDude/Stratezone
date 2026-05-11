@@ -4,6 +4,7 @@ public sealed partial class RtsSimulation
 {
     private const float EnemyScoutDispatchDelaySeconds = 18.0f;
     private const float EnemyUnitPursuitRange = 9.0f;
+    private const float EnemyBaseDefensePursuitRange = 18.0f;
     private const float EnemyRetreatHealthRatio = 0.32f;
     private const float EnemyRetreatRecoverRatio = 0.58f;
 
@@ -42,7 +43,21 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        var groupSize = Math.Max(1, _enemyAi.Profile.AttackGroupSize);
+        CommitIdleEnemyAttackers(Math.Max(1, _enemyAi.Profile.AttackGroupSize), requireFullGroup: true);
+    }
+
+    internal int CommitMissionTriggerEnemyPressure(int groupSize)
+    {
+        if (_elapsedSeconds < _enemyOfficer.NextAttackAllowedSeconds)
+        {
+            return 0;
+        }
+
+        return CommitIdleEnemyAttackers(Math.Max(1, groupSize), requireFullGroup: false);
+    }
+
+    private int CommitIdleEnemyAttackers(int groupSize, bool requireFullGroup)
+    {
         var committedCount = _units.Count(unit =>
             unit.FactionId == ContentIds.Factions.PrivateMilitary &&
             !unit.IsDestroyed &&
@@ -50,7 +65,7 @@ public sealed partial class RtsSimulation
             unit.IsEnemyAttackCommitted);
         if (committedCount >= groupSize)
         {
-            return;
+            return 0;
         }
 
         var idleCombatUnits = _units
@@ -62,18 +77,23 @@ public sealed partial class RtsSimulation
                 !unit.IsEnemyAttackCommitted)
             .OrderBy(unit => unit.Position.DistanceTo(_enemyAi.HubPosition))
             .ToArray();
-        if (idleCombatUnits.Length + committedCount < groupSize)
+        if (idleCombatUnits.Length == 0 ||
+            (requireFullGroup && idleCombatUnits.Length + committedCount < groupSize))
         {
-            return;
+            return 0;
         }
 
+        var committedNow = 0;
         foreach (var unit in idleCombatUnits.Take(groupSize - committedCount))
         {
             unit.IsEnemyAttackCommitted = true;
             unit.IsEnemyScout = false;
             unit.IsEnemyRetreating = false;
             _knownCommittedEnemyIds.Add(unit.EntityId);
+            committedNow++;
         }
+
+        return committedNow;
     }
 
     private void DispatchEnemyScout()
@@ -163,7 +183,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        if (unit.MoveTarget is not null && unit.Definition.CanRunOverInfantry)
+        if (unit.MoveTarget is not null)
         {
             MoveUnitToward(unit, unit.MoveTarget.Value, deltaSeconds);
             return;
@@ -176,10 +196,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        if (unit.MoveTarget is not null)
-        {
-            MoveUnitToward(unit, unit.MoveTarget.Value, deltaSeconds);
-        }
+        unit.ClearPath();
     }
 
     private void TickEnemyUnit(UnitState unit, float deltaSeconds)
@@ -195,7 +212,7 @@ public sealed partial class RtsSimulation
         {
             unit.TargetUnitEntityId = targetUnit.EntityId;
             unit.TargetBuildingEntityId = null;
-            TryUnitAttackUnit(unit, targetUnit);
+            TickUnitAttackTarget(unit, targetUnit, deltaSeconds);
             return;
         }
 
@@ -212,6 +229,16 @@ public sealed partial class RtsSimulation
 
     private void TickEnemyDefenderUnit(UnitState unit, float deltaSeconds)
     {
+        var baseIntruder = FindEnemyBaseIntruder(unit);
+        if (baseIntruder is not null)
+        {
+            unit.IsEnemyScout = false;
+            unit.TargetUnitEntityId = baseIntruder.EntityId;
+            unit.TargetBuildingEntityId = null;
+            TickUnitAttackTarget(unit, baseIntruder, deltaSeconds);
+            return;
+        }
+
         if (unit.IsEnemyScout)
         {
             TickEnemyScout(unit, deltaSeconds * _enemyAi.Profile.PressureSlowdownMultiplier);
@@ -226,6 +253,25 @@ public sealed partial class RtsSimulation
         unit.TargetUnitEntityId = targetUnit.EntityId;
         unit.TargetBuildingEntityId = null;
         TryUnitAttackUnit(unit, targetUnit);
+    }
+
+    private UnitState? FindEnemyBaseIntruder(UnitState unit)
+    {
+        if (!unit.Definition.CanAttack || unit.Definition.AttackRange <= 0.0f)
+        {
+            return null;
+        }
+
+        var defenseRadius = ToWorldRadius(EnemyBaseDefensePursuitRange);
+        return _units
+            .Where(candidate =>
+                candidate.FactionId == ContentIds.Factions.PlayerExpedition &&
+                !candidate.IsDestroyed &&
+                candidate.Definition.CanAttack &&
+                candidate.Position.DistanceTo(_enemyAi.HubPosition) <= defenseRadius)
+            .OrderBy(candidate => candidate.Definition.Id == ContentIds.Units.Commander ? 0 : 1)
+            .ThenBy(candidate => candidate.Position.DistanceTo(unit.Position))
+            .FirstOrDefault();
     }
 
     private bool ShouldEnemyRetreat(UnitState unit)
@@ -316,7 +362,20 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        MoveUnitToward(attacker, target.Position + attacker.TargetFormationOffset, deltaSeconds);
+        var approachPoint = GetBuildingAttackApproachPoint(attacker, target, attackRange) + attacker.TargetFormationOffset;
+        MoveUnitToward(attacker, approachPoint, deltaSeconds);
+    }
+
+    private static SimVector2 GetBuildingAttackApproachPoint(UnitState attacker, BuildingState target, float attackRange)
+    {
+        var directionFromTarget = (attacker.Position - target.Position).Normalized();
+        if (directionFromTarget.Length() <= 0.0001f)
+        {
+            directionFromTarget = new SimVector2(-1.0f, 0.0f);
+        }
+
+        var standOffDistance = MathF.Max(target.FootprintWorldRadius + 4.0f, attackRange - 0.5f);
+        return target.Position + (directionFromTarget * standOffDistance);
     }
 
     private BuildingState? GetEnemyTargetBuilding(UnitState unit)

@@ -31,7 +31,7 @@ public partial class FogOfWarView : Node2D
                 continue;
             }
 
-            DrawRect(rect, new Color(0.0f, 0.0f, 0.0f, 0.92f));
+            DrawRect(rect, Colors.Black);
         }
     }
 }

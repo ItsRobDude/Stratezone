@@ -257,6 +257,7 @@ public sealed class ContentCatalog
                 record.GetProperty("display_name").GetString() ?? string.Empty,
                 record.GetProperty("biome").GetString() ?? string.Empty,
                 record.GetProperty("target_size").GetString() ?? string.Empty,
+                record.TryGetProperty("requires_buildable_regions", out var requiresBuildableRegions) && requiresBuildableRegions.GetBoolean(),
                 LoadStringArray(record, "required_features"),
                 LoadMapRegions(record),
                 LoadStringArray(record, "tags"));
@@ -333,6 +334,8 @@ public sealed class ContentCatalog
             var availableBuildingIds = LoadStringArray(record, "available_building_ids");
             var objectiveIds = LoadStringArray(record, "objectives");
             var failureConditionIds = LoadStringArray(record, "failure_conditions");
+            var presentation = LoadMissionPresentation(record);
+            var missionTriggers = LoadMissionTriggers(record);
             var enemyAiProfile = LoadEnemyAiProfile(record);
 
             var mission = new MissionDefinition(
@@ -349,6 +352,8 @@ public sealed class ContentCatalog
                 availableBuildingIds,
                 objectiveIds,
                 failureConditionIds,
+                presentation,
+                missionTriggers,
                 enemyAiProfile
             );
 
@@ -413,6 +418,46 @@ public sealed class ContentCatalog
             .ToArray();
     }
 
+    private static MissionPresentationDefinition LoadMissionPresentation(JsonElement record)
+    {
+        if (!record.TryGetProperty("presentation", out var presentation) || presentation.ValueKind != JsonValueKind.Object)
+        {
+            return new MissionPresentationDefinition(
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty);
+        }
+
+        return new MissionPresentationDefinition(
+            GetOptionalString(presentation, "briefing_title_key") ?? string.Empty,
+            GetOptionalString(presentation, "briefing_body_key") ?? string.Empty,
+            GetOptionalString(presentation, "start_objective_key") ?? string.Empty,
+            GetOptionalString(presentation, "success_key") ?? string.Empty,
+            GetOptionalString(presentation, "failure_key") ?? string.Empty);
+    }
+
+    private static IReadOnlyList<MissionTriggerDefinition> LoadMissionTriggers(JsonElement record)
+    {
+        if (!record.TryGetProperty("mission_triggers", out var triggers) || triggers.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return triggers.EnumerateArray()
+            .Select(trigger => new MissionTriggerDefinition(
+                trigger.GetProperty("id").GetString() ?? string.Empty,
+                LoadStringArray(trigger, "watched_player_building_ids"),
+                GetOptionalFloat(trigger, "min_elapsed_seconds"),
+                GetOptionalFloat(trigger, "coalesce_window_seconds"),
+                GetOptionalFloat(trigger, "cooldown_seconds"),
+                trigger.TryGetProperty("max_fire_count", out var maxFireCount) ? maxFireCount.GetInt32() : 1,
+                trigger.TryGetProperty("enemy_attack_group_size", out var enemyAttackGroupSize) ? enemyAttackGroupSize.GetInt32() : 1))
+            .Where(trigger => trigger.Id.Length > 0 && trigger.WatchedPlayerBuildingIds.Count > 0)
+            .ToArray();
+    }
+
     private static EnemyAiProfileDefinition LoadEnemyAiProfile(JsonElement record)
     {
         if (!record.TryGetProperty("enemy_ai_profile", out var profile) || profile.ValueKind != JsonValueKind.Object)
@@ -422,11 +467,15 @@ public sealed class ContentCatalog
 
         return new EnemyAiProfileDefinition(
             profile.GetProperty("id").GetString() ?? EnemyAiProfileDefinition.Default.Id,
+            GetOptionalFloat(profile, "first_rebuild_delay_seconds"),
+            GetOptionalFloat(profile, "first_central_well_rebuild_delay_seconds"),
             GetOptionalFloat(profile, "first_attack_delay_seconds"),
             GetOptionalFloat(profile, "rebuild_cooldown_seconds"),
             GetOptionalFloat(profile, "production_cooldown_seconds"),
             profile.TryGetProperty("attack_group_size", out var attackGroupSize) ? attackGroupSize.GetInt32() : 1,
             GetOptionalFloat(profile, "central_well_interest"),
+            GetOptionalFloat(profile, "central_well_rebuild_cooldown_seconds"),
+            GetOptionalInt(profile, "max_central_well_rebuilds", int.MaxValue),
             profile.TryGetProperty("pressure_slowdown_multiplier", out var slowdown) ? slowdown.GetSingle() : 1.0f,
             profile.TryGetProperty("train_time_multiplier", out var trainTime) ? trainTime.GetSingle() : RtsSimulation.EnemyTrainTimeMultiplier,
             GetOptionalString(profile, "hub_marker") ?? EnemyAiProfileDefinition.Default.HubMarkerId,
@@ -470,6 +519,13 @@ public sealed class ContentCatalog
         return record.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number
             ? value.GetSingle()
             : 0.0f;
+    }
+
+    private static int GetOptionalInt(JsonElement record, string propertyName, int fallback)
+    {
+        return record.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number
+            ? value.GetInt32()
+            : fallback;
     }
 
     private static bool GetOptionalBool(JsonElement record, string propertyName)

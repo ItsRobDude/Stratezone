@@ -31,6 +31,7 @@ REQUIRED_I18N_KEYS = {
     "sim.placement.colony_hub_exists",
     "sim.placement.requires_colony_hub",
     "sim.placement.blocked_by_terrain",
+    "sim.placement.blocked_by_energy_wall",
     "sim.placement.requires_buildable_clearing",
     "sim.placement.legal",
     "sim.placement.placed",
@@ -86,6 +87,7 @@ REQUIRED_I18N_KEYS = {
     "ui.hud.placing_line",
     "ui.hud.status_line",
     "ui.hud.mission_line",
+    "ui.hud.briefing_line",
     "ui.hud.commander_line",
     "ui.hud.commander_missing_line",
     "ui.hud.commander_alive_status",
@@ -314,6 +316,47 @@ def validate_unit_and_building_combat_fields(records: dict[str, dict[str, Any]])
     return errors
 
 
+def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    numeric_fields = {
+        "first_rebuild_delay_seconds",
+        "first_central_well_rebuild_delay_seconds",
+        "first_attack_delay_seconds",
+        "rebuild_cooldown_seconds",
+        "production_cooldown_seconds",
+        "central_well_interest",
+        "central_well_rebuild_cooldown_seconds",
+        "pressure_slowdown_multiplier",
+        "train_time_multiplier",
+    }
+
+    for record_id, record in records.items():
+        if not record_id.startswith("mission_"):
+            continue
+
+        profile = record.get("enemy_ai_profile")
+        if profile is None:
+            continue
+        if not isinstance(profile, dict):
+            errors.append(f"{record['_source_path']}: {record_id}.enemy_ai_profile must be an object")
+            continue
+
+        for field in numeric_fields:
+            value = profile.get(field)
+            if value is not None and (not isinstance(value, (int, float)) or value < 0):
+                errors.append(
+                    f"{record['_source_path']}: {record_id}.enemy_ai_profile.{field} must be a non-negative number"
+                )
+
+        max_rebuilds = profile.get("max_central_well_rebuilds")
+        if max_rebuilds is not None and (not isinstance(max_rebuilds, int) or max_rebuilds < 0):
+            errors.append(
+                f"{record['_source_path']}: {record_id}.enemy_ai_profile.max_central_well_rebuilds must be a non-negative integer"
+            )
+
+    return errors
+
+
 def i18n_key_for_record(record_id: str) -> str:
     prefix = record_id.split("_", 1)[0]
     return f"{prefix}.{record_id}.name"
@@ -340,6 +383,11 @@ def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
             required_keys.add(i18n_key_for_record(record_id))
             if record_id.startswith(("unit_", "building_")):
                 required_keys.add(i18n_short_key_for_record(record_id))
+        presentation = record.get("presentation")
+        if record_id.startswith("mission_") and isinstance(presentation, dict):
+            for key_name, key_value in presentation.items():
+                if key_name.endswith("_key") and isinstance(key_value, str) and key_value:
+                    required_keys.add(key_value)
 
     for key in sorted(required_keys):
         value = strings.get(key)
@@ -364,6 +412,7 @@ def main() -> int:
     errors.extend(validate_required_first_landing(records))
     errors.extend(validate_no_separate_weapon_layer(records))
     errors.extend(validate_unit_and_building_combat_fields(records))
+    errors.extend(validate_mission_profiles(records))
     errors.extend(validate_i18n(records))
 
     if errors:

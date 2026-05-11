@@ -158,9 +158,9 @@ When a hand-written code file reaches 900 lines, treat that as an architecture r
 
 Current architecture pressure points:
 
-- `game/scripts/presentation/main/Main.cs` is past the review trigger and should be split or explicitly justified before Level 2 adds more presentation behavior.
-- `tests/SimulationSmoke/Program.cs` has become the broad proof harness for many systems; before new missions expand it further, group or split checks so failures point to the relevant scenario or system.
-- Mission 2 should be a data-plus-seams exercise. If it requires copying First Landing setup logic into scene code, pause and improve the mission setup architecture first.
+- `game/scripts/presentation/main/Main.cs` remains large, but command-panel rendering/detail helpers now live in `Main.CommandPanel.cs`; keep moving presentation-only surfaces out as they gain independent reasons to change.
+- `tests/SimulationSmoke/Program.cs` is still the broad mechanics harness, while content, First Landing, Wells at the Ridge, and mission trigger checks now live in focused smoke files.
+- Mission 2 is a data-plus-seams exercise. Current runtime uses mission JSON for map, starts, presentation keys, trigger pacing, and trainable units instead of copying First Landing setup into scene code.
 
 ## Simulation Boundary
 
@@ -180,6 +180,7 @@ Simulation-owned systems:
 - unit stats and combat resolution
 - projectiles or hitscan rules, if used
 - enemy raid timing and objective AI
+- mission trigger grace, cooldown, and coalescing
 - mission objectives and win/loss state
 - mission-specific failure criteria
 - environmental events
@@ -356,7 +357,7 @@ Early requirements:
 - survive raid
 - destroy all enemies on the map
 - defend an on-map commander unit
-- support a Level 1 Medium Tank reveal when either side's Colony Hub is destroyed, without changing win/loss rules by itself
+- support a permanent Medium Tank occupant release when either side's Colony Hub is destroyed, and keep mission completion blocked while enemy Hub occupants are alive
 - support mission data choosing whether Barracks upgrades/add-ons are player-built, prebuilt, upgraded in place, or locked for the mission
 - fail if mission-specific critical conditions are broken, such as Colony Hub destroyed, Commander killed, transport lost, convoy escaped, or required Grunt/equipment lost; timer-expiry mission failure is not planned for the first demo unless the roadmap is explicitly reopened
 
@@ -478,14 +479,18 @@ Avoid making the first prototype depend on full 3D modeling, complex animation, 
 
 ## Debugging and Developer Tools
 
-The project should eventually include:
+Current development tooling includes a first-pass in-game map editor/tuner overlay. It is presentation-owned, reads the current mission, map, content, and simulation state, and exports reviewable JSON snippets rather than writing source files directly. This keeps authored map truth in content data while making terrain, markers, pylon ranges, resource wells, and wall links visible during playtest tuning.
+
+The project should continue growing:
 
 - debug overlay for entity IDs, power, passability, and AI state
+- F5 map editor/tuner hardening for mission markers, terrain regions, route proof, and balance overlays
 - mission event log
 - deterministic test map or scenario
 - fast restart hotkey in development builds
 - simple balance dump for units/buildings
 - screenshot-friendly debug mode for playtest notes
+- later modder-facing map editor packaging, validation, and safe file save/load once internal map authoring is trustworthy
 
 These tools matter because RTS bugs are often state bugs, not visual bugs.
 

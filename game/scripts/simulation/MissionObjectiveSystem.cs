@@ -35,7 +35,8 @@ internal sealed class MissionObjectiveSystem
 
         if (HasObjective(ContentIds.Objectives.DestroyEnemyColonyHub) &&
             hasEnemyPresence &&
-            !HasLiveEnemyColonyHub(buildings))
+            !HasLiveEnemyColonyHub(buildings) &&
+            !HasLiveEnemyHubOccupants(units))
         {
             return new MissionState(
                 MissionStatus.Won,
@@ -48,8 +49,7 @@ internal sealed class MissionObjectiveSystem
         var remainingEnemyTargets =
             units.Count(unit =>
                 unit.FactionId == ContentIds.Factions.PrivateMilitary &&
-                !unit.IsDestroyed &&
-                IsRequiredEnemyTarget(unit)) +
+                !unit.IsDestroyed) +
             buildings.Count(building => building.FactionId == ContentIds.Factions.PrivateMilitary && !building.IsDestroyed);
 
         var destroyAllEnemies = HasObjective(ContentIds.Objectives.DestroyAllEnemies) || _objectiveIds.Count == 0;
@@ -66,11 +66,15 @@ internal sealed class MissionObjectiveSystem
         if (HasObjective(ContentIds.Objectives.DestroyEnemyColonyHub))
         {
             var remainingHubs = HasLiveEnemyColonyHub(buildings) ? 1 : 0;
+            var remainingHubOccupants = units.Count(unit =>
+                unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+                unit.IsColonyHubOccupant &&
+                !unit.IsDestroyed);
             return new MissionState(
                 MissionStatus.Active,
                 "Objective: destroy enemy Colony Hub.",
                 null,
-                remainingHubs,
+                remainingHubs + remainingHubOccupants,
                 "mission.objective.destroy_enemy_colony_hub");
         }
 
@@ -99,8 +103,11 @@ internal sealed class MissionObjectiveSystem
             !building.IsDestroyed);
     }
 
-    private static bool IsRequiredEnemyTarget(UnitState unit)
+    private static bool HasLiveEnemyHubOccupants(IReadOnlyList<UnitState> units)
     {
-        return !unit.Definition.Tags.Contains("level_1_reveal_only", StringComparer.Ordinal);
+        return units.Any(unit =>
+            unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+            unit.IsColonyHubOccupant &&
+            !unit.IsDestroyed);
     }
 }

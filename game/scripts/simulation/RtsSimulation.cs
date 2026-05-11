@@ -26,12 +26,13 @@ public sealed partial class RtsSimulation
     private readonly List<EnergyWallSegment> _energyWalls = [];
     private readonly List<SimulationEvent> _events = [];
     private readonly HashSet<string>? _trainableUnitIds;
-    private readonly FogOfWarState _playerFog = new(-760, 940, -420, 420, FogCellSize);
-    private readonly FogOfWarState _enemyFog = new(-760, 940, -420, 420, FogCellSize);
+    private readonly FogOfWarState _playerFog = new(-1400, 1400, -900, 900, FogCellSize);
+    private readonly FogOfWarState _enemyFog = new(-1400, 1400, -900, 900, FogCellSize);
     private readonly HashSet<int> _hubTankReveals = [];
     private readonly HashSet<int> _buildingCadetReveals = [];
     private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives;
+    private readonly MissionTriggerSystem _missionTriggers;
     private readonly MapDefinition? _map;
     private readonly EnemyOfficerState _enemyOfficer = new();
     private readonly HashSet<int> _knownCommittedEnemyIds = [];
@@ -49,7 +50,8 @@ public sealed partial class RtsSimulation
         EnemyAiProfileDefinition? enemyAiProfile = null,
         IEnumerable<string>? trainableUnitIds = null,
         IEnumerable<string>? objectiveIds = null,
-        MapDefinition? map = null)
+        MapDefinition? map = null,
+        IEnumerable<MissionTriggerDefinition>? missionTriggers = null)
     {
         _catalog = catalog;
         _map = map;
@@ -57,6 +59,7 @@ public sealed partial class RtsSimulation
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
         _missionObjectives = new MissionObjectiveSystem(objectiveIds);
+        _missionTriggers = new MissionTriggerSystem(missionTriggers);
         _trainableUnitIds = trainableUnitIds is null
             ? null
             : new HashSet<string>(trainableUnitIds, StringComparer.Ordinal);
@@ -185,6 +188,15 @@ public sealed partial class RtsSimulation
                 "sim.placement.blocked_by_terrain");
         }
 
+        if (IsBuildingFootprintBlockedByEnergyWall(position, footprintRadius))
+        {
+            return new PlacementValidation(
+                false,
+                "Blocked by energy wall.",
+                null,
+                "sim.placement.blocked_by_energy_wall");
+        }
+
         if (_map?.AllowsBuildingAt(position, footprintRadius) == false)
         {
             return new PlacementValidation(
@@ -261,6 +273,11 @@ public sealed partial class RtsSimulation
             factionId,
             "sim.event.construction_complete",
             SimulationMessage.Args(("buildingId", definition.Id), ("building", definition.DisplayName))));
+        if (factionId == ContentIds.Factions.PlayerExpedition)
+        {
+            _missionTriggers.RecordPlayerBuildingPlaced(definition.Id, _elapsedSeconds);
+        }
+
         return new PlacementResult(
             true,
             $"Placed {definition.DisplayName}.",
@@ -281,6 +298,7 @@ public sealed partial class RtsSimulation
         RecomputePower();
         TickBarracksUpgrades(deltaSeconds);
         _enemyAi.Tick(this, deltaSeconds);
+        _missionTriggers.Tick(this, _elapsedSeconds);
         TickProduction(deltaSeconds);
         TickEnemyPressure(deltaSeconds);
         TickBuildingAttacks(deltaSeconds);
@@ -324,7 +342,13 @@ public sealed partial class RtsSimulation
 
     public UnitState AddUnit(string unitId, string factionId, SimVector2 position)
     {
+        return AddUnit(unitId, factionId, position, false);
+    }
+
+    private UnitState AddUnit(string unitId, string factionId, SimVector2 position, bool isColonyHubOccupant)
+    {
         var unit = new UnitState(_nextEntityId++, _catalog.GetUnit(unitId), factionId, position);
+        unit.IsColonyHubOccupant = isColonyHubOccupant;
         _units.Add(unit);
         RecomputeFog();
         UpdateMissionState();
@@ -368,10 +392,8 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        unit.TargetUnitEntityId = null;
-        unit.TargetBuildingEntityId = null;
-        unit.RepairTargetBuildingEntityId = null;
-        unit.TargetFormationOffset = default;
+        unit.ClearPath();
+        unit.ClearCommandTargets(clearAttackPresentation: true);
         SetUnitPathTo(unit, position);
     }
 
@@ -385,9 +407,8 @@ public sealed partial class RtsSimulation
         }
 
         unit.ClearPath();
+        unit.ClearCommandTargets();
         unit.TargetUnitEntityId = target.EntityId;
-        unit.TargetBuildingEntityId = null;
-        unit.RepairTargetBuildingEntityId = null;
         unit.TargetFormationOffset = formationOffset;
     }
 
@@ -401,9 +422,8 @@ public sealed partial class RtsSimulation
         }
 
         unit.ClearPath();
-        unit.TargetUnitEntityId = null;
+        unit.ClearCommandTargets();
         unit.TargetBuildingEntityId = target.EntityId;
-        unit.RepairTargetBuildingEntityId = null;
         unit.TargetFormationOffset = formationOffset;
     }
 
@@ -487,7 +507,7 @@ public sealed partial class RtsSimulation
 
     public bool IsLineBlockedByEnergyWall(SimVector2 start, SimVector2 end)
     {
-        return _energyWalls.Any(wall => LinesIntersect(start, end, wall.Start, wall.End));
+        return _energyWalls.Any(wall => DoesEnergyWallBlockLine(wall, start, end));
     }
 
     private void MoveUnitToward(UnitState unit, SimVector2 target, float deltaSeconds)
@@ -566,13 +586,24 @@ public sealed partial class RtsSimulation
 
     private EnergyWallSegment? FindBlockingEnergyWall(SimVector2 start, SimVector2 end)
     {
-        return _energyWalls.FirstOrDefault(wall => LinesIntersect(start, end, wall.Start, wall.End));
+        return _energyWalls.FirstOrDefault(wall => DoesEnergyWallBlockLine(wall, start, end));
     }
 
     private EnergyWallSegment? FindBlockingEnergyWallForFaction(string factionId, SimVector2 start, SimVector2 end)
     {
         return GetBlockingEnergyWallsForFaction(factionId)
-            .FirstOrDefault(wall => LinesIntersect(start, end, wall.Start, wall.End));
+            .FirstOrDefault(wall => DoesEnergyWallBlockLine(wall, start, end));
+    }
+
+    private bool IsBuildingFootprintBlockedByEnergyWall(SimVector2 position, float footprintRadius)
+    {
+        return _energyWalls.Any(wall =>
+            SimulationGeometry.DistancePointToSegment(position, wall.ExtendedStart, wall.ExtendedEnd) <= footprintRadius + EnergyWallSegment.PlacementBuffer);
+    }
+
+    private static bool DoesEnergyWallBlockLine(EnergyWallSegment wall, SimVector2 start, SimVector2 end)
+    {
+        return SimulationGeometry.DistanceSegmentToSegment(start, end, wall.ExtendedStart, wall.ExtendedEnd) <= EnergyWallSegment.BlockingClearance;
     }
 
     private IReadOnlyList<EnergyWallSegment> GetBlockingEnergyWallsForFaction(string factionId)
@@ -611,6 +642,35 @@ public sealed partial class RtsSimulation
             building.FactionId == factionId &&
             building.Definition.Id == buildingId &&
             !building.IsDestroyed);
+    }
+
+    internal bool IsEnemyCentralWellRouteStrategic(SimVector2 extractorPosition)
+    {
+        var targetWell = _resourceWells
+            .Where(well => !well.IsDepleted)
+            .Where(well => well.Position.DistanceTo(extractorPosition) <= ResourceWellCoreRadius + ToWorldRadius(2.0f))
+            .OrderBy(well => well.Position.DistanceTo(extractorPosition))
+            .FirstOrDefault();
+        if (targetWell is null)
+        {
+            return false;
+        }
+
+        var liveExtractor = _buildings.FirstOrDefault(building =>
+            building.ResourceWellId == targetWell.Definition.Id &&
+            !building.IsDestroyed);
+        return liveExtractor is null ||
+            liveExtractor.FactionId == ContentIds.Factions.PrivateMilitary;
+    }
+
+    internal bool IsEnemyBaseUnderThreat(SimVector2 hubPosition)
+    {
+        var threatRadius = ToWorldRadius(18.0f);
+        return _units.Any(unit =>
+            unit.FactionId == ContentIds.Factions.PlayerExpedition &&
+            !unit.IsDestroyed &&
+            unit.Definition.CanAttack &&
+            unit.Position.DistanceTo(hubPosition) <= threatRadius);
     }
 
     private ResourceWellState? FindCompatibleResourceWell(BuildingDefinition definition, SimVector2 position)
@@ -799,16 +859,4 @@ public sealed partial class RtsSimulation
         }
     }
 
-    private static bool LinesIntersect(SimVector2 a, SimVector2 b, SimVector2 c, SimVector2 d)
-    {
-        var denominator = ((d.Y - c.Y) * (b.X - a.X)) - ((d.X - c.X) * (b.Y - a.Y));
-        if (MathF.Abs(denominator) < 0.0001f)
-        {
-            return false;
-        }
-
-        var ua = (((d.X - c.X) * (a.Y - c.Y)) - ((d.Y - c.Y) * (a.X - c.X))) / denominator;
-        var ub = (((b.X - a.X) * (a.Y - c.Y)) - ((b.Y - a.Y) * (a.X - c.X))) / denominator;
-        return ua is >= 0.0f and <= 1.0f && ub is >= 0.0f and <= 1.0f;
-    }
 }

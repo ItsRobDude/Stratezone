@@ -33,7 +33,8 @@ public static class MissionRuntimeFactory
             mission.EnemyAiProfile,
             mission.AvailableUnitIds,
             mission.ObjectiveIds,
-            map);
+            map,
+            mission.MissionTriggers);
 
         foreach (var entity in mission.StartingEntities)
         {

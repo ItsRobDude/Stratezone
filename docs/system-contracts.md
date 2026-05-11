@@ -42,7 +42,7 @@ Prototype behavior:
 Tunable placeholders:
 
 - Power Plant local radius: small base cluster
-- Pylon link range: long enough to bridge expansion gaps
+- Pylon link range: long enough to bridge expansion gaps without forcing wasteful short-hop chains; current prototype value is 30 content units
 - power update cadence: immediate or near-immediate after construction/destruction
 
 Acceptance checks:
@@ -215,6 +215,9 @@ Prototype behavior:
 - Medium and Heavy Tanks can run over enemy infantry on direct move orders
 - Commander is fragile, controllable, pistol-only, and mission-critical
 - buildings preserve siege pacing: basic infantry can harass weak infrastructure, but base-cracking should require explosives, heavy units, or a major numbers advantage
+- idle combat-capable units auto-fire at visible hostile units, including vehicles/tanks, in range; buildings require an explicit attack command
+- direct move commands override idle auto-fire until the move order finishes
+- enemy committed attackers use the same weapon range as the player version of that unit; pursuit radius is only for choosing whether to chase
 - explosive damage is strong against structures
 - normal gunfire does not cause friendly fire
 - explosive damage can cause friendly fire
@@ -229,7 +232,7 @@ Tunable placeholders:
 - Guardian health: medium
 - Guardian damage: slightly below Rifleman as raw damage, worse than Rifleman into basic infantry, and more than twice as effective as Rifleman into Medium or Heavy Tanks because armor resists ballistics much harder than energy
 - Commander health: low
-- Medium Tank health: below Heavy Tank, with roughly half the practical Rifleman time-to-kill burden of the old reveal tank
+- Medium Tank health: below Heavy Tank, with roughly half the practical Rifleman time-to-kill burden of the old heavy tank record
 - Medium Tank shell: lower damage and smaller splash than Heavy Tank, leaving a full-health Rifleman near 30 percent health on direct hit
 - Heavy Tank health: high
 - Heavy Tank ballistic resistance: about 0.8 so Riflemen are nearly useless against heavy armor
@@ -251,9 +254,12 @@ Acceptance checks:
 - Rovers and tanks can instantly kill basic infantry with crush damage when moved through exposed enemy infantry
 - a small Rifleman group cannot efficiently destroy a Colony Hub without siege support
 - Riflemen perform poorly against Heavy Tanks because of high ballistic resistance
-- Guardian energy fire, revealed Medium Tank shells, and Rocket Tower explosives outperform their ballistic counterparts against armored vehicles
+- Guardian energy fire, released Medium Tank shells, and Rocket Tower explosives outperform their ballistic counterparts against armored vehicles
 - explosive damage can harm friendly units in range
 - commander death triggers mission loss
+- idle player combat units fire at hostile troops and tanks in range, but do not auto-target buildings
+- direct move commands pull units out of building attacks and idle firefights instead of letting stale attacks trap the unit
+- enemy Riflemen cannot deal damage from outside Rifleman weapon range just because a target is inside pursuit range
 
 ## Support and Siege Infrastructure
 
@@ -309,6 +315,10 @@ Prototype behavior:
 - Gun Towers and Rocket Towers are normally created by upgrading an existing Defense Tower in place
 - upgrading a Defense Tower preserves its wall-anchor identity while the upgrade is underway, unless the tower is destroyed or unpowered
 - tower walls block enemy pathing
+- hostile tower walls block with enough clearance that units cannot slip directly between anchors
+- hostile tower walls use a short end-cap buffer so an authored chokepoint can seal against nearby cliffs/water/blocked terrain instead of being bypassed by walking around the tower sprite
+- tower walls block movement, not line-of-fire; units may shoot through a wall if their weapon range reaches the target
+- building placement cannot cut through an active wall gap
 - first-pass pathing uses a coarse simulation grid around live building footprints and hostile wall segments
 - units that start inside a friendly spawn-building clearance can path outward instead of being trapped by the spawn footprint
 - tower placement should be expensive enough to matter
@@ -326,6 +336,9 @@ Acceptance checks:
 - a Defense Tower can upgrade into a Gun Tower or Rocket Tower without opening a powered wall link
 - destroying or unpowering either tower removes the segment
 - enemies path around or attack through the opened route after a wall drops
+- live wall gaps reject new building placement that would occupy the barrier lane
+- authored wall chokepoints prove that the buffered wall ends overlap nearby impassable terrain and block the intended walk-around lanes
+- a unit ordered to attack an enemy structure behind a wall stops at a reachable firing point instead of trying to path through the wall if the target is in range from that side
 
 ## Fog and Scouting
 
@@ -365,14 +378,14 @@ Prototype behavior:
 
 - Level 1 win condition is destroy all enemies
 - Level 1 loss condition is commander death
-- destroying either Colony Hub reveals a Medium Tank but does not change win/loss conditions by itself; reveal-only tanks are not required enemy targets
+- destroying either Colony Hub releases a Medium Tank occupant; enemy Hub occupants are required hostile targets and prevent mission completion while alive
 - objective state should be readable in HUD/debug output
 
 Acceptance checks:
 
 - commander death loses the mission
 - destroying all required enemy targets wins the mission
-- destroying a Colony Hub can reveal a Medium Tank without ending the mission
+- destroying a Colony Hub can release a Medium Tank without ending the mission before that occupant is killed
 
 ## Enemy Production and AI
 
@@ -390,6 +403,13 @@ Prototype behavior:
 - enemy uses player-like tech with different color/skin
 - enemy resources are limited
 - enemy rebuilds only when it can afford to
+- mission profiles may separate normal rebuild timing from the first central-well claim delay so a resource race does not become an instant enemy claim
+- mission profiles may throttle and cap contested-well rebuilds so the enemy does not single-mindedly replace a destroyed midfield Extractor every rebuild tick
+- enemy forward expansion pylons should only be maintained while their linked well route is still strategically contestable
+- during a base breach, enemy rebuilds should prioritize defensive/production structures and defensive wall power over pylons or expansion infrastructure
+- during a base breach, idle enemy defenders should pursue player combat units inside the base-defense radius instead of waiting for those units to enter weapon range
+- during a base breach, enemy combat production may start immediately even when the first scheduled attack timer has not arrived
+- enemy rebuild placement should use nearby fallback positions for normal defensive/power structures when the exact authored marker is blocked, but resource Extractors must still be placed on the actual well
 - Level 1 enemy is slower than normal baseline
 - enemy competes for the central well
 - Level 1's forward enemy Pylon powers the central Extractor and tower-wall route, so destroying it should visibly shut off that infrastructure route
@@ -397,6 +417,7 @@ Prototype behavior:
 - enemy can dispatch a small scout/rally movement before the first committed attack
 - if a mission explicitly enables Guardian production, enemy AI must earn that production by staffing and completing the Barracks Guardian upgrade before training Guardians
 - base-building pressure triggers must respect mission grace windows, cooldowns, or trigger groups so normal early actions such as Barracks built and first Extractor built do not fire back-to-back raids
+- first-pass mission triggers are data-authored, simulation-owned, and can coalesce watched player building completions into one small enemy pressure commitment without creating player-facing hidden-plan alerts
 - damaged committed attackers may retreat toward base instead of fighting to the last hit point
 - wiped attack groups create an internal regroup delay before the next attack commitment
 - a small internal rival-officer state may remember battlefield facts such as lost attack groups, exposed Commander sightings, power strikes, wall blocks, scouting, and retreats
@@ -420,6 +441,7 @@ Acceptance checks:
 - destroying an enemy pylon can disable an enemy tower path and shut off the central Extractor route when mission data wires that Pylon as the forward power source
 - enemy attack commitment is capped to the mission profile instead of sending the whole enemy base
 - early pressure triggers can coalesce or queue behind a cooldown rather than stacking immediate raids
+- Mission 2's Barracks/Extractor trigger commits at most one small pressure beat after its grace/coalescing window
 - enemy target selection favors visible tactical targets before simple Colony Hub base-cracking
 - exposed Commander sightings are internal AI knowledge only and do not create adaptation alerts
 - alerts are fog-safe and do not reveal hidden enemy intent

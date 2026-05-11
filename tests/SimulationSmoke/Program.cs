@@ -1,75 +1,13 @@
 using Stratezone.Simulation;
-using Stratezone.Simulation.Content;
-using Stratezone.Localization;
+using static SmokeTestSupport;
 
-var repoRoot = FindRepoRoot();
-var gameRoot = Path.Combine(repoRoot, "game");
-var catalog = ContentCatalog.LoadFromGameData(gameRoot);
-var localization = LocalizationCatalog.LoadFromGameData(gameRoot);
-var mission = catalog.GetMission(ContentIds.Missions.FirstLanding);
-var ridgeMission = catalog.GetMission(ContentIds.Missions.WellsAtTheRidge);
-var ridgeMap = catalog.GetMap(ridgeMission.MapId);
+var context = SmokeTestSupport.LoadContext();
+var catalog = context.Catalog;
+var mission = context.FirstLandingMission;
+var ridgeMission = context.WellsAtTheRidgeMission;
 var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Materials];
 
-Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
-Assert(localization.Translate("missing.test.key") == "[[missing.test.key]]", "missing localization keys are obvious");
-Assert(localization.ContentName(ContentIds.Units.Grunt) == "Grunt", "content name localization keys resolve stable content ids");
-Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");
-var cadetDefinition = catalog.GetUnit(ContentIds.Units.Cadet);
-var riflemanDefinition = catalog.GetUnit(ContentIds.Units.Rifleman);
-var guardianDefinition = catalog.GetUnit(ContentIds.Units.Guardian);
-var mediumTankDefinition = catalog.GetUnit(ContentIds.Units.MediumTank);
-var tankDefinition = catalog.GetUnit(ContentIds.Units.Tank);
-var armoryAnnexDefinition = catalog.GetBuilding(ContentIds.Buildings.ArmoryAnnex);
-var gunTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.GunTower);
-var rocketTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.RocketTower);
-Assert(cadetDefinition.Cost < riflemanDefinition.Cost, "Cadet costs less than Rifleman");
-Assert(cadetDefinition.Health < riflemanDefinition.Health, "Cadet has less health than Rifleman");
-Assert(cadetDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Cadet deals less damage than Rifleman");
-Assert(cadetDefinition.TrainTimeSeconds == 3.0f, "Cadet recruits in only a few seconds");
-Assert(riflemanDefinition.TrainTimeSeconds == 4.0f, "Rifleman recruits only slightly slower than Cadet");
-Assert(guardianDefinition.TrainTimeSeconds == 9.0f, "Guardian trains slower as a specialist");
-Assert(catalog.GetUnit(ContentIds.Units.Grunt).TrainTimeSeconds > guardianDefinition.TrainTimeSeconds, "Grunt stays slow and expensive compared with infantry");
-Assert(guardianDefinition.Role == "anti_armor_infantry", "Guardian content role is the anti-armor infantry proof role");
-Assert(guardianDefinition.RequiredAddonBuildingId is null, "Guardian no longer uses the legacy Armory Annex training gate");
-Assert(guardianDefinition.RequiredBarracksUpgradeId == ContentIds.BarracksUpgrades.GuardianRetrofit, "Guardian training requires the Barracks Guardian Retrofit");
-Assert(!armoryAnnexDefinition.TrainingUnlockUnitIds.Contains(ContentIds.Units.Guardian), "Armory Annex no longer declares the Guardian unlock");
-Assert(guardianDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Guardian keeps lower raw damage than Rifleman");
-Assert(DamagePerSecondAgainst(guardianDefinition, riflemanDefinition) < DamagePerSecondAgainst(riflemanDefinition, riflemanDefinition), "Guardian is not a better anti-infantry Rifleman");
-Assert(DamagePerSecondAgainst(guardianDefinition, mediumTankDefinition) > DamagePerSecondAgainst(riflemanDefinition, mediumTankDefinition) * 2.0f, "Guardian energy fire outperforms Rifleman ballistics against Medium Tanks");
-Assert(DamagePerSecondAgainst(guardianDefinition, tankDefinition) > DamagePerSecondAgainst(riflemanDefinition, tankDefinition) * 2.25f, "Guardian energy fire outperforms Rifleman ballistics against Heavy Tanks");
-Assert(DamagePerSecondAgainst(mediumTankDefinition, mediumTankDefinition) > DamagePerSecondAgainst(riflemanDefinition, mediumTankDefinition) * 1.5f, "revealed Medium Tanks are a better anti-armor answer than Riflemen");
-Assert(BuildingDamagePerSecondAgainst(rocketTowerDefinition, mediumTankDefinition) > BuildingDamagePerSecondAgainst(gunTowerDefinition, mediumTankDefinition) * 4.0f, "Rocket Tower explosives outperform Gun Tower ballistics against Medium Tanks");
-Assert(tankDefinition.DisplayName == "Heavy Tank", "existing Tank record is promoted to Heavy Tank");
-Assert(mediumTankDefinition.Health < tankDefinition.Health, "Medium Tank is less durable than Heavy Tank");
-Assert(mediumTankDefinition.AttackDamage < tankDefinition.AttackDamage, "Medium Tank deals less damage than Heavy Tank");
-Assert(mediumTankDefinition.AreaRadius < tankDefinition.AreaRadius, "Medium Tank has smaller splash than Heavy Tank");
-Assert(Math.Abs(riflemanDefinition.Health - (mediumTankDefinition.AttackDamage * 1.1f) - (riflemanDefinition.Health * 0.3f)) < 1.5f, "Medium Tank shot leaves a Rifleman near 30 percent health");
-Assert(tankDefinition.AttackCooldown > 3.0f, "Heavy Tank cannon fires slowly enough to read as a heavy burst weapon");
-Assert(mission.AvailableUnitIds.Contains(ContentIds.Units.Grunt) && mission.AvailableUnitIds.Contains(ContentIds.Units.Cadet) && mission.AvailableUnitIds.Contains(ContentIds.Units.Rifleman), "mission data exposes Level 1 trainable units");
-Assert(!mission.AvailableUnitIds.Contains(ContentIds.Units.Guardian) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Rover) && !mission.AvailableUnitIds.Contains(ContentIds.Units.Commander), "mission data hides Level 1 scenario-only units from training");
-Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Guardian) == 1, "Level 1 starts the player with one Guardian");
-Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Commander) == 1, "Level 1 starts the player with one Commander");
-Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Grunt) == 1, "Level 1 starts the player with one Grunt");
-Assert(mission.StartingEntities.Count(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rover) == 1, "Level 1 starts the player with one provided Rover");
-Assert(!mission.StartingEntities.Any(entity => entity.FactionId == ContentIds.Factions.PlayerExpedition && entity.ContentId == ContentIds.Units.Rifleman), "Level 1 does not start the player with extra Riflemen");
-Assert(catalog.Missions.Count >= 2, "catalog loads more than one playable mission file");
-Assert(ridgeMission.MapId == "map_wells_at_the_ridge_greybox", "Level 2 mission data points at the ridge greybox map");
-Assert(ridgeMission.AvailableUnitIds.Contains(ContentIds.Units.Guardian), "Level 2 exposes Guardian training behind the Barracks retrofit");
-Assert(ridgeMission.AvailableBuildingIds.Contains(ContentIds.Buildings.ColonyHub), "Level 2 exposes Colony Hub placement");
-Assert(!ridgeMission.StartingEntities.Any(entity =>
-    entity.FactionId == ContentIds.Factions.PlayerExpedition &&
-    entity.ContentId == ContentIds.Buildings.ColonyHub), "Level 2 does not start with the player base already built");
-Assert(ridgeMission.StartingEntities.Count(entity =>
-    entity.FactionId == ContentIds.Factions.PlayerExpedition &&
-    entity.ContentId == ContentIds.Units.Cadet) == 2, "Level 2 starts with two Cadets in the landing party");
-Assert(ridgeMission.StartingEntities.Count(entity =>
-    entity.FactionId == ContentIds.Factions.PlayerExpedition &&
-    entity.ContentId == ContentIds.Units.Rifleman) == 1, "Level 2 starts with one Rifleman escort");
-Assert(ridgeMission.ObjectiveIds.Contains(ContentIds.Objectives.DestroyEnemyColonyHub), "Level 2 wins through the enemy Colony Hub objective rather than well control");
-Assert(ridgeMap.TerrainRegions.Any(region => region.BlocksMovement && region.BlocksBuilding), "Level 2 map has blocked terrain regions");
-Assert(ridgeMap.TerrainRegions.Count(region => region.AllowsBuilding) >= 3, "Level 2 map has buildable clearings and resource basins");
-Assert(ridgeMap.TerrainRegions.Any(region => region.RegionType == "chokepoint_marker"), "Level 2 map marks chokepoint candidates");
+ContentSmoke.Run(context);
 
 var simulation = new RtsSimulation(
     catalog,
@@ -94,6 +32,7 @@ lowBudgetSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimV
 Assert(!lowBudgetSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).IsLegal, "spending cannot go below zero");
 Assert(!simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(520, 320)).IsLegal, "pylon cannot be placed globally from a power plant");
 Assert(catalog.GetBuilding(ContentIds.Buildings.Pylon).FootprintRadius < catalog.GetBuilding(ContentIds.Buildings.DefenseTower).FootprintRadius, "pylon footprint is smaller than a tower footprint");
+Assert(Math.Abs(catalog.GetBuilding(ContentIds.Buildings.Pylon).PylonLinkRange - 30.0f) < 0.01f, "Pylon links cover long enough distances to avoid wasteful short-hop power grids");
 
 var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160));
 Assert(pylon.Success, pylon.Message);
@@ -150,6 +89,8 @@ var secondTower = wallSimulation.TryPlaceBuilding(ContentIds.Buildings.DefenseTo
 Assert(secondTower.Success, secondTower.Message);
 Assert(wallSimulation.EnergyWalls.Count == 1, "two nearby powered wall anchors create a wall segment");
 Assert(wallSimulation.IsLineBlockedByEnergyWall(new SimVector2(0, 0), new SimVector2(260, 0)), "energy wall blocks a crossing line");
+var wallBlockedPlacement = wallSimulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(150, 0));
+Assert(!wallBlockedPlacement.IsLegal, "building placement cannot cut through an active energy wall gap");
 var blockedEnemy = wallSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(520, 70));
 TickFor(wallSimulation, 5.0f);
 Assert(blockedEnemy.IsBlockedByEnergyWall, "enemy pressure recognizes a blocking energy wall");
@@ -190,6 +131,8 @@ var hostileWallRunner = wallPathSimulation.AddUnit(ContentIds.Units.Rifleman, Co
 wallPathSimulation.CommandUnitMove(hostileWallRunner.EntityId, new SimVector2(0, 0));
 Assert(!hostileWallRunner.IsPathBlocked, "hostile unit can route around a finite energy wall segment");
 Assert(hostileWallRunner.PathWaypoints.Any(point => Math.Abs(point.Y) > 90.0f), "hostile unit path detours around enemy energy wall segment");
+TickFor(wallPathSimulation, 1.5f);
+Assert(!(hostileWallRunner.Position.X < 130.0f && Math.Abs(hostileWallRunner.Position.Y) < 90.0f), "hostile unit does not walk through the active energy wall gap");
 var friendlyWallRunner = wallPathSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(260, 0));
 wallPathSimulation.CommandUnitMove(friendlyWallRunner.EntityId, new SimVector2(0, 0));
 Assert(!friendlyWallRunner.IsPathBlocked, "friendly energy wall does not block allied movement");
@@ -413,6 +356,55 @@ buildingCombatSimulation.CommandUnitAttackBuilding(buildingAttacker.EntityId, en
 TickFor(buildingCombatSimulation, 3.0f);
 Assert(enemyBuilding.Health < enemyBuilding.Definition.Health, "player combat unit can damage an enemy building");
 
+var idleAutoFireSimulation = new RtsSimulation(catalog, startingMaterials, []);
+idleAutoFireSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var idleRifleman = idleAutoFireSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var nearbyEnemyBuilding = idleAutoFireSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(130, 0), ContentIds.Factions.PrivateMilitary);
+TickFor(idleAutoFireSimulation, 1.0f);
+Assert(Math.Abs(nearbyEnemyBuilding.Health - nearbyEnemyBuilding.Definition.Health) < 0.01f, "idle player combat unit does not auto-fire at hostile buildings");
+var nearbyEnemyUnit = idleAutoFireSimulation.AddUnit(ContentIds.Units.Cadet, ContentIds.Factions.PrivateMilitary, idleRifleman.Position + new SimVector2(80, 0));
+TickFor(idleAutoFireSimulation, 1.0f);
+Assert(nearbyEnemyUnit.Health < nearbyEnemyUnit.Definition.Health, "idle player combat unit auto-fires at a hostile unit in range");
+var idleTankAutoFireSimulation = new RtsSimulation(catalog, startingMaterials, []);
+idleTankAutoFireSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+idleTankAutoFireSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var nearbyEnemyTank = idleTankAutoFireSimulation.AddUnit(ContentIds.Units.MediumTank, ContentIds.Factions.PrivateMilitary, new SimVector2(95, 0));
+TickFor(idleTankAutoFireSimulation, 1.0f);
+Assert(nearbyEnemyTank.Health < nearbyEnemyTank.Definition.Health, "idle player combat unit auto-fires at a hostile tank in range");
+
+var moveOverridesIdleFireSimulation = new RtsSimulation(catalog, startingMaterials, []);
+moveOverridesIdleFireSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var movingRifleman = moveOverridesIdleFireSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var ignoredCadet = moveOverridesIdleFireSimulation.AddUnit(ContentIds.Units.Cadet, ContentIds.Factions.PrivateMilitary, new SimVector2(80, 0));
+moveOverridesIdleFireSimulation.CommandUnitMove(movingRifleman.EntityId, new SimVector2(-260, 0));
+TickFor(moveOverridesIdleFireSimulation, 0.2f);
+Assert(movingRifleman.Position.X < -5.0f, "explicit move orders make infantry move instead of stopping for idle auto-fire");
+Assert(Math.Abs(ignoredCadet.Health - ignoredCadet.Definition.Health) < 0.01f, "idle auto-fire waits while a direct move order is active");
+
+var moveCancelsBuildingAttackSimulation = new RtsSimulation(catalog, startingMaterials, []);
+moveCancelsBuildingAttackSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+var cancelAttacker = moveCancelsBuildingAttackSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var cancelTargetHub = moveCancelsBuildingAttackSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(170, 0), ContentIds.Factions.PrivateMilitary);
+moveCancelsBuildingAttackSimulation.CommandUnitAttackBuilding(cancelAttacker.EntityId, cancelTargetHub.EntityId);
+TickFor(moveCancelsBuildingAttackSimulation, 1.0f);
+Assert(cancelTargetHub.Health < cancelTargetHub.Definition.Health, "setup: player Rifleman starts damaging the enemy Hub");
+var hubHealthAfterAttack = cancelTargetHub.Health;
+moveCancelsBuildingAttackSimulation.CommandUnitMove(cancelAttacker.EntityId, new SimVector2(-260, 0));
+TickFor(moveCancelsBuildingAttackSimulation, 1.0f);
+Assert(cancelAttacker.TargetBuildingEntityId is null, "move command clears a stale building attack target");
+Assert(cancelAttacker.Position.X < -40.0f, "move command pulls a Rifleman off an enemy building attack");
+Assert(Math.Abs(cancelTargetHub.Health - hubHealthAfterAttack) < 0.01f, "Rifleman stops shooting the enemy Hub after a direct move command");
+
+var enemyRangeParitySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
+enemyRangeParitySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
+enemyRangeParitySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+var playerStandingRifleman = enemyRangeParitySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
+var riflemanRange = RtsSimulation.ToWorldRadius(catalog.GetUnit(ContentIds.Units.Rifleman).AttackRange);
+var enemyOverrangeRifleman = enemyRangeParitySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(riflemanRange + 16.0f, 0));
+TickFor(enemyRangeParitySimulation, 0.1f);
+Assert(Math.Abs(playerStandingRifleman.Health - playerStandingRifleman.Definition.Health) < 0.01f, "enemy Rifleman cannot damage a player Rifleman outside the same Rifleman weapon range");
+Assert(enemyOverrangeRifleman.TargetUnitEntityId == playerStandingRifleman.EntityId, "enemy Rifleman pursues visible player troops before firing");
+
 var attackVisualSimulation = new RtsSimulation(catalog, startingMaterials, []);
 attackVisualSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var visualAttacker = attackVisualSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
@@ -536,16 +528,20 @@ hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new S
 var enemyHubToDestroy = hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(90, 0), ContentIds.Factions.PrivateMilitary);
 enemyHubToDestroy.ApplyDamage(9999, "explosive");
 hubRevealWinSimulation.Tick(0.1f);
-Assert(hubRevealWinSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed enemy Hub reveals a Medium Tank");
-Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Won, "reveal-only tank does not block destroy-all-enemies victory");
+var revealedEnemyHubTank = hubRevealWinSimulation.Units.Single(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed);
+Assert(revealedEnemyHubTank.IsColonyHubOccupant, "destroyed enemy Hub releases a Medium Tank occupant");
+Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Active, "enemy Hub tank occupant must be cleared before destroy-all-enemies victory");
+revealedEnemyHubTank.ApplyDamage(9999, "explosive");
+hubRevealWinSimulation.Tick(0.1f);
+Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Won, "destroy-all-enemies victory waits for the released Hub tank to die");
 
 var playerHubRevealSimulation = new RtsSimulation(catalog, startingMaterials, []);
 var playerHubToDestroy = playerHubRevealSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 playerHubRevealSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(90, 0));
 playerHubToDestroy.ApplyDamage(9999, "explosive");
 playerHubRevealSimulation.Tick(0.1f);
-Assert(playerHubRevealSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed player Hub reveals a Medium Tank for the player");
-Assert(playerHubRevealSimulation.MissionState.Status == MissionStatus.Active, "player Hub Medium Tank reveal does not replace mission loss conditions by itself");
+Assert(playerHubRevealSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed player Hub releases a Medium Tank for the player");
+Assert(playerHubRevealSimulation.MissionState.Status == MissionStatus.Active, "player Hub Medium Tank release does not replace mission loss conditions by itself");
 
 var towerUpgradeSimulation = new RtsSimulation(catalog, 3000, []);
 towerUpgradeSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-500, 0));
@@ -632,211 +628,8 @@ Assert(fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, hi
 var enemyInBlackFog = fogSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(900, -360));
 Assert(!fogSimulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, enemyInBlackFog.Position), "enemy in unexplored black fog remains hidden");
 
-var missionRuntime = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.FirstLanding);
-var missionMarkers = missionRuntime.Markers;
-Assert(mission.ResourceWellPlacements.Count == 2, "mission data owns resource well placements");
-Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Units.Grunt), "mission data owns starting player units");
-var missionWellPlacements = missionRuntime.ResourceWellPlacements;
-Assert(mission.Markers.Any(marker => marker.Id == "enemy_pylon_weak_point"), "mission data exposes an enemy pylon weak-point marker");
-Assert(mission.StartingEntities.Any(entity => entity.ContentId == ContentIds.Buildings.Pylon && entity.MarkerId == "enemy_pylon_weak_point"), "mission starts with a real enemy Pylon weak point");
-var missionStartingBuildings = mission.StartingEntities
-    .Where(entity => entity.ContentId.StartsWith("building_", StringComparison.Ordinal))
-    .Select(entity => (
-        Entity: entity,
-        Position: missionMarkers[entity.MarkerId] + entity.Offset,
-        Definition: catalog.GetBuilding(entity.ContentId)))
-    .ToArray();
-foreach (var left in missionStartingBuildings)
-{
-    foreach (var right in missionStartingBuildings)
-    {
-        if (left.Entity == right.Entity ||
-            string.CompareOrdinal(left.Entity.MarkerId, right.Entity.MarkerId) >= 0)
-        {
-            continue;
-        }
-
-        var requiredDistance = RtsSimulation.ToWorldRadius(left.Definition.FootprintRadius + left.Definition.PlacementBuffer) +
-            RtsSimulation.ToWorldRadius(right.Definition.FootprintRadius + right.Definition.PlacementBuffer);
-        var actualDistance = left.Position.DistanceTo(right.Position);
-        Assert(
-            actualDistance >= requiredDistance,
-            $"mission starting buildings are spaced legally ({left.Entity.ContentId} at {left.Entity.MarkerId}, {right.Entity.ContentId} at {right.Entity.MarkerId})");
-    }
-}
-
-var routeSimulation = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.FirstLanding).Simulation;
-var enemyForwardPylon = routeSimulation.Buildings.Single(building =>
-    building.FactionId == ContentIds.Factions.PrivateMilitary &&
-    building.Definition.Id == ContentIds.Buildings.Pylon &&
-    building.Position.DistanceTo(missionMarkers["enemy_pylon_weak_point"]) < 0.01f);
-Assert(enemyForwardPylon.IsPowered, "enemy pylon weak point starts powered by the enemy base chain");
-Assert(routeSimulation.EnergyWalls.Any(wall =>
-{
-    var start = routeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
-    var end = routeSimulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
-    return start.FactionId == ContentIds.Factions.PrivateMilitary &&
-        end.FactionId == ContentIds.Factions.PrivateMilitary;
-}), "mission starts with a powered enemy tower-wall route");
-
-TickFor(routeSimulation, 0.1f);
-var enemyCentralExtractor = routeSimulation.Buildings.Single(building =>
-    building.FactionId == ContentIds.Factions.PrivateMilitary &&
-    building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-    building.ResourceWellId == "well_first_landing_central");
-Assert(enemyCentralExtractor.IsPowered, "enemy pylon powers the central well Extractor");
-Assert(routeSimulation.IsLineBlockedByEnergyWall(new SimVector2(-300, -140), enemyCentralExtractor.Position), "mission enemy wall blocks the direct player-base route to the central Extractor");
-enemyForwardPylon.ApplyDamage(9999, "explosive");
-TickFor(routeSimulation, 0.1f);
-Assert(routeSimulation.EnemyOfficer.PowerStrikesTaken == 1, "destroying the enemy Pylon counts as an internal power strike");
-Assert(!enemyCentralExtractor.IsPowered, "destroying the enemy Pylon shuts off the central enemy Extractor");
-Assert(!routeSimulation.EnergyWalls.Any(wall =>
-{
-    var start = routeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
-    var end = routeSimulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
-    return start.FactionId == ContentIds.Factions.PrivateMilitary &&
-        end.FactionId == ContentIds.Factions.PrivateMilitary;
-}), "destroying the enemy Pylon drops the enemy tower-wall route");
-enemyCentralExtractor.ApplyDamage(9999, "explosive");
-Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).Success, "retake route places player power");
-Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160)).Success, "retake route places first player Pylon");
-Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-10, 120)).Success, "retake route chains player Pylon toward the central well");
-Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(140, 210)).Success, "retake route avoids the enemy wall anchors while extending support");
-Assert(routeSimulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(300, 170)).Success, "retake route reaches the central well with powered support");
-var centralRetakeValidation = routeSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, missionMarkers["central_well"]);
-Assert(centralRetakeValidation.IsLegal, $"destroyed enemy Extractor releases the central well for player retake ({centralRetakeValidation.MessageKey}: {centralRetakeValidation.Reason})");
-
-var pacedMissionSimulation = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.FirstLanding).Simulation;
-
-TickFor(pacedMissionSimulation, mission.EnemyAiProfile.FirstAttackDelaySeconds - 5.0f);
-Assert(!pacedMissionSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.TargetBuildingEntityId is not null), "mission AI profile delays first enemy pressure");
-Assert(pacedMissionSimulation.EnemyOfficer.ScoutDispatched, "mission AI can dispatch a scout before the first attack");
-Assert(pacedMissionSimulation.Units.Any(unit =>
-    unit.FactionId == ContentIds.Factions.PrivateMilitary &&
-    unit.IsEnemyScout &&
-    !unit.IsEnemyAttackCommitted), "scouting does not commit the whole enemy base to an attack");
-TickFor(pacedMissionSimulation, 20.0f);
-Assert(pacedMissionSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary) ||
-    pacedMissionSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Rifleman) > 0,
-    "mission AI profile starts paced enemy production after delay");
-var committedAttackers = pacedMissionSimulation.Units.Count(unit =>
-    unit.FactionId == ContentIds.Factions.PrivateMilitary &&
-    unit.Definition.CanAttack &&
-    !unit.IsDestroyed &&
-    unit.IsEnemyAttackCommitted);
-Assert(committedAttackers > 0, "mission AI commits a small attack group after the first delay");
-Assert(committedAttackers <= mission.EnemyAiProfile.AttackGroupSize, "mission AI does not commit the entire enemy base as one attack wave");
-Assert(pacedMissionSimulation.Units.Any(unit =>
-    unit.FactionId == ContentIds.Factions.PrivateMilitary &&
-    unit.Definition.CanAttack &&
-    !unit.IsDestroyed &&
-    !unit.IsEnemyAttackCommitted), "mission AI leaves defenders at the enemy base");
-
-var ridgeRuntime = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.WellsAtTheRidge);
-var ridgeSimulation = ridgeRuntime.Simulation;
-Assert(!ridgeSimulation.Buildings.Any(building =>
-    building.FactionId == ContentIds.Factions.PlayerExpedition &&
-    building.Definition.Id == ContentIds.Buildings.ColonyHub), "Level 2 runtime starts without a player Colony Hub");
-var beforeHubPowerPlant = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
-Assert(!beforeHubPowerPlant.IsLegal, "Level 2 requires Colony Hub deployment before other player structures");
-Assert(beforeHubPowerPlant.MessageKey == "sim.placement.requires_colony_hub", "pre-Hub structure placement returns a stable message key");
-var hubPlacement = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"]);
-Assert(hubPlacement.Success, $"Level 2 lets the player deploy the Colony Hub from mission data ({hubPlacement.MessageKey}: {hubPlacement.Message})");
-Assert(!ridgeSimulation.ValidatePlacement(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(150, 0)).IsLegal, "Level 2 rejects a second player Colony Hub");
-var afterHubPowerPlant = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(240, 0));
-Assert(afterHubPowerPlant.Success, $"Level 2 allows normal building after the Colony Hub is deployed ({afterHubPowerPlant.MessageKey}: {afterHubPowerPlant.Message})");
-var northRidgeBlocker = ridgeRuntime.Map.TerrainRegions.Single(region => region.Id == "ridge_north_blocker");
-var blockedTerrainPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, northRidgeBlocker.Center);
-Assert(!blockedTerrainPlacement.IsLegal, "Level 2 blocked terrain rejects building placement");
-Assert(blockedTerrainPlacement.MessageKey == "sim.placement.blocked_by_terrain", "blocked terrain placement returns a stable message key");
-var outsideClearingPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-80, 330));
-Assert(!outsideClearingPlacement.IsLegal, "Level 2 requires base structures to stay in buildable clearings");
-Assert(outsideClearingPlacement.MessageKey == "sim.placement.requires_buildable_clearing", "non-clearing placement returns a stable message key");
-var ridgePathProbe = ridgeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-520, -210));
-ridgeSimulation.CommandUnitMove(ridgePathProbe.EntityId, new SimVector2(500, -210));
-Assert(ridgePathProbe.PathWaypoints.Count > 1, "Level 2 pathfinding routes around ridge blockers instead of taking the direct line");
-Assert(!ridgePathProbe.PathWaypoints.Any(waypoint => northRidgeBlocker.Contains(waypoint, 0.0f)), "Level 2 path waypoints stay out of blocked terrain");
-Assert(ridgeSimulation.Buildings.Any(building =>
-    building.FactionId == ContentIds.Factions.PrivateMilitary &&
-    building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-    building.ResourceWellId == "well_wells_ridge_enemy" &&
-    building.IsPowered), "Level 2 starts the enemy entrenched on its own powered well");
-TickFor(ridgeSimulation, 0.1f);
-Assert(ridgeSimulation.Buildings.Any(building =>
-    building.FactionId == ContentIds.Factions.PrivateMilitary &&
-    building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-    building.ResourceWellId == "well_wells_ridge_contested"), "Level 2 enemy AI races for the contested ridge well");
-Assert(ridgeSimulation.MissionState.PrimaryTextKey == "mission.objective.destroy_enemy_colony_hub", "Level 2 objective text targets the enemy Colony Hub");
-var ridgeEnemyHub = ridgeSimulation.Buildings.Single(building =>
-    building.FactionId == ContentIds.Factions.PrivateMilitary &&
-    building.Definition.Id == ContentIds.Buildings.ColonyHub &&
-    !building.IsDestroyed);
-ridgeEnemyHub.ApplyDamage(9999, "explosive");
-TickFor(ridgeSimulation, 0.1f);
-Assert(ridgeSimulation.MissionState.Status == MissionStatus.Won, "destroying the Level 2 enemy Colony Hub wins the skeletal mission");
+FirstLandingMissionSmoke.Run(context);
+WellsAtTheRidgeSmoke.Run(context);
+MissionTriggerSmoke.Run(context);
 
 Console.WriteLine("Simulation smoke checks passed.");
-
-static void Assert(bool condition, string message)
-{
-    if (!condition)
-    {
-        throw new InvalidOperationException($"Assertion failed: {message}");
-    }
-}
-
-static float DamagePerSecondAgainst(UnitDefinition attacker, UnitDefinition target)
-{
-    if (!attacker.CanAttack || attacker.AttackDamage <= 0.0f || attacker.AttackCooldown <= 0.0f)
-    {
-        return 0.0f;
-    }
-
-    return EffectiveDamage(attacker.AttackDamage, attacker.DamageType, target.DamageResistances) / attacker.AttackCooldown;
-}
-
-static float BuildingDamagePerSecondAgainst(BuildingDefinition attacker, UnitDefinition target)
-{
-    if (attacker.AttackDamage <= 0.0f || attacker.AttackCooldown <= 0.0f)
-    {
-        return 0.0f;
-    }
-
-    return EffectiveDamage(attacker.AttackDamage, attacker.DamageType, target.DamageResistances) / attacker.AttackCooldown;
-}
-
-static float EffectiveDamage(float rawDamage, string damageType, IReadOnlyDictionary<string, float> resistances)
-{
-    var resistance = resistances.TryGetValue(damageType, out var value)
-        ? value
-        : 0.0f;
-    return rawDamage * MathF.Max(0.0f, 1.0f - resistance);
-}
-
-static void TickFor(RtsSimulation simulation, float seconds)
-{
-    const float step = 0.1f;
-    var elapsed = 0.0f;
-    while (elapsed < seconds)
-    {
-        simulation.Tick(MathF.Min(step, seconds - elapsed));
-        elapsed += step;
-    }
-}
-
-static string FindRepoRoot()
-{
-    var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
-    while (directory is not null)
-    {
-        if (Directory.Exists(Path.Combine(directory.FullName, "game")) &&
-            Directory.Exists(Path.Combine(directory.FullName, "docs")))
-        {
-            return directory.FullName;
-        }
-
-        directory = directory.Parent;
-    }
-
-    throw new DirectoryNotFoundException("Could not find Stratezone repo root.");
-}

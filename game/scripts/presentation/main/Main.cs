@@ -58,6 +58,7 @@ public partial class Main : Node2D
     private int? _selectedBuildingEntityId;
     private string? _placementBuildingId;
     private string _activeMissionId = DefaultMissionId;
+    private MissionDefinition? _activeMission;
     private bool _leftMouseSelecting;
     private Vector2 _selectionStartWorld;
     private float _uiScale = DefaultUiScale;
@@ -78,6 +79,7 @@ public partial class Main : Node2D
         SetupHud();
         SetupMissionResultOverlay();
         SetupMapRegionView();
+        SetupMapEditorOverlay();
         SyncWorldViews();
         SetupEnergyWallView();
         SetupFogOfWarView();
@@ -102,6 +104,11 @@ public partial class Main : Node2D
         }
 
         UpdatePlacementGhost();
+        if (_mapEditorEnabled)
+        {
+            _mapEditorOverlay?.QueueRedraw();
+        }
+
         _hudRefreshElapsedSeconds += deltaSeconds;
         if (_placementBuildingId is not null || _hudRefreshElapsedSeconds >= HudRefreshIntervalSeconds)
         {
@@ -114,6 +121,16 @@ public partial class Main : Node2D
     {
         if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            if (HandleMapEditorKey(keyEvent.Keycode))
+            {
+                return;
+            }
+
+            if (_mapEditorEnabled)
+            {
+                return;
+            }
+
             var upgradeHotkeysFirst = IsSelectedBuilding(ContentIds.Buildings.DefenseTower);
 
             if (HandleUiScaleHotkey(keyEvent.Keycode))
@@ -142,6 +159,11 @@ public partial class Main : Node2D
             }
 
             HandleBuildHotkey(keyEvent.Keycode);
+            return;
+        }
+
+        if (HandleMapEditorMouse(inputEvent))
+        {
             return;
         }
 
@@ -206,6 +228,7 @@ public partial class Main : Node2D
         _activeMissionId = missionId;
         var runtime = MissionRuntimeFactory.Create(_catalog, missionId);
         var mission = runtime.Mission;
+        _activeMission = mission;
         _availableUnitIds.Clear();
         _availableBuildingIds.Clear();
         foreach (var unitId in mission.AvailableUnitIds)
@@ -220,6 +243,7 @@ public partial class Main : Node2D
 
         _simulation = runtime.Simulation;
         _mapRegionView?.UpdateFromMap(runtime.Map);
+        UpdateMapEditorOverlayData();
     }
 
     private void SetupCamera()
@@ -392,6 +416,7 @@ public partial class Main : Node2D
         _placementGhost?.Clear();
         SetupSimulation(missionId);
         _mapRegionView?.UpdateFromMap(_simulation?.Map);
+        UpdateMapEditorOverlayData();
         SyncWorldViews();
         UpdateHud();
     }
@@ -552,8 +577,8 @@ public partial class Main : Node2D
             return;
         }
 
-        _statusPanel.Size = new Vector2(660, 144) * _uiScale;
-        _statusLabel.Size = new Vector2(636, 124) * _uiScale;
+        _statusPanel.Size = new Vector2(660, 174) * _uiScale;
+        _statusLabel.Size = new Vector2(636, 154) * _uiScale;
         _statusLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(HudBaseFontSize * _uiScale));
         if (_commandPanel is not null)
         {
@@ -562,6 +587,7 @@ public partial class Main : Node2D
         }
 
         ApplyMissionResultScale();
+        ApplyMapEditorPanelScale();
     }
 
     private void ApplyUiScaleIfViewportChanged()
@@ -777,315 +803,14 @@ public partial class Main : Node2D
                     ("buildings", _simulation.Buildings.Count),
                     ("powered", powered),
                     ("walls", _simulation.EnergyWalls.Count))) + "\n" +
-            L("ui.hud.mission_line", SimulationMessage.Args(("status", _simulation.MissionState.Status), ("objective", LocalizedMissionText(_simulation.MissionState)))) + "\n" +
+            GetMissionHudLine() + "\n" +
+            GetMissionBriefingHudLine() + "\n" +
             GetCommanderHudLine() + "\n" +
             L("ui.hud.alert_line", SimulationMessage.Args(("alerts", GetAlertSummary()))) + "\n" +
             L("ui.hud.scale_line", SimulationMessage.Args(("scale", $"{_uiScale:0.0}"))) + "\n" +
             $"{placementLine} | {_lastActionMessage}";
         UpdateCommandPanel();
         UpdateMissionResultOverlay();
-    }
-
-    private void UpdateCommandPanel()
-    {
-        if (_commandPanel is null || _simulation is null || _catalog is null)
-        {
-            return;
-        }
-
-        var selectedUnits = SelectedUnits().ToArray();
-        var selectedBuilding = _selectedBuildingEntityId is null
-            ? null
-            : _simulation.Buildings.FirstOrDefault(item => item.EntityId == _selectedBuildingEntityId.Value);
-        var hasBuilder = selectedUnits.Any(unit => unit.Definition.CanConstruct);
-        var selectedBarracks = selectedBuilding is not null && selectedBuilding.Definition.Id == ContentIds.Buildings.Barracks;
-        var selectedDefenseTower = selectedBuilding is not null && selectedBuilding.Definition.Id == ContentIds.Buildings.DefenseTower;
-        var actions = new List<CommandPanelAction>();
-
-        actions.AddRange(BuildHotkeyOrder
-            .Where(IsBuildingCommandAvailable)
-            .Select((buildingId, index) =>
-            {
-                var definition = _catalog.GetBuilding(buildingId);
-                var blockedReason = GetBuildingCommandBlockedReason(buildingId);
-                var enabled = hasBuilder && blockedReason is null;
-                var hint = !hasBuilder
-                    ? L("ui.command.requires_grunt")
-                    : blockedReason ?? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))));
-                return new CommandPanelAction(
-                    $"{index + 1} {BuildingShortName(definition)}",
-                    BuildingDetail(definition, hint),
-                    enabled,
-                    () => EnterPlacementMode(buildingId),
-                    BuildingIcon(definition.Id),
-                    L("ui.action_bar.cost", SimulationMessage.Args(("cost", definition.Cost))));
-            }));
-
-        actions.AddRange(TrainHotkeyOrder
-            .Where(IsUnitCommandAvailable)
-            .Select(unitId =>
-            {
-                var unit = _catalog.GetUnit(unitId);
-                var validation = selectedBarracks
-                    ? _simulation.ValidateUnitProduction(unitId, selectedBuilding!.EntityId)
-                    : null;
-                var enabled = validation?.CanQueue == true;
-                var hint = selectedBarracks
-                    ? LocalizedProduction(validation!)
-                    : L("ui.command.select_barracks_for_training");
-                return new CommandPanelAction(
-                    $"{GetTrainHotkeyLabel(unitId)} {UnitShortName(unit)}",
-                    UnitDetail(unit, hint),
-                    enabled,
-                    () =>
-                    {
-                        if (_selectedBuildingEntityId is null)
-                        {
-                            _lastActionMessage = L("ui.action.select_barracks_before_training");
-                            return;
-                        }
-
-                        var result = _simulation.TryQueueUnit(unitId, _selectedBuildingEntityId.Value);
-                        _lastActionMessage = LocalizedProduction(result);
-                    },
-                    UnitIcon(unit.Id),
-                    TrainingCostLabel(unit, selectedBuilding));
-            }));
-
-        if (selectedBarracks && IsUnitCommandAvailable(ContentIds.Units.Guardian))
-        {
-            var upgrade = _catalog.GetBarracksUpgrade(ContentIds.BarracksUpgrades.GuardianRetrofit);
-            if (!selectedBuilding!.HasBarracksUpgrade(upgrade.Id))
-            {
-                var validation = _simulation.ValidateGuardianRetrofit(selectedBuilding.EntityId);
-                actions.Add(new CommandPanelAction(
-                    L("ui.command.guardian_retrofit_label"),
-                    BarracksUpgradeDetail(upgrade, validation),
-                    validation.Success,
-                    () =>
-                    {
-                        var result = _simulation.TryStartGuardianRetrofit(selectedBuilding.EntityId);
-                        _lastActionMessage = LocalizedUpgrade(result);
-                    },
-                    "L2",
-                    BarracksUpgradeCostLabel(upgrade, selectedBuilding)));
-            }
-        }
-
-        if (selectedDefenseTower)
-        {
-            actions.AddRange(new[] { ContentIds.Buildings.GunTower, ContentIds.Buildings.RocketTower }
-                .Where(IsBuildingCommandAvailable)
-                .Select(upgradeId =>
-                {
-                    var upgrade = _catalog.GetBuilding(upgradeId);
-                    var key = upgradeId == ContentIds.Buildings.GunTower ? "G" : "T";
-                    var validation = _simulation.ValidateBuildingUpgrade(selectedBuilding!.EntityId, upgradeId);
-                    return new CommandPanelAction(
-                        $"{key} {BuildingShortName(upgrade)}",
-                        BuildingDetail(upgrade, LocalizedUpgrade(validation)),
-                        validation.Success,
-                        () =>
-                        {
-                            var result = _simulation.TryUpgradeBuilding(selectedBuilding.EntityId, upgradeId);
-                            _lastActionMessage = LocalizedUpgrade(result);
-                        },
-                        BuildingIcon(upgrade.Id),
-                        L("ui.action_bar.cost", SimulationMessage.Args(("cost", upgrade.Cost))));
-                }));
-        }
-
-        if (selectedUnits.Length > 0)
-        {
-            _commandPanel.UpdateActions(
-                L("ui.action_bar.title_unit_selection", SimulationMessage.Args(("count", selectedUnits.Length))),
-                actions.ToArray(),
-                hasBuilder ? GetBuilderCommandPanelHint() : L("ui.command.combat_selection_hint"));
-            return;
-        }
-
-        if (selectedBuilding is not null)
-        {
-            var hint = selectedBuilding.IsDamaged
-                ? L("ui.command.damaged_building_hint")
-                : selectedBarracks
-                    ? L("ui.command.barracks_hint")
-                    : selectedDefenseTower
-                        ? L("ui.command.defense_tower_hint")
-                        : L("ui.command.no_direct_commands");
-            _commandPanel.UpdateActions(BuildingName(selectedBuilding.Definition), actions.ToArray(), hint);
-            return;
-        }
-
-        _commandPanel.UpdateActions(L("ui.action_bar.title_no_selection"), actions.ToArray(), L("ui.action_bar.no_selection_hint"));
-    }
-
-    private string GetSelectionHudLine()
-    {
-        if (_simulation is null || _catalog is null)
-        {
-            return string.Empty;
-        }
-
-        var selectedUnits = SelectedUnits().ToArray();
-        if (selectedUnits.Length > 0)
-        {
-            var builders = selectedUnits.Count(unit => unit.Definition.CanConstruct);
-            var combat = selectedUnits.Count(unit => unit.Definition.CanAttack);
-            return builders > 0
-                ? L("ui.selection.units_with_builders", SimulationMessage.Args(("count", selectedUnits.Length), ("builders", builders), ("combat", combat)))
-                : L("ui.selection.units_combat", SimulationMessage.Args(("count", selectedUnits.Length), ("combat", combat)));
-        }
-
-        if (_selectedBuildingEntityId is null)
-        {
-            return L(
-                "ui.selection.no_selection_training_hint",
-                SimulationMessage.Args(("commands", GetTrainingCommandSummary())));
-        }
-
-        var building = _simulation.Buildings.FirstOrDefault(item => item.EntityId == _selectedBuildingEntityId.Value);
-        if (building is null)
-        {
-            return string.Empty;
-        }
-
-        if (building.Definition.Id == ContentIds.Buildings.Barracks)
-        {
-            var grunt = LocalizedProduction(_simulation.ValidateUnitProduction(ContentIds.Units.Grunt, building.EntityId));
-            return L(
-                "ui.selection.barracks",
-                SimulationMessage.Args(("commands", GetTrainingCommandSummary()), ("gruntReason", grunt)));
-        }
-
-        if (building.Definition.Id == ContentIds.Buildings.DefenseTower)
-        {
-            return L("ui.selection.defense_tower");
-        }
-
-        return L("ui.selection.building", SimulationMessage.Args(("building", BuildingName(building.Definition))));
-    }
-
-    private string UnitDetail(Stratezone.Simulation.Content.UnitDefinition unit, string commandHint)
-    {
-        var combatLine = unit.CanAttack
-            ? L(
-                "ui.detail.unit_combat",
-                SimulationMessage.Args(
-                    ("damage", $"{unit.AttackDamage:0}"),
-                    ("range", $"{unit.AttackRange:0.0}"),
-                    ("cooldown", $"{unit.AttackCooldown:0.0}")))
-            : L("ui.detail.unit_noncombat");
-        return L(
-            "ui.detail.unit",
-            SimulationMessage.Args(
-                ("unit", UnitName(unit)),
-                ("cost", unit.Cost),
-                ("health", unit.Health),
-                ("speed", $"{unit.MovementSpeed:0.0}"),
-                ("train", $"{unit.TrainTimeSeconds:0.0}"),
-                ("combat", combatLine),
-                ("hint", commandHint)));
-    }
-
-    private string TrainingCostLabel(Stratezone.Simulation.Content.UnitDefinition unit, BuildingState? selectedBuilding)
-    {
-        var cost = L("ui.action_bar.cost", SimulationMessage.Args(("cost", unit.Cost)));
-        if (selectedBuilding is null || selectedBuilding.Definition.Id != ContentIds.Buildings.Barracks)
-        {
-            return cost;
-        }
-
-        var queued = _simulation?.ProductionOrders.Count(order =>
-            order.ProducerBuildingEntityId == selectedBuilding.EntityId &&
-            order.UnitId == unit.Id) ?? 0;
-        return queued <= 0
-            ? cost
-            : $"{cost} | {L("ui.action_bar.queued", SimulationMessage.Args(("count", queued)))}";
-    }
-
-    private string BarracksUpgradeCostLabel(BarracksUpgradeDefinition upgrade, BuildingState barracks)
-    {
-        if (barracks.IsBarracksUpgradeInProgress && barracks.ActiveBarracksUpgradeId == upgrade.Id)
-        {
-            return L(
-                "ui.action_bar.progress_seconds",
-                SimulationMessage.Args(("seconds", $"{Mathf.CeilToInt(barracks.ActiveBarracksUpgradeRemainingSeconds)}")));
-        }
-
-        return L("ui.action_bar.cost", SimulationMessage.Args(("cost", upgrade.Cost)));
-    }
-
-    private string BarracksUpgradeDetail(BarracksUpgradeDefinition upgrade, UpgradeResult validation)
-    {
-        return L(
-            "ui.detail.barracks_upgrade",
-            SimulationMessage.Args(
-                ("upgradeId", upgrade.Id),
-                ("upgrade", BarracksUpgradeName(upgrade)),
-                ("cost", upgrade.Cost),
-                ("time", $"{upgrade.DurationSeconds:0}"),
-                ("requiredGrunts", upgrade.RequiredGruntCount),
-                ("hint", LocalizedUpgrade(validation))));
-    }
-
-    private string BuildingDetail(Stratezone.Simulation.Content.BuildingDefinition building, string commandHint)
-    {
-        var roleLine = building.ProvidesPower
-            ? L("ui.detail.building_power", SimulationMessage.Args(("radius", $"{building.PowerRadius:0.0}")))
-            : building.ProvidesResourceExtraction
-                ? L("ui.detail.building_extractor")
-                : building.WallAnchor
-                    ? L("ui.detail.building_wall", SimulationMessage.Args(("range", $"{building.WallLinkRange:0.0}")))
-                    : building.AttackDamage > 0.0f
-                        ? L(
-                            "ui.detail.building_attack",
-                            SimulationMessage.Args(
-                                ("damage", $"{building.AttackDamage:0}"),
-                                ("range", $"{building.AttackRange:0.0}"),
-                                ("cooldown", $"{building.AttackCooldown:0.0}")))
-                        : L("ui.detail.building_support");
-        return L(
-            "ui.detail.building",
-            SimulationMessage.Args(
-                ("building", BuildingName(building)),
-                ("cost", building.Cost),
-                ("health", building.Health),
-                ("role", roleLine),
-                ("hint", commandHint)));
-    }
-
-    private string BarracksUpgradeName(BarracksUpgradeDefinition definition)
-    {
-        return _localization?.ContentName(definition.Id, definition.DisplayName) ?? definition.DisplayName;
-    }
-
-    private static string UnitIcon(string unitId)
-    {
-        return unitId switch
-        {
-            ContentIds.Units.Grunt => "W",
-            ContentIds.Units.Cadet => "C",
-            ContentIds.Units.Rifleman => "R",
-            ContentIds.Units.Guardian => "G",
-            ContentIds.Units.Rover => "RV",
-            _ => "U"
-        };
-    }
-
-    private static string BuildingIcon(string buildingId)
-    {
-        return buildingId switch
-        {
-            ContentIds.Buildings.PowerPlant => "PWR",
-            ContentIds.Buildings.Pylon => "PYL",
-            ContentIds.Buildings.Barracks => "BRK",
-            ContentIds.Buildings.ExtractorRefinery => "EXT",
-            ContentIds.Buildings.DefenseTower => "WALL",
-            ContentIds.Buildings.GunTower => "GUN",
-            ContentIds.Buildings.RocketTower => "RKT",
-            _ => "BLD"
-        };
     }
 
     private void HandleCameraPan(double delta)

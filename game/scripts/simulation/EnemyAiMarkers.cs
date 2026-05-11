@@ -4,6 +4,7 @@ public sealed record EnemyAiMarkers(
     SimVector2 HubPosition,
     SimVector2 PowerPlantPosition,
     SimVector2 BasePylonPosition,
+    SimVector2 WallPowerPylonPosition,
     SimVector2 ForwardPylonPosition,
     SimVector2 BarracksPosition,
     SimVector2 ExtractorPosition,
@@ -14,6 +15,7 @@ public sealed record EnemyAiMarkers(
     public static EnemyAiMarkers FirstLanding { get; } = new(
         new SimVector2(700, 140),
         new SimVector2(500, -220),
+        new SimVector2(300, -190),
         new SimVector2(300, -190),
         new SimVector2(220, 30),
         new SimVector2(650, -90),
@@ -29,6 +31,7 @@ public sealed record EnemyAiMarkers(
             GetMarker(markers, profile.HubMarkerId, FirstLanding.HubPosition),
             GetMarker(markers, profile.PowerPlantMarkerId, FirstLanding.PowerPlantPosition),
             GetMarker(markers, "enemy_base_pylon", FirstLanding.BasePylonPosition),
+            GetMarker(markers, "enemy_wall_power_pylon", FirstLanding.WallPowerPylonPosition),
             GetMarker(markers, "enemy_pylon_weak_point", FirstLanding.ForwardPylonPosition),
             GetMarker(markers, profile.BarracksMarkerId, FirstLanding.BarracksPosition),
             GetMarker(markers, profile.ExtractorMarkerId, FirstLanding.ExtractorPosition),

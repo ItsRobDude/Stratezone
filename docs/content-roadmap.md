@@ -241,7 +241,7 @@ Recommendation:
 
 - Use cliffs/ridges early as simple impassable regions.
 - Do not add height bonuses yet.
-- Use them to frame buildable clearings, wells, and tower-wall chokepoints.
+- Use them to frame readable base spaces, wells, and tower-wall chokepoints.
 
 ### Water and Marsh
 
@@ -285,12 +285,13 @@ Recommendation:
 
 ### Buildable Clearings
 
-Purpose: give the player natural base spaces without showing a visible grid.
+Purpose: give the player natural base spaces without showing a visible grid or silently forbidding construction elsewhere.
 
 Recommendation:
 
-- Use authored buildable regions or clearings for base areas and expansions.
-- Keep hidden footprint/buffer rules active inside those clearings.
+- Use authored clearings for visual readability and route planning, not as the default legality whitelist.
+- In base-building missions, allow player and enemy construction anywhere that is not blocked by terrain, resource-well reservation, footprint overlap, power/support requirements, or an explicit mission rule.
+- Use `requires_buildable_regions` only for a special scenario that deliberately restricts construction to marked zones.
 - Make clearings large enough for practical power, Barracks, extractor, and tower-wall choices.
 
 ### Resource Basins
@@ -1063,7 +1064,7 @@ Purpose: preserve base-building agency without starting from a finished outpost.
 Direction:
 
 - Start with the pieces, resources, or deployment state needed for the player to place and build the opening base.
-- Use this when the mission is about expansion choices, buildable clearings, terrain chokes, and resource-race pressure.
+- Use this when the mission is about expansion choices, readable base spaces, terrain chokes, and resource-race pressure.
 - The mission should still give enough breathing room for the player to establish first power, production, and resource extraction.
 
 Fit:
@@ -1498,7 +1499,9 @@ Player feel: the enemy wants the same wells, and the terrain decides the fight.
 Direction:
 
 - The player still builds and places the base; do not start with a finished base.
-- Prove scarce wells, cliffs/water/ridges, buildable clearings, resource basins, Defense Tower wall placement, and enemy power/extractor routes.
+- Prove scarce wells, cliffs/water/ridges, readable clearings, resource basins, Defense Tower wall placement, and enemy power/extractor routes.
+- The midfield well should sit near the actual center lane, with an authored buildable power corridor so the player can chain Pylons to it without guessing invisible placement pockets.
+- The enemy may contest the midfield well, but should not start with it or claim it on the opening tick.
 - Guardian production is unlocked through a Barracks upgrade, not an Armory Annex.
 - Enemy Guardian production follows the same runtime gate: train/staff Grunts, complete the Barracks upgrade, then train Guardians.
 - Use enemy armor, hardened defense, or tower anchors only if needed to justify Guardian use.
@@ -1587,11 +1590,11 @@ These are not planned for the first demo, but can be reconsidered if a specific 
 
 These are implementation debts created by the approved outline:
 
-1. Tune and playtest the Barracks Guardian upgrade path now that player and enemy runtime/data both use it instead of the Armory Annex placeholder path.
+1. Tune and playtest the Barracks Guardian upgrade path now that player and enemy runtime/data both use it instead of the Armory Annex placeholder path. Current smoke coverage proves the Mission 2 route can train a second Grunt, complete Guardian Retrofit, and produce a Guardian.
 2. Support mission start patterns without scene-copying: deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force.
-3. Add Level 2 map logic for blocked terrain, buildable clearings, resource basins, chokepoint markers, and Defense Tower wall route proof.
-4. Add event trigger grace/cooldown/coalescing so normal early build milestones do not stack immediate raids.
-5. Move mission presentation surfaces toward localization keys: briefings, objectives, warnings, map callouts, success/failure messages, retry hints, and tactical notes.
+3. Add Level 2 map logic for blocked terrain, readable base spaces, resource basins, chokepoint markers, and Defense Tower wall route proof. Current runtime/data covers terrain blockers, readable clearings, basins, and chokepoint markers; Level 2 still needs playtest-grade wall-route tuning.
+4. Add event trigger grace/cooldown/coalescing so normal early build milestones do not stack immediate raids. First-pass mission trigger runtime/data now coalesces Mission 2 Barracks and first Extractor construction into one pressure beat.
+5. Move mission presentation surfaces toward localization keys: briefings, objectives, warnings, map callouts, success/failure messages, retry hints, and tactical notes. Current mission data covers briefing, start-objective, success, and failure keys; map callouts/retry/tactical notes remain later presentation work.
 6. Keep enemy rebuild/production resource-bound and mission-profile-driven.
 
 ### Recommended Build Order

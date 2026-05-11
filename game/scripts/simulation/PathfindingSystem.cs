@@ -259,6 +259,8 @@ internal static class PathfindingSystem
 
             var center = ToCenter(cell);
             return _terrainRegions.Any(region => region.BlocksMovement && region.Contains(center, UnitClearance)) ||
+                _blockingWalls.Any(wall =>
+                    SimulationGeometry.DistancePointToSegment(center, wall.ExtendedStart, wall.ExtendedEnd) <= EnergyWallSegment.BlockingClearance) ||
                 _buildings.Any(building =>
                 !building.IsDestroyed &&
                 !_ignoredStartBlockers.Contains(building.EntityId) &&
@@ -274,20 +276,8 @@ internal static class PathfindingSystem
         {
             var start = ToCenter(from);
             var end = ToCenter(to);
-            return _blockingWalls.Any(wall => LinesIntersect(start, end, wall.Start, wall.End));
+            return _blockingWalls.Any(wall =>
+                SimulationGeometry.DistanceSegmentToSegment(start, end, wall.ExtendedStart, wall.ExtendedEnd) <= EnergyWallSegment.BlockingClearance);
         }
-    }
-
-    private static bool LinesIntersect(SimVector2 a, SimVector2 b, SimVector2 c, SimVector2 d)
-    {
-        var denominator = ((d.Y - c.Y) * (b.X - a.X)) - ((d.X - c.X) * (b.Y - a.Y));
-        if (MathF.Abs(denominator) < 0.0001f)
-        {
-            return false;
-        }
-
-        var ua = (((d.X - c.X) * (a.Y - c.Y)) - ((d.Y - c.Y) * (a.X - c.X))) / denominator;
-        var ub = (((b.X - a.X) * (a.Y - c.Y)) - ((b.Y - a.Y) * (a.X - c.X))) / denominator;
-        return ua is >= 0.0f and <= 1.0f && ub is >= 0.0f and <= 1.0f;
     }
 }

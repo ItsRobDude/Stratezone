@@ -16,6 +16,8 @@ public sealed record MissionDefinition(
     IReadOnlyList<string> AvailableBuildingIds,
     IReadOnlyList<string> ObjectiveIds,
     IReadOnlyList<string> FailureConditionIds,
+    MissionPresentationDefinition Presentation,
+    IReadOnlyList<MissionTriggerDefinition> MissionTriggers,
     EnemyAiProfileDefinition EnemyAiProfile
 );
 
@@ -37,13 +39,35 @@ public sealed record MissionResourceWellPlacementDefinition(
     SimVector2 Offset
 );
 
+public sealed record MissionPresentationDefinition(
+    string BriefingTitleKey,
+    string BriefingBodyKey,
+    string StartObjectiveKey,
+    string SuccessKey,
+    string FailureKey
+);
+
+public sealed record MissionTriggerDefinition(
+    string Id,
+    IReadOnlyList<string> WatchedPlayerBuildingIds,
+    float MinElapsedSeconds,
+    float CoalesceWindowSeconds,
+    float CooldownSeconds,
+    int MaxFireCount,
+    int EnemyAttackGroupSize
+);
+
 public sealed record EnemyAiProfileDefinition(
     string Id,
+    float FirstRebuildDelaySeconds,
+    float FirstCentralWellRebuildDelaySeconds,
     float FirstAttackDelaySeconds,
     float RebuildCooldownSeconds,
     float ProductionCooldownSeconds,
     int AttackGroupSize,
     float CentralWellInterest,
+    float CentralWellRebuildCooldownSeconds,
+    int MaxCentralWellRebuilds,
     float PressureSlowdownMultiplier,
     float TrainTimeMultiplier,
     string HubMarkerId,
@@ -59,8 +83,12 @@ public sealed record EnemyAiProfileDefinition(
         0.0f,
         0.0f,
         0.0f,
+        0.0f,
+        0.0f,
         1,
         1.0f,
+        0.0f,
+        int.MaxValue,
         1.0f,
         RtsSimulation.EnemyTrainTimeMultiplier,
         "enemy_base",

@@ -11,6 +11,13 @@
       "map_id": "map_wells_at_the_ridge_greybox",
       "player_faction_id": "faction_player_expedition",
       "enemy_faction_ids": ["faction_private_military"],
+      "presentation": {
+        "briefing_title_key": "mission.mission_wells_at_the_ridge.briefing_title",
+        "briefing_body_key": "mission.mission_wells_at_the_ridge.briefing_body",
+        "start_objective_key": "mission.mission_wells_at_the_ridge.start_objective",
+        "success_key": "mission.mission_wells_at_the_ridge.success",
+        "failure_key": "mission.mission_wells_at_the_ridge.failure"
+      },
       "mission_markers": [
         { "id": "player_landing_zone", "position": { "x": -620, "y": 185 } },
         { "id": "player_grunt", "position": { "x": -600, "y": 140 } },
@@ -19,18 +26,19 @@
         { "id": "player_cadet_south", "position": { "x": -545, "y": 230 } },
         { "id": "player_rifleman", "position": { "x": -505, "y": 180 } },
         { "id": "player_start_well", "position": { "x": -460, "y": 250 } },
-        { "id": "contested_ridge_well", "position": { "x": 230, "y": -40 } },
-        { "id": "enemy_well", "position": { "x": 700, "y": 230 } },
-        { "id": "enemy_base", "position": { "x": 760, "y": -140 } },
-        { "id": "enemy_power", "position": { "x": 620, "y": -230 } },
-        { "id": "enemy_base_pylon", "position": { "x": 620, "y": -70 } },
+        { "id": "contested_ridge_well", "position": { "x": -60, "y": 15 } },
+        { "id": "enemy_well", "position": { "x": 720, "y": 230 } },
+        { "id": "enemy_base", "position": { "x": 790, "y": -120 } },
+        { "id": "enemy_power", "position": { "x": 620, "y": -180 } },
+        { "id": "enemy_base_pylon", "position": { "x": 500, "y": -165 } },
+        { "id": "enemy_wall_power_pylon", "position": { "x": 520, "y": -55 } },
         { "id": "enemy_well_pylon", "position": { "x": 670, "y": 90 } },
-        { "id": "enemy_pylon_weak_point", "position": { "x": 400, "y": -70 } },
-        { "id": "enemy_barracks", "position": { "x": 780, "y": 40 } },
-        { "id": "enemy_extractor", "position": { "x": 230, "y": -40 } },
-        { "id": "enemy_defense", "position": { "x": 350, "y": -140 } },
-        { "id": "enemy_defense_south", "position": { "x": 350, "y": 20 } },
-        { "id": "enemy_rally", "position": { "x": 470, "y": 20 } }
+        { "id": "enemy_pylon_weak_point", "position": { "x": 105, "y": -20 } },
+        { "id": "enemy_barracks", "position": { "x": 780, "y": 50 } },
+        { "id": "enemy_extractor", "position": { "x": -60, "y": 15 } },
+        { "id": "enemy_defense", "position": { "x": 430, "y": -115 } },
+        { "id": "enemy_defense_south", "position": { "x": 430, "y": 35 } },
+        { "id": "enemy_rally", "position": { "x": 360, "y": 20 } }
       ],
       "starting_entities": [
         {
@@ -72,6 +80,11 @@
           "content_id": "building_pylon",
           "faction_id": "faction_private_military",
           "marker": "enemy_base_pylon"
+        },
+        {
+          "content_id": "building_pylon",
+          "faction_id": "faction_private_military",
+          "marker": "enemy_wall_power_pylon"
         },
         {
           "content_id": "building_pylon",
@@ -162,11 +175,15 @@
       ],
       "enemy_ai_profile": {
         "id": "ai_profile_level_2_private_military_ridge",
+        "first_rebuild_delay_seconds": 55,
+        "first_central_well_rebuild_delay_seconds": 165,
         "first_attack_delay_seconds": 130,
         "rebuild_cooldown_seconds": 24,
         "production_cooldown_seconds": 32,
         "attack_group_size": 2,
         "central_well_interest": 1.0,
+        "central_well_rebuild_cooldown_seconds": 110,
+        "max_central_well_rebuilds": 2,
         "pressure_slowdown_multiplier": 0.8,
         "train_time_multiplier": 1.4,
         "hub_marker": "enemy_base",
@@ -176,6 +193,17 @@
         "defense_tower_marker": "enemy_defense",
         "rally_marker": "enemy_rally"
       },
+      "mission_triggers": [
+        {
+          "id": "mission_trigger_ridge_first_base_pressure",
+          "watched_player_building_ids": ["building_barracks", "building_extractor_refinery"],
+          "min_elapsed_seconds": 75,
+          "coalesce_window_seconds": 30,
+          "cooldown_seconds": 120,
+          "max_fire_count": 1,
+          "enemy_attack_group_size": 1
+        }
+      ],
       "objectives": ["objective_destroy_enemy_colony_hub", "objective_protect_commander"],
       "failure_conditions": ["commander_killed"],
       "event_ids": [],

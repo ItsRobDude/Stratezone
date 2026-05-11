@@ -34,6 +34,7 @@ public sealed class UnitState
     public bool IsEnemyAttackCommitted { get; internal set; }
     public bool IsEnemyScout { get; internal set; }
     public bool IsEnemyRetreating { get; internal set; }
+    public bool IsColonyHubOccupant { get; internal set; }
     public SimVector2? LastIncomingAttackOrigin { get; private set; }
     public SimVector2? LastAttackTargetPosition { get; private set; }
     public float HitFlashSeconds { get; private set; }
@@ -71,6 +72,22 @@ public sealed class UnitState
         CurrentWaypointIndex = 0;
         IsPathBlocked = false;
         PathBlockedReason = null;
+    }
+
+    internal void ClearCommandTargets(bool clearAttackPresentation = false)
+    {
+        TargetUnitEntityId = null;
+        TargetBuildingEntityId = null;
+        RepairTargetBuildingEntityId = null;
+        TargetFormationOffset = default;
+
+        if (!clearAttackPresentation)
+        {
+            return;
+        }
+
+        LastAttackTargetPosition = null;
+        AttackFlashSeconds = 0.0f;
     }
 
     internal void AdvanceWaypoint()

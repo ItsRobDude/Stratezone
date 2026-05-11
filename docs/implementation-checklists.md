@@ -159,8 +159,8 @@ Acceptance checks:
 - Rover can run over enemy infantry if that behavior is included
 - all required enemy targets destroyed triggers win
 - destroyed Barracks and Power Plants release same-faction Cadets before victory/loss checks finish
-- destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself, and the reveal-only tank does not block victory
-- Guardian energy fire, revealed Medium Tanks, and Rocket Tower explosives outperform comparable ballistic options against armored vehicles
+- destroying either Colony Hub releases a Medium Tank occupant, and hostile Hub occupants must be killed before mission completion
+- Guardian energy fire, released Medium Tanks, and Rocket Tower explosives outperform comparable ballistic options against armored vehicles
 - Cadet recruits fastest, Rifleman recruits only slightly slower, and Guardian recruits slower as a specialist; current content data should be retuned if it does not match that feel
 
 Evidence:
@@ -168,7 +168,7 @@ Evidence:
 - one completed mission run; current evidence includes a user-completed greybox win run
 - one commander-death loss run; deterministic smoke coverage currently proves Commander death and the F7/debug loss path
 - smoke coverage for central well retake, enemy Pylon weak point, and tower-wall shutdown
-- smoke coverage for Guardian-vs-armor damage math, Medium Tank reveal on both sides, and Rocket Tower anti-armor tuning
+- smoke coverage for Guardian-vs-armor damage math, Medium Tank occupant release on both sides, and Rocket Tower anti-armor tuning
 - repair smoke coverage for command start, switching targets, friendly-only restriction, proportional material cost, and no-negative-spend behavior
 - notes for any missing or intentionally placeholder behavior
 - localization key coverage for mission result, objective, command, and blocked-action text
@@ -183,21 +183,22 @@ Acceptance checks:
 - mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
 - Barracks Guardian upgrade has a runtime/data path that replaces the old Armory Annex Guardian gate
 - mission setup supports deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force starts without copying scene logic
-- map data can represent first-pass terrain regions, passability blockers, buildable clearings, resource basins, and chokepoint markers
+- map data can represent first-pass terrain regions, passability blockers, readable base/expansion pockets, resource basins, chokepoint markers, and explicit restricted-build scenarios
 - new mission setup can be added through data plus narrow simulation/presentation seams
-- event trigger pacing has a planned grace/cooldown/coalescing rule so normal early build milestones cannot stack immediate raids
-- mission presentation fields have a localization-ready data path for briefings, objectives, warnings, map callouts, failure/success messages, retry hints, and tactical notes
-- map preview/debug output exists if JSON-only map authoring is too hard to inspect
+- event trigger pacing has grace/cooldown/coalescing runtime support so normal early build milestones cannot stack immediate raids
+- mission presentation fields have a localization-ready data path for briefings, objectives, failure/success messages, and later warnings/map callouts/retry hints/tactical notes
+- the in-game map editor/tuner can inspect current mission markers, terrain regions, live resource wells, pylon ranges, and wall-link candidates without becoming the source of gameplay truth
+- editor/tuner changes are exported as reviewable JSON snippets until safe save/load and validation are deliberately added
 - root or documented validation commands cover content validation, C# build, simulation smoke, and Godot headless launch
 - new objective, warning, command, and blocked-action text uses localization keys
 - no new major mechanic is added only to make the milestone feel larger
 
 Evidence:
 
-- file-size and ownership notes for any remaining large files
-- smoke/test organization notes showing how Level 2 routes will be proven
+- file-size and ownership notes for any remaining large files; current `Main.cs` command-panel ownership lives in a partial file
+- smoke/test organization notes showing how Level 2 routes will be proven; current smoke files separate content, First Landing, Mission 2, and mission trigger checks
 - start-pattern proof notes
-- map-data validation or preview notes for terrain/passability authoring
+- map editor/tuner notes or snippets for terrain/passability authoring
 - one dry-run plan for adding a second mission without copying First Landing scene logic
 - implementation follow-up list for any runtime/data seams not completed in this milestone
 - validation command output
@@ -210,7 +211,7 @@ Acceptance checks:
 - Level 2 has the player build and place the base instead of starting with a finished base
 - scarce wells force a visible resource race
 - cliffs, water, or other impassable terrain create readable chokepoints without a complex terrain-simulation expansion
-- buildable clearings give the player practical base spaces without a visible grid
+- readable clearings give the player practical base-space cues without becoming hidden build whitelists
 - resource basins make important wells read as tactical map pockets
 - Defense Tower wall placement matters because of the map shape
 - enemy power or extractor infrastructure can be scouted and attacked
@@ -230,6 +231,9 @@ Evidence:
 - one defensive wall/chokepoint route note
 - one Barracks Guardian upgrade route note if the unlock enters Level 2
 - smoke or debug evidence for any new terrain/passability/buildability rule
+- smoke evidence that the Mission 2 player can deploy an offset Hub inside the landing clearing, build Power/Barracks/Extractor, chain Pylons through the authored power corridor to the midfield well, train the second Grunt, complete Guardian Retrofit, and train a Guardian
+- smoke evidence that the enemy does not claim the midfield well on its normal rebuild beat and waits for the mission-profile central-well claim delay
+- smoke evidence that Mission 2 starts with a real enemy defense wall, the wall buffer overlaps nearby ridge blockers and blocks intended walk-around lanes, units can shoot through a wall when range allows, idle combat units auto-fire at visible hostile troops/tanks but not buildings, enemy forward expansion pylons are not rebuilt after the player owns the linked midfield well, base-breach rebuilds prefer defense/wall power over expansion pylons, and idle enemy defenders pursue base intruders before the scheduled attack timer
 - notes for any support/siege system deliberately kept out
 
 ## Milestone 5 Checklist: Level 3 - Mobile Response

@@ -153,7 +153,7 @@ Prototype rules:
 - `unit_guardian` requires `barracks_upgrade_guardian_retrofit` where the mission enables Guardian production.
 - `unit_rover` should require `building_vehicle_bay` where Barracks add-ons are enabled by the mission.
 - In First Landing, `unit_guardian`, `unit_rover`, and `unit_commander` may be authored as starting/scenario units but must not be listed as trainable mission units.
-- `unit_medium_tank` is the Level 1 reveal tank. It is not normally trainable, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
+- `unit_medium_tank` is the Hub-destruction occupant tank. It is not normally trainable in the early demo, has lower health and smaller splash than the Heavy Tank, and its shell should leave a full-health Rifleman near 30 percent health.
 - `unit_tank` is now the Heavy Tank record. It is the promoted old tank profile and should remain a heavier later answer with stronger explosive splash and high ballistic resistance.
 - Troop training time varies by unit. Cadet is fastest, Rifleman is only slightly slower, and Guardian is slower because it is a specialized anti-armor / anti-defense unit.
 - Unit attack speed, damage, range, damage type, area, and friendly-fire behavior live directly on the unit record.
@@ -194,7 +194,7 @@ First-pass resistance intent:
 - Basic infantry should die fast against other infantry.
 - Heavy armor should feel nearly impenetrable to ballistic infantry fire, while Medium Tanks should be meaningfully faster to kill than Heavy Tanks.
 - Guardian energy fire should be worse than Rifleman fire against basic infantry but more than twice as effective as Rifleman fire against Medium and Heavy Tanks.
-- Revealed Medium Tanks and Rocket Tower explosives should also outperform Rifleman/Gun Tower ballistics against armored vehicles.
+- Released Medium Tanks and Rocket Tower explosives should also outperform Rifleman/Gun Tower ballistics against armored vehicles.
 - Buildings should resist casual ballistic damage enough to preserve siege pacing.
 - Buildings should have negative explosive resistance so Rocket Towers, Tanks, and later siege weapons are the base-cracking lane.
 - The Colony Hub should keep its early siege ratio of 1200 health and 0.25 ballistic resistance unless playtests prove the ratio wrong.
@@ -265,6 +265,7 @@ Prototype rules:
 - `building_vehicle_bay` is a powered Barracks add-on that unlocks Rover training and heavy-armor capacity where the mission allows it. In First Landing it is silently locked and hidden from the player.
 - `building_power_plant` provides local power.
 - `building_pylon` extends or links power.
+- prototype Pylon link range is `30` content units so expansion chains read as deliberate infrastructure, not dense pylon spam.
 - `building_extractor_refinery` extracts from a resource well and stops when unpowered, destroyed, or depleted.
 - `building_med_hall` heals infantry in a radius, requires power, and spends resources while actively healing.
 - `building_logistics_repair_pad` repairs parked vehicles, requires power, and spends resources while actively repairing.
@@ -408,7 +409,8 @@ Required fields:
 Planned first-pass map logic fields:
 
 - `terrain_regions`: authored rectangles, polygons, or circles with stable IDs, terrain kind, and gameplay flags
-- `buildable_regions`: authored base/expansion clearings where normal footprint/buffer rules still apply
+- `requires_buildable_regions`: optional boolean; default false. When false, base missions allow building anywhere except blocked terrain, resource-well reservations, power/support limits, footprint overlap, and mission-specific rules. Set true only for an explicitly restricted scenario.
+- `buildable_regions`: authored base/expansion readability hints where normal footprint/buffer rules still apply if `requires_buildable_regions` is true
 - `blocked_regions`: impassable terrain such as cliffs, ridges, deep water, wreck fields, or map-edge blockers
 - `resource_basins`: visual/logical pockets around important wells
 - `chokepoint_markers`: authored spots intended for Defense Tower wall play, attack lanes, or route proof
@@ -423,8 +425,8 @@ Prototype rules:
 - First Landing starts as a small greybox map.
 - The map should include a player start, enemy edge-of-fog reveal, central choke, contested well, and enemy pylon weak point.
 - Terrain and art values are placeholders until the first playable map exists.
-- Milestone 3 should make terrain regions real enough to support Level 2 route proof without a full map editor.
-- Milestone 4 should prove at least one blocked terrain feature, one buildable clearing/expansion pocket, one resource basin, and one Defense Tower wall chokepoint.
+- Milestone 3 should make terrain regions real enough to support Level 2 route proof, with the F5 in-game map editor/tuner used as an internal inspection and snippet-export aid rather than the canonical data store.
+- Milestone 4 should prove at least one blocked terrain feature, one readable base/expansion pocket, one resource basin, and one Defense Tower wall chokepoint. Base missions should not use buildable pockets as a hidden whitelist unless explicitly specified.
 
 ## Faction Definition
 
@@ -487,7 +489,9 @@ Prototype rules:
 - includes a central choke that can be blocked with tower-wall play
 - includes an enemy pylon weak point that can disable an enemy tower route
 - includes authored mission markers for base positions, wells, AI build slots, rally points, and choke points
-- includes an enemy AI profile for first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, pressure slowdown, and train-time multiplier
+- includes an enemy AI profile for first rebuild delay, first central-well claim delay, first attack delay, rebuild cadence, production cadence, attack group size, central-well interest, contested-well rebuild cooldown/limit, pressure slowdown, and train-time multiplier
+- may include `presentation` keys for briefing title/body, start objective, success, and failure text; these keys must exist in localization once wired
+- may include `mission_triggers` for authored pacing beats such as coalesced base-building pressure
 - uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission
 - uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records
 - future first-demo missions should use authored `starting_entities`, `starting_resources`, `available_unit_ids`, and `available_building_ids` rather than a player-selected loadout system
@@ -497,7 +501,7 @@ Prototype rules:
 - hides `building_vehicle_bay` in Level 1 rather than presenting it as a disabled command
 - wins by destroying all required enemy targets
 - loses if the Commander dies
-- destroying either Colony Hub reveals a Medium Tank without changing win/loss by itself; reveal-only tanks are not required destroy-all targets
+- destroying either Colony Hub releases a Medium Tank occupant; hostile Hub occupants are required targets and prevent mission completion while alive
 
 ## Mission Event Definition
 
@@ -518,9 +522,9 @@ Prototype rules:
 - events should be inspectable and tunable
 - Level 1 pressure should be tame but active
 - event warnings should appear before danger when practical
-- mission events should support pacing guards such as opening grace, cooldowns, or trigger groups before Level 2 relies on multiple base-building triggers
+- `mission_triggers` now support first-pass pacing guards through watched player building IDs, minimum elapsed time, coalescing window, cooldown, max fire count, and enemy attack group size
 - early base-building triggers such as Barracks built and first Extractor built should coalesce into one pressure beat instead of firing back-to-back raids
-- new warning text should use localization keys; current `warning_text` fields are English prototype fallbacks until the event-presentation schema is tightened
+- new warning text should use localization keys; current `warning_text` fields are English prototype fallbacks until older event records are migrated to the keyed presentation path
 
 ## Objective Definition
 

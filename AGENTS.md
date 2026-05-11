@@ -49,7 +49,7 @@ Current locked vision choices:
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
 - Mission presentation should use short field-command briefings, direct objective verbs, sparse map callouts, truthful success/failure messages, and localizable player-facing strings.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
-- Tanks are not normally trainable in Level 1, but destroying either player's or enemy's Colony Hub reveals a tank without changing win/loss conditions by itself.
+- Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule; enemy Hub occupants must be killed before a mission can complete.
 - Ancient-tech mystery is out of scope for now.
 - Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless the roadmap is explicitly reopened. Artillery Battery remains a preferred Mission 5 siege candidate.
 - Visual tone is military-industrial with restrained near-future utility tech.

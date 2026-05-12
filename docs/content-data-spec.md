@@ -449,7 +449,7 @@ Prototype rules:
 - First Landing starts as a small greybox map.
 - The map should include a player start, enemy edge-of-fog reveal, central choke, contested well, and enemy pylon weak point.
 - Terrain and art values are placeholders until the first playable map exists.
-- Milestone 3 should make terrain regions real enough to support Level 2 route proof, with the F5 in-game map editor/tuner used as an internal inspection and snippet-export aid rather than the canonical data store.
+- Milestone 3 should make terrain regions real enough to support Level 2 route proof, with the F5 in-game map editor/tuner used as an internal Stratezone-shaped authoring aid for mission markers, terrain regions, and map objects. It may create, move, resize, delete, inspect, validate, export snippets, and guarded-save owned marker/region/object arrays, but content JSON remains the canonical reviewable data store.
 - Milestone 4 should prove at least one blocked terrain feature, one readable base/expansion pocket, one resource basin, and one Defense Tower wall chokepoint. Base missions should not use buildable pockets as a hidden whitelist unless explicitly specified.
 
 ## Faction Definition

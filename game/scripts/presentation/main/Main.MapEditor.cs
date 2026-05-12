@@ -10,10 +10,23 @@ public partial class Main
     private MapEditorOverlay? _mapEditorOverlay;
     private Panel? _mapEditorPanel;
     private Label? _mapEditorLabel;
+    private Panel? _mapEditorPalettePanel;
+    private VBoxContainer? _mapEditorPaletteList;
+    private Panel? _mapEditorInspectorPanel;
+    private VBoxContainer? _mapEditorInspectorList;
+    private PopupMenu? _mapEditorContextMenu;
+    private readonly Dictionary<MapEditorToolMode, Button> _mapEditorToolButtons = [];
+    private readonly List<string> _mapEditorMissionPickerIds = [];
+    private OptionButton? _mapEditorMissionPicker;
+    private CheckBox? _mapEditorSnapToggle;
     private bool _mapEditorEnabled;
     private string _lastMapEditorExportSummary = "No export yet.";
     private MapEditorSavePreview? _pendingMapEditorSave;
+    private MapEditorDeletePreview? _pendingMapEditorDelete;
+    private string? _pendingMapEditorMissionSwitchId;
     private string _mapEditorSavePreviewSummary = string.Empty;
+    private bool _refreshingMapEditorUi;
+    private bool _mapEditorFocusIdOnRefresh;
 
     private void SetupMapEditorOverlay()
     {
@@ -46,6 +59,8 @@ public partial class Main
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         _mapEditorPanel.AddChild(_mapEditorLabel);
+        SetupMapEditorToolPanels();
+        SetupMapEditorContextMenu();
         ApplyMapEditorPanelScale();
         RefreshMapEditorPanel();
     }
@@ -90,6 +105,26 @@ public partial class Main
                 return true;
             }
 
+            if (keycode == Key.Z && (keyEvent.CtrlPressed || keyEvent.MetaPressed))
+            {
+                if (keyEvent.ShiftPressed)
+                {
+                    RedoMapEditor();
+                }
+                else
+                {
+                    UndoMapEditor();
+                }
+
+                return true;
+            }
+
+            if (keycode == Key.Y && (keyEvent.CtrlPressed || keyEvent.MetaPressed))
+            {
+                RedoMapEditor();
+                return true;
+            }
+
             switch (keycode)
             {
                 case Key.Escape:
@@ -110,6 +145,12 @@ public partial class Main
                     return true;
                 case Key.P:
                     ToggleMapEditorPathingLayer();
+                    return true;
+                case Key.G:
+                    ToggleMapEditorSnap();
+                    return true;
+                case Key.Delete:
+                    BeginMapEditorDelete();
                     return true;
                 case Key.E:
                     ExportMapEditorSelection();
@@ -153,8 +194,14 @@ public partial class Main
             {
                 if (_mapEditorOverlay.IsDragging)
                 {
-                    _mapEditorOverlay.DragTo(GetGlobalMousePosition());
-                    ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
+                    var beforeRevision = _mapEditorOverlay.Revision;
+                    _mapEditorOverlay.UpdatePointerAction(GetGlobalMousePosition());
+                    if (_mapEditorOverlay.Revision != beforeRevision)
+                    {
+                        ClearMapEditorPendingDecisions();
+                        ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
+                    }
+
                     RefreshMapEditorPanel();
                 }
 
@@ -170,16 +217,35 @@ public partial class Main
             {
                 if (mouseButton.Pressed)
                 {
-                    if (!_mapEditorOverlay.TryBeginDrag(GetGlobalMousePosition()))
+                    var beforeRevision = _mapEditorOverlay.Revision;
+                    if (!_mapEditorOverlay.BeginPointerAction(GetGlobalMousePosition(), out var deletePreview))
                     {
                         _mapEditorOverlay.LogWarning("mouse_select", $"No marker or region selected at {GetGlobalMousePosition()}.");
+                    }
+
+                    if (deletePreview is not null)
+                    {
+                        _pendingMapEditorDelete = deletePreview;
+                    }
+
+                    if (_mapEditorOverlay.Revision != beforeRevision)
+                    {
+                        ClearMapEditorPendingDecisions();
+                        ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
                     }
 
                     RefreshMapEditorPanel();
                 }
                 else
                 {
-                    _mapEditorOverlay.EndDrag();
+                    var beforeRevision = _mapEditorOverlay.Revision;
+                    _mapEditorOverlay.EndPointerAction(GetGlobalMousePosition());
+                    if (_mapEditorOverlay.Revision != beforeRevision)
+                    {
+                        ClearMapEditorPendingDecisions();
+                        ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
+                    }
+
                     RefreshMapEditorPanel();
                 }
 
@@ -188,13 +254,13 @@ public partial class Main
 
             if (mouseButton.ButtonIndex == MouseButton.Right && mouseButton.Pressed)
             {
-                if (_mapEditorOverlay.TrySelectMarkerAt(GetGlobalMousePosition()))
+                if (_mapEditorOverlay.SelectAt(GetGlobalMousePosition()))
                 {
-                    StartMapEditorViewAtSelectedMarker();
+                    ShowMapEditorContextMenu();
                 }
                 else
                 {
-                    _lastActionMessage = "Right-click a marker to re-init the mission view there. Use E to copy selected JSON.";
+                    _lastActionMessage = "Right-click a marker, region, or map object to open editor actions.";
                     RefreshMapEditorPanel();
                 }
 
@@ -224,6 +290,7 @@ public partial class Main
                 _mapEditorPanel.Visible = true;
             }
 
+            SetMapEditorToolPanelsVisible(true);
             _lastActionMessage = "Map editor active. Simulation paused; close editor to re-init play from current edits.";
             RefreshMapEditorPanel();
             return;
@@ -237,7 +304,9 @@ public partial class Main
             _mapEditorPanel.Visible = false;
         }
 
+        SetMapEditorToolPanelsVisible(false);
         ClearPendingMapEditorSave();
+        ClearMapEditorPendingDecisions();
         _lastActionMessage = "Map editor closed; mission reinitialized from current edits.";
         RefreshMapEditorPanel();
     }
@@ -265,6 +334,18 @@ public partial class Main
             return;
         }
 
+        var validationIssues = _mapEditorOverlay.ValidateContent();
+        var validationErrors = validationIssues.Where(issue => issue.Severity == MapEditorValidationSeverity.Error).ToArray();
+        if (validationErrors.Length > 0)
+        {
+            _lastMapEditorExportSummary = $"Save blocked: {validationErrors.Length} editor validation error(s). Fix the validation panel before writing JSON.";
+            _lastActionMessage = _lastMapEditorExportSummary;
+            _mapEditorSavePreviewSummary = string.Join(System.Environment.NewLine, validationErrors.Take(8).Select(issue => $"ERROR {issue.Code}: {issue.Message}"));
+            _pendingMapEditorSave = null;
+            RefreshMapEditorPanel();
+            return;
+        }
+
         if (_pendingMapEditorSave is not null)
         {
             if (_pendingMapEditorSave.SessionRevision != _mapEditorOverlay.Revision)
@@ -280,6 +361,7 @@ public partial class Main
                 _lastMapEditorExportSummary = result.Message;
                 _lastActionMessage = result.Message;
                 _pendingMapEditorSave = null;
+                ClearMapEditorPendingDecisions();
                 _mapEditorSavePreviewSummary = string.Empty;
                 GD.Print($"Map editor save: {result.Message}");
             }
@@ -341,7 +423,9 @@ public partial class Main
             _mapEditorPanel.Visible = false;
         }
 
+        SetMapEditorToolPanelsVisible(false);
         ClearPendingMapEditorSave();
+        ClearMapEditorPendingDecisions();
         _lastActionMessage = $"Mission reinitialized from edits; camera centered on {markerId}.";
     }
 
@@ -407,6 +491,7 @@ public partial class Main
 
         if (_mapEditorOverlay.NudgeSelected(delta))
         {
+            ClearMapEditorPendingDecisions();
             ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
             RefreshMapEditorPanel();
         }
@@ -424,6 +509,7 @@ public partial class Main
 
         if (_mapEditorOverlay.CycleSelection(forward))
         {
+            ClearMapEditorPendingDecisions();
             RefreshMapEditorPanel();
         }
 
@@ -518,12 +604,12 @@ public partial class Main
             return;
         }
 
+        RefreshMapEditorToolPanels();
         _mapEditorLabel.Text =
             "F5 Map Editor/Tuner\n" +
             $"{_mapEditorOverlay.SelectedSummary}\n" +
-            $"{_mapEditorOverlay.SelectedInspector}\n" +
-            "Tab/Q: cycle | Left-drag: move center | Arrows: nudge 10 | P: pathing | Shift+F5: re-init\n" +
-            "Ctrl+S: preview/write JSON | E: copy selected | J: copy all | Right-click marker: start view here\n" +
+            "Palette selects mode | Left-drag: move/create/resize | Right-click: actions | G: snap | P: pathing | Shift+F5: re-init\n" +
+            "Ctrl+S: preview/write JSON | Ctrl+Z/Y: undo/redo | E: copy selected | J: copy all\n" +
             _lastMapEditorExportSummary +
             MapEditorSavePanelText();
     }
@@ -541,6 +627,31 @@ public partial class Main
         _mapEditorPanel.Position = new Vector2(16, Mathf.Max(16.0f, viewportSize.Y - panelSize.Y - 16.0f));
         _mapEditorLabel.Size = new Vector2(696, 310) * _uiScale;
         _mapEditorLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(12 * _uiScale));
+
+        if (_mapEditorPalettePanel is not null)
+        {
+            _mapEditorPalettePanel.Size = new Vector2(210, 430) * _uiScale;
+            _mapEditorPalettePanel.Position = new Vector2(16, 210) * _uiScale;
+            if (_mapEditorPaletteList is not null)
+            {
+                _mapEditorPaletteList.Size = new Vector2(190, 410) * _uiScale;
+                _mapEditorPaletteList.AddThemeConstantOverride("separation", Mathf.RoundToInt(4 * _uiScale));
+            }
+        }
+
+        if (_mapEditorInspectorPanel is not null)
+        {
+            var inspectorSize = new Vector2(330, Mathf.Max(430, viewportSize.Y - 260)) * _uiScale;
+            _mapEditorInspectorPanel.Size = inspectorSize;
+            _mapEditorInspectorPanel.Position = new Vector2(
+                Mathf.Max(16.0f, viewportSize.X - inspectorSize.X - 16.0f),
+                16.0f);
+            if (_mapEditorInspectorList is not null)
+            {
+                _mapEditorInspectorList.Size = inspectorSize - new Vector2(20, 20);
+                _mapEditorInspectorList.AddThemeConstantOverride("separation", Mathf.RoundToInt(4 * _uiScale));
+            }
+        }
     }
 
     private void LogMapEditorWarning(string operation, string message)

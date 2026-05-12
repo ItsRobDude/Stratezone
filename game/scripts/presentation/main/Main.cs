@@ -352,6 +352,7 @@ public partial class Main : Node2D
         _placementBuildingId = null;
         _placementGhost?.Clear();
         ClearPendingMapEditorSave();
+        ClearMapEditorPendingDecisions();
         SetupSimulation(missionId);
         ResetCameraToMissionStart();
         _mapRegionView?.UpdateFromMap(_simulation?.Map);

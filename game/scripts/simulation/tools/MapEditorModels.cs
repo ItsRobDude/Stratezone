@@ -12,7 +12,7 @@ public sealed class MapEditorMarker
         Position = position;
     }
 
-    public string Id { get; }
+    public string Id { get; set; }
     public SimVector2 Position { get; set; }
     public IReadOnlyList<string> ContentIds => _contentIds;
 
@@ -51,16 +51,16 @@ public sealed class MapEditorRegion
         Tags = tags;
     }
 
-    public string Id { get; }
-    public string RegionType { get; }
-    public string Shape { get; }
+    public string Id { get; set; }
+    public string RegionType { get; set; }
+    public string Shape { get; set; }
     public SimVector2 Center { get; set; }
-    public SimVector2 Size { get; }
-    public float Radius { get; }
-    public bool BlocksMovement { get; }
-    public bool BlocksBuilding { get; }
-    public bool AllowsBuilding { get; }
-    public IReadOnlyList<string> Tags { get; }
+    public SimVector2 Size { get; set; }
+    public float Radius { get; set; }
+    public bool BlocksMovement { get; set; }
+    public bool BlocksBuilding { get; set; }
+    public bool AllowsBuilding { get; set; }
+    public IReadOnlyList<string> Tags { get; set; }
 
     public float Area => Shape == "circle"
         ? MathF.PI * Radius * Radius
@@ -111,16 +111,16 @@ public sealed class MapEditorObject
         Tags = tags;
     }
 
-    public string Id { get; }
-    public string ObjectType { get; }
-    public string Shape { get; }
+    public string Id { get; set; }
+    public string ObjectType { get; set; }
+    public string Shape { get; set; }
     public SimVector2 Center { get; set; }
-    public SimVector2 Size { get; }
-    public float Radius { get; }
-    public float MaxHealth { get; }
-    public bool StartsIntact { get; }
-    public bool BlocksMovementWhenBroken { get; }
-    public IReadOnlyList<string> Tags { get; }
+    public SimVector2 Size { get; set; }
+    public float Radius { get; set; }
+    public float MaxHealth { get; set; }
+    public bool StartsIntact { get; set; }
+    public bool BlocksMovementWhenBroken { get; set; }
+    public IReadOnlyList<string> Tags { get; set; }
 
     public float Area => Shape == "circle"
         ? MathF.PI * Radius * Radius
@@ -151,6 +151,77 @@ public enum MapEditorSelectionKind
     Marker,
     Region,
     Object
+}
+
+public enum MapEditorToolMode
+{
+    Select,
+    AddMarker,
+    AddRectRegion,
+    AddCircleRegion,
+    Delete
+}
+
+public enum MapEditorResizeHandle
+{
+    None,
+    RectLeft,
+    RectRight,
+    RectTop,
+    RectBottom,
+    CircleRadius
+}
+
+public enum MapEditorValidationSeverity
+{
+    Warning,
+    Error
+}
+
+public sealed record MapEditorValidationIssue(
+    MapEditorValidationSeverity Severity,
+    string Code,
+    string Message);
+
+public sealed record MapEditorDeletePreview(
+    MapEditorSelectionKind SelectionKind,
+    string SelectionId,
+    IReadOnlyList<string> References)
+{
+    public string Summary
+    {
+        get
+        {
+            if (References.Count == 0)
+            {
+                return $"Delete {SelectionId}? No known references.";
+            }
+
+            return $"Delete {SelectionId}? Referenced by: {string.Join(", ", References)}";
+        }
+    }
+}
+
+public sealed record MapEditorEditResult(
+    bool Success,
+    bool Changed,
+    string Message,
+    IReadOnlyList<string> Warnings)
+{
+    public static MapEditorEditResult Unchanged(string message)
+    {
+        return new MapEditorEditResult(true, false, message, []);
+    }
+
+    public static MapEditorEditResult ChangedResult(string message, IReadOnlyList<string>? warnings = null)
+    {
+        return new MapEditorEditResult(true, true, message, warnings ?? []);
+    }
+
+    public static MapEditorEditResult Failed(string message)
+    {
+        return new MapEditorEditResult(false, false, message, []);
+    }
 }
 
 public sealed record MapEditorLogEntry(

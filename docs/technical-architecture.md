@@ -479,12 +479,12 @@ Avoid making the first prototype depend on full 3D modeling, complex animation, 
 
 ## Debugging and Developer Tools
 
-Current development tooling includes an internal in-game map editor/tuner overlay. A plain C# editor session owns the mutable tool state, diagnostics, keyboard selection, JSON export path, edited mission/map materialization, and guarded save data. The Godot overlay owns rendering and input. It reads the current mission, map, content, and simulation state, pauses live simulation while edit mode is active, copies/prints reviewable JSON snippets, can preview-and-write only owned marker/region/object arrays back to source JSON with a `.bak`, and keeps authored map truth in content data while making terrain, markers, map objects, pylon ranges, resource wells, and wall links visible during playtest tuning. Returning from edit mode reinitializes the mission from in-memory edits instead of carrying live unit/building state across the boundary.
+Current development tooling includes an internal in-game map editor/tuner overlay. A plain C# editor session owns the mutable tool state, diagnostics, keyboard selection, creation/deletion/resize edits, dependency-aware warnings, inspector field edits, undo/redo snapshots, JSON export path, edited mission/map materialization, validation, and guarded save data. The Godot overlay owns rendering and input. It reads the current mission, map, content, and simulation state, pauses live simulation while edit mode is active, exposes a visible tool palette, supports drag-created markers and terrain regions, copies/prints reviewable JSON snippets, can preview-and-write only owned marker/region/object arrays back to source JSON with a `.bak`, and keeps authored map truth in content data while making terrain, markers, map objects, pylon ranges, resource wells, and wall links visible during playtest tuning. Returning from edit mode reinitializes the mission from in-memory edits instead of carrying live unit/building state across the boundary.
 
 The project should continue growing:
 
 - debug overlay for entity IDs, power, passability, and AI state
-- F5 map editor/tuner hardening for mission markers, terrain regions, map objects, route proof, diff-preview save, and re-init loops
+- F5 map editor/tuner hardening for route proof, live validation breadth, and map-object/bridge authoring ergonomics
 - mission event log
 - deterministic test map or scenario
 - fast restart hotkey in development builds

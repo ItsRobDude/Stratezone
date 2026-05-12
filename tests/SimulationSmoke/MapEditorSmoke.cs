@@ -68,6 +68,7 @@ internal static class MapEditorSmoke
         Assert(fullExport.Contains("\"mission_markers\": [", StringComparison.Ordinal), "full export includes marker block");
         Assert(fullExport.Contains("\"terrain_regions\": [", StringComparison.Ordinal), "full export includes terrain block");
         Assert(fullExport.Contains("\"map_objects\": [", StringComparison.Ordinal), "full export includes map object block");
+        ValidateEditorCreationDeletionResizeAndValidation(context);
         ValidateSessionMaterializationAndSave(context);
 
         var brokenSession = new MapEditorSession();
@@ -136,6 +137,53 @@ internal static class MapEditorSmoke
                 Directory.Delete(tempRoot, recursive: true);
             }
         }
+    }
+
+    private static void ValidateEditorCreationDeletionResizeAndValidation(SmokeTestContext context)
+    {
+        var session = new MapEditorSession();
+        session.Load(context.WellsAtTheRidgeMission, context.WellsAtTheRidgeMap);
+        var initialIssues = session.ValidateContent();
+        Assert(!initialIssues.Any(issue => issue.Severity == MapEditorValidationSeverity.Error), "loaded editor session has no blocking validation errors");
+
+        var marker = session.AddMarkerAt(new SimVector2(-120, 240));
+        Assert(marker.Id == "marker_new", "map editor creates a unique marker id");
+        Assert(session.SelectedId == marker.Id && session.SelectionKind == MapEditorSelectionKind.Marker, "created marker becomes selected");
+        Assert(session.ValidateContent().Any(issue => issue.Code == "unreferenced_marker" && issue.Message.Contains(marker.Id, StringComparison.Ordinal)), "new marker is flagged as unreferenced warning");
+        Assert(session.Undo(), "map editor undo removes the created marker");
+        Assert(!session.Markers.Any(item => item.Id == marker.Id), "undo restores marker list");
+        Assert(session.Redo(), "map editor redo restores the created marker");
+        Assert(session.Markers.Any(item => item.Id == marker.Id), "redo restores marker creation");
+
+        var rect = session.AddRegion("rect", new SimVector2(100, 100), new SimVector2(80, 120), 0);
+        Assert(rect.Shape == "rect", "map editor creates rect regions");
+        Assert(rect.BlocksMovement && rect.BlocksBuilding && !rect.AllowsBuilding, "new regions default to blocked terrain logic");
+        Assert(session.HitTestResizeHandle(new SimVector2(140, 100), 16) == MapEditorResizeHandle.RectRight, "rect region exposes edge resize handle");
+        Assert(session.ResizeSelected(MapEditorResizeHandle.RectRight, new SimVector2(180, 100)), "rect region can be resized by edge handle");
+        Assert(session.SelectedRegion?.Size.X == 120, "rect resize updates width while holding opposite edge");
+
+        var circle = session.AddRegion("circle", new SimVector2(200, 200), new SimVector2(100, 100), 50);
+        Assert(circle.Shape == "circle" && circle.Radius == 50, "map editor creates circle regions");
+        Assert(session.HitTestResizeHandle(new SimVector2(250, 200), 12) == MapEditorResizeHandle.CircleRadius, "circle region exposes perimeter resize handle");
+        Assert(session.ResizeSelected(MapEditorResizeHandle.CircleRadius, new SimVector2(280, 200)), "circle region can be resized by perimeter handle");
+        Assert(session.SelectedRegion?.Radius == 80, "circle resize updates radius");
+
+        Assert(session.SelectMarker("enemy_base"), "delete smoke can select a referenced marker");
+        var deletePreview = session.CreateDeletePreview();
+        Assert(deletePreview is not null, "delete preview is created for selected marker");
+        Assert(deletePreview!.References.Any(reference => reference.StartsWith("starting_entities", StringComparison.Ordinal)), "delete preview lists starting entity references");
+        Assert(deletePreview.References.Any(reference => reference.StartsWith("enemy_ai_profile.hub_marker", StringComparison.Ordinal)), "delete preview lists AI marker references");
+        var deleteResult = session.DeleteSelected();
+        Assert(deleteResult.Changed, "dependency-aware delete can orphan selected marker after confirmation");
+        Assert(session.ValidateContent().Any(issue => issue.Severity == MapEditorValidationSeverity.Error && issue.Message.Contains("enemy_base", StringComparison.Ordinal)), "orphaned delete creates blocking validation error");
+        Assert(session.Undo(), "undo restores deleted referenced marker");
+        Assert(!session.ValidateContent().Any(issue => issue.Severity == MapEditorValidationSeverity.Error), "undo clears orphaned marker validation error");
+
+        Assert(session.SelectMarker("enemy_base"), "rename smoke can select referenced marker");
+        var renameResult = session.RenameSelected("enemy_base_renamed");
+        Assert(renameResult.Changed, "map editor can rename selected marker");
+        Assert(renameResult.Warnings.Any(warning => warning.Contains("Existing references", StringComparison.Ordinal)), "rename warning surfaces stale references");
+        Assert(session.ValidateContent().Any(issue => issue.Severity == MapEditorValidationSeverity.Error && issue.Message.Contains("enemy_base", StringComparison.Ordinal)), "renaming a referenced marker creates validation error until JSON references are reviewed");
     }
 
     private static void CopyDirectory(string source, string destination)

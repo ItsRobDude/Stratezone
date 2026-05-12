@@ -346,7 +346,7 @@ Milestone 3 should establish:
 - a map-data shape for terrain regions such as blocked, water, cliff/ridge, buildable clearing, road/visual lane, and resource basin
 - a map-object shape for bridge geometry, health, passability, and later mission overrides without creating a new top-level neutral-object content file
 - validation that required map regions and mission markers exist
-- an honest internal F5 editor/tuner view with region/marker/object inspection, a clear legend, range overlays, optional pathing-blocked sampling, clipboard export, guarded diff-preview saves, and mission re-init from in-memory edits
+- an honest internal F5 editor/tuner view with region/marker/object inspection, visible marker/region creation tools, resize handles, dependency-aware delete, inline inspector edits, a clear legend, range overlays, optional pathing-blocked sampling, clipboard export, guarded diff-preview saves, validation, undo/redo, snap, mission switching, and mission re-init from in-memory edits
 - tests or smoke checks proving blocked terrain affects placement and movement
 - a rule that terrain art does not become gameplay truth; simulation reads data, presentation renders it
 
@@ -358,7 +358,7 @@ Milestone 4 should prove:
 - at least one destructible bridge changes route access and can be restored by a Grunt without Med Hall or repair-pad systems
 - terrain boundaries are readable with greybox/prototype art before final art
 
-A full shipped/modder-facing map editor remains later scope. The current internal map workbench should stay Stratezone-shaped and limited to mission markers, terrain regions, and map objects until Level 2 iteration proves it needs more.
+A full shipped/modder-facing map editor remains later scope. The current internal map workbench should stay Stratezone-shaped and limited to mission markers, terrain regions, and map objects; it authors logic, not art, and must not absorb mission triggers, AI tuning numbers, objectives, or balance values.
 
 ## Neutral Infrastructure Direction
 

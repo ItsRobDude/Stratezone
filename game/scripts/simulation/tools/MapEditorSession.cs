@@ -4,7 +4,7 @@ using Stratezone.Simulation.Content;
 
 namespace Stratezone.Simulation.Tools;
 
-public sealed class MapEditorSession
+public sealed partial class MapEditorSession
 {
     public const float DefaultMarkerHitRadius = 26.0f;
     private const int MaxDiagnostics = 200;
@@ -13,6 +13,8 @@ public sealed class MapEditorSession
     private readonly List<MapEditorRegion> _regions = [];
     private readonly List<MapEditorObject> _objects = [];
     private readonly List<MapEditorLogEntry> _diagnostics = [];
+    private MissionDefinition? _sourceMission;
+    private MapDefinition? _sourceMap;
     private MapEditorSelectionKind _selectionKind = MapEditorSelectionKind.None;
     private int _selectionIndex = -1;
 
@@ -133,9 +135,12 @@ public sealed class MapEditorSession
     {
         MissionId = mission?.Id ?? string.Empty;
         MapId = map?.Id ?? string.Empty;
+        _sourceMission = mission;
+        _sourceMap = map;
         _markers.Clear();
         _regions.Clear();
         _objects.Clear();
+        ResetUndoHistory();
         ClearSelection();
         Revision = 0;
 
@@ -301,6 +306,7 @@ public sealed class MapEditorSession
                 return true;
             }
 
+            PrepareChange();
             SelectedMarker.Position = center;
             Revision++;
             return true;
@@ -313,6 +319,7 @@ public sealed class MapEditorSession
                 return true;
             }
 
+            PrepareChange();
             SelectedRegion.Center = center;
             Revision++;
             return true;
@@ -325,6 +332,7 @@ public sealed class MapEditorSession
                 return true;
             }
 
+            PrepareChange();
             SelectedObject.Center = center;
             Revision++;
             return true;

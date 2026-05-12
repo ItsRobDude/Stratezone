@@ -7,12 +7,15 @@ internal static class MissionTriggerSmoke
     {
         var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
         var simulation = runtime.Simulation;
-        var hubPosition = runtime.Markers["player_landing_zone"] + new SimVector2(-120, -80);
+        var hubPosition = runtime.Markers["player_landing_zone"];
 
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, hubPosition).Success, "trigger route deploys Level 2 Colony Hub");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, hubPosition + new SimVector2(230, -20)).Success, "trigger route places powered support");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(200, -170)).Success, "trigger route places watched Barracks");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["player_start_well"]).Success, "trigger route places watched first Extractor");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, hubPosition + new SimVector2(-260, -120)).Success, "trigger route places powered support");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(-180, -260)).Success, "trigger route places watched Barracks");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270)).Success, "trigger route starts a legal well power chain");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-610, 245)).Success, "trigger route powers the start well approach");
+        var extractor = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["player_start_well"]);
+        Assert(extractor.Success, $"trigger route places watched first Extractor ({extractor.MessageKey}: {extractor.Message})");
 
         TickFor(simulation, 74.0f);
         Assert(!simulation.Units.Any(IsCommittedEnemyCombatUnit), "coalesced Mission 2 trigger does not fire before its grace window");

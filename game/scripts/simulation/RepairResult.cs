@@ -6,5 +6,6 @@ public sealed record RepairResult(
     UnitState? Grunt = null,
     BuildingState? Building = null,
     string MessageKey = "",
-    IReadOnlyDictionary<string, string>? MessageArgs = null
+    IReadOnlyDictionary<string, string>? MessageArgs = null,
+    BridgeState? Bridge = null
 );

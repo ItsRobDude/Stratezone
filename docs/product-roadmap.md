@@ -97,6 +97,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Split or justify large hand-written files that are already over the review trigger, especially `Main.cs` and broad smoke coverage.
    - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, scenario-specific tests, event trigger coalescing, and localization-key paths for mission presentation.
    - Harden the F5 map editor/tuner only where it helps internal route and balance proof; keep direct file writes, palettes, and modder packaging as later steps.
+   - Reopen destructible bridge scope narrowly for Mission 2's island-well rebuild, with bridge data living on maps and Grunt repair using the existing repair verb.
 
 4. Level 2 planning target
    - Build a resource-race mission with more strategic base-building terrain: cliffs, water, chokepoints, and Defense Tower wall opportunities.
@@ -228,7 +229,8 @@ Architecture work:
 - keep the Barracks Guardian upgrade schema/runtime path covered by smoke checks and mission data
 - support deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force start patterns without scene-copying
 - define first-pass map logic for terrain regions, passability, readable base/expansion pockets, resource basins, chokepoint markers, and explicit restricted-build scenarios
-- harden the in-game F5 map editor/tuner as the internal terrain and marker authoring aid, still exporting snippets instead of directly writing source files
+- define first-pass map-object logic for destructible/repairable bridges without creating a generic neutral-object content layer
+- harden the in-game F5 map editor/tuner as the internal terrain and marker authoring aid, including region/marker/object inspection, legend clarity, and optional pathing-blocked sampling while still exporting snippets instead of directly writing source files
 - add event trigger grace/cooldown/coalescing so normal early build milestones cannot fire stacked immediate raids
 - define localization-key paths for briefings, objectives, warnings, map callouts, failure/success text, retry hints, and tactical notes
 - keep all new mission rules in simulation/data layers rather than Godot scene-only code
@@ -239,6 +241,7 @@ Exit criteria:
 
 - Level 2 can be added mostly through data plus narrow simulation/presentation seams
 - map data can express blocked terrain, readable base/expansion areas, resource basins, tower-wall chokepoint candidates, and explicit restricted-build maps without relying on scene-only placement, and the F5 editor/tuner can inspect those authored facts during a running mission
+- map object data can express Mission 2 bridge crossings, and smoke coverage proves intact/broken/repaired bridge passability
 - Barracks Guardian upgrade has replaced Armory Annex as the Level 2 Guardian unlock path in runtime, data, and smoke coverage
 - mission starts can support the approved demo shapes without duplicating scene setup logic
 - `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together; current code has command-panel helpers split to `Main.CommandPanel.cs` and mission smoke grouped into scenario files
@@ -256,9 +259,10 @@ Mission shape:
 - same-tech human opponent using player-like structures and units with red or alternate-color presentation
 - the player builds and places the base instead of starting with a finished base
 - scarce resource wells that force a race for expansion timing
+- a central island well whose west/east approaches are controlled by destructible, player-repairable bridges
 - cliffs, water, or other impassable terrain that create readable chokepoints without requiring complex terrain simulation
 - larger battlefield spacing than Level 1, with the enemy base far enough away that expansion and scouting matter before the base assault
-- a longer central bridge/choke route, plus northern and southern exploration lanes that can reveal enemy movement instead of making the mission a straight middle-lane push
+- central bridge fights plus northern and southern exploration lanes that can reveal enemy movement instead of making the mission a straight middle-lane push
 - authored clearings and resource basins that make base expansion readable without becoming hidden build whitelists
 - Defense Tower wall placement that matters because of the terrain, not because a tutorial says so
 - enemy power dependencies and extractor routes that can be scouted and attacked
@@ -274,6 +278,7 @@ Exit criteria:
 - the player makes a real choice between expanding, walling, repairing, or attacking
 - the resource race is legible before it becomes punishing
 - at least one chokepoint can be shaped with Defense Tower walls
+- at least one destructible bridge changes route access, can collapse, and can be restored by a Grunt without Med Hall or repair-pad systems
 - blocked terrain affects placement and/or movement in a way smoke checks can prove
 - early patrols make top/bottom scouting worthwhile without replacing the main resource-race pressure
 - Guardian production remains a specialist answer if the Barracks upgrade enters this mission
@@ -489,6 +494,7 @@ These are not first-prototype commitments:
 - Grunt replacement cost relative to basic combat units.
 - Exact Level 3 route/map shape for making Vehicle Bay/Rover matter without replacing infantry.
 - Exact Guardian Retrofit cost, build time, and Grunt-count tuning after Level 2 playtests.
+- Exact Mission 2 bridge durability, repair rate, repair cost, and whether the enemy eventually needs Grunt bridge repair after human playtesting.
 - Exact Artillery/authored siege implementation for Mission 5. Current first-demo support/siege direction is powered Grunt-hacked defense equipment in Mission 4 plus Artillery/authored siege equipment in Mission 5. Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless playtests deliberately reopen them.
 - Exact Level 4 and Level 5 encounter layouts and failure-condition details.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.

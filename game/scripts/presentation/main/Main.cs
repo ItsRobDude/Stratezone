@@ -5,13 +5,14 @@ using Stratezone.Simulation.Content;
 
 public partial class Main : Node2D
 {
-    private const float DefaultUiScale = 1.6f;
-    private const float MinUiScale = 1.0f;
-    private const float MaxUiScale = 2.6f;
+    private const float DefaultUiScale = 1.1f;
+    private const float MinUiScale = 0.8f;
+    private const float MaxUiScale = 2.4f;
     private const int HudBaseFontSize = 18;
     private const float OffscreenCullPaddingWorld = 180.0f;
     private const float HudRefreshIntervalSeconds = 0.12f;
     private const string DefaultMissionId = ContentIds.Missions.FirstLanding;
+    private const string InitialMissionEnvironmentVariable = "STRATEZONE_MISSION_ID";
 
     private static readonly string[] BuildHotkeyOrder =
     [
@@ -74,7 +75,7 @@ public partial class Main : Node2D
         _lastActionMessage = L("ui.action.initial_hint");
         _worldRoot = GetNode<Node2D>("WorldRoot");
 
-        SetupSimulation(_activeMissionId);
+        SetupSimulation(ResolveInitialMissionId());
         SetupCamera();
         SetupHud();
         SetupMissionResultOverlay();
@@ -87,7 +88,7 @@ public partial class Main : Node2D
         SetupPlacementGhost();
         UpdateHud();
 
-        GD.Print($"{GameInfo.Title} scaffold ready. Mission target: {ContentIds.Missions.FirstLanding}");
+        GD.Print($"{GameInfo.Title} scaffold ready. Mission target: {_activeMissionId}");
     }
 
     public override void _Process(double delta)
@@ -246,6 +247,18 @@ public partial class Main : Node2D
         UpdateMapEditorOverlayData();
     }
 
+    private string ResolveInitialMissionId()
+    {
+        var missionId = System.Environment.GetEnvironmentVariable(InitialMissionEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(missionId) ||
+            _catalog?.Missions.ContainsKey(missionId) != true)
+        {
+            return DefaultMissionId;
+        }
+
+        return missionId!;
+    }
+
     private void SetupHud()
     {
         var uiRoot = GetNode<CanvasLayer>("UiRoot");
@@ -325,6 +338,7 @@ public partial class Main : Node2D
         _placementBuildingId = null;
         _placementGhost?.Clear();
         SetupSimulation(missionId);
+        ResetCameraToMissionStart();
         _mapRegionView?.UpdateFromMap(_simulation?.Map);
         UpdateMapEditorOverlayData();
         SyncWorldViews();

@@ -34,7 +34,8 @@ public static class MissionRuntimeFactory
             mission.AvailableUnitIds,
             mission.ObjectiveIds,
             map,
-            mission.MissionTriggers);
+            mission.MissionTriggers,
+            mission.MapObjectOverrides);
 
         foreach (var entity in mission.StartingEntities)
         {

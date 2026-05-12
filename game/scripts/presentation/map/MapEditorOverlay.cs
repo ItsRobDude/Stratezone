@@ -20,6 +20,8 @@ public partial class MapEditorOverlay : Node2D
     public bool EditorEnabled { get; private set; }
     public bool IsDragging => _isDragging;
     public string SelectedSummary => _session.SelectedSummary;
+    public string SelectedInspector => _session.SelectedInspector;
+    public bool PathingDebugEnabled { get; private set; }
 
     public MapEditorOverlay()
     {
@@ -91,6 +93,12 @@ public partial class MapEditorOverlay : Node2D
             _isDragging = false;
         }
 
+        QueueRedraw();
+    }
+
+    public void SetPathingDebugEnabled(bool enabled)
+    {
+        PathingDebugEnabled = enabled;
         QueueRedraw();
     }
 
@@ -166,10 +174,33 @@ public partial class MapEditorOverlay : Node2D
             return;
         }
 
+        DrawPathingDebugLayer();
         DrawRegions();
+        DrawMapObjects();
         DrawLivePowerAndWalls();
         DrawMarkerWallLinks();
         DrawMarkers();
+        DrawLegend();
+    }
+
+    private void DrawPathingDebugLayer()
+    {
+        if (!PathingDebugEnabled || _simulation is null)
+        {
+            return;
+        }
+
+        var cells = PathfindingSystem.SampleBlockedCells(
+            _simulation.Buildings,
+            _simulation.EnergyWalls,
+            _simulation.Map?.TerrainRegions ?? [],
+            _simulation.Bridges);
+        foreach (var cell in cells)
+        {
+            var size = new Vector2(cell.Size, cell.Size);
+            var rect = new Rect2(ToGodot(cell.Center) - (size * 0.5f), size);
+            DrawRect(rect, new Color(0.03f, 0.03f, 0.04f, 0.22f));
+        }
     }
 
     private void DrawRegions()
@@ -245,6 +276,50 @@ public partial class MapEditorOverlay : Node2D
         {
             DrawLine(ToGodot(wall.ExtendedStart), ToGodot(wall.ExtendedEnd), new Color(0.26f, 0.86f, 1.0f, 0.20f), EnergyWallSegment.BlockingClearance * 2.0f);
             DrawLine(ToGodot(wall.Start), ToGodot(wall.End), new Color(0.56f, 0.96f, 1.0f, 0.90f), 4.0f);
+        }
+    }
+
+    private void DrawMapObjects()
+    {
+        foreach (var mapObject in _session.Objects)
+        {
+            var selected = _session.SelectionKind == MapEditorSelectionKind.Object &&
+                string.Equals(_session.SelectedId, mapObject.Id, StringComparison.Ordinal);
+            var runtimeBridge = _simulation?.Bridges.FirstOrDefault(bridge => string.Equals(bridge.Id, mapObject.Id, StringComparison.Ordinal));
+            var intact = runtimeBridge?.IsIntact ?? mapObject.StartsIntact;
+            var fill = intact
+                ? new Color(0.54f, 0.45f, 0.34f, 0.42f)
+                : new Color(0.35f, 0.14f, 0.10f, 0.48f);
+            var outline = selected
+                ? new Color(1.0f, 0.94f, 0.35f, 0.96f)
+                : intact
+                    ? new Color(0.92f, 0.74f, 0.46f, 0.90f)
+                    : new Color(1.0f, 0.30f, 0.18f, 0.92f);
+
+            if (mapObject.Shape == "rect")
+            {
+                var size = ToGodot(mapObject.Size);
+                var rect = new Rect2(ToGodot(mapObject.Center) - (size * 0.5f), size);
+                DrawRect(rect, fill);
+                DrawRect(rect, outline, false, selected ? 4.0f : 2.0f);
+            }
+            else if (mapObject.Shape == "circle")
+            {
+                DrawCircle(ToGodot(mapObject.Center), mapObject.Radius, fill);
+                DrawArc(ToGodot(mapObject.Center), mapObject.Radius, 0, Mathf.Tau, 72, outline, selected ? 4.0f : 2.0f);
+            }
+
+            var healthText = runtimeBridge is null
+                ? mapObject.Id
+                : $"{mapObject.Id} {runtimeBridge.CurrentHealth:0}/{runtimeBridge.MaxHealth:0}";
+            DrawString(
+                ThemeDB.FallbackFont,
+                ToGodot(mapObject.Center) + new Vector2(10, 18),
+                healthText,
+                HorizontalAlignment.Left,
+                -1,
+                (int)LabelFontSize,
+                new Color(1.0f, 0.92f, 0.72f, selected ? 1.0f : 0.82f));
         }
     }
 
@@ -358,6 +433,37 @@ public partial class MapEditorOverlay : Node2D
         }
 
         return new Color(0.45f, 0.96f, 0.66f, 0.90f);
+    }
+
+    private void DrawLegend()
+    {
+        var origin = GetViewportTransform().AffineInverse() * new Vector2(18, 18);
+        var lines = new[]
+        {
+            "F5 editor legend",
+            "Gray: blocked terrain",
+            "Green: buildable hint",
+            "Gold: resource basin/well",
+            "Blue: chokepoint/lane",
+            "Tan/red: bridge intact/broken",
+            PathingDebugEnabled ? "P: pathing blocked layer ON" : "P: pathing blocked layer off"
+        };
+
+        var lineHeight = 16.0f;
+        var width = 240.0f;
+        var height = (lines.Length * lineHeight) + 14.0f;
+        DrawRect(new Rect2(origin - new Vector2(8, 16), new Vector2(width, height)), new Color(0.02f, 0.025f, 0.03f, 0.68f));
+        for (var index = 0; index < lines.Length; index++)
+        {
+            DrawString(
+                ThemeDB.FallbackFont,
+                origin + new Vector2(0, index * lineHeight),
+                lines[index],
+                HorizontalAlignment.Left,
+                -1,
+                12,
+                new Color(0.90f, 0.96f, 1.0f, 0.90f));
+        }
     }
 
     private static Color RegionFill(MapEditorRegion region)

@@ -24,6 +24,7 @@ public sealed partial class RtsSimulation
     private readonly List<ProductionOrderState> _productionOrders = [];
     private readonly List<ResourceWellState> _resourceWells = [];
     private readonly List<EnergyWallSegment> _energyWalls = [];
+    private readonly List<BridgeState> _bridges = [];
     private readonly List<SimulationEvent> _events = [];
     private readonly HashSet<string>? _trainableUnitIds;
     private readonly FogOfWarState _playerFog = new(-1400, 1400, -900, 900, FogCellSize);
@@ -56,7 +57,8 @@ public sealed partial class RtsSimulation
         IEnumerable<string>? trainableUnitIds = null,
         IEnumerable<string>? objectiveIds = null,
         MapDefinition? map = null,
-        IEnumerable<MissionTriggerDefinition>? missionTriggers = null)
+        IEnumerable<MissionTriggerDefinition>? missionTriggers = null,
+        IEnumerable<MissionMapObjectOverrideDefinition>? mapObjectOverrides = null)
     {
         _catalog = catalog;
         _map = map;
@@ -69,6 +71,7 @@ public sealed partial class RtsSimulation
         _trainableUnitIds = trainableUnitIds is null
             ? null
             : new HashSet<string>(trainableUnitIds, StringComparer.Ordinal);
+        InitializeBridges(map, mapObjectOverrides);
 
         foreach (var placement in resourceWellPlacements)
         {
@@ -83,6 +86,7 @@ public sealed partial class RtsSimulation
     public IReadOnlyList<ProductionOrderState> ProductionOrders => _productionOrders;
     public IReadOnlyList<ResourceWellState> ResourceWells => _resourceWells;
     public IReadOnlyList<EnergyWallSegment> EnergyWalls => _energyWalls;
+    public IReadOnlyList<BridgeState> Bridges => _bridges;
     public IReadOnlyList<SimulationEvent> Events => _events;
     public FogOfWarState PlayerFog => _playerFog;
     public MapDefinition? Map => _map;
@@ -433,6 +437,21 @@ public sealed partial class RtsSimulation
         unit.TargetFormationOffset = formationOffset;
     }
 
+    public void CommandUnitAttackBridge(int unitEntityId, string targetBridgeId, SimVector2 formationOffset = default)
+    {
+        var unit = FindLiveUnit(unitEntityId);
+        var target = FindBridge(targetBridgeId);
+        if (unit is null || target is null || !target.IsIntact)
+        {
+            return;
+        }
+
+        unit.ClearPath();
+        unit.ClearCommandTargets();
+        unit.TargetBridgeId = target.Id;
+        unit.TargetFormationOffset = formationOffset;
+    }
+
     public UpgradeResult TryUpgradeBuilding(int buildingEntityId, string upgradeBuildingId)
     {
         return TryUpgradeBuildingForFaction(ContentIds.Factions.PlayerExpedition, buildingEntityId, upgradeBuildingId);
@@ -562,7 +581,8 @@ public sealed partial class RtsSimulation
             target,
             _buildings,
             GetBlockingEnergyWallsForFaction(unit.FactionId),
-            _map?.TerrainRegions ?? []);
+            _map?.TerrainRegions ?? [],
+            _bridges);
 
         if (path.Success)
         {

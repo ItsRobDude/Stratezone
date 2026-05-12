@@ -11,6 +11,7 @@ public sealed class MapEditorSession
 
     private readonly List<MapEditorMarker> _markers = [];
     private readonly List<MapEditorRegion> _regions = [];
+    private readonly List<MapEditorObject> _objects = [];
     private readonly List<MapEditorLogEntry> _diagnostics = [];
     private MapEditorSelectionKind _selectionKind = MapEditorSelectionKind.None;
     private int _selectionIndex = -1;
@@ -21,10 +22,11 @@ public sealed class MapEditorSession
     public string MapId { get; private set; } = string.Empty;
     public IReadOnlyList<MapEditorMarker> Markers => _markers;
     public IReadOnlyList<MapEditorRegion> Regions => _regions;
+    public IReadOnlyList<MapEditorObject> Objects => _objects;
     public IReadOnlyList<MapEditorLogEntry> Diagnostics => _diagnostics;
     public MapEditorSelectionKind SelectionKind => _selectionKind;
 
-    public string? SelectedId => SelectedMarker?.Id ?? SelectedRegion?.Id;
+    public string? SelectedId => SelectedMarker?.Id ?? SelectedObject?.Id ?? SelectedRegion?.Id;
 
     public SimVector2? SelectedCenter
     {
@@ -38,6 +40,11 @@ public sealed class MapEditorSession
             if (SelectedRegion is not null)
             {
                 return SelectedRegion.Center;
+            }
+
+            if (SelectedObject is not null)
+            {
+                return SelectedObject.Center;
             }
 
             return null;
@@ -56,6 +63,12 @@ public sealed class MapEditorSession
             ? _regions[_selectionIndex]
             : null;
 
+    public MapEditorObject? SelectedObject => _selectionKind == MapEditorSelectionKind.Object &&
+        _selectionIndex >= 0 &&
+        _selectionIndex < _objects.Count
+            ? _objects[_selectionIndex]
+            : null;
+
     public string SelectedSummary
     {
         get
@@ -70,7 +83,48 @@ public sealed class MapEditorSession
                 return $"{SelectedRegion.Id} {SelectedRegion.RegionType} {SelectedRegion.Shape} at {FormatVector(SelectedRegion.Center)}";
             }
 
-            return "No marker or region selected.";
+            if (SelectedObject is not null)
+            {
+                return $"{SelectedObject.Id} {SelectedObject.ObjectType} {SelectedObject.Shape} HP {SelectedObject.MaxHealth:0} at {FormatVector(SelectedObject.Center)}";
+            }
+
+            return "No marker, region, or object selected.";
+        }
+    }
+
+    public string SelectedInspector
+    {
+        get
+        {
+            if (SelectedMarker is not null)
+            {
+                var content = SelectedMarker.ContentIds.Count == 0
+                    ? "none"
+                    : string.Join(", ", SelectedMarker.ContentIds);
+                return $"Marker id={SelectedMarker.Id}\nposition={FormatVector(SelectedMarker.Position)}\ncontent={content}";
+            }
+
+            if (SelectedRegion is not null)
+            {
+                return "Region " +
+                    $"id={SelectedRegion.Id}\n" +
+                    $"type={SelectedRegion.RegionType} shape={SelectedRegion.Shape}\n" +
+                    $"center={FormatVector(SelectedRegion.Center)} size={FormatShapeSize(SelectedRegion.Shape, SelectedRegion.Size, SelectedRegion.Radius)}\n" +
+                    $"blocks_movement={FormatBool(SelectedRegion.BlocksMovement)} blocks_building={FormatBool(SelectedRegion.BlocksBuilding)} allows_building={FormatBool(SelectedRegion.AllowsBuilding)}\n" +
+                    $"tags={FormatTags(SelectedRegion.Tags)}";
+            }
+
+            if (SelectedObject is not null)
+            {
+                return "Object " +
+                    $"id={SelectedObject.Id}\n" +
+                    $"type={SelectedObject.ObjectType} shape={SelectedObject.Shape}\n" +
+                    $"center={FormatVector(SelectedObject.Center)} size={FormatShapeSize(SelectedObject.Shape, SelectedObject.Size, SelectedObject.Radius)}\n" +
+                    $"max_health={FormatNumber(SelectedObject.MaxHealth)} starts_intact={FormatBool(SelectedObject.StartsIntact)} blocks_when_broken={FormatBool(SelectedObject.BlocksMovementWhenBroken)}\n" +
+                    $"tags={FormatTags(SelectedObject.Tags)}";
+            }
+
+            return "No selection.";
         }
     }
 
@@ -80,6 +134,7 @@ public sealed class MapEditorSession
         MapId = map?.Id ?? string.Empty;
         _markers.Clear();
         _regions.Clear();
+        _objects.Clear();
         ClearSelection();
 
         if (mission is null)
@@ -128,9 +183,25 @@ public sealed class MapEditorSession
                     region.AllowsBuilding,
                     region.Tags.ToArray()));
             }
+
+            foreach (var mapObject in map.MapObjects)
+            {
+                _objects.Add(new MapEditorObject(
+                    mapObject.Id,
+                    mapObject.ObjectType,
+                    mapObject.Shape,
+                    mapObject.Center,
+                    mapObject.Size,
+                    mapObject.Radius,
+                    mapObject.MaxHealth,
+                    mapObject.StartsIntact,
+                    mapObject.BlocksMovementWhenBroken,
+                    mapObject.Tags.ToArray()));
+            }
         }
 
         LogDuplicateIds(_regions.Select(region => region.Id), "terrain region");
+        LogDuplicateIds(_objects.Select(item => item.Id), "map object");
         if (mission is not null && _markers.Count == 0)
         {
             LogWarning("load", $"Mission '{MissionId}' has no mission markers.");
@@ -141,7 +212,7 @@ public sealed class MapEditorSession
             LogInfo("load", $"Map '{MapId}' has no terrain regions; editor will show markers and live simulation overlays only.");
         }
 
-        LogInfo("load", $"Loaded map editor session: mission='{MissionId}', map='{MapId}', markers={_markers.Count}, regions={_regions.Count}.");
+        LogInfo("load", $"Loaded map editor session: mission='{MissionId}', map='{MapId}', markers={_markers.Count}, regions={_regions.Count}, objects={_objects.Count}.");
     }
 
     public bool SelectAt(SimVector2 position, float markerHitRadius = DefaultMarkerHitRadius)
@@ -155,6 +226,14 @@ public sealed class MapEditorSession
             return true;
         }
 
+        var objectIndex = FindObjectAt(position);
+        if (objectIndex >= 0)
+        {
+            _selectionKind = MapEditorSelectionKind.Object;
+            _selectionIndex = objectIndex;
+            return true;
+        }
+
         var regionIndex = FindRegionAt(position);
         if (regionIndex >= 0)
         {
@@ -163,7 +242,7 @@ public sealed class MapEditorSession
             return true;
         }
 
-        LogInfo("select_at", $"No marker or region at {FormatVector(position)}.");
+        LogInfo("select_at", $"No marker, region, or object at {FormatVector(position)}.");
         return false;
     }
 
@@ -225,7 +304,13 @@ public sealed class MapEditorSession
             return true;
         }
 
-        LogWarning("move_selected", $"Cannot move to {FormatVector(center)} because no marker or region is selected.");
+        if (SelectedObject is not null)
+        {
+            SelectedObject.Center = center;
+            return true;
+        }
+
+        LogWarning("move_selected", $"Cannot move to {FormatVector(center)} because no marker, region, or object is selected.");
         return false;
     }
 
@@ -234,7 +319,7 @@ public sealed class MapEditorSession
         var center = SelectedCenter;
         if (center is null)
         {
-            LogWarning("nudge_selected", $"Cannot nudge by {FormatVector(delta)} because no marker or region is selected.");
+            LogWarning("nudge_selected", $"Cannot nudge by {FormatVector(delta)} because no marker, region, or object is selected.");
             return false;
         }
 
@@ -253,15 +338,20 @@ public sealed class MapEditorSession
             return FormatTerrainRegion(SelectedRegion);
         }
 
-        LogWarning("export_selected", "Cannot export selection because no marker or region is selected.");
+        if (SelectedObject is not null)
+        {
+            return FormatMapObject(SelectedObject);
+        }
+
+        LogWarning("export_selected", "Cannot export selection because no marker, region, or object is selected.");
         return "No map editor selection.";
     }
 
     public string ExportAllSnippets()
     {
-        if (_markers.Count == 0 && _regions.Count == 0)
+        if (_markers.Count == 0 && _regions.Count == 0 && _objects.Count == 0)
         {
-            LogWarning("export_all", "Full export requested with no mission markers or terrain regions loaded.");
+            LogWarning("export_all", "Full export requested with no mission markers, terrain regions, or map objects loaded.");
         }
 
         var builder = new StringBuilder();
@@ -280,6 +370,14 @@ public sealed class MapEditorSession
         {
             builder.Append(Indent(FormatTerrainRegion(_regions[index]), 2));
             builder.AppendLine(index == _regions.Count - 1 ? string.Empty : ",");
+        }
+
+        builder.AppendLine("],");
+        builder.AppendLine("\"map_objects\": [");
+        for (var index = 0; index < _objects.Count; index++)
+        {
+            builder.Append(Indent(FormatMapObject(_objects[index]), 2));
+            builder.AppendLine(index == _objects.Count - 1 ? string.Empty : ",");
         }
 
         builder.AppendLine("]");
@@ -346,6 +444,31 @@ public sealed class MapEditorSession
         return builder.ToString();
     }
 
+    public static string FormatMapObject(MapEditorObject mapObject)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("{");
+        builder.AppendLine($"  \"id\": \"{JsonEscape(mapObject.Id)}\",");
+        builder.AppendLine($"  \"object_type\": \"{JsonEscape(mapObject.ObjectType)}\",");
+        builder.AppendLine($"  \"shape\": \"{JsonEscape(mapObject.Shape)}\",");
+        builder.AppendLine($"  \"center\": {{ \"x\": {FormatNumber(mapObject.Center.X)}, \"y\": {FormatNumber(mapObject.Center.Y)} }},");
+        if (mapObject.Shape == "rect")
+        {
+            builder.AppendLine($"  \"size\": {{ \"x\": {FormatNumber(mapObject.Size.X)}, \"y\": {FormatNumber(mapObject.Size.Y)} }},");
+        }
+        else if (mapObject.Shape == "circle")
+        {
+            builder.AppendLine($"  \"radius\": {FormatNumber(mapObject.Radius)},");
+        }
+
+        builder.AppendLine($"  \"max_health\": {FormatNumber(mapObject.MaxHealth)},");
+        builder.AppendLine($"  \"starts_intact\": {FormatBool(mapObject.StartsIntact)},");
+        builder.AppendLine($"  \"blocks_movement_when_broken\": {FormatBool(mapObject.BlocksMovementWhenBroken)},");
+        builder.AppendLine($"  \"tags\": [{string.Join(", ", mapObject.Tags.Select(tag => $"\"{JsonEscape(tag)}\""))}]");
+        builder.Append("}");
+        return builder.ToString();
+    }
+
     public static string FormatVector(SimVector2 vector)
     {
         return $"({FormatNumber(vector.X)}, {FormatNumber(vector.Y)})";
@@ -391,12 +514,35 @@ public sealed class MapEditorSession
         return bestIndex;
     }
 
+    private int FindObjectAt(SimVector2 position)
+    {
+        var bestIndex = -1;
+        var bestArea = float.MaxValue;
+        for (var index = 0; index < _objects.Count; index++)
+        {
+            var mapObject = _objects[index];
+            if (!mapObject.Contains(position))
+            {
+                continue;
+            }
+
+            var area = mapObject.Area;
+            if (area < bestArea)
+            {
+                bestIndex = index;
+                bestArea = area;
+            }
+        }
+
+        return bestIndex;
+    }
+
     private bool SelectRelative(int delta, string operation)
     {
-        var total = _markers.Count + _regions.Count;
+        var total = _markers.Count + _regions.Count + _objects.Count;
         if (total == 0)
         {
-            LogWarning(operation, "Cannot cycle selection because no markers or regions are loaded.");
+            LogWarning(operation, "Cannot cycle selection because no markers, regions, or objects are loaded.");
             return false;
         }
 
@@ -404,6 +550,7 @@ public sealed class MapEditorSession
         {
             MapEditorSelectionKind.Marker => _selectionIndex,
             MapEditorSelectionKind.Region => _markers.Count + _selectionIndex,
+            MapEditorSelectionKind.Object => _markers.Count + _regions.Count + _selectionIndex,
             _ => delta > 0 ? -1 : 0
         };
         var nextIndex = ((currentIndex + delta) % total + total) % total;
@@ -412,10 +559,15 @@ public sealed class MapEditorSession
             _selectionKind = MapEditorSelectionKind.Marker;
             _selectionIndex = nextIndex;
         }
-        else
+        else if (nextIndex < _markers.Count + _regions.Count)
         {
             _selectionKind = MapEditorSelectionKind.Region;
             _selectionIndex = nextIndex - _markers.Count;
+        }
+        else
+        {
+            _selectionKind = MapEditorSelectionKind.Object;
+            _selectionIndex = nextIndex - _markers.Count - _regions.Count;
         }
 
         LogInfo(operation, $"Selected {SelectedSummary}.");
@@ -459,6 +611,7 @@ public sealed class MapEditorSession
             SelectedId,
             _markers.Count,
             _regions.Count,
+            _objects.Count,
             exceptionType,
             exceptionMessage);
         _diagnostics.Add(entry);
@@ -486,6 +639,18 @@ public sealed class MapEditorSession
     private static string FormatBool(bool value)
     {
         return value ? "true" : "false";
+    }
+
+    private static string FormatShapeSize(string shape, SimVector2 size, float radius)
+    {
+        return shape == "circle"
+            ? $"radius {FormatNumber(radius)}"
+            : $"{FormatNumber(size.X)}x{FormatNumber(size.Y)}";
+    }
+
+    private static string FormatTags(IReadOnlyList<string> tags)
+    {
+        return tags.Count == 0 ? "none" : string.Join(", ", tags);
     }
 
     private static string JsonEscape(string value)
@@ -577,11 +742,72 @@ public sealed class MapEditorRegion
     }
 }
 
+public sealed class MapEditorObject
+{
+    public MapEditorObject(
+        string id,
+        string objectType,
+        string shape,
+        SimVector2 center,
+        SimVector2 size,
+        float radius,
+        float maxHealth,
+        bool startsIntact,
+        bool blocksMovementWhenBroken,
+        IReadOnlyList<string> tags)
+    {
+        Id = id;
+        ObjectType = objectType;
+        Shape = shape;
+        Center = center;
+        Size = size;
+        Radius = radius;
+        MaxHealth = maxHealth;
+        StartsIntact = startsIntact;
+        BlocksMovementWhenBroken = blocksMovementWhenBroken;
+        Tags = tags;
+    }
+
+    public string Id { get; }
+    public string ObjectType { get; }
+    public string Shape { get; }
+    public SimVector2 Center { get; set; }
+    public SimVector2 Size { get; }
+    public float Radius { get; }
+    public float MaxHealth { get; }
+    public bool StartsIntact { get; }
+    public bool BlocksMovementWhenBroken { get; }
+    public IReadOnlyList<string> Tags { get; }
+
+    public float Area => Shape == "circle"
+        ? MathF.PI * Radius * Radius
+        : MathF.Abs(Size.X * Size.Y);
+
+    public bool Contains(SimVector2 position)
+    {
+        if (Shape == "circle")
+        {
+            return Center.DistanceTo(position) <= Radius;
+        }
+
+        if (Shape != "rect")
+        {
+            return false;
+        }
+
+        var halfWidth = Size.X * 0.5f;
+        var halfHeight = Size.Y * 0.5f;
+        return MathF.Abs(position.X - Center.X) <= halfWidth &&
+            MathF.Abs(position.Y - Center.Y) <= halfHeight;
+    }
+}
+
 public enum MapEditorSelectionKind
 {
     None,
     Marker,
-    Region
+    Region,
+    Object
 }
 
 public sealed record MapEditorLogEntry(
@@ -594,6 +820,7 @@ public sealed record MapEditorLogEntry(
     string? SelectionId,
     int MarkerCount,
     int RegionCount,
+    int ObjectCount,
     string? ExceptionType,
     string? ExceptionMessage)
 {
@@ -605,7 +832,7 @@ public sealed record MapEditorLogEntry(
         var exception = ExceptionType is null
             ? string.Empty
             : $" exception={ExceptionType}: {ExceptionMessage}";
-        return $"[MapEditor:{Level}] op={Operation} mission={MissionId} map={MapId} selection={selection} markers={MarkerCount} regions={RegionCount} message=\"{Message}\"{exception}";
+        return $"[MapEditor:{Level}] op={Operation} mission={MissionId} map={MapId} selection={selection} markers={MarkerCount} regions={RegionCount} objects={ObjectCount} message=\"{Message}\"{exception}";
     }
 }
 

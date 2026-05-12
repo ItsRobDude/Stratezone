@@ -18,7 +18,27 @@ public sealed partial class RtsSimulation
 
         validation.Grunt.TargetUnitEntityId = null;
         validation.Grunt.TargetBuildingEntityId = null;
+        validation.Grunt.TargetBridgeId = null;
         validation.Grunt.RepairTargetBuildingEntityId = validation.Building.EntityId;
+        validation.Grunt.RepairTargetBridgeId = null;
+        validation.Grunt.TargetFormationOffset = default;
+        validation.Grunt.ClearPath();
+        return validation;
+    }
+
+    public RepairResult CommandUnitRepairBridge(int unitEntityId, string targetBridgeId)
+    {
+        var validation = ValidateUnitRepairBridge(unitEntityId, targetBridgeId);
+        if (!validation.Success || validation.Grunt is null || validation.Bridge is null)
+        {
+            return validation;
+        }
+
+        validation.Grunt.TargetUnitEntityId = null;
+        validation.Grunt.TargetBuildingEntityId = null;
+        validation.Grunt.TargetBridgeId = null;
+        validation.Grunt.RepairTargetBuildingEntityId = null;
+        validation.Grunt.RepairTargetBridgeId = validation.Bridge.Id;
         validation.Grunt.TargetFormationOffset = default;
         validation.Grunt.ClearPath();
         return validation;
@@ -63,8 +83,54 @@ public sealed partial class RtsSimulation
             SimulationMessage.Args(("buildingId", building.Definition.Id), ("building", building.Definition.DisplayName)));
     }
 
+    public RepairResult ValidateUnitRepairBridge(int unitEntityId, string targetBridgeId)
+    {
+        var unit = FindLiveUnit(unitEntityId);
+        var bridge = FindBridge(targetBridgeId);
+        if (unit is null || !unit.Definition.CanRepair)
+        {
+            return new RepairResult(false, "Select a Grunt.", unit, null, "sim.repair.requires_grunt", Bridge: bridge);
+        }
+
+        if (bridge is null)
+        {
+            return new RepairResult(false, "Select a damaged bridge.", unit, null, "sim.repair.requires_bridge", Bridge: null);
+        }
+
+        if (!bridge.IsDamaged)
+        {
+            return new RepairResult(
+                false,
+                $"{BridgeDisplayName(bridge)} does not need repair.",
+                unit,
+                null,
+                "sim.repair.bridge_not_damaged",
+                SimulationMessage.Args(("bridgeId", bridge.Id), ("bridge", BridgeDisplayName(bridge))),
+                bridge);
+        }
+
+        if (GetMaterialsForFaction(unit.FactionId) <= 0.0f)
+        {
+            return new RepairResult(false, "Need materials for repair.", unit, null, "sim.repair.need_materials", Bridge: bridge);
+        }
+
+        return new RepairResult(
+            true,
+            $"Repairing {BridgeDisplayName(bridge)}.",
+            unit,
+            null,
+            "sim.repair.bridge_started",
+            SimulationMessage.Args(("bridgeId", bridge.Id), ("bridge", BridgeDisplayName(bridge))),
+            bridge);
+    }
+
     private bool TickUnitRepair(UnitState unit, float deltaSeconds)
     {
+        if (TickUnitRepairBridge(unit, deltaSeconds))
+        {
+            return true;
+        }
+
         if (unit.RepairTargetBuildingEntityId is null)
         {
             return false;

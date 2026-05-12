@@ -199,6 +199,50 @@ public partial class Main
             return;
         }
 
+        var bridgeTarget = FindBridgeAt(worldPosition);
+        if (bridgeTarget is not null)
+        {
+            if (bridgeTarget.IsDamaged)
+            {
+                var repairers = 0;
+                foreach (var grunt in selectedUnits.Where(unit => unit.Definition.CanRepair))
+                {
+                    var result = _simulation.CommandUnitRepairBridge(grunt.EntityId, bridgeTarget.Id);
+                    if (result.Success)
+                    {
+                        repairers++;
+                    }
+                }
+
+                if (repairers > 0)
+                {
+                    _lastActionMessage = L(
+                        "ui.action.units_repairing_bridge",
+                        SimulationMessage.Args(("count", repairers), ("bridge", BridgeName(bridgeTarget))));
+                    return;
+                }
+            }
+
+            if (bridgeTarget.IsIntact)
+            {
+                var attackers = 0;
+                var attackingUnits = selectedUnits.Where(unit => unit.Definition.CanAttack).ToArray();
+                for (var index = 0; index < attackingUnits.Length; index++)
+                {
+                    _simulation.CommandUnitAttackBridge(
+                        attackingUnits[index].EntityId,
+                        bridgeTarget.Id,
+                        ToSim(GetGroupOffset(index, attackingUnits.Length)));
+                    attackers++;
+                }
+
+                _lastActionMessage = attackers > 0
+                    ? L("ui.action.units_attacking_bridge", SimulationMessage.Args(("count", attackers), ("bridge", BridgeName(bridgeTarget))))
+                    : L("ui.action.selected_units_cannot_attack");
+                return;
+            }
+        }
+
         for (var index = 0; index < selectedUnits.Length; index++)
         {
             _simulation.CommandUnitMove(selectedUnits[index].EntityId, ToSim(worldPosition + GetGroupOffset(index, selectedUnits.Length)));
@@ -326,6 +370,20 @@ public partial class Main
             .FirstOrDefault();
     }
 
+    private BridgeState? FindBridgeAt(Vector2 worldPosition)
+    {
+        if (_simulation is null)
+        {
+            return null;
+        }
+
+        var simPosition = ToSim(worldPosition);
+        return _simulation.Bridges
+            .Where(bridge => bridge.Contains(simPosition, 12.0f))
+            .OrderBy(bridge => bridge.DistanceTo(simPosition))
+            .FirstOrDefault();
+    }
+
     private bool BuildingContainsPoint(BuildingState building, Vector2 worldPosition)
     {
         if (_buildingViews.TryGetValue(building.EntityId, out var view) && view.Visible)
@@ -350,4 +408,5 @@ public partial class Main
     {
         return new Vector2(vector.X, vector.Y);
     }
+
 }

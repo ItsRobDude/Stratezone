@@ -83,6 +83,9 @@ public partial class Main
                     _lastActionMessage = "Map editor reloaded from current mission data.";
                     RefreshMapEditorPanel();
                     return true;
+                case Key.P:
+                    ToggleMapEditorPathingLayer();
+                    return true;
                 case Key.E:
                     ExportMapEditorSelection();
                     return true;
@@ -189,8 +192,23 @@ public partial class Main
         }
 
         _lastActionMessage = _mapEditorEnabled
-            ? "Map editor active. Left-drag markers/regions, arrows nudge, E copies selection, J copies all, R reloads."
+            ? "Map editor active. Left-drag markers/regions/objects, arrows nudge, P pathing, E copies selection, J copies all, R reloads."
             : "Map editor closed.";
+        RefreshMapEditorPanel();
+    }
+
+    private void ToggleMapEditorPathingLayer()
+    {
+        if (_mapEditorOverlay is null)
+        {
+            LogMapEditorWarning("toggle_pathing", "Map editor overlay is missing; cannot toggle pathing layer.");
+            return;
+        }
+
+        _mapEditorOverlay.SetPathingDebugEnabled(!_mapEditorOverlay.PathingDebugEnabled);
+        _lastActionMessage = _mapEditorOverlay.PathingDebugEnabled
+            ? "Map editor pathing layer on."
+            : "Map editor pathing layer off.";
         RefreshMapEditorPanel();
     }
 
@@ -284,7 +302,8 @@ public partial class Main
         _mapEditorLabel.Text =
             "F5 Map Editor/Tuner\n" +
             $"{_mapEditorOverlay.SelectedSummary}\n" +
-            "Tab/Q: cycle selection | Left-drag: move center | Arrows: nudge 10\n" +
+            $"{_mapEditorOverlay.SelectedInspector}\n" +
+            "Tab/Q: cycle | Left-drag: move center | Arrows: nudge 10 | P: pathing\n" +
             "E/right-click: copy selected | J: copy all | R: reload | Esc/F5: close\n" +
             _lastMapEditorExportSummary;
     }
@@ -297,10 +316,10 @@ public partial class Main
         }
 
         var viewportSize = GetSafeHudSize();
-        var panelSize = new Vector2(560, 148) * _uiScale;
+        var panelSize = new Vector2(640, 230) * _uiScale;
         _mapEditorPanel.Size = panelSize;
         _mapEditorPanel.Position = new Vector2(16, Mathf.Max(16.0f, viewportSize.Y - panelSize.Y - 16.0f));
-        _mapEditorLabel.Size = new Vector2(536, 128) * _uiScale;
+        _mapEditorLabel.Size = new Vector2(616, 210) * _uiScale;
         _mapEditorLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(12 * _uiScale));
     }
 

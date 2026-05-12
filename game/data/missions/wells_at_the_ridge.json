@@ -26,7 +26,7 @@
             "text_key": "mission.mission_wells_at_the_ridge.callout.start_well"
           },
           {
-            "marker": "contested_ridge_well",
+            "marker": "central_island_well",
             "text_key": "mission.mission_wells_at_the_ridge.callout.contested_well"
           },
           {
@@ -36,29 +36,29 @@
         ]
       },
       "mission_markers": [
-        { "id": "player_landing_zone", "position": { "x": -820, "y": 220 } },
-        { "id": "player_grunt", "position": { "x": -800, "y": 175 } },
-        { "id": "player_commander", "position": { "x": -855, "y": 240 } },
-        { "id": "player_cadet_north", "position": { "x": -760, "y": 155 } },
-        { "id": "player_cadet_south", "position": { "x": -745, "y": 265 } },
-        { "id": "player_rifleman", "position": { "x": -705, "y": 215 } },
-        { "id": "player_start_well", "position": { "x": -650, "y": 320 } },
-        { "id": "contested_ridge_well", "position": { "x": 100, "y": 20 } },
-        { "id": "enemy_well", "position": { "x": 1080, "y": 320 } },
-        { "id": "enemy_base", "position": { "x": 1160, "y": -150 } },
-        { "id": "enemy_power", "position": { "x": 1000, "y": -240 } },
-        { "id": "enemy_base_pylon", "position": { "x": 850, "y": -210 } },
-        { "id": "enemy_wall_power_pylon", "position": { "x": 800, "y": -65 } },
-        { "id": "enemy_well_pylon", "position": { "x": 1035, "y": 175 } },
-        { "id": "enemy_pylon_weak_point", "position": { "x": 260, "y": -20 } },
-        { "id": "enemy_barracks", "position": { "x": 1150, "y": 40 } },
-        { "id": "enemy_extractor", "position": { "x": 100, "y": 20 } },
-        { "id": "enemy_defense", "position": { "x": 720, "y": -145 } },
-        { "id": "enemy_defense_south", "position": { "x": 720, "y": 20 } },
-        { "id": "enemy_rally", "position": { "x": 610, "y": 20 } },
-        { "id": "enemy_patrol_north_overlook", "position": { "x": -160, "y": -520 } },
-        { "id": "enemy_patrol_south_forest", "position": { "x": -220, "y": 470 } },
-        { "id": "enemy_patrol_west_probe", "position": { "x": -520, "y": -80 } }
+        { "id": "player_landing_zone", "position": { "x": -860, "y": 200 } },
+        { "id": "player_grunt", "position": { "x": -830, "y": 155 } },
+        { "id": "player_commander", "position": { "x": -895, "y": 230 } },
+        { "id": "player_cadet_north", "position": { "x": -790, "y": 145 } },
+        { "id": "player_cadet_south", "position": { "x": -780, "y": 260 } },
+        { "id": "player_rifleman", "position": { "x": -735, "y": 205 } },
+        { "id": "player_start_well", "position": { "x": -600, "y": 420 } },
+        { "id": "central_island_well", "position": { "x": 20, "y": 0 } },
+        { "id": "enemy_well", "position": { "x": 1030, "y": 320 } },
+        { "id": "enemy_base", "position": { "x": 1120, "y": -150 } },
+        { "id": "enemy_power", "position": { "x": 960, "y": -250 } },
+        { "id": "enemy_base_pylon", "position": { "x": 760, "y": -220 } },
+        { "id": "enemy_wall_power_pylon", "position": { "x": 705, "y": 0 } },
+        { "id": "enemy_well_pylon", "position": { "x": 955, "y": 180 } },
+        { "id": "enemy_pylon_weak_point", "position": { "x": 200, "y": -20 } },
+        { "id": "enemy_barracks", "position": { "x": 1080, "y": 45 } },
+        { "id": "enemy_extractor", "position": { "x": 20, "y": 0 } },
+        { "id": "enemy_defense", "position": { "x": 610, "y": -80 } },
+        { "id": "enemy_defense_south", "position": { "x": 610, "y": 80 } },
+        { "id": "enemy_rally", "position": { "x": 600, "y": 0 } },
+        { "id": "enemy_patrol_north_overlook", "position": { "x": 20, "y": -520 } },
+        { "id": "enemy_patrol_south_forest", "position": { "x": 20, "y": 500 } },
+        { "id": "enemy_patrol_west_probe", "position": { "x": -660, "y": -80 } }
       ],
       "starting_entities": [
         {
@@ -179,7 +179,7 @@
         },
         {
           "well_id": "well_wells_ridge_contested",
-          "marker": "contested_ridge_well"
+          "marker": "central_island_well"
         }
       ],
       "available_unit_ids": ["unit_grunt", "unit_cadet", "unit_rifleman", "unit_guardian"],
@@ -194,7 +194,7 @@
         "building_rocket_tower"
       ],
       "enemy_ai_profile": {
-        "id": "ai_profile_level_2_private_military_ridge",
+        "id": "ai_profile_level_2_private_military_island",
         "first_rebuild_delay_seconds": 60,
         "first_central_well_rebuild_delay_seconds": 185,
         "first_attack_delay_seconds": 180,
@@ -216,6 +216,7 @@
         "extractor_marker": "enemy_extractor",
         "defense_tower_marker": "enemy_defense",
         "rally_marker": "enemy_rally",
+        "central_island_attack_via_bridge_id": "bridge_central_isle_east",
         "patrol_markers": ["enemy_patrol_north_overlook", "enemy_patrol_south_forest", "enemy_patrol_west_probe"]
       },
       "mission_triggers": [
@@ -237,7 +238,7 @@
         "explored_terrain_stays_visible": true,
         "track_last_known_enemies": false
       },
-      "special_rules": ["player_places_colony_hub", "ridge_chokepoints_map_logic"],
+      "special_rules": ["player_places_colony_hub", "central_island_bridge_race"],
       "tags": ["wells_at_the_ridge", "greybox_demo", "playable_ugly"],
       "balance_status": "tunable_placeholder"
     }

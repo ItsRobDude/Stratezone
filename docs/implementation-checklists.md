@@ -235,9 +235,9 @@ Evidence:
 - one defensive wall/chokepoint route note
 - one Barracks Guardian upgrade route note if the unlock enters Level 2
 - smoke or debug evidence for any new terrain/passability/buildability rule
-- smoke evidence that the Mission 2 player can deploy an offset Hub inside the landing clearing, build Power/Barracks/Extractor, chain Pylons through the authored power corridor to the midfield well, train the second Grunt, complete Guardian Retrofit, and train a Guardian
-- smoke evidence that the enemy does not claim the midfield well on its normal rebuild beat and waits for the mission-profile central-well claim delay
-- smoke evidence that Mission 2 starts with a real enemy defense wall, the wall buffer overlaps nearby ridge blockers and blocks intended walk-around lanes, units can shoot through a wall when range allows, idle combat units auto-fire at visible hostile troops/tanks but not buildings, enemy forward expansion pylons are not rebuilt after the player owns the linked midfield well, base-breach rebuilds prefer defense/wall power over expansion pylons, idle enemy defenders pursue base intruders before the scheduled attack timer, and early enemy patrols fan out across multiple authored exploration markers
+- smoke evidence that the Mission 2 player can deploy the Hub inside the landing clearing, build Power/Barracks/Extractor, chain Pylons through the authored power corridor to the central island well, train the second Grunt, complete Guardian Retrofit, and train a Guardian
+- smoke evidence that the enemy does not claim the central island well on its normal rebuild beat and waits for the mission-profile central-well claim delay
+- smoke evidence that Mission 2 starts with a real enemy defense wall, the wall buffer blocks the intended bridgehead crossing lanes, units can shoot through a wall when range allows, idle combat units auto-fire at visible hostile troops/tanks but not buildings, enemy forward expansion pylons are not rebuilt after the player owns the linked central island well, base-breach rebuilds prefer defense/wall power over expansion pylons, idle enemy defenders pursue base intruders before the scheduled attack timer, and early enemy patrols fan out across multiple authored exploration markers
 - notes for any support/siege system deliberately kept out
 
 ## Milestone 5 Checklist: Level 3 - Mobile Response

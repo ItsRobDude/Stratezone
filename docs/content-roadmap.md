@@ -67,10 +67,11 @@ Gameplay shape:
 
 - the player still builds and places the base; the mission does not start with a finished base
 - limited resource wells create an expansion race
+- a central island well creates the resource-race focus, with player and enemy approaches controlled by destructible bridges
 - cliffs, water, ridges, or other terrain blockers create readable chokepoints
 - Defense Tower walls matter because of map shape
 - enemy power and extractor routes are useful strike targets
-- player chooses between expanding, walling, repairing, or attacking
+- player chooses between expanding, walling, repairing bridges, severing bridge access, or attacking
 - Guardian production can enter here through a Barracks upgrade, not an Armory Annex
 - enemy armor, hardened defense, or tower anchors should justify Guardian use if the unlock enters Level 2
 
@@ -260,8 +261,10 @@ Purpose: make crossings readable and strategically important.
 Recommendation:
 
 - Use bridges/fords as passable lanes through water or ravines.
-- Keep them indestructible at first to avoid bridge-repair and bridge-state complexity.
-- Use them in Level 2 only if they make the resource race clearer rather than more fragile.
+- Reopen destructible bridge scope narrowly for Mission 2 because the central island well needs a clearer tactical spine than the current ridge pass.
+- First-pass bridges are map-owned geography objects with health, passability while intact, blocked passability while broken, and Grunt timed repair/rebuild.
+- Avoid generic bridge-control, neutral-object, or repair-pad systems in this pass.
+- Mission design must keep at least one bridge route repairable by the player so a broken crossing does not soft-lock the enemy-base win condition.
 
 ### Forests and Light Woods
 
@@ -341,8 +344,9 @@ Maps need active design and runtime logic before the project needs a full map ed
 Milestone 3 should establish:
 
 - a map-data shape for terrain regions such as blocked, water, cliff/ridge, buildable clearing, road/visual lane, and resource basin
+- a map-object shape for bridge geometry, health, passability, and later mission overrides without creating a new top-level neutral-object content file
 - validation that required map regions and mission markers exist
-- a simple preview or debug view path for map authorship, even if it is only generated output or an in-game debug overlay
+- an honest in-game F5 editor/tuner view with region/marker/object inspection, a clear legend, range overlays, and optional pathing-blocked sampling
 - tests or smoke checks proving blocked terrain affects placement and movement
 - a rule that terrain art does not become gameplay truth; simulation reads data, presentation renders it
 
@@ -351,6 +355,7 @@ Milestone 4 should prove:
 - Level 2 uses at least one terrain blocker type for real pathing or placement consequences
 - at least one resource basin creates a visible resource-race decision
 - at least one chokepoint can be shaped with Defense Tower walls
+- at least one destructible bridge changes route access and can be restored by a Grunt without Med Hall or repair-pad systems
 - terrain boundaries are readable with greybox/prototype art before final art
 
 A full map editor remains later scope. A dev map workbench or preview tool can be considered during Milestone 3 only if it helps prove map data and Level 2 iteration without becoming its own product.
@@ -459,14 +464,16 @@ Purpose: make terrain routes and chokepoints more dynamic.
 Direction:
 
 - Bridge gameplay is a strong fit for terrain-focused missions.
-- A bridge may be controlled, activated, repaired, or destroyed depending on the mission.
-- Destructible bridges are appealing, but should wait until terrain/passability and path recalculation are stable enough.
+- Mission 2 uses destructible/repairable map bridges as geography objects, not generic capturable infrastructure.
+- A bridge can be damaged down, collapse into blocked passability, then be restored by a physically present Grunt through the existing repair-style work verb.
+- First-pass bridges do not use Med Hall, Logistics / Repair Pad, Neutral Repair Platform, or a broader bridge-control UI.
 - If a bridge can be destroyed, mission design must avoid soft-locking the player unless the soft lock is an intentional fail state.
+- Enemy bridge repair remains stretch/deferred until a hands-on playtest proves the AI looks broken without it.
 
 Fit:
 
-- Strong candidate after the first pass of terrain logic.
-- Good for resource-race, convoy/intercept, or siege missions.
+- Strong current fit for Mission 2's island-well resource race.
+- Good later fit for convoy/intercept or siege missions once the core bridge pass proves stable.
 
 ### Wrecks
 
@@ -521,13 +528,14 @@ Preferred first-demo candidates:
 2. Abandoned Refinery
 3. Sensor/Radar Tower with small-area reveal only
 4. Ruined unpowered turret
-5. Bridge control or destructible bridge after terrain/pathing support exists
+5. Destructible/repairable map bridges as Mission 2 geography, separate from generic neutral infrastructure
 
 Later-only possibilities:
 
 - Repair Platform
 - Wrecks as blockers/landmarks
 - Supply Depot
+- Bridge controls, if a later mission needs capture/activation instead of simple damage/repair
 
 Not planned for now:
 
@@ -1500,8 +1508,8 @@ Direction:
 
 - The player still builds and places the base; do not start with a finished base.
 - Prove scarce wells, cliffs/water/ridges, readable clearings, resource basins, Defense Tower wall placement, and enemy power/extractor routes.
-- The midfield well should sit near the actual center lane, with an authored buildable power corridor so the player can chain Pylons to it without guessing invisible placement pockets.
-- The enemy may contest the midfield well, but should not start with it or claim it on the opening tick.
+- The central island well should sit near the actual center lane, with authored bridge crossings and a buildable power corridor so the player can chain Pylons to it without guessing invisible placement pockets.
+- The enemy may contest the central island well, but should not start with it or claim it on the opening tick.
 - Guardian production is unlocked through a Barracks upgrade, not an Armory Annex.
 - Enemy Guardian production follows the same runtime gate: train/staff Grunts, complete the Barracks upgrade, then train Guardians.
 - Use enemy armor, hardened defense, or tower anchors only if needed to justify Guardian use.

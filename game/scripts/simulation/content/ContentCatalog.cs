@@ -260,12 +260,36 @@ public sealed class ContentCatalog
                 record.TryGetProperty("requires_buildable_regions", out var requiresBuildableRegions) && requiresBuildableRegions.GetBoolean(),
                 LoadStringArray(record, "required_features"),
                 LoadMapRegions(record),
+                LoadMapObjects(record),
                 LoadStringArray(record, "tags"));
 
             maps.Add(map.Id, map);
         }
 
         return maps;
+    }
+
+    private static IReadOnlyList<MapObjectDefinition> LoadMapObjects(JsonElement record)
+    {
+        if (!record.TryGetProperty("map_objects", out var objects) || objects.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return objects.EnumerateArray()
+            .Select(item => new MapObjectDefinition(
+                item.GetProperty("id").GetString() ?? string.Empty,
+                item.GetProperty("object_type").GetString() ?? string.Empty,
+                item.GetProperty("shape").GetString() ?? string.Empty,
+                LoadVector(item.GetProperty("center")),
+                item.TryGetProperty("size", out var size) ? LoadVector(size) : new SimVector2(0, 0),
+                GetOptionalFloat(item, "radius"),
+                item.TryGetProperty("max_health", out var maxHealth) ? maxHealth.GetSingle() : 0.0f,
+                !item.TryGetProperty("starts_intact", out var startsIntact) || startsIntact.GetBoolean(),
+                !item.TryGetProperty("blocks_movement_when_broken", out var blocksWhenBroken) || blocksWhenBroken.GetBoolean(),
+                LoadStringArray(item, "tags")))
+            .Where(item => item.Id.Length > 0)
+            .ToArray();
     }
 
     private static IReadOnlyList<MapRegionDefinition> LoadMapRegions(JsonElement record)
@@ -336,6 +360,7 @@ public sealed class ContentCatalog
             var failureConditionIds = LoadStringArray(record, "failure_conditions");
             var presentation = LoadMissionPresentation(record);
             var missionTriggers = LoadMissionTriggers(record);
+            var mapObjectOverrides = LoadMissionMapObjectOverrides(record);
             var enemyAiProfile = LoadEnemyAiProfile(record);
 
             var mission = new MissionDefinition(
@@ -355,6 +380,7 @@ public sealed class ContentCatalog
                 failureConditionIds,
                 presentation,
                 missionTriggers,
+                mapObjectOverrides,
                 enemyAiProfile
             );
 
@@ -480,6 +506,21 @@ public sealed class ContentCatalog
             .ToArray();
     }
 
+    private static IReadOnlyList<MissionMapObjectOverrideDefinition> LoadMissionMapObjectOverrides(JsonElement record)
+    {
+        if (!record.TryGetProperty("mission_object_overrides", out var overrides) || overrides.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return overrides.EnumerateArray()
+            .Select(item => new MissionMapObjectOverrideDefinition(
+                item.GetProperty("object_id").GetString() ?? string.Empty,
+                Math.Clamp(GetOptionalFloat(item, "starting_health_percent"), 0.0f, 1.0f)))
+            .Where(item => item.ObjectId.Length > 0)
+            .ToArray();
+    }
+
     private static EnemyAiProfileDefinition LoadEnemyAiProfile(JsonElement record)
     {
         if (!record.TryGetProperty("enemy_ai_profile", out var profile) || profile.ValueKind != JsonValueKind.Object)
@@ -510,7 +551,8 @@ public sealed class ContentCatalog
             GetOptionalString(profile, "extractor_marker") ?? EnemyAiProfileDefinition.Default.ExtractorMarkerId,
             GetOptionalString(profile, "defense_tower_marker") ?? EnemyAiProfileDefinition.Default.DefenseTowerMarkerId,
             GetOptionalString(profile, "rally_marker") ?? EnemyAiProfileDefinition.Default.RallyMarkerId,
-            LoadStringArray(profile, "patrol_markers"));
+            LoadStringArray(profile, "patrol_markers"),
+            GetOptionalString(profile, "central_island_attack_via_bridge_id") ?? string.Empty);
     }
 
     private static SimVector2 LoadVector(JsonElement record)

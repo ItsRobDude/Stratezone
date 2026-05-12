@@ -409,12 +409,36 @@ Required fields:
 Planned first-pass map logic fields:
 
 - `terrain_regions`: authored rectangles, polygons, or circles with stable IDs, terrain kind, and gameplay flags
+- `map_objects`: authored map-owned objects such as bridges, with stable IDs, shape, geometry, health, starting intact state, passability flags, and tags
 - `requires_buildable_regions`: optional boolean; default false. When false, base missions allow building anywhere except blocked terrain, resource-well reservations, power/support limits, footprint overlap, and mission-specific rules. Set true only for an explicitly restricted scenario.
 - `buildable_regions`: authored base/expansion readability hints where normal footprint/buffer rules still apply if `requires_buildable_regions` is true
 - `blocked_regions`: impassable terrain such as cliffs, ridges, deep water, wreck fields, or map-edge blockers
 - `resource_basins`: visual/logical pockets around important wells
 - `chokepoint_markers`: authored spots intended for Defense Tower wall play, attack lanes, or route proof
 - `visual_lanes`: roads, dirt paths, or open corridors that guide the player visually before any movement-speed bonus exists
+
+First-pass `map_objects` bridge shape:
+
+```json
+{
+  "id": "bridge_central_isle_west",
+  "object_type": "bridge",
+  "shape": "rect",
+  "center": { "x": -260, "y": 0 },
+  "size": { "x": 180, "y": 90 },
+  "max_health": 600,
+  "starts_intact": true,
+  "blocks_movement_when_broken": true,
+  "tags": ["bridge", "central_isle"]
+}
+```
+
+Bridge prototype rules:
+
+- Bridge objects are geographic facts of the map, not a generic neutral-infrastructure framework.
+- Intact bridges subtract passable geometry from blocked water/cliff terrain for pathfinding.
+- Broken bridges add no passable geometry, so underlying blocked terrain applies normally.
+- Bridge IDs must be stable because missions, editor exports, smoke tests, and future saves may refer to them.
 
 First-pass map ID:
 
@@ -509,6 +533,7 @@ Prototype rules:
 - includes an enemy AI profile for first rebuild delay, first central-well claim delay, first attack delay, optional early patrol delay/interval/count, rebuild cadence, production cadence, attack group size, patrol group size, central-well interest, contested-well rebuild cooldown/limit, pressure slowdown, train-time multiplier, and authored patrol marker list
 - may include `presentation` keys for briefing title/body, start objective, success, failure, retry hints, tactical notes, and map callouts; these keys must exist in localization once wired
 - may include `mission_triggers` for authored pacing beats such as coalesced base-building pressure
+- may include `mission_object_overrides`, each with `object_id` and `starting_health_percent`, so a later mission can start with a damaged map object without duplicating the map record
 - uses `available_unit_ids` as the trainable-unit truth for both player production and enemy AI production in that mission
 - uses `available_building_ids` to hide or lock mission-inappropriate build and upgrade commands without deleting future content records
 - future first-demo missions should use authored `starting_entities`, `starting_resources`, `available_unit_ids`, and `available_building_ids` rather than a player-selected loadout system

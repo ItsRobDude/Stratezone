@@ -189,6 +189,7 @@ public partial class Main
         }
 
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
+        _mapRegionView?.UpdateBridgeStates(_simulation.Bridges);
         _fogOfWarView?.UpdateFromState(_simulation.PlayerFog, visibleWorldBounds);
     }
 }

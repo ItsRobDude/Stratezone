@@ -8,12 +8,35 @@ public partial class Main
         _camera = new Camera2D
         {
             Name = "GreyboxCamera",
-            Position = new Vector2(140, 20),
             Zoom = new Vector2(1.0f, 1.0f),
             Enabled = true
         };
         AddChild(_camera);
+        ResetCameraToMissionStart();
         _camera.MakeCurrent();
+    }
+
+    private void ResetCameraToMissionStart()
+    {
+        if (_camera is null)
+        {
+            return;
+        }
+
+        var playerStart = FindMissionMarkerPosition("player_landing_zone") ??
+            FindMissionMarkerPosition("player_base") ??
+            new Vector2(140, 20);
+        _camera.Position = playerStart;
+        _camera.Zoom = new Vector2(1.0f, 1.0f);
+        ApplyPresentationZoom();
+    }
+
+    private Vector2? FindMissionMarkerPosition(string markerId)
+    {
+        var marker = _activeMission?.Markers.FirstOrDefault(marker => string.Equals(marker.Id, markerId, StringComparison.Ordinal));
+        return marker is null
+            ? null
+            : new Vector2(marker.Position.X, marker.Position.Y);
     }
 
     private void HandleCameraPan(double delta)

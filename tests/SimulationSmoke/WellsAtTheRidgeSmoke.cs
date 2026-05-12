@@ -5,150 +5,140 @@ internal static class WellsAtTheRidgeSmoke
 {
     public static void Run(SmokeTestContext context)
     {
-        var catalog = context.Catalog;
-        var ridgeRuntime = MissionRuntimeFactory.Create(catalog, ContentIds.Missions.WellsAtTheRidge);
-        var ridgeSimulation = ridgeRuntime.Simulation;
+        var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
+        var simulation = runtime.Simulation;
 
-        Assert(!ridgeSimulation.Buildings.Any(building =>
+        Assert(!simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PlayerExpedition &&
             building.Definition.Id == ContentIds.Buildings.ColonyHub), "Level 2 runtime starts without a player Colony Hub");
-        var beforeHubPowerPlant = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(-240, 170));
+        var beforeHubPowerPlant = simulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, runtime.Markers["player_landing_zone"] + new SimVector2(-260, -120));
         Assert(!beforeHubPowerPlant.IsLegal, "Level 2 requires Colony Hub deployment before other player structures");
         Assert(beforeHubPowerPlant.MessageKey == "sim.placement.requires_colony_hub", "pre-Hub structure placement returns a stable message key");
-        var hubPlacement = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"]);
+
+        var hubPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, runtime.Markers["player_landing_zone"]);
         Assert(hubPlacement.Success, $"Level 2 lets the player deploy the Colony Hub from mission data ({hubPlacement.MessageKey}: {hubPlacement.Message})");
-        Assert(!ridgeSimulation.ValidatePlacement(ContentIds.Buildings.ColonyHub, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(150, 0)).IsLegal, "Level 2 rejects a second player Colony Hub");
-        var afterHubPowerPlant = ridgeSimulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, ridgeRuntime.Markers["player_landing_zone"] + new SimVector2(-240, 170));
+        Assert(!simulation.ValidatePlacement(ContentIds.Buildings.ColonyHub, runtime.Markers["player_landing_zone"] + new SimVector2(150, 0)).IsLegal, "Level 2 rejects a second player Colony Hub");
+        var afterHubPowerPlant = simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, runtime.Markers["player_landing_zone"] + new SimVector2(-260, -120));
         Assert(afterHubPowerPlant.Success, $"Level 2 allows normal building after the Colony Hub is deployed ({afterHubPowerPlant.MessageKey}: {afterHubPowerPlant.Message})");
-        var northRidgeBlocker = ridgeRuntime.Map.TerrainRegions.Single(region => region.Id == "ridge_north_blocker");
-        var southRidgeBlocker = ridgeRuntime.Map.TerrainRegions.Single(region => region.Id == "ridge_south_blocker");
-        var blockedTerrainPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, northRidgeBlocker.Center);
-        Assert(!blockedTerrainPlacement.IsLegal, "Level 2 blocked terrain rejects building placement");
+
+        var westWater = runtime.Map.TerrainRegions.Single(region => region.Id == "west_channel_water");
+        var blockedTerrainPlacement = simulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, westWater.Center);
+        Assert(!blockedTerrainPlacement.IsLegal, "Level 2 water channel rejects building placement");
         Assert(blockedTerrainPlacement.MessageKey == "sim.placement.blocked_by_terrain", "blocked terrain placement returns a stable message key");
-        var outsideMarkedRegionPlacement = ridgeSimulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-1060, 190));
+        var outsideMarkedRegionPlacement = simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270));
         Assert(outsideMarkedRegionPlacement.IsLegal, $"Level 2 allows powered Pylon placement outside marked base regions ({outsideMarkedRegionPlacement.MessageKey}: {outsideMarkedRegionPlacement.Reason})");
-        var ridgePathProbe = ridgeSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-640, -290));
-        ridgeSimulation.CommandUnitMove(ridgePathProbe.EntityId, new SimVector2(860, -290));
-        Assert(ridgePathProbe.PathWaypoints.Count > 1, "Level 2 pathfinding routes around ridge blockers instead of taking the direct line");
-        Assert(!ridgePathProbe.PathWaypoints.Any(waypoint => northRidgeBlocker.Contains(waypoint, 0.0f)), "Level 2 path waypoints stay out of blocked terrain");
-        ridgePathProbe.ApplyDamage(9999, "debug");
-        Assert(ridgeSimulation.Buildings.Any(building =>
+
+        Assert(simulation.Bridges.Count == 2, "Level 2 runtime creates bridge state from map objects");
+        Assert(simulation.Bridges.All(bridge => bridge.IsIntact), "Level 2 bridges start intact");
+        ValidateBridgePassabilityAndRepair(context);
+
+        Assert(simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
             building.ResourceWellId == "well_wells_ridge_enemy" &&
             building.IsPowered), "Level 2 starts the enemy entrenched on its own powered well");
-        Assert(ridgeSimulation.EnergyWalls.Any(wall =>
+        Assert(simulation.EnergyWalls.Any(wall =>
         {
-            var start = ridgeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
-            var end = ridgeSimulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
+            var start = simulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
+            var end = simulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
             return start.FactionId == ContentIds.Factions.PrivateMilitary &&
                 end.FactionId == ContentIds.Factions.PrivateMilitary;
         }), "Level 2 starts with a real powered enemy defense wall segment");
-        Assert(ridgeSimulation.Buildings.Any(building =>
+        Assert(simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.Pylon &&
-            building.Position.DistanceTo(ridgeRuntime.Markers["enemy_pylon_weak_point"]) < 0.01f &&
-            building.IsPowered), "Level 2 enemy forward Pylon starts powered enough to contest later");
-        var enemyWall = ridgeSimulation.EnergyWalls.First(wall =>
-        {
-            var start = ridgeSimulation.Buildings.Single(building => building.EntityId == wall.StartAnchorEntityId);
-            var end = ridgeSimulation.Buildings.Single(building => building.EntityId == wall.EndAnchorEntityId);
-            return start.FactionId == ContentIds.Factions.PrivateMilitary &&
-                end.FactionId == ContentIds.Factions.PrivateMilitary;
-        });
-        Assert(ridgeSimulation.IsLineBlockedByEnergyWall(new SimVector2(640, -185), new SimVector2(820, -185)), "Level 2 enemy wall buffer blocks the north walk-around lane");
-        Assert(ridgeSimulation.IsLineBlockedByEnergyWall(new SimVector2(640, 60), new SimVector2(820, 60)), "Level 2 enemy wall buffer blocks the south walk-around lane");
-        Assert(northRidgeBlocker.Contains(enemyWall.ExtendedStart, EnergyWallSegment.BlockingClearance), "Level 2 enemy wall north buffer overlaps the ridge blocker instead of leaving a walk-around gap");
-        Assert(southRidgeBlocker.Contains(enemyWall.ExtendedEnd, EnergyWallSegment.BlockingClearance), "Level 2 enemy wall south buffer overlaps the ridge blocker instead of leaving a walk-around gap");
-        var enemyPylons = ridgeSimulation.Buildings.Where(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.Pylon &&
-            !building.IsDestroyed).ToArray();
-        foreach (var enemyPylon in enemyPylons)
-        {
-            Assert(
-                SimulationGeometry.DistancePointToSegment(enemyPylon.Position, enemyWall.Start, enemyWall.End) > enemyPylon.FootprintWorldRadius + 8.0f,
-                "Level 2 enemy Pylons are not authored inside the defense wall lane");
-        }
-        TickFor(ridgeSimulation, 0.1f);
-        Assert(!ridgeSimulation.Buildings.Any(building =>
+            building.Position.DistanceTo(runtime.Markers["enemy_pylon_weak_point"]) < 0.01f &&
+            building.IsPowered), "Level 2 enemy forward Pylon starts powered enough to contest the island well");
+
+        TickFor(simulation, 0.1f);
+        Assert(!simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested"), "Level 2 enemy does not instantly own the midfield well");
-        TickFor(ridgeSimulation, ridgeRuntime.Mission.EnemyAiProfile.FirstRebuildDelaySeconds + 20.0f);
-        Assert(!ridgeSimulation.Buildings.Any(building =>
+            building.ResourceWellId == "well_wells_ridge_contested"), "Level 2 enemy does not instantly own the island well");
+        TickFor(simulation, runtime.Mission.EnemyAiProfile.FirstCentralWellRebuildDelaySeconds + 0.2f);
+        Assert(simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested" &&
-            !building.IsDestroyed), "Level 2 enemy core rebuild timing does not also claim the midfield well");
-        TickFor(ridgeSimulation, ridgeRuntime.Mission.EnemyAiProfile.FirstCentralWellRebuildDelaySeconds - ridgeRuntime.Mission.EnemyAiProfile.FirstRebuildDelaySeconds - 19.8f);
-        var forwardPylonAfterDelay = ridgeSimulation.Buildings.FirstOrDefault(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.Pylon &&
-            building.Position.DistanceTo(ridgeRuntime.Markers["enemy_pylon_weak_point"]) < 0.01f &&
-            !building.IsDestroyed);
-        var basePylonAfterDelay = ridgeSimulation.Buildings.FirstOrDefault(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.Pylon &&
-            building.Position.DistanceTo(ridgeRuntime.Markers["enemy_base_pylon"]) < 0.01f &&
-            !building.IsDestroyed);
-        Assert(ridgeSimulation.Buildings.Any(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested"), $"Level 2 enemy AI races for the contested ridge well; base pylon powered={basePylonAfterDelay?.IsPowered}; forward pylon powered={forwardPylonAfterDelay?.IsPowered}; enemy materials={ridgeSimulation.EnemyMaterials:0.0}");
-        var firstContestedExtractor = ridgeSimulation.Buildings.Single(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested" &&
-            !building.IsDestroyed);
-        firstContestedExtractor.ApplyDamage(9999, "explosive");
-        TickFor(ridgeSimulation, 60.0f);
-        Assert(!ridgeSimulation.Buildings.Any(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested" &&
-            !building.IsDestroyed), "Level 2 enemy does not immediately rebuild the destroyed midfield Extractor");
-        TickFor(ridgeSimulation, ridgeRuntime.Mission.EnemyAiProfile.CentralWellRebuildCooldownSeconds - 59.7f);
-        Assert(ridgeSimulation.Buildings.Any(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested" &&
-            !building.IsDestroyed), "Level 2 enemy may retake the midfield well after the authored cooldown");
-        var secondContestedExtractor = ridgeSimulation.Buildings.Single(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested" &&
-            !building.IsDestroyed);
-        secondContestedExtractor.ApplyDamage(9999, "explosive");
-        TickFor(ridgeSimulation, ridgeRuntime.Mission.EnemyAiProfile.CentralWellRebuildCooldownSeconds + 1.0f);
-        Assert(!ridgeSimulation.Buildings.Any(building =>
-            building.FactionId == ContentIds.Factions.PrivateMilitary &&
-            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
-            building.ResourceWellId == "well_wells_ridge_contested" &&
-            !building.IsDestroyed), "Level 2 enemy stops treating the midfield well as an infinite rebuild loop");
-        Assert(ridgeSimulation.MissionState.PrimaryTextKey == "mission.objective.destroy_enemy_colony_hub", "Level 2 objective text targets the enemy Colony Hub");
-        ValidateNaturalPlayerPylonRoute(context);
+            building.ResourceWellId == "well_wells_ridge_contested"), "Level 2 enemy AI can race for the island well when the bridge route is intact");
+
+        ValidateEnemyBridgeAwareDeferral(context);
         ValidateBaseBreachRebuildPriority(context);
         ValidateEnemyBaseDefenseResponse(context);
         ValidateEnemyPatrolsExploreFlanks(context);
         ValidateWallDoesNotBlockFire(context);
+        ValidateNaturalPlayerPylonRoute(context);
         ValidatePlayerGuardianRoute(context);
 
-        var ridgeEnemyHub = ridgeSimulation.Buildings.Single(building =>
+        Assert(simulation.MissionState.PrimaryTextKey == "mission.objective.destroy_enemy_colony_hub", "Level 2 objective text targets the enemy Colony Hub");
+        var enemyHub = simulation.Buildings.Single(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.ColonyHub &&
             !building.IsDestroyed);
-        ridgeEnemyHub.ApplyDamage(9999, "explosive");
-        TickFor(ridgeSimulation, 0.1f);
-        var releasedHubTank = ridgeSimulation.Units.Single(unit =>
+        enemyHub.ApplyDamage(9999, "explosive");
+        TickFor(simulation, 0.1f);
+        var releasedHubTank = simulation.Units.Single(unit =>
             unit.FactionId == ContentIds.Factions.PrivateMilitary &&
             unit.Definition.Id == ContentIds.Units.MediumTank &&
             unit.IsColonyHubOccupant &&
             !unit.IsDestroyed);
-        Assert(ridgeSimulation.MissionState.Status == MissionStatus.Active, "destroying the Level 2 enemy Colony Hub releases a tank that must be killed before victory");
+        Assert(simulation.MissionState.Status == MissionStatus.Active, "destroying the Level 2 enemy Colony Hub releases a tank that must be killed before victory");
         releasedHubTank.ApplyDamage(9999, "explosive");
-        TickFor(ridgeSimulation, 0.1f);
-        Assert(ridgeSimulation.MissionState.Status == MissionStatus.Won, "Level 2 wins after the enemy Colony Hub and its released tank occupant are destroyed");
+        TickFor(simulation, 0.1f);
+        Assert(simulation.MissionState.Status == MissionStatus.Won, "Level 2 wins after the enemy Colony Hub and its released tank occupant are destroyed");
+    }
+
+    private static void ValidateBridgePassabilityAndRepair(SmokeTestContext context)
+    {
+        var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
+        var simulation = runtime.Simulation;
+        var bridge = simulation.FindBridge("bridge_central_isle_west")!;
+
+        var pathProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
+        simulation.CommandUnitMove(pathProbe.EntityId, runtime.Markers["central_island_well"]);
+        Assert(pathProbe.PathWaypoints.Count > 0 && !pathProbe.IsPathBlocked, "Level 2 intact west bridge allows pathing to the island well");
+        pathProbe.ApplyDamage(9999, "debug");
+
+        simulation.DebugDamageBridge(bridge.Id, bridge.MaxHealth + 1.0f);
+        Assert(!bridge.IsIntact, "Level 2 bridge damage can collapse an intact bridge");
+        var blockedProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
+        simulation.CommandUnitMove(blockedProbe.EntityId, runtime.Markers["central_island_well"]);
+        Assert(blockedProbe.IsPathBlocked, "Level 2 collapsed bridge blocks the same island route");
+        blockedProbe.ApplyDamage(9999, "debug");
+
+        var grunt = simulation.Units.First(unit =>
+            unit.FactionId == ContentIds.Factions.PlayerExpedition &&
+            unit.Definition.Id == ContentIds.Units.Grunt &&
+            !unit.IsDestroyed);
+        var repair = simulation.CommandUnitRepairBridge(grunt.EntityId, bridge.Id);
+        Assert(repair.Success, $"Level 2 Grunt can start bridge repair ({repair.MessageKey}: {repair.Message})");
+        TickFor(simulation, 36.0f);
+        Assert(bridge.IsIntact && !bridge.IsDamaged, "Level 2 Grunt repair restores the collapsed bridge");
+
+        var restoredProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
+        simulation.CommandUnitMove(restoredProbe.EntityId, runtime.Markers["central_island_well"]);
+        Assert(!restoredProbe.IsPathBlocked, "Level 2 restored bridge reopens island pathing without mission restart");
+    }
+
+    private static void ValidateEnemyBridgeAwareDeferral(SmokeTestContext context)
+    {
+        var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
+        var simulation = runtime.Simulation;
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, runtime.Markers["player_landing_zone"]).Success, "bridge deferral route deploys player Hub");
+        var enemyBridge = simulation.FindBridge("bridge_central_isle_east")!;
+        simulation.DebugDamageBridge(enemyBridge.Id, enemyBridge.MaxHealth + 1.0f);
+
+        TickFor(simulation, runtime.Mission.EnemyAiProfile.FirstCentralWellRebuildDelaySeconds + runtime.Mission.EnemyAiProfile.CentralWellRebuildCooldownSeconds + 0.2f);
+        Assert(!simulation.Buildings.Any(building =>
+            building.FactionId == ContentIds.Factions.PrivateMilitary &&
+            building.Definition.Id == ContentIds.Buildings.ExtractorRefinery &&
+            building.ResourceWellId == "well_wells_ridge_contested" &&
+            !building.IsDestroyed), "Level 2 enemy defers island-well rebuilds while its required bridge is broken");
+
+        TickFor(simulation, runtime.Mission.EnemyAiProfile.FirstAttackDelaySeconds + 0.2f);
+        Assert(!simulation.Units.Any(unit =>
+            unit.FactionId == ContentIds.Factions.PrivateMilitary &&
+            !unit.IsDestroyed &&
+            unit.IsEnemyAttackCommitted), "Level 2 enemy defers committed attacks when the bridge route is unreachable");
     }
 
     private static void ValidateBaseBreachRebuildPriority(SmokeTestContext context)
@@ -170,18 +160,29 @@ internal static class WellsAtTheRidgeSmoke
             building.Definition.Id == ContentIds.Buildings.Pylon &&
             building.Position.DistanceTo(runtime.Markers["enemy_wall_power_pylon"]) < 0.01f &&
             !building.IsDestroyed);
+        var forwardPylon = simulation.Buildings.Single(building =>
+            building.FactionId == ContentIds.Factions.PrivateMilitary &&
+            building.Definition.Id == ContentIds.Buildings.Pylon &&
+            building.Position.DistanceTo(runtime.Markers["enemy_pylon_weak_point"]) < 0.01f &&
+            !building.IsDestroyed);
         basePylon.ApplyDamage(9999, "explosive");
         wallPowerPylon.ApplyDamage(9999, "explosive");
+        forwardPylon.ApplyDamage(9999, "explosive");
         defenseTower.ApplyDamage(9999, "explosive");
         simulation.AddUnit(ContentIds.Units.Tank, ContentIds.Factions.PlayerExpedition, runtime.Markers["enemy_base"] + new SimVector2(-90, 0));
 
         TickFor(simulation, runtime.Mission.EnemyAiProfile.FirstRebuildDelaySeconds + 0.2f);
 
-        Assert(!simulation.Buildings.Any(building =>
+        Assert(simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.Pylon &&
             building.Position.DistanceTo(runtime.Markers["enemy_base_pylon"]) < 0.01f &&
-            !building.IsDestroyed), "Level 2 enemy skips base Pylon rebuilds during a base breach");
+            !building.IsDestroyed), "Level 2 enemy rebuilds the defensive power spine during a base breach when the wall route depends on it");
+        Assert(!simulation.Buildings.Any(building =>
+            building.FactionId == ContentIds.Factions.PrivateMilitary &&
+            building.Definition.Id == ContentIds.Buildings.Pylon &&
+            building.Position.DistanceTo(runtime.Markers["enemy_pylon_weak_point"]) < RtsSimulation.ToWorldRadius(6.0f) &&
+            !building.IsDestroyed), "Level 2 enemy skips forward expansion Pylon rebuilds during a base breach");
         Assert(simulation.Buildings.Any(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.DefenseTower &&
@@ -273,12 +274,13 @@ internal static class WellsAtTheRidgeSmoke
         var landingZone = runtime.Markers["player_landing_zone"];
 
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, landingZone).Success, "Level 2 natural route deploys the Colony Hub at the landing marker");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, landingZone + new SimVector2(-240, 170)).Success, "Level 2 natural route places a forward Power Plant from the landing marker");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1060, 190)).Success, "Level 2 natural route can start a Pylon chain east from base");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-360, 25)).Success, "Level 2 natural route can cross the longer bridge approach");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-60, 25)).Success, "Level 2 natural route can turn the Pylon chain toward the midfield well");
-        var contestedWellPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["contested_ridge_well"]);
-        Assert(contestedWellPlacement.Success, $"Level 2 natural route can power the midfield Extractor without exact designer-only coordinates ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Message})");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, landingZone + new SimVector2(-260, -120)).Success, "Level 2 natural route places a Power Plant from the landing marker");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270)).Success, "Level 2 natural route can start a Pylon chain from base");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-610, 245)).Success, "Level 2 natural route can power the player well approach");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-510, 120)).Success, "Level 2 natural route can reach the west bridge approach");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-170, 20)).Success, "Level 2 natural route can extend power onto the island");
+        var contestedWellPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["central_island_well"]);
+        Assert(contestedWellPlacement.Success, $"Level 2 natural route can power the island Extractor without exact designer-only coordinates ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Message})");
         var enemyForwardPylon = simulation.Buildings.Single(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.Pylon &&
@@ -290,25 +292,28 @@ internal static class WellsAtTheRidgeSmoke
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.Pylon &&
             building.Position.DistanceTo(runtime.Markers["enemy_pylon_weak_point"]) < 0.01f &&
-            !building.IsDestroyed), "Level 2 enemy does not rebuild the forward Pylon after the player owns the midfield well");
+            !building.IsDestroyed), "Level 2 enemy does not rebuild the forward Pylon after the player owns the island well");
     }
 
     private static void ValidatePlayerGuardianRoute(SmokeTestContext context)
     {
         var runtime = MissionRuntimeFactory.Create(context.Catalog, ContentIds.Missions.WellsAtTheRidge);
         var simulation = runtime.Simulation;
-        var hubPosition = runtime.Markers["player_landing_zone"] + new SimVector2(-120, -80);
+        var hubPosition = runtime.Markers["player_landing_zone"];
         var playerWell = runtime.Markers["player_start_well"];
 
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, hubPosition).Success, "Level 2 route starts with player-deployed Colony Hub");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, hubPosition + new SimVector2(230, -20)).Success, "Level 2 route places Power Plant inside landing clearing");
-        var barracks = simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(200, -170));
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, hubPosition + new SimVector2(-260, -120)).Success, "Level 2 route places Power Plant inside landing clearing");
+        var barracks = simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(-180, -260));
         Assert(barracks.Success, $"Level 2 route places Barracks ({barracks.MessageKey}: {barracks.Message})");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, playerWell).Success, "Level 2 route captures the safe start well");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-560, 75)).Success, "Level 2 route can extend a Pylon into the western power corridor");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-60, 25)).Success, "Level 2 route can continue Pylon power through the central corridor without blocking the well");
-        var contestedWellPlacement = simulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["contested_ridge_well"]);
-        Assert(contestedWellPlacement.IsLegal, $"Level 2 route can legally power an Extractor at the midfield well ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Reason})");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270)).Success, "Level 2 route can start a Pylon chain toward the player well");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-610, 245)).Success, "Level 2 route can power the player well approach");
+        var startWellPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, playerWell);
+        Assert(startWellPlacement.Success, $"Level 2 route captures the safe start well ({startWellPlacement.MessageKey}: {startWellPlacement.Message})");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-510, 120)).Success, "Level 2 route can extend a Pylon toward the west bridge");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-170, 20)).Success, "Level 2 route can continue Pylon power onto the island without blocking the well");
+        var contestedWellPlacement = simulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["central_island_well"]);
+        Assert(contestedWellPlacement.IsLegal, $"Level 2 route can legally power an Extractor at the island well ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Reason})");
         Assert(simulation.TryQueueUnit(ContentIds.Units.Grunt, barracks.Building!.EntityId).Success, "Level 2 route trains the second Grunt needed for retrofit staffing");
 
         TickFor(simulation, context.Catalog.GetUnit(ContentIds.Units.Grunt).TrainTimeSeconds + 0.2f);

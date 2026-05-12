@@ -28,7 +28,9 @@ public sealed class UnitState
     public string? PathBlockedReason { get; private set; }
     public int? TargetUnitEntityId { get; internal set; }
     public int? TargetBuildingEntityId { get; internal set; }
+    public string? TargetBridgeId { get; internal set; }
     public int? RepairTargetBuildingEntityId { get; internal set; }
+    public string? RepairTargetBridgeId { get; internal set; }
     public SimVector2 TargetFormationOffset { get; internal set; }
     public bool IsBlockedByEnergyWall { get; internal set; }
     public bool IsEnemyAttackCommitted { get; internal set; }
@@ -78,7 +80,9 @@ public sealed class UnitState
     {
         TargetUnitEntityId = null;
         TargetBuildingEntityId = null;
+        TargetBridgeId = null;
         RepairTargetBuildingEntityId = null;
+        RepairTargetBridgeId = null;
         TargetFormationOffset = default;
 
         if (!clearAttackPresentation)

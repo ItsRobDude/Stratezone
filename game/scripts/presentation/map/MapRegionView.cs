@@ -5,6 +5,7 @@ using Stratezone.Simulation.Content;
 public partial class MapRegionView : Node2D
 {
     private IReadOnlyList<MapRegionDefinition> _regions = [];
+    private IReadOnlyList<BridgeState> _bridges = [];
 
     public void UpdateFromMap(MapDefinition? map)
     {
@@ -22,11 +23,47 @@ public partial class MapRegionView : Node2D
         QueueRedraw();
     }
 
+    public void UpdateBridgeStates(IReadOnlyList<BridgeState> bridges)
+    {
+        _bridges = bridges;
+        QueueRedraw();
+    }
+
     public override void _Draw()
     {
         foreach (var region in _regions)
         {
             DrawRegion(region);
+        }
+
+        foreach (var bridge in _bridges)
+        {
+            DrawBridge(bridge);
+        }
+    }
+
+    private void DrawBridge(BridgeState bridge)
+    {
+        var fill = bridge.IsIntact
+            ? new Color(0.45f, 0.36f, 0.24f, 0.82f)
+            : new Color(0.24f, 0.10f, 0.08f, 0.78f);
+        var outline = bridge.IsIntact
+            ? new Color(0.86f, 0.68f, 0.42f, 0.92f)
+            : new Color(0.95f, 0.25f, 0.18f, 0.92f);
+
+        if (bridge.Definition.Shape == "rect")
+        {
+            var size = ToGodot(bridge.Definition.Size);
+            var rect = new Rect2(ToGodot(bridge.Definition.Center) - (size * 0.5f), size);
+            DrawRect(rect, fill);
+            DrawRect(rect, outline, false, 2.0f);
+            return;
+        }
+
+        if (bridge.Definition.Shape == "circle")
+        {
+            DrawCircle(ToGodot(bridge.Definition.Center), bridge.Definition.Radius, fill);
+            DrawArc(ToGodot(bridge.Definition.Center), bridge.Definition.Radius, 0, Mathf.Tau, 72, outline, 2.0f);
         }
     }
 

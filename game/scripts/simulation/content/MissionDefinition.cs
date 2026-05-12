@@ -19,6 +19,7 @@ public sealed record MissionDefinition(
     IReadOnlyList<string> FailureConditionIds,
     MissionPresentationDefinition Presentation,
     IReadOnlyList<MissionTriggerDefinition> MissionTriggers,
+    IReadOnlyList<MissionMapObjectOverrideDefinition> MapObjectOverrides,
     EnemyAiProfileDefinition EnemyAiProfile
 );
 
@@ -66,6 +67,11 @@ public sealed record MissionTriggerDefinition(
     int EnemyAttackGroupSize
 );
 
+public sealed record MissionMapObjectOverrideDefinition(
+    string ObjectId,
+    float StartingHealthPercent
+);
+
 public sealed record EnemyAiProfileDefinition(
     string Id,
     float FirstRebuildDelaySeconds,
@@ -89,7 +95,8 @@ public sealed record EnemyAiProfileDefinition(
     string ExtractorMarkerId,
     string DefenseTowerMarkerId,
     string RallyMarkerId,
-    IReadOnlyList<string> PatrolMarkerIds
+    IReadOnlyList<string> PatrolMarkerIds,
+    string CentralIslandAttackViaBridgeId
 )
 {
     public static EnemyAiProfileDefinition Default { get; } = new(
@@ -115,5 +122,6 @@ public sealed record EnemyAiProfileDefinition(
         "enemy_extractor",
         "enemy_defense",
         "enemy_rally",
-        []);
+        [],
+        string.Empty);
 }

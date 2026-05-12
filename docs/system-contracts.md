@@ -340,6 +340,41 @@ Acceptance checks:
 - authored wall chokepoints prove that the buffered wall ends overlap nearby impassable terrain and block the intended walk-around lanes
 - a unit ordered to attack an enemy structure behind a wall stops at a reachable firing point instead of trying to path through the wall if the target is in range from that side
 
+## Bridge / Map Object System
+
+Owns:
+
+- map-owned bridge state
+- bridge health and collapse events
+- bridge passability contribution to pathfinding
+- Grunt timed bridge repair/rebuild commands
+- mission-level starting-health overrides for map objects
+
+Prototype behavior:
+
+- bridges are authored on `MapDefinition.map_objects`; they are not separate neutral-infrastructure records
+- water or ravine terrain remains blocked, and an intact bridge creates the passable crossing through that blocked terrain
+- when a bridge reaches zero health, it becomes broken, emits a `bridge_collapsed` simulation event, and no longer subtracts passability from the blocked terrain beneath it
+- bridge damage is explicit; idle unit auto-fire should not target bridges as if they were normal hostile units or buildings
+- a Grunt can repair or rebuild a bridge by physically reaching its geometry and working over time
+- bridge repair spends materials based on missing health percentage, matching the existing building repair cost shape
+- the first pass must avoid bridge soft-locks: Mission 2 needs at least one player-repairable route to the enemy island/base objective
+- enemy bridge repair is deferred until playtest evidence shows the AI needs it
+
+Tunable placeholders:
+
+- bridge health: high enough that a few infantry shots do not delete the route instantly, low enough that a deliberate strike can collapse it
+- bridge repair rate: similar to Grunt structure repair until bridge-specific feel tuning exists
+- bridge repair cost: proportional to missing bridge health and cheaper than treating the crossing as a permanent loss
+
+Acceptance checks:
+
+- intact bridge pathing can cross blocked water terrain
+- broken bridge pathing cannot cross the same blocked water terrain
+- Grunt repair can restore a broken bridge and pathing updates without restarting the mission
+- bridge collapse produces a stable simulation event key for localization
+- Mission 2 remains completable after a bridge collapse if the player has a live Grunt and resources
+
 ## Fog and Scouting
 
 Owns:
@@ -410,6 +445,7 @@ Prototype behavior:
 - during a base breach, idle enemy defenders should pursue player combat units inside the base-defense radius instead of waiting for those units to enter weapon range
 - during a base breach, enemy combat production may start immediately even when the first scheduled attack timer has not arrived
 - enemy rebuild placement should use nearby fallback positions for normal defensive/power structures when the exact authored marker is blocked, but resource Extractors must still be placed on the actual well
+- bridge-aware missions may declare marker or attack dependencies on bridge IDs; if the required bridge is broken or the target is unreachable, enemy dispatch should defer or retarget instead of sending units into a blocked route
 - Level 1 enemy is slower than normal baseline
 - enemy competes for the central well
 - Level 1's forward enemy Pylon powers the central Extractor and tower-wall route, so destroying it should visibly shut off that infrastructure route
@@ -443,5 +479,6 @@ Acceptance checks:
 - early pressure triggers can coalesce or queue behind a cooldown rather than stacking immediate raids
 - Mission 2's Barracks/Extractor trigger commits at most one small pressure beat after its grace/coalescing window
 - enemy target selection favors visible tactical targets before simple Colony Hub base-cracking
+- bridge-aware dispatch defers an attack or patrol route when its required bridge is broken and no reachable path exists
 - exposed Commander sightings are internal AI knowledge only and do not create adaptation alerts
 - alerts are fog-safe and do not reveal hidden enemy intent

@@ -80,7 +80,7 @@ internal static class ContentSmoke
         Assert(ridgeMission.ObjectiveIds.Contains(ContentIds.Objectives.DestroyEnemyColonyHub), "Level 2 wins through the enemy Colony Hub objective rather than well control");
         Assert(ridgeMission.Presentation.StartObjectiveKey == "mission.mission_wells_at_the_ridge.start_objective", "Level 2 owns localized start objective data");
         Assert(ridgeMission.Presentation.TacticalNoteKey == "mission.mission_wells_at_the_ridge.tactical_note", "Level 2 owns localized tactical note data");
-        Assert(ridgeMission.Presentation.MapCallouts.Any(callout => callout.MarkerId == "contested_ridge_well"), "Level 2 callouts are tied to stable mission markers");
+        Assert(ridgeMission.Presentation.MapCallouts.Any(callout => callout.MarkerId == "central_island_well"), "Level 2 callouts are tied to stable mission markers");
         Assert(ridgeMission.MissionTriggers.Count == 1, "Level 2 declares one coalesced base-building pressure trigger");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.Barracks), "Level 2 pressure trigger watches Barracks construction");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.ExtractorRefinery), "Level 2 pressure trigger coalesces first Extractor construction");
@@ -93,6 +93,9 @@ internal static class ContentSmoke
         Assert(ridgeMap.TerrainRegions.Count(region => region.AllowsBuilding) >= 3, "Level 2 map marks practical base areas and resource basins without whitelisting construction");
         Assert(ridgeMap.TerrainRegions.Any(region => region.RegionType == "chokepoint_marker"), "Level 2 map marks chokepoint candidates");
         Assert(ridgeMap.TerrainRegions.All(region => region.Id.Length > 0 && region.Shape.Length > 0), "Level 2 terrain regions have stable IDs and shapes for editor/tuner snippet export");
-        Assert(ridgeMap.TerrainRegions.Any(region => region.Id == "central_power_corridor"), "Level 2 map keeps an explicit power-corridor region for Pylon route tuning");
+        Assert(ridgeMap.TerrainRegions.Any(region => region.Id == "central_island_buildable"), "Level 2 map keeps an explicit central island buildable region for Pylon route tuning");
+        Assert(ridgeMap.MapObjects.Count(item => item.ObjectType == "bridge") == 2, "Level 2 map owns two bridge objects for the island-well race");
+        Assert(ridgeMap.MapObjects.All(item => item.MaxHealth > 0 && item.BlocksMovementWhenBroken), "Level 2 bridge objects have health and broken-passability rules");
+        Assert(ridgeMission.EnemyAiProfile.CentralIslandAttackViaBridgeId == "bridge_central_isle_east", "Level 2 enemy profile declares the bridge its island press depends on");
     }
 }

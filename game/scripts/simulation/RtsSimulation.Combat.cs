@@ -39,7 +39,8 @@ public sealed partial class RtsSimulation
     private void CommitEnemyAttackGroup()
     {
         if (_elapsedSeconds < _enemyAi.Profile.FirstAttackDelaySeconds ||
-            _elapsedSeconds < _enemyOfficer.NextAttackAllowedSeconds)
+            _elapsedSeconds < _enemyOfficer.NextAttackAllowedSeconds ||
+            !IsEnemyAttackRouteAvailable())
         {
             return;
         }
@@ -49,7 +50,8 @@ public sealed partial class RtsSimulation
 
     internal int CommitMissionTriggerEnemyPressure(int groupSize)
     {
-        if (_elapsedSeconds < _enemyOfficer.NextAttackAllowedSeconds)
+        if (_elapsedSeconds < _enemyOfficer.NextAttackAllowedSeconds ||
+            !IsEnemyAttackRouteAvailable())
         {
             return 0;
         }
@@ -162,12 +164,19 @@ public sealed partial class RtsSimulation
 
         var destinationIndex = SelectEnemyPatrolDestinationIndex();
         var destination = _enemyAi.PatrolPositions[destinationIndex];
+        if (!IsReachableForFaction(ContentIds.Factions.PrivateMilitary, _enemyAi.HubPosition, destination))
+        {
+            _nextEnemyPatrolDispatchSeconds = _elapsedSeconds + Math.Max(1.0f, _enemyAi.Profile.PatrolIntervalSeconds);
+            return;
+        }
+
         foreach (var unit in idleCombatUnits)
         {
             unit.IsEnemyScout = true;
             unit.IsEnemyRetreating = false;
             unit.TargetUnitEntityId = null;
             unit.TargetBuildingEntityId = null;
+            unit.TargetBridgeId = null;
             SetUnitPathTo(unit, destination);
         }
 
@@ -192,6 +201,21 @@ public sealed partial class RtsSimulation
         }
 
         return (_enemyPatrolDispatches + _enemyPatrolDestinationOffset) % positions.Count;
+    }
+
+    private bool IsEnemyAttackRouteAvailable()
+    {
+        if (!IsBridgeIntact(_enemyAi.Profile.CentralIslandAttackViaBridgeId))
+        {
+            return false;
+        }
+
+        var playerHub = _buildings.FirstOrDefault(building =>
+            building.FactionId == ContentIds.Factions.PlayerExpedition &&
+            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
+            !building.IsDestroyed);
+        return playerHub is null ||
+            IsReachableForFaction(ContentIds.Factions.PrivateMilitary, _enemyAi.HubPosition, playerHub.Position);
     }
 
     private void TickBuildingAttacks(float deltaSeconds)
@@ -252,6 +276,13 @@ public sealed partial class RtsSimulation
             return;
         }
 
+        var targetBridge = unit.TargetBridgeId is null ? null : FindBridge(unit.TargetBridgeId);
+        if (targetBridge is not null && targetBridge.IsIntact)
+        {
+            TickUnitAttackTarget(unit, targetBridge, deltaSeconds);
+            return;
+        }
+
         if (unit.MoveTarget is not null)
         {
             MoveUnitToward(unit, unit.MoveTarget.Value, deltaSeconds);
@@ -281,6 +312,7 @@ public sealed partial class RtsSimulation
         {
             unit.TargetUnitEntityId = targetUnit.EntityId;
             unit.TargetBuildingEntityId = null;
+            unit.TargetBridgeId = null;
             TickUnitAttackTarget(unit, targetUnit, deltaSeconds);
             return;
         }
@@ -288,6 +320,7 @@ public sealed partial class RtsSimulation
         var target = GetEnemyTargetBuilding(unit);
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = target?.EntityId;
+        unit.TargetBridgeId = null;
         if (target is null)
         {
             return;
@@ -304,6 +337,7 @@ public sealed partial class RtsSimulation
             unit.IsEnemyScout = false;
             unit.TargetUnitEntityId = baseIntruder.EntityId;
             unit.TargetBuildingEntityId = null;
+            unit.TargetBridgeId = null;
             TickUnitAttackTarget(unit, baseIntruder, deltaSeconds);
             return;
         }
@@ -321,6 +355,7 @@ public sealed partial class RtsSimulation
 
         unit.TargetUnitEntityId = targetUnit.EntityId;
         unit.TargetBuildingEntityId = null;
+        unit.TargetBridgeId = null;
         TryUnitAttackUnit(unit, targetUnit);
     }
 
@@ -371,6 +406,7 @@ public sealed partial class RtsSimulation
         unit.IsEnemyRetreating = true;
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = null;
+        unit.TargetBridgeId = null;
         MoveUnitToward(unit, _enemyAi.HubPosition, deltaSeconds);
         if (unit.Position.DistanceTo(_enemyAi.HubPosition) <= GetEnemyRetreatStandDownDistance())
         {
@@ -432,6 +468,32 @@ public sealed partial class RtsSimulation
         }
 
         var approachPoint = GetBuildingAttackApproachPoint(attacker, target, attackRange) + attacker.TargetFormationOffset;
+        MoveUnitToward(attacker, approachPoint, deltaSeconds);
+    }
+
+    private void TickUnitAttackTarget(UnitState attacker, BridgeState target, float deltaSeconds)
+    {
+        if (!target.IsIntact)
+        {
+            attacker.TargetBridgeId = null;
+            attacker.ClearPath();
+            return;
+        }
+
+        var attackRange = ToWorldRadius(attacker.Definition.AttackRange);
+        if (attacker.Definition.CanAttack && target.DistanceTo(attacker.Position) <= attackRange)
+        {
+            TryUnitAttackBridge(attacker, target);
+            return;
+        }
+
+        var directionFromTarget = (attacker.Position - target.Center).Normalized();
+        if (directionFromTarget.Length() <= 0.0001f)
+        {
+            directionFromTarget = new SimVector2(-1.0f, 0.0f);
+        }
+
+        var approachPoint = target.Center + (directionFromTarget * MathF.Max(4.0f, attackRange - 0.5f)) + attacker.TargetFormationOffset;
         MoveUnitToward(attacker, approachPoint, deltaSeconds);
     }
 
@@ -530,6 +592,24 @@ public sealed partial class RtsSimulation
 
         CombatResolver.ResolveUnitAttack(unit, target, _units, _buildings);
         RecomputePower();
+    }
+
+    private void TryUnitAttackBridge(UnitState unit, BridgeState target)
+    {
+        if (unit.AttackCooldownRemaining > 0.0f ||
+            !target.IsIntact ||
+            unit.Definition.AttackDamage <= 0.0f)
+        {
+            return;
+        }
+
+        unit.AttackCooldownRemaining = unit.Definition.AttackCooldown;
+        unit.RegisterOutgoingAttack(target.Center);
+        DamageBridge(target, unit.Definition.AttackDamage);
+        if (!target.IsIntact)
+        {
+            unit.TargetBridgeId = null;
+        }
     }
 
     private void TryUnitAttackUnit(UnitState attacker, UnitState target)

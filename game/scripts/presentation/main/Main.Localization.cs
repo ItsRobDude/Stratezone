@@ -29,6 +29,15 @@ public partial class Main
         return _localization?.ContentShortName(definition.Id, BuildingName(definition)) ?? BuildingName(definition);
     }
 
+    private static string BridgeName(BridgeState bridge)
+    {
+        return string.Join(
+            " ",
+            bridge.Id.Split('_', StringSplitOptions.RemoveEmptyEntries)
+                .Where(part => part != "bridge")
+                .Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
+    }
+
     private string LocalizedMessage(string key, IReadOnlyDictionary<string, string>? args, string fallback)
     {
         return string.IsNullOrWhiteSpace(key)

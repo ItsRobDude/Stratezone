@@ -58,9 +58,14 @@ REQUIRED_I18N_KEYS = {
     "sim.production.producer_upgrading",
     "sim.production.requires_barracks_upgrade",
     "sim.production.can_train",
+    "sim.repair.requires_bridge",
+    "sim.repair.bridge_not_damaged",
+    "sim.repair.bridge_started",
     "sim.event.construction_complete",
     "sim.event.training_complete",
     "sim.event.barracks_upgrade_complete",
+    "sim.event.bridge_collapsed",
+    "sim.event.bridge_repair_complete",
     "ui.action.initial_hint",
     "ui.action.select_barracks_before_training",
     "ui.action.select_barracks_before_retrofit",
@@ -78,6 +83,7 @@ REQUIRED_I18N_KEYS = {
     "ui.action.no_unit_selected",
     "ui.action.units_attacking_unit",
     "ui.action.units_attacking_building",
+    "ui.action.units_attacking_bridge",
     "ui.action.selected_units_cannot_attack",
     "ui.action.moving_units",
     "ui.action.debug_commander_killed",
@@ -85,6 +91,7 @@ REQUIRED_I18N_KEYS = {
     "ui.action.debug_mission_loaded",
     "ui.action.mission_restarted",
     "ui.action.quit_requested",
+    "ui.action.units_repairing_bridge",
     "ui.hud.build_line",
     "ui.hud.placing_line",
     "ui.hud.status_line",
@@ -197,13 +204,28 @@ def iter_references(value: Any, parent_key: str = ""):
             yield parent_key, value
 
 
+def collect_map_object_ids(records: dict[str, dict[str, Any]]) -> set[str]:
+    ids: set[str] = set()
+    for record in records.values():
+        map_objects = record.get("map_objects")
+        if not isinstance(map_objects, list):
+            continue
+        for item in map_objects:
+            if isinstance(item, dict) and isinstance(item.get("id"), str):
+                ids.add(item["id"])
+    return ids
+
+
 def validate_references(records: dict[str, dict[str, Any]]) -> list[str]:
     errors: list[str] = []
     allowed_external_prefixes = ("ai_profile_",)
+    map_object_ids = collect_map_object_ids(records)
 
     for record_id, record in records.items():
         for key, target in iter_references(record):
             if target in records:
+                continue
+            if key in {"object_id", "central_island_attack_via_bridge_id"} and target in map_object_ids:
                 continue
             if target.startswith(allowed_external_prefixes):
                 continue
@@ -345,6 +367,8 @@ def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
         "train_time_multiplier",
     }
 
+    map_object_ids = collect_map_object_ids(records)
+
     for record_id, record in records.items():
         if not record_id.startswith("mission_"):
             continue
@@ -427,12 +451,68 @@ def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
                             f"{record['_source_path']}: {record_id}.enemy_ai_profile.patrol_markers references missing mission marker '{marker_id}'"
                         )
 
+        bridge_id = profile.get("central_island_attack_via_bridge_id")
+        if bridge_id is not None and bridge_id not in map_object_ids:
+            errors.append(
+                f"{record['_source_path']}: {record_id}.enemy_ai_profile.central_island_attack_via_bridge_id references missing map object '{bridge_id}'"
+            )
+
     return errors
 
 
 def i18n_key_for_record(record_id: str) -> str:
     prefix = record_id.split("_", 1)[0]
     return f"{prefix}.{record_id}.name"
+
+
+def validate_map_objects(records: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    map_object_ids = collect_map_object_ids(records)
+
+    for record_id, record in records.items():
+        map_objects = record.get("map_objects")
+        if map_objects is not None:
+            if not isinstance(map_objects, list):
+                errors.append(f"{record['_source_path']}: {record_id}.map_objects must be a list")
+            else:
+                for index, item in enumerate(map_objects):
+                    if not isinstance(item, dict):
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}] must be an object")
+                        continue
+                    object_id = item.get("id")
+                    if not isinstance(object_id, str) or not ID_PATTERN.match(object_id):
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].id must be lowercase snake_case")
+                    if item.get("object_type") != "bridge":
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].object_type must be bridge for the first pass")
+                    if item.get("shape") not in {"rect", "circle"}:
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].shape must be rect or circle")
+                    if not isinstance(item.get("center"), dict):
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].center must be an object")
+                    if item.get("shape") == "rect" and not isinstance(item.get("size"), dict):
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].size must be an object for rect objects")
+                    if item.get("shape") == "circle" and not isinstance(item.get("radius"), (int, float)):
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].radius must be numeric for circle objects")
+                    if not isinstance(item.get("max_health"), (int, float)) or item.get("max_health", 0) <= 0:
+                        errors.append(f"{record['_source_path']}: {record_id}.map_objects[{index}].max_health must be positive")
+
+        overrides = record.get("mission_object_overrides")
+        if overrides is None:
+            continue
+        if not isinstance(overrides, list):
+            errors.append(f"{record['_source_path']}: {record_id}.mission_object_overrides must be a list")
+            continue
+        for index, item in enumerate(overrides):
+            if not isinstance(item, dict):
+                errors.append(f"{record['_source_path']}: {record_id}.mission_object_overrides[{index}] must be an object")
+                continue
+            object_id = item.get("object_id")
+            if object_id not in map_object_ids:
+                errors.append(f"{record['_source_path']}: {record_id}.mission_object_overrides[{index}] references missing map object '{object_id}'")
+            percent = item.get("starting_health_percent")
+            if not isinstance(percent, (int, float)) or percent < 0 or percent > 1:
+                errors.append(f"{record['_source_path']}: {record_id}.mission_object_overrides[{index}].starting_health_percent must be between 0 and 1")
+
+    return errors
 
 
 def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
@@ -493,6 +573,7 @@ def main() -> int:
     errors.extend(validate_no_separate_weapon_layer(records))
     errors.extend(validate_unit_and_building_combat_fields(records))
     errors.extend(validate_mission_profiles(records))
+    errors.extend(validate_map_objects(records))
     errors.extend(validate_i18n(records))
 
     if errors:

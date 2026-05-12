@@ -69,6 +69,12 @@ internal sealed class EnemyAiSystem
             EnsureBuildingAt(simulation, ContentIds.Buildings.Pylon, _markers.WallPowerPylonPosition);
             if (baseUnderThreat)
             {
+                if (!HasLiveBuildingNear(simulation, ContentIds.Buildings.Pylon, _markers.WallPowerPylonPosition, allowNearbyFallback: true))
+                {
+                    EnsureBuildingAt(simulation, ContentIds.Buildings.Pylon, _markers.BasePylonPosition);
+                    EnsureBuildingAt(simulation, ContentIds.Buildings.Pylon, _markers.WallPowerPylonPosition);
+                }
+
                 EnsureBuildingAt(simulation, ContentIds.Buildings.DefenseTower, _markers.DefenseTowerPosition);
             }
             else
@@ -127,7 +133,8 @@ internal sealed class EnemyAiSystem
     private bool ShouldMaintainCentralWellRoute(RtsSimulation simulation)
     {
         if (_profile.CentralWellInterest <= 0.0f ||
-            !simulation.IsEnemyCentralWellRouteStrategic(_markers.ExtractorPosition))
+            !simulation.IsEnemyCentralWellRouteStrategic(_markers.ExtractorPosition) ||
+            !simulation.IsBridgeIntact(_profile.CentralIslandAttackViaBridgeId))
         {
             return false;
         }

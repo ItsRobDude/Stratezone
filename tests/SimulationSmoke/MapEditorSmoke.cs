@@ -1,4 +1,5 @@
 using Stratezone.Simulation;
+using Stratezone.Simulation.Content;
 using Stratezone.Simulation.Tools;
 using static SmokeTestSupport;
 
@@ -67,6 +68,7 @@ internal static class MapEditorSmoke
         Assert(fullExport.Contains("\"mission_markers\": [", StringComparison.Ordinal), "full export includes marker block");
         Assert(fullExport.Contains("\"terrain_regions\": [", StringComparison.Ordinal), "full export includes terrain block");
         Assert(fullExport.Contains("\"map_objects\": [", StringComparison.Ordinal), "full export includes map object block");
+        ValidateSessionMaterializationAndSave(context);
 
         var brokenSession = new MapEditorSession();
         brokenSession.Load(null, null);
@@ -76,5 +78,77 @@ internal static class MapEditorSmoke
         Assert(diagnostic.ToConsoleLine().Contains("[MapEditor:Error]", StringComparison.Ordinal), "map editor diagnostic console line includes severity");
         Assert(diagnostic.ToConsoleLine().Contains("op=load", StringComparison.Ordinal), "map editor diagnostic console line includes operation");
         Assert(diagnostic.ToConsoleLine().Contains("objects=", StringComparison.Ordinal), "map editor diagnostic console line includes object count");
+    }
+
+    private static void ValidateSessionMaterializationAndSave(SmokeTestContext context)
+    {
+        var session = new MapEditorSession();
+        session.Load(context.WellsAtTheRidgeMission, context.WellsAtTheRidgeMap);
+        Assert(session.SelectMarker("enemy_defense"), "save smoke can select marker");
+        Assert(session.MoveSelectedTo(new SimVector2(640, -95)), "save smoke can move marker");
+        Assert(session.SelectRegion("central_island_buildable"), "save smoke can select region");
+        Assert(session.MoveSelectedTo(new SimVector2(40, 15)), "save smoke can move region");
+        Assert(session.SelectAt(new SimVector2(-360, 0)), "save smoke can select bridge object");
+        Assert(session.MoveSelectedTo(new SimVector2(-340, 10)), "save smoke can move map object");
+
+        var editedMission = session.ApplyToMission(context.WellsAtTheRidgeMission);
+        var editedMap = session.ApplyToMap(context.WellsAtTheRidgeMap);
+        Assert(editedMission.Markers.Single(marker => marker.Id == "enemy_defense").Position == new SimVector2(640, -95), "map editor materializes edited mission markers");
+        Assert(editedMap.TerrainRegions.Single(region => region.Id == "central_island_buildable").Center == new SimVector2(40, 15), "map editor materializes edited terrain regions");
+        Assert(editedMap.MapObjects.Single(item => item.Id == "bridge_central_isle_west").Center == new SimVector2(-340, 10), "map editor materializes edited map objects");
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), "StratezoneMapEditorSmoke", Guid.NewGuid().ToString("N"));
+        try
+        {
+            CopyDirectory(Path.Combine(context.GameRoot, "data"), Path.Combine(tempRoot, "data"));
+            var preview = MapEditorPersistence.CreatePreview(tempRoot, session);
+            Assert(preview.HasChanges, "map editor save preview detects changed source files");
+            Assert(preview.MissionChanged, "map editor save preview includes mission marker changes");
+            Assert(preview.MapChanged, "map editor save preview includes map region/object changes");
+            Assert(
+                preview.DiffText.Contains("\"enemy_defense\"", StringComparison.Ordinal) &&
+                preview.DiffText.Contains("\"x\": 640", StringComparison.Ordinal) &&
+                preview.DiffText.Contains("\"y\": -95", StringComparison.Ordinal),
+                "map editor save preview includes marker diff");
+            Assert(preview.DiffText.Contains("\"central_island_buildable\"", StringComparison.Ordinal), "map editor save preview includes terrain diff");
+            Assert(preview.DiffText.Contains("\"bridge_central_isle_west\"", StringComparison.Ordinal), "map editor save preview includes map-object diff");
+
+            var result = MapEditorPersistence.WritePreview(preview);
+            Assert(result.Success && result.WroteMission && result.WroteMap, "map editor save writes changed mission and map files");
+            Assert(File.Exists(preview.MissionSourcePath + ".bak"), "map editor save keeps one mission backup");
+            Assert(File.Exists(preview.MapSourcePath + ".bak"), "map editor save keeps one map backup");
+            Assert(!File.Exists(preview.MissionSourcePath + ".tmp") && !File.Exists(preview.MapSourcePath + ".tmp"), "map editor save removes temp files after atomic replace");
+
+            var savedCatalog = ContentCatalog.LoadFromGameData(tempRoot);
+            var savedMission = savedCatalog.GetMission(ContentIds.Missions.WellsAtTheRidge);
+            var savedMap = savedCatalog.GetMap(context.WellsAtTheRidgeMap.Id);
+            Assert(savedMission.Markers.Single(marker => marker.Id == "enemy_defense").Position == new SimVector2(640, -95), "map editor save persists marker edits to mission JSON");
+            Assert(savedMap.TerrainRegions.Single(region => region.Id == "central_island_buildable").Center == new SimVector2(40, 15), "map editor save persists region edits to map JSON");
+            Assert(savedMap.MapObjects.Single(item => item.Id == "bridge_central_isle_west").Center == new SimVector2(-340, 10), "map editor save persists object edits to map JSON");
+
+            var secondPreview = MapEditorPersistence.CreatePreview(tempRoot, session);
+            Assert(!secondPreview.HasChanges, "map editor save preview reports no changes after writing the same edits");
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    private static void CopyDirectory(string source, string destination)
+    {
+        Directory.CreateDirectory(destination);
+        foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(directory.Replace(source, destination, StringComparison.Ordinal));
+        }
+
+        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+        {
+            File.Copy(file, file.Replace(source, destination, StringComparison.Ordinal), overwrite: true);
+        }
     }
 }

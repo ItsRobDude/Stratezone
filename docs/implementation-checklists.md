@@ -187,9 +187,9 @@ Acceptance checks:
 - new mission setup can be added through data plus narrow simulation/presentation seams
 - event trigger pacing has grace/cooldown/coalescing runtime support so normal early build milestones cannot stack immediate raids
 - mission presentation fields have a localization-ready data path for briefings, objectives, failure/success messages, and later warnings/map callouts/retry hints/tactical notes
-- the in-game map editor/tuner can inspect current mission markers, terrain regions, live resource wells, pylon ranges, and wall-link candidates without becoming the source of gameplay truth
-- editor/tuner changes are copied/printed as reviewable JSON snippets until safe save/load and validation are deliberately added
-- marker selection, region selection, nudge/move behavior, and JSON export are covered by plain C# smoke checks
+- the in-game map editor/tuner can inspect current mission markers, terrain regions, map objects, live resource wells, pylon ranges, and wall-link candidates without becoming the source of gameplay truth
+- editor/tuner changes can still be copied/printed as reviewable JSON snippets, and guarded source saves are limited to owned marker/region/object arrays with diff preview, one `.bak`, and validation-friendly JSON output
+- marker selection, region/object selection, nudge/move behavior, JSON export, edited-definition materialization, and guarded save behavior are covered by plain C# smoke checks
 - editor/tuner errors and invalid operations emit structured diagnostics with operation, mission/map, selection, counts, and exception details
 - root or documented validation commands cover content validation, C# build, simulation smoke, and Godot headless launch
 - new objective, warning, command, and blocked-action text uses localization keys

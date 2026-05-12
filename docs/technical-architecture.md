@@ -479,18 +479,18 @@ Avoid making the first prototype depend on full 3D modeling, complex animation, 
 
 ## Debugging and Developer Tools
 
-Current development tooling includes a first-pass in-game map editor/tuner overlay. A plain C# editor session owns the mutable tool state, diagnostics, keyboard selection, and JSON export path, while the Godot overlay owns rendering and input. It reads the current mission, map, content, and simulation state, copies/prints reviewable JSON snippets rather than writing source files directly, and keeps authored map truth in content data while making terrain, markers, pylon ranges, resource wells, and wall links visible during playtest tuning.
+Current development tooling includes an internal in-game map editor/tuner overlay. A plain C# editor session owns the mutable tool state, diagnostics, keyboard selection, JSON export path, edited mission/map materialization, and guarded save data. The Godot overlay owns rendering and input. It reads the current mission, map, content, and simulation state, pauses live simulation while edit mode is active, copies/prints reviewable JSON snippets, can preview-and-write only owned marker/region/object arrays back to source JSON with a `.bak`, and keeps authored map truth in content data while making terrain, markers, map objects, pylon ranges, resource wells, and wall links visible during playtest tuning. Returning from edit mode reinitializes the mission from in-memory edits instead of carrying live unit/building state across the boundary.
 
 The project should continue growing:
 
 - debug overlay for entity IDs, power, passability, and AI state
-- F5 map editor/tuner hardening for mission markers, terrain regions, route proof, and balance overlays
+- F5 map editor/tuner hardening for mission markers, terrain regions, map objects, route proof, diff-preview save, and re-init loops
 - mission event log
 - deterministic test map or scenario
 - fast restart hotkey in development builds
 - simple balance dump for units/buildings
 - screenshot-friendly debug mode for playtest notes
-- later modder-facing map editor packaging, validation, and safe file save/load once internal map authoring is trustworthy
+- later modder-facing map editor packaging and safe map-pack loading once internal map authoring is trustworthy
 
 These tools matter because RTS bugs are often state bugs, not visual bugs.
 

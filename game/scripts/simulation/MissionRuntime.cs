@@ -15,6 +15,11 @@ public static class MissionRuntimeFactory
     {
         var mission = catalog.GetMission(missionId);
         var map = catalog.GetMap(mission.MapId);
+        return Create(catalog, mission, map);
+    }
+
+    public static MissionRuntime Create(ContentCatalog catalog, MissionDefinition mission, MapDefinition map)
+    {
         var markers = mission.Markers.ToDictionary(marker => marker.Id, marker => marker.Position, StringComparer.Ordinal);
         var wellPlacements = ResolveResourceWellPlacements(mission, markers);
         var startingMaterials = mission.PlayerStartingResources.TryGetValue(ContentIds.Resources.Materials, out var materials)

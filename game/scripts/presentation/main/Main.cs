@@ -2,6 +2,7 @@ using Godot;
 using Stratezone.Localization;
 using Stratezone.Simulation;
 using Stratezone.Simulation.Content;
+using Stratezone.Simulation.Tools;
 
 public partial class Main : Node2D
 {
@@ -41,6 +42,7 @@ public partial class Main : Node2D
 
     private ContentCatalog? _catalog;
     private LocalizationCatalog? _localization;
+    private string _gameRoot = string.Empty;
     private RtsSimulation? _simulation;
     private Camera2D? _camera;
     private Control? _uiLayoutRoot;
@@ -70,6 +72,7 @@ public partial class Main : Node2D
     public override void _Ready()
     {
         var gameRoot = ProjectSettings.GlobalizePath("res://");
+        _gameRoot = gameRoot;
         _catalog = ContentCatalog.LoadFromGameData(gameRoot);
         _localization = LocalizationCatalog.LoadFromGameData(gameRoot);
         _lastActionMessage = L("ui.action.initial_hint");
@@ -97,7 +100,7 @@ public partial class Main : Node2D
         HandleCameraPan(delta);
         ApplyUiScaleIfViewportChanged();
 
-        if (_simulation is not null)
+        if (_simulation is not null && !_mapEditorEnabled)
         {
             _simulation.Tick(deltaSeconds);
             SyncWorldViews();
@@ -122,7 +125,7 @@ public partial class Main : Node2D
     {
         if (inputEvent is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            if (HandleMapEditorKey(keyEvent.Keycode))
+            if (HandleMapEditorKey(keyEvent))
             {
                 return;
             }
@@ -226,9 +229,20 @@ public partial class Main : Node2D
             return;
         }
 
-        _activeMissionId = missionId;
-        var runtime = MissionRuntimeFactory.Create(_catalog, missionId);
-        var mission = runtime.Mission;
+        var mission = _catalog.GetMission(missionId);
+        var map = _catalog.GetMap(mission.MapId);
+        SetupSimulation(mission, map);
+    }
+
+    private void SetupSimulation(MissionDefinition mission, MapDefinition map)
+    {
+        if (_catalog is null)
+        {
+            return;
+        }
+
+        _activeMissionId = mission.Id;
+        var runtime = MissionRuntimeFactory.Create(_catalog, mission, map);
         _activeMission = mission;
         _availableUnitIds.Clear();
         _availableBuildingIds.Clear();
@@ -337,6 +351,7 @@ public partial class Main : Node2D
         _selectedBuildingEntityId = null;
         _placementBuildingId = null;
         _placementGhost?.Clear();
+        ClearPendingMapEditorSave();
         SetupSimulation(missionId);
         ResetCameraToMissionStart();
         _mapRegionView?.UpdateFromMap(_simulation?.Map);

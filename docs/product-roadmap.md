@@ -96,7 +96,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Keep reusable start-pattern support for deployed, player-built, partial-base, allotted-troop, and no-base missions covered by validation and smoke checks.
    - Split or justify large hand-written files that are already over the review trigger, especially `Main.cs` and broad smoke coverage.
    - Preserve the simulation/presentation boundary while adding mission templates, validation helpers, scenario-specific tests, event trigger coalescing, and localization-key paths for mission presentation.
-   - Harden the F5 map editor/tuner only where it helps internal route and balance proof; keep direct file writes, palettes, and modder packaging as later steps.
+   - Harden the F5 map editor/tuner only where it helps internal route and balance proof; keep save writes guarded by diff preview and keep palettes/modder packaging as later steps.
    - Reopen destructible bridge scope narrowly for Mission 2's island-well rebuild, with bridge data living on maps and Grunt repair using the existing repair verb.
 
 4. Level 2 planning target
@@ -230,7 +230,7 @@ Architecture work:
 - support deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force start patterns without scene-copying
 - define first-pass map logic for terrain regions, passability, readable base/expansion pockets, resource basins, chokepoint markers, and explicit restricted-build scenarios
 - define first-pass map-object logic for destructible/repairable bridges without creating a generic neutral-object content layer
-- harden the in-game F5 map editor/tuner as the internal terrain and marker authoring aid, including region/marker/object inspection, legend clarity, and optional pathing-blocked sampling while still exporting snippets instead of directly writing source files
+- harden the in-game F5 map editor/tuner as the internal terrain and marker authoring aid, including region/marker/object inspection, legend clarity, optional pathing-blocked sampling, clipboard snippets, guarded diff-preview source saves, and in-memory mission re-init
 - add event trigger grace/cooldown/coalescing so normal early build milestones cannot fire stacked immediate raids
 - define localization-key paths for briefings, objectives, warnings, map callouts, failure/success text, retry hints, and tactical notes
 - keep all new mission rules in simulation/data layers rather than Godot scene-only code

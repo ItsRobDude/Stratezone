@@ -21,6 +21,9 @@ public partial class MapEditorOverlay : Node2D
     public bool IsDragging => _isDragging;
     public string SelectedSummary => _session.SelectedSummary;
     public string SelectedInspector => _session.SelectedInspector;
+    public string? SelectedId => _session.SelectedId;
+    public MapEditorSelectionKind SelectionKind => _session.SelectionKind;
+    public int Revision => _session.Revision;
     public bool PathingDebugEnabled { get; private set; }
 
     public MapEditorOverlay()
@@ -117,6 +120,20 @@ public partial class MapEditorOverlay : Node2D
         return false;
     }
 
+    public bool TrySelectMarkerAt(Vector2 worldPosition)
+    {
+        var selected = _session.SelectAt(ToSim(worldPosition), MarkerHitRadius);
+        QueueRedraw();
+        return selected && _session.SelectionKind == MapEditorSelectionKind.Marker;
+    }
+
+    public Vector2? SelectedMarkerWorldPosition()
+    {
+        return _session.SelectedMarker is null
+            ? null
+            : ToGodot(_session.SelectedMarker.Position);
+    }
+
     public void DragTo(Vector2 worldPosition)
     {
         if (!_isDragging)
@@ -165,6 +182,21 @@ public partial class MapEditorOverlay : Node2D
     public string ExportAllSnippets()
     {
         return _session.ExportAllSnippets();
+    }
+
+    public MissionDefinition ApplyEditsToMission(MissionDefinition mission)
+    {
+        return _session.ApplyToMission(mission);
+    }
+
+    public MapDefinition ApplyEditsToMap(MapDefinition map)
+    {
+        return _session.ApplyToMap(map);
+    }
+
+    public MapEditorSavePreview CreateSavePreview(string gameRoot)
+    {
+        return MapEditorPersistence.CreatePreview(gameRoot, _session);
     }
 
     public override void _Draw()

@@ -31,6 +31,17 @@ public partial class Main
         ApplyPresentationZoom();
     }
 
+    private void FocusCameraOn(Vector2 position)
+    {
+        if (_camera is null)
+        {
+            return;
+        }
+
+        _camera.Position = position;
+        ApplyPresentationZoom();
+    }
+
     private Vector2? FindMissionMarkerPosition(string markerId)
     {
         var marker = _activeMission?.Markers.FirstOrDefault(marker => string.Equals(marker.Id, markerId, StringComparison.Ordinal));

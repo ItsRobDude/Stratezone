@@ -407,7 +407,8 @@ public sealed class ContentCatalog
         return markers.EnumerateArray()
             .Select(marker => new MissionMarkerDefinition(
                 marker.GetProperty("id").GetString() ?? string.Empty,
-                LoadVector(marker.GetProperty("position"))))
+                LoadVector(marker.GetProperty("position")),
+                LoadStringArray(marker, "tags")))
             .Where(marker => marker.Id.Length > 0)
             .ToArray();
     }

@@ -365,7 +365,7 @@ Tunable placeholders:
 
 - bridge health: high enough that a few infantry shots do not delete the route instantly, low enough that a deliberate strike can collapse it
 - bridge repair rate: similar to Grunt structure repair until bridge-specific feel tuning exists
-- bridge repair cost: proportional to missing bridge health and cheaper than treating the crossing as a permanent loss
+- bridge repair cost: proportional to missing bridge health and cheaper than treating the crossing as a permanent loss; until bridges have an authored build cost, full bridge repair costs 60% of `max_health` in materials
 
 Acceptance checks:
 

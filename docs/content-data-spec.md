@@ -520,6 +520,12 @@ Mission presentation fields:
 - `presentation.map_callouts` is an optional list of sparse callouts with `marker` and `text_key`; each marker must match an authored mission marker and each text key must exist in localization.
 - Presentation fields must not reveal hidden enemy plans. They should name known terrain, known risks, or concise retry advice.
 
+Mission marker fields:
+
+- `mission_markers` use stable `id` plus `position`.
+- `mission_markers.tags` is optional, and should be used for required-feature validation when the marker's role is broader than its exact ID, such as `player_start`, `contested_well`, or `enemy_edge_of_fog`.
+- Required-feature validation should prefer exact IDs and tags over marker-name substring guesses.
+
 Prototype rules:
 
 - starts already landed

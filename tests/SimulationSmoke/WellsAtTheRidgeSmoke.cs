@@ -111,8 +111,10 @@ internal static class WellsAtTheRidgeSmoke
             !unit.IsDestroyed);
         var repair = simulation.CommandUnitRepairBridge(grunt.EntityId, bridge.Id);
         Assert(repair.Success, $"Level 2 Grunt can start bridge repair ({repair.MessageKey}: {repair.Message})");
+        var materialsBeforeRepair = simulation.Materials;
         TickFor(simulation, 36.0f);
         Assert(bridge.IsIntact && !bridge.IsDamaged, "Level 2 Grunt repair restores the collapsed bridge");
+        Assert(Math.Abs((materialsBeforeRepair - simulation.Materials) - (bridge.MaxHealth * 0.6f)) < 0.1f, "Level 2 full bridge repair costs 60 percent of bridge max health in materials");
 
         var restoredProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
         simulation.CommandUnitMove(restoredProbe.EntityId, runtime.Markers["central_island_well"]);

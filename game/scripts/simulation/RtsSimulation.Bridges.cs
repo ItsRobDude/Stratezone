@@ -5,6 +5,7 @@ namespace Stratezone.Simulation;
 public sealed partial class RtsSimulation
 {
     private const float BridgeInteractionRange = 1.5f;
+    private const float BridgeRepairMaterialCostPerHealth = FullRepairCostFraction;
 
     private void InitializeBridges(
         MapDefinition? map,
@@ -145,6 +146,6 @@ public sealed partial class RtsSimulation
     {
         return bridge.MaxHealth <= 0.0f
             ? 0.0f
-            : bridge.MaxHealth * FullRepairCostFraction / bridge.MaxHealth;
+            : BridgeRepairMaterialCostPerHealth;
     }
 }

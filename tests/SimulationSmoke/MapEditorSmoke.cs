@@ -145,6 +145,14 @@ internal static class MapEditorSmoke
         session.Load(context.WellsAtTheRidgeMission, context.WellsAtTheRidgeMap);
         var initialIssues = session.ValidateContent();
         Assert(!initialIssues.Any(issue => issue.Severity == MapEditorValidationSeverity.Error), "loaded editor session has no blocking validation errors");
+        Assert(!initialIssues.Any(issue => issue.Code == "missing_required_feature"), "Level 2 required feature validation uses exact ids and tags without false warnings");
+
+        var firstLandingSession = new MapEditorSession();
+        firstLandingSession.Load(context.FirstLandingMission, context.Catalog.GetMap(context.FirstLandingMission.MapId));
+        Assert(!firstLandingSession.ValidateContent().Any(issue => issue.Code == "missing_required_feature"), "First Landing required feature validation uses marker tags instead of marker-name substrings");
+        Assert(firstLandingSession.SelectMarker("central_well"), "required-feature smoke can select the tagged contested well marker");
+        Assert(firstLandingSession.RenameSelected("contested_isle_well").Changed, "required-feature smoke can rename a tagged marker");
+        Assert(!firstLandingSession.ValidateContent().Any(issue => issue.Code == "missing_required_feature" && issue.Message.Contains("contested_well", StringComparison.Ordinal)), "renaming a tagged contested well marker does not break required-feature validation");
 
         var marker = session.AddMarkerAt(new SimVector2(-120, 240));
         Assert(marker.Id == "marker_new", "map editor creates a unique marker id");

@@ -178,6 +178,11 @@ public sealed partial class MapEditorSession
             return true;
         }
 
+        if (_markers.Any(marker => marker.Tags.Contains(feature, StringComparer.Ordinal)))
+        {
+            return true;
+        }
+
         if (_regions.Any(region =>
             string.Equals(region.Id, feature, StringComparison.Ordinal) ||
             string.Equals(region.RegionType, feature, StringComparison.Ordinal) ||
@@ -199,9 +204,6 @@ public sealed partial class MapEditorSession
             "destructible_bridges" => _objects.Any(item => item.ObjectType == "bridge" && item.MaxHealth > 0.0f),
             "buildable_clearings" => _regions.Any(region => region.AllowsBuilding),
             "enemy_colony_hub" => MissionHasEntityAtLiveMarker(ContentIds.Buildings.ColonyHub, ContentIds.Factions.PrivateMilitary),
-            "contested_well" => _sourceMission?.ResourceWellPlacements.Any(placement => _markers.Any(marker => marker.Id == placement.MarkerId && marker.Id.Contains("central", StringComparison.Ordinal))) == true,
-            "player_start" => _markers.Any(marker => marker.Id.Contains("player", StringComparison.Ordinal) && marker.Id.Contains("start", StringComparison.Ordinal)),
-            "enemy_edge_of_fog" => _markers.Any(marker => marker.Id.Contains("enemy", StringComparison.Ordinal)),
             _ => false
         };
     }

@@ -127,7 +127,7 @@
           "blocks_movement": false,
           "blocks_building": false,
           "allows_building": true,
-          "tags": ["resource_basin", "enemy_claimed", "buildable"]
+          "tags": ["resource_basin", "enemy_claimed_well", "enemy_claimed", "buildable"]
         },
         {
           "id": "enemy_bridgehead_clearing",

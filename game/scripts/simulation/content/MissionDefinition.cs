@@ -25,8 +25,14 @@ public sealed record MissionDefinition(
 
 public sealed record MissionMarkerDefinition(
     string Id,
-    SimVector2 Position
-);
+    SimVector2 Position,
+    IReadOnlyList<string> Tags)
+{
+    public MissionMarkerDefinition(string Id, SimVector2 Position)
+        : this(Id, Position, [])
+    {
+    }
+}
 
 public sealed record MissionStartingEntityDefinition(
     string ContentId,

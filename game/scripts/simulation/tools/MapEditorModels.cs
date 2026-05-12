@@ -6,14 +6,16 @@ public sealed class MapEditorMarker
 {
     private readonly List<string> _contentIds = [];
 
-    public MapEditorMarker(string id, SimVector2 position)
+    public MapEditorMarker(string id, SimVector2 position, IReadOnlyList<string>? tags = null)
     {
         Id = id;
         Position = position;
+        Tags = tags ?? [];
     }
 
     public string Id { get; set; }
     public SimVector2 Position { get; set; }
+    public IReadOnlyList<string> Tags { get; set; }
     public IReadOnlyList<string> ContentIds => _contentIds;
 
     internal void AddContentId(string contentId)

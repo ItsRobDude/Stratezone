@@ -146,7 +146,10 @@ public sealed partial class MapEditorSession
         {
             PrepareChange();
             var original = SelectedMarker;
-            var clone = new MapEditorMarker(UniqueId($"{original.Id}_copy", AllIds()), original.Position + new SimVector2(DuplicateOffset, DuplicateOffset));
+            var clone = new MapEditorMarker(
+                UniqueId($"{original.Id}_copy", AllIds()),
+                original.Position + new SimVector2(DuplicateOffset, DuplicateOffset),
+                original.Tags.ToArray());
             foreach (var contentId in original.ContentIds)
             {
                 clone.AddContentId(contentId);
@@ -469,12 +472,12 @@ public sealed partial class MapEditorSession
     {
         if (SelectedRegion is not null)
         {
-            return HitTestShapeResizeHandle(SelectedRegion.Shape, SelectedRegion.Center, SelectedRegion.Size, SelectedRegion.Radius, position, tolerance);
+            return MapEditorShapeResizeHelper.HitTest(SelectedRegion.Shape, SelectedRegion.Center, SelectedRegion.Size, SelectedRegion.Radius, position, tolerance);
         }
 
         if (SelectedObject is not null)
         {
-            return HitTestShapeResizeHandle(SelectedObject.Shape, SelectedObject.Center, SelectedObject.Size, SelectedObject.Radius, position, tolerance);
+            return MapEditorShapeResizeHelper.HitTest(SelectedObject.Shape, SelectedObject.Center, SelectedObject.Size, SelectedObject.Radius, position, tolerance);
         }
 
         return MapEditorResizeHandle.None;
@@ -489,7 +492,7 @@ public sealed partial class MapEditorSession
 
         if (SelectedRegion is not null)
         {
-            var resized = ResizeShape(SelectedRegion.Shape, SelectedRegion.Center, SelectedRegion.Size, SelectedRegion.Radius, handle, position);
+            var resized = MapEditorShapeResizeHelper.Resize(SelectedRegion.Shape, SelectedRegion.Center, SelectedRegion.Size, SelectedRegion.Radius, handle, position, MinShapeDimension);
             if (SelectedRegion.Center == resized.Center && SelectedRegion.Size == resized.Size && MathF.Abs(SelectedRegion.Radius - resized.Radius) < 0.001f)
             {
                 return true;
@@ -505,7 +508,7 @@ public sealed partial class MapEditorSession
 
         if (SelectedObject is not null)
         {
-            var resized = ResizeShape(SelectedObject.Shape, SelectedObject.Center, SelectedObject.Size, SelectedObject.Radius, handle, position);
+            var resized = MapEditorShapeResizeHelper.Resize(SelectedObject.Shape, SelectedObject.Center, SelectedObject.Size, SelectedObject.Radius, handle, position, MinShapeDimension);
             if (SelectedObject.Center == resized.Center && SelectedObject.Size == resized.Size && MathF.Abs(SelectedObject.Radius - resized.Radius) < 0.001f)
             {
                 return true;
@@ -660,7 +663,7 @@ public sealed partial class MapEditorSession
 
     private static MapEditorMarker CloneMarker(MapEditorMarker marker)
     {
-        var clone = new MapEditorMarker(marker.Id, marker.Position);
+        var clone = new MapEditorMarker(marker.Id, marker.Position, marker.Tags.ToArray());
         foreach (var contentId in marker.ContentIds)
         {
             clone.AddContentId(contentId);
@@ -762,96 +765,6 @@ public sealed partial class MapEditorSession
         }
     }
 
-    private static MapEditorResizeHandle HitTestShapeResizeHandle(
-        string shape,
-        SimVector2 center,
-        SimVector2 size,
-        float radius,
-        SimVector2 position,
-        float tolerance)
-    {
-        if (shape == "circle")
-        {
-            var distance = MathF.Abs(center.DistanceTo(position) - radius);
-            return distance <= tolerance ? MapEditorResizeHandle.CircleRadius : MapEditorResizeHandle.None;
-        }
-
-        if (shape != "rect")
-        {
-            return MapEditorResizeHandle.None;
-        }
-
-        var halfWidth = size.X * 0.5f;
-        var halfHeight = size.Y * 0.5f;
-        var insideY = MathF.Abs(position.Y - center.Y) <= halfHeight + tolerance;
-        var insideX = MathF.Abs(position.X - center.X) <= halfWidth + tolerance;
-        if (insideY && MathF.Abs(position.X - (center.X - halfWidth)) <= tolerance)
-        {
-            return MapEditorResizeHandle.RectLeft;
-        }
-
-        if (insideY && MathF.Abs(position.X - (center.X + halfWidth)) <= tolerance)
-        {
-            return MapEditorResizeHandle.RectRight;
-        }
-
-        if (insideX && MathF.Abs(position.Y - (center.Y - halfHeight)) <= tolerance)
-        {
-            return MapEditorResizeHandle.RectTop;
-        }
-
-        if (insideX && MathF.Abs(position.Y - (center.Y + halfHeight)) <= tolerance)
-        {
-            return MapEditorResizeHandle.RectBottom;
-        }
-
-        return MapEditorResizeHandle.None;
-    }
-
-    private static ShapeResizeResult ResizeShape(
-        string shape,
-        SimVector2 center,
-        SimVector2 size,
-        float radius,
-        MapEditorResizeHandle handle,
-        SimVector2 position)
-    {
-        if (shape == "circle" && handle == MapEditorResizeHandle.CircleRadius)
-        {
-            return new ShapeResizeResult(center, size, MathF.Max(MinShapeDimension * 0.5f, center.DistanceTo(position)));
-        }
-
-        if (shape != "rect")
-        {
-            return new ShapeResizeResult(center, size, radius);
-        }
-
-        var left = center.X - (size.X * 0.5f);
-        var right = center.X + (size.X * 0.5f);
-        var top = center.Y - (size.Y * 0.5f);
-        var bottom = center.Y + (size.Y * 0.5f);
-
-        switch (handle)
-        {
-            case MapEditorResizeHandle.RectLeft:
-                left = MathF.Min(position.X, right - MinShapeDimension);
-                break;
-            case MapEditorResizeHandle.RectRight:
-                right = MathF.Max(position.X, left + MinShapeDimension);
-                break;
-            case MapEditorResizeHandle.RectTop:
-                top = MathF.Min(position.Y, bottom - MinShapeDimension);
-                break;
-            case MapEditorResizeHandle.RectBottom:
-                bottom = MathF.Max(position.Y, top + MinShapeDimension);
-                break;
-        }
-
-        var newSize = new SimVector2(MathF.Max(MinShapeDimension, right - left), MathF.Max(MinShapeDimension, bottom - top));
-        var newCenter = new SimVector2((left + right) * 0.5f, (top + bottom) * 0.5f);
-        return new ShapeResizeResult(newCenter, newSize, radius);
-    }
-
     private static SimVector2 ClampSize(SimVector2 size)
     {
         return new SimVector2(MathF.Max(MinShapeDimension, MathF.Abs(size.X)), MathF.Max(MinShapeDimension, MathF.Abs(size.Y)));
@@ -881,5 +794,4 @@ public sealed partial class MapEditorSession
         MapEditorSelectionKind SelectionKind,
         int SelectionIndex);
 
-    private readonly record struct ShapeResizeResult(SimVector2 Center, SimVector2 Size, float Radius);
 }

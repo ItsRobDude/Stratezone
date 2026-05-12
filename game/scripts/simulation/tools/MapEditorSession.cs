@@ -104,7 +104,7 @@ public sealed partial class MapEditorSession
                 var content = SelectedMarker.ContentIds.Count == 0
                     ? "none"
                     : string.Join(", ", SelectedMarker.ContentIds);
-                return $"Marker id={SelectedMarker.Id}\nposition={FormatVector(SelectedMarker.Position)}\ncontent={content}";
+                return $"Marker id={SelectedMarker.Id}\nposition={FormatVector(SelectedMarker.Position)}\ncontent={content}\ntags={FormatTags(SelectedMarker.Tags)}";
             }
 
             if (SelectedRegion is not null)
@@ -158,7 +158,7 @@ public sealed partial class MapEditorSession
         {
             foreach (var marker in mission.Markers)
             {
-                _markers.Add(new MapEditorMarker(marker.Id, marker.Position));
+                _markers.Add(new MapEditorMarker(marker.Id, marker.Position, marker.Tags.ToArray()));
             }
 
             foreach (var entity in mission.StartingEntities)
@@ -347,7 +347,7 @@ public sealed partial class MapEditorSession
         return mission with
         {
             Markers = _markers
-                .Select(marker => new MissionMarkerDefinition(marker.Id, marker.Position))
+                .Select(marker => new MissionMarkerDefinition(marker.Id, marker.Position, marker.Tags.ToArray()))
                 .ToArray()
         };
     }
@@ -482,12 +482,22 @@ public sealed partial class MapEditorSession
 
     public static string FormatMissionMarker(MapEditorMarker marker)
     {
-        return $$"""
+        var builder = new StringBuilder();
+        builder.AppendLine("{");
+        builder.AppendLine($"  \"id\": \"{JsonEscape(marker.Id)}\",");
+        builder.Append($"  \"position\": {{ \"x\": {FormatNumber(marker.Position.X)}, \"y\": {FormatNumber(marker.Position.Y)} }}");
+        if (marker.Tags.Count > 0)
         {
-          "id": "{{JsonEscape(marker.Id)}}",
-          "position": { "x": {{FormatNumber(marker.Position.X)}}, "y": {{FormatNumber(marker.Position.Y)}} }
+            builder.AppendLine(",");
+            builder.Append($"  \"tags\": [{string.Join(", ", marker.Tags.Select(tag => $"\"{JsonEscape(tag)}\""))}]");
         }
-        """;
+        else
+        {
+            builder.AppendLine();
+        }
+
+        builder.Append("}");
+        return builder.ToString();
     }
 
     public static string FormatTerrainRegion(MapEditorRegion region)

@@ -36,14 +36,14 @@
         ]
       },
       "mission_markers": [
-        { "id": "player_landing_zone", "position": { "x": -860, "y": 200 } },
+        { "id": "player_landing_zone", "position": { "x": -860, "y": 200 }, "tags": ["player_start"] },
         { "id": "player_grunt", "position": { "x": -830, "y": 155 } },
         { "id": "player_commander", "position": { "x": -895, "y": 230 } },
         { "id": "player_cadet_north", "position": { "x": -790, "y": 145 } },
         { "id": "player_cadet_south", "position": { "x": -780, "y": 260 } },
         { "id": "player_rifleman", "position": { "x": -735, "y": 205 } },
         { "id": "player_start_well", "position": { "x": -600, "y": 420 } },
-        { "id": "central_island_well", "position": { "x": 20, "y": 0 } },
+        { "id": "central_island_well", "position": { "x": 20, "y": 0 }, "tags": ["contested_well"] },
         { "id": "enemy_well", "position": { "x": 1030, "y": 320 } },
         { "id": "enemy_base", "position": { "x": 1120, "y": -150 } },
         { "id": "enemy_power", "position": { "x": 960, "y": -250 } },

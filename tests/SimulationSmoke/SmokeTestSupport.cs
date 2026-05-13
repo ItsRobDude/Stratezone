@@ -18,7 +18,7 @@ internal static class SmokeTestSupport
         var repoRoot = FindRepoRoot();
         var gameRoot = Path.Combine(repoRoot, "game");
         var catalog = ContentCatalog.LoadFromGameData(gameRoot);
-        var localization = LocalizationCatalog.LoadFromGameData(gameRoot);
+        var localization = LocalizationCatalog.LoadFromGameData(gameRoot).Catalog;
         var firstLandingMission = catalog.GetMission(ContentIds.Missions.FirstLanding);
         var wellsAtTheRidgeMission = catalog.GetMission(ContentIds.Missions.WellsAtTheRidge);
         var wellsAtTheRidgeMap = catalog.GetMap(wellsAtTheRidgeMission.MapId);

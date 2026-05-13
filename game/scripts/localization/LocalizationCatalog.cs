@@ -1,6 +1,9 @@
 using System.Text.Json;
+using Stratezone.Simulation.Content;
 
 namespace Stratezone.Localization;
+
+public sealed record LocalizationLoadResult(LocalizationCatalog Catalog, IReadOnlyList<string> Warnings);
 
 public sealed class LocalizationCatalog
 {
@@ -11,10 +14,41 @@ public sealed class LocalizationCatalog
         _strings = strings;
     }
 
-    public static LocalizationCatalog LoadFromGameData(string gameRoot, string locale = "en")
+    public static LocalizationLoadResult LoadFromGameData(string gameRoot, string locale = "en")
     {
-        var path = Path.Combine(gameRoot, "data", "i18n", $"{locale}.json");
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        return LoadFromGameData(new FileSystemGameDataReader(gameRoot), locale);
+    }
+
+    public static LocalizationLoadResult LoadFromGameData(IGameDataReader reader, string locale = "en")
+    {
+        var warnings = new List<string>();
+        return LoadInternal(reader, locale, warnings, new HashSet<string>(StringComparer.Ordinal));
+    }
+
+    private static LocalizationLoadResult LoadInternal(
+        IGameDataReader reader,
+        string locale,
+        List<string> warnings,
+        HashSet<string> attemptedLocales)
+    {
+        if (!attemptedLocales.Add(locale))
+        {
+            throw new InvalidOperationException($"Locale fallback loop while loading '{locale}'.");
+        }
+
+        var path = $"data/i18n/{locale}.json";
+        if (!reader.FileExists(path))
+        {
+            if (locale == "en")
+            {
+                throw new FileNotFoundException($"Required English locale missing at {path}.");
+            }
+
+            warnings.Add($"Locale '{locale}' missing at {path}; falling back to 'en'.");
+            return LoadInternal(reader, "en", warnings, attemptedLocales);
+        }
+
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var root = document.RootElement.TryGetProperty("strings", out var stringsElement)
             ? stringsElement
             : document.RootElement;
@@ -28,7 +62,7 @@ public sealed class LocalizationCatalog
             }
         }
 
-        return new LocalizationCatalog(strings);
+        return new LocalizationLoadResult(new LocalizationCatalog(strings), warnings);
     }
 
     public string Translate(string key, IReadOnlyDictionary<string, string>? args = null, string? fallback = null)

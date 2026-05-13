@@ -8,6 +8,7 @@ var ridgeMission = context.WellsAtTheRidgeMission;
 var startingMaterials = mission.PlayerStartingResources[ContentIds.Resources.Materials];
 
 ContentSmoke.Run(context);
+LocalizationSmoke.Run();
 
 var simulation = new RtsSimulation(
     catalog,

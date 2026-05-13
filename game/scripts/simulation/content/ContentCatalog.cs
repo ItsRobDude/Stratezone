@@ -79,25 +79,23 @@ public sealed class ContentCatalog
 
     public static ContentCatalog LoadFromGameData(string gameRoot)
     {
-        var unitsPath = Path.Combine(gameRoot, "data", "units", "units.json");
-        var buildingsPath = Path.Combine(gameRoot, "data", "buildings", "buildings.json");
-        var barracksUpgradesPath = Path.Combine(gameRoot, "data", "upgrades", "barracks_upgrades.json");
-        var resourceWellsPath = Path.Combine(gameRoot, "data", "resources", "resource_wells.json");
-        var mapsPath = Path.Combine(gameRoot, "data", "maps", "maps.json");
-        var missionsPath = Path.Combine(gameRoot, "data", "missions");
+        return LoadFromGameData(new FileSystemGameDataReader(gameRoot));
+    }
 
-        var units = LoadUnits(unitsPath);
-        var buildings = LoadBuildings(buildingsPath);
-        var barracksUpgrades = LoadBarracksUpgrades(barracksUpgradesPath);
-        var resourceWells = LoadResourceWells(resourceWellsPath);
-        var maps = LoadMaps(mapsPath);
-        var missions = LoadMissions(missionsPath);
+    public static ContentCatalog LoadFromGameData(IGameDataReader reader)
+    {
+        var units = LoadUnits(reader, "data/units/units.json");
+        var buildings = LoadBuildings(reader, "data/buildings/buildings.json");
+        var barracksUpgrades = LoadBarracksUpgrades(reader, "data/upgrades/barracks_upgrades.json");
+        var resourceWells = LoadResourceWells(reader, "data/resources/resource_wells.json");
+        var maps = LoadMaps(reader, "data/maps/maps.json");
+        var missions = LoadMissions(reader, "data/missions");
         return new ContentCatalog(units, buildings, barracksUpgrades, resourceWells, maps, missions);
     }
 
-    private static Dictionary<string, UnitDefinition> LoadUnits(string path)
+    private static Dictionary<string, UnitDefinition> LoadUnits(IGameDataReader reader, string path)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
         var units = new Dictionary<string, UnitDefinition>(StringComparer.Ordinal);
 
@@ -139,9 +137,9 @@ public sealed class ContentCatalog
         return units;
     }
 
-    private static Dictionary<string, BuildingDefinition> LoadBuildings(string path)
+    private static Dictionary<string, BuildingDefinition> LoadBuildings(IGameDataReader reader, string path)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
         var buildings = new Dictionary<string, BuildingDefinition>(StringComparer.Ordinal);
 
@@ -186,9 +184,9 @@ public sealed class ContentCatalog
         return buildings;
     }
 
-    private static Dictionary<string, BarracksUpgradeDefinition> LoadBarracksUpgrades(string path)
+    private static Dictionary<string, BarracksUpgradeDefinition> LoadBarracksUpgrades(IGameDataReader reader, string path)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
         var upgrades = new Dictionary<string, BarracksUpgradeDefinition>(StringComparer.Ordinal);
 
@@ -212,9 +210,9 @@ public sealed class ContentCatalog
         return upgrades;
     }
 
-    private static Dictionary<string, ResourceWellDefinition> LoadResourceWells(string path)
+    private static Dictionary<string, ResourceWellDefinition> LoadResourceWells(IGameDataReader reader, string path)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
         var wells = new Dictionary<string, ResourceWellDefinition>(StringComparer.Ordinal);
 
@@ -234,20 +232,20 @@ public sealed class ContentCatalog
         return wells;
     }
 
-    private static Dictionary<string, MissionDefinition> LoadMissions(string missionsPath)
+    private static Dictionary<string, MissionDefinition> LoadMissions(IGameDataReader reader, string missionsPath)
     {
         var missions = new Dictionary<string, MissionDefinition>(StringComparer.Ordinal);
-        foreach (var path in Directory.EnumerateFiles(missionsPath, "*.json").OrderBy(path => path, StringComparer.Ordinal))
+        foreach (var path in reader.EnumerateFiles(missionsPath, "*.json"))
         {
-            LoadMissionFile(path, missions);
+            LoadMissionFile(reader, path, missions);
         }
 
         return missions;
     }
 
-    private static Dictionary<string, MapDefinition> LoadMaps(string path)
+    private static Dictionary<string, MapDefinition> LoadMaps(IGameDataReader reader, string path)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
         var maps = new Dictionary<string, MapDefinition>(StringComparer.Ordinal);
 
@@ -316,9 +314,9 @@ public sealed class ContentCatalog
             .ToArray();
     }
 
-    private static void LoadMissionFile(string path, Dictionary<string, MissionDefinition> missions)
+    private static void LoadMissionFile(IGameDataReader reader, string path, Dictionary<string, MissionDefinition> missions)
     {
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(reader.ReadAllText(path));
         var records = document.RootElement.GetProperty("records");
 
         foreach (var record in records.EnumerateArray())

@@ -82,8 +82,15 @@ public partial class Main : Node2D
     {
         var gameRoot = ProjectSettings.GlobalizePath("res://");
         _gameRoot = gameRoot;
-        _catalog = ContentCatalog.LoadFromGameData(gameRoot);
-        _localization = LocalizationCatalog.LoadFromGameData(gameRoot);
+        var gameDataReader = new GodotGameDataReader();
+        _catalog = ContentCatalog.LoadFromGameData(gameDataReader);
+        var localizationResult = LocalizationCatalog.LoadFromGameData(gameDataReader);
+        _localization = localizationResult.Catalog;
+        foreach (var warning in localizationResult.Warnings)
+        {
+            GD.PushWarning(warning);
+        }
+
         _debugHotkeyHintsEnabled = string.Equals(
             System.Environment.GetEnvironmentVariable(DebugHotkeysEnvironmentVariable),
             "1",

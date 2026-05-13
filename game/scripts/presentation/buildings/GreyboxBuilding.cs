@@ -27,6 +27,9 @@ public partial class GreyboxBuilding : Node2D
         "1",
         StringComparison.Ordinal);
     private bool _labelsSuppressed;
+    private BuildingRenderSnapshot _lastRenderSnapshot;
+    private bool _hasRenderSnapshot;
+    private bool _wasFlashing;
     private float _cameraZoom = 1.0f;
 
     public bool ShowAlwaysOnLabel
@@ -98,14 +101,14 @@ public partial class GreyboxBuilding : Node2D
         }
 
         ApplyZoomDetailVisibility();
-        QueueRedraw();
+        RequestRedrawIfChanged(state);
     }
 
     public void SetSelected(bool selected)
     {
         _selected = selected;
         ApplyZoomDetailVisibility();
-        QueueRedraw();
+        RequestRedrawIfChanged();
     }
 
     public void SetCameraZoom(float cameraZoom)
@@ -118,7 +121,7 @@ public partial class GreyboxBuilding : Node2D
 
         _cameraZoom = nextZoom;
         ApplyZoomDetailVisibility();
-        QueueRedraw();
+        RequestRedrawIfChanged();
     }
 
     public bool ContainsInteractionPoint(Vector2 worldPosition, float padding = 8.0f)
@@ -356,6 +359,31 @@ public partial class GreyboxBuilding : Node2D
         {
             _label.Visible = ShouldShowLabel();
         }
+    }
+
+    private void RequestRedrawIfChanged(BuildingState? state = null)
+    {
+        state ??= _state;
+        if (state is null)
+        {
+            QueueRedraw();
+            return;
+        }
+
+        var isFlashing = state.HitFlashSeconds > 0.0f;
+        var snapshot = BuildingRenderSnapshot.From(
+            state,
+            _selected,
+            _cameraZoom,
+            _label?.Text ?? string.Empty);
+        if (isFlashing || _wasFlashing || !_hasRenderSnapshot || snapshot != _lastRenderSnapshot)
+        {
+            QueueRedraw();
+        }
+
+        _lastRenderSnapshot = snapshot;
+        _hasRenderSnapshot = true;
+        _wasFlashing = isFlashing;
     }
 
     private bool ShouldShowLabel()

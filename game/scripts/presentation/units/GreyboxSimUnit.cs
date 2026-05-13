@@ -36,6 +36,7 @@ public partial class GreyboxSimUnit : Node2D
     private bool _isAttacking;
     private bool _hovered;
     private bool _showAlwaysOnLabel;
+    private bool _labelsSuppressed;
     private string? _attackTargetKey;
     private float _runMovementGraceSeconds;
     private float _attackEngagementGraceSeconds;
@@ -57,6 +58,20 @@ public partial class GreyboxSimUnit : Node2D
             }
 
             _showAlwaysOnLabel = value;
+            ApplyZoomDetailVisibility();
+        }
+    }
+    public bool LabelsSuppressed
+    {
+        get => _labelsSuppressed;
+        set
+        {
+            if (_labelsSuppressed == value)
+            {
+                return;
+            }
+
+            _labelsSuppressed = value;
             ApplyZoomDetailVisibility();
         }
     }

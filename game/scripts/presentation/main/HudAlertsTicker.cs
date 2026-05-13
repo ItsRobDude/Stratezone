@@ -9,6 +9,11 @@ public partial class HudAlertsTicker : Control
     private IReadOnlyList<HudAlertSnapshot> _alerts = [];
     private float _uiScale = 1.0f;
 
+    public override void _Ready()
+    {
+        MouseFilter = MouseFilterEnum.Pass;
+    }
+
     public void ApplyUiScale(float uiScale)
     {
         _uiScale = uiScale;
@@ -23,9 +28,10 @@ public partial class HudAlertsTicker : Control
         QueueRedraw();
     }
 
-    public void UpdateAlerts(IReadOnlyList<HudAlertSnapshot> alerts)
+    public void UpdateAlerts(IReadOnlyList<HudAlertSnapshot> alerts, string tooltip)
     {
         _alerts = alerts.Take(2).ToArray();
+        TooltipText = tooltip;
         QueueRedraw();
     }
 

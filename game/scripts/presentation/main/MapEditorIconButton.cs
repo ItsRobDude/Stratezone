@@ -6,6 +6,22 @@ public partial class MapEditorIconButton : Button
     private float _uiScale = 1.0f;
     private bool _active;
 
+    public bool IsActive
+    {
+        get => _active;
+        set
+        {
+            if (_active == value)
+            {
+                return;
+            }
+
+            _active = value;
+            ThemeTypeVariation = value ? "ButtonActive" : string.Empty;
+            QueueRedraw();
+        }
+    }
+
     public void Configure(string iconId, string tooltip, bool active, Action action)
     {
         _iconId = iconId;
@@ -14,14 +30,7 @@ public partial class MapEditorIconButton : Button
         ToggleMode = false;
         MouseFilter = MouseFilterEnum.Stop;
         Pressed += action;
-        SetActive(active);
-    }
-
-    public void SetActive(bool active)
-    {
-        _active = active;
-        ThemeTypeVariation = active ? "ButtonActive" : string.Empty;
-        QueueRedraw();
+        IsActive = active;
     }
 
     public void ApplyUiScale(float uiScale, float size = 48.0f)

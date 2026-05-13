@@ -21,7 +21,43 @@ public partial class GreyboxBuilding : Node2D
     private Label? _label;
     private LocalizationCatalog? _localization;
     private bool _selected;
+    private bool _hovered;
+    private bool _showAlwaysOnLabel = string.Equals(
+        System.Environment.GetEnvironmentVariable("STRATEZONE_DEBUG_LABELS"),
+        "1",
+        StringComparison.Ordinal);
+    private bool _labelsSuppressed;
     private float _cameraZoom = 1.0f;
+
+    public bool ShowAlwaysOnLabel
+    {
+        get => _showAlwaysOnLabel;
+        set
+        {
+            if (_showAlwaysOnLabel == value)
+            {
+                return;
+            }
+
+            _showAlwaysOnLabel = value;
+            ApplyZoomDetailVisibility();
+        }
+    }
+
+    public bool LabelsSuppressed
+    {
+        get => _labelsSuppressed;
+        set
+        {
+            if (_labelsSuppressed == value)
+            {
+                return;
+            }
+
+            _labelsSuppressed = value;
+            ApplyZoomDetailVisibility();
+        }
+    }
 
     public void Initialize(BuildingState state, LocalizationCatalog? localization = null)
     {
@@ -93,6 +129,20 @@ public partial class GreyboxBuilding : Node2D
         }
 
         return GetInteractionRect().Grow(padding).HasPoint(ToLocal(worldPosition));
+    }
+
+    public override void _Process(double delta)
+    {
+        var hovered = _state is not null &&
+            !_state.IsDestroyed &&
+            ContainsInteractionPoint(GetGlobalMousePosition(), padding: 4.0f);
+        if (hovered == _hovered)
+        {
+            return;
+        }
+
+        _hovered = hovered;
+        ApplyZoomDetailVisibility();
     }
 
     public float DistanceToInteractionBounds(Vector2 worldPosition)
@@ -310,7 +360,12 @@ public partial class GreyboxBuilding : Node2D
 
     private bool ShouldShowLabel()
     {
-        return _selected || _cameraZoom >= BuildingLabelZoomThreshold || _state?.IsDamaged == true || _state?.IsPowered == false;
+        return !_labelsSuppressed &&
+            (_selected ||
+                _hovered ||
+                (ShowAlwaysOnLabel && _cameraZoom >= BuildingLabelZoomThreshold) ||
+                _state?.IsDamaged == true ||
+                _state?.IsPowered == false);
     }
 
     private bool ShouldDrawPowerRadius(BuildingState state)

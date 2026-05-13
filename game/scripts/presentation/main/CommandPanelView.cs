@@ -7,29 +7,16 @@ public partial class CommandPanelView : Panel
     private const float ButtonSize = 56.0f;
     private const float InnerPadding = 12.0f;
 
-    private readonly Label _title = new();
     private readonly HBoxContainer _buttons = new();
-    private readonly Label _hint = new();
     private float _uiScale = 1.0f;
-    private string _defaultHint = string.Empty;
     private string _lastActionSignature = string.Empty;
 
     public override void _Ready()
     {
         MouseFilter = MouseFilterEnum.Pass;
 
-        _title.ThemeTypeVariation = "LabelSecondary";
-        _title.HorizontalAlignment = HorizontalAlignment.Left;
-        _title.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
-        AddChild(_title);
-
         _buttons.MouseFilter = MouseFilterEnum.Pass;
         AddChild(_buttons);
-
-        _hint.ThemeTypeVariation = "LabelSecondary";
-        _hint.HorizontalAlignment = HorizontalAlignment.Right;
-        _hint.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
-        AddChild(_hint);
     }
 
     public void ApplyUiScale(float uiScale, Vector2 viewportSize)
@@ -48,12 +35,8 @@ public partial class CommandPanelView : Panel
 
         var localWidth = Mathf.Max(640.0f * uiScale, viewportSize.X - (margin * 2.0f));
         var buttonSize = ButtonSize * uiScale;
-        _title.Position = new Vector2(InnerPadding, 6.0f) * uiScale;
-        _title.Size = new Vector2(180.0f, 18.0f) * uiScale;
-        _buttons.Position = new Vector2(InnerPadding, 18.0f) * uiScale;
+        _buttons.Position = new Vector2(InnerPadding, 12.0f) * uiScale;
         _buttons.Size = new Vector2(Mathf.Max(0.0f, localWidth - (InnerPadding * 2.0f * uiScale)), buttonSize);
-        _hint.Position = new Vector2(localWidth - (350.0f * uiScale) - (InnerPadding * uiScale), 6.0f * uiScale);
-        _hint.Size = new Vector2(350.0f, 18.0f) * uiScale;
 
         foreach (var child in _buttons.GetChildren().OfType<CommandIconButton>())
         {
@@ -61,23 +44,15 @@ public partial class CommandPanelView : Panel
         }
     }
 
-    public void UpdateActions(string title, IReadOnlyList<CommandPanelAction> actions, string hint)
+    public void UpdateActions(IReadOnlyList<CommandPanelAction> actions)
     {
-        _title.Text = title;
-        _defaultHint = hint;
-        var signature = BuildActionSignature(title, actions, hint);
+        var signature = BuildActionSignature(actions);
         if (signature == _lastActionSignature)
         {
-            if (!HasMouseOverButton())
-            {
-                _hint.Text = hint;
-            }
-
             return;
         }
 
         _lastActionSignature = signature;
-        _hint.Text = hint;
 
         foreach (var child in _buttons.GetChildren())
         {
@@ -89,26 +64,16 @@ public partial class CommandPanelView : Panel
             var button = new CommandIconButton();
             button.Configure(action);
             button.ApplyUiScale(_uiScale);
-            button.MouseEntered += () => _hint.Text = action.Tooltip;
-            button.MouseExited += () => _hint.Text = _defaultHint;
             button.Pressed += action.Execute;
             _buttons.AddChild(button);
         }
     }
 
-    private bool HasMouseOverButton()
-    {
-        return _buttons.GetChildren().OfType<CommandIconButton>().Any(button =>
-            new Rect2(Vector2.Zero, button.Size).HasPoint(button.GetLocalMousePosition()));
-    }
-
-    private static string BuildActionSignature(string title, IReadOnlyList<CommandPanelAction> actions, string hint)
+    private static string BuildActionSignature(IReadOnlyList<CommandPanelAction> actions)
     {
         return string.Join(
             "\u001f",
-            actions.Select(action => $"{action.Name}\u001e{action.Hotkey}\u001e{action.Tooltip}\u001e{action.Enabled}\u001e{action.IconId}\u001e{action.Cost}\u001e{action.Active}")
-                .Prepend(title)
-                .Append(hint));
+            actions.Select(action => $"{action.Name}\u001e{action.Hotkey}\u001e{action.Tooltip}\u001e{action.Enabled}\u001e{action.IconId}\u001e{action.Cost}\u001e{action.Active}"));
     }
 }
 

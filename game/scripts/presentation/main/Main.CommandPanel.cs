@@ -120,27 +120,17 @@ public partial class Main
 
         if (selectedUnits.Length > 0)
         {
-            _commandPanel.UpdateActions(
-                L("ui.action_bar.title_unit_selection", SimulationMessage.Args(("count", selectedUnits.Length))),
-                actions.ToArray(),
-                hasBuilder ? GetBuilderCommandPanelHint() : L("ui.command.combat_selection_hint"));
+            _commandPanel.UpdateActions(actions.ToArray());
             return;
         }
 
         if (selectedBuilding is not null)
         {
-            var hint = selectedBuilding.IsDamaged
-                ? L("ui.command.damaged_building_hint")
-                : selectedBarracks
-                    ? L("ui.command.barracks_hint")
-                    : selectedDefenseTower
-                        ? L("ui.command.defense_tower_hint")
-                        : L("ui.command.no_direct_commands");
-            _commandPanel.UpdateActions(BuildingName(selectedBuilding.Definition), actions.ToArray(), hint);
+            _commandPanel.UpdateActions(actions.ToArray());
             return;
         }
 
-        _commandPanel.UpdateActions(L("ui.action_bar.title_no_selection"), actions.ToArray(), L("ui.action_bar.no_selection_hint"));
+        _commandPanel.UpdateActions(actions.ToArray());
     }
 
     private string GetSelectionHudLine()

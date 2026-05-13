@@ -40,15 +40,13 @@ public partial class HudCommanderIndicator : Panel
         QueueRedraw();
     }
 
-    public void UpdateCommander(int health, int maxHealth, bool missing)
+    public void UpdateCommander(int health, int maxHealth, bool missing, string tooltip)
     {
         _health = Math.Max(0, health);
         _maxHealth = Math.Max(1, maxHealth);
         _missing = missing;
         _value.Text = missing ? "--" : $"{_health:0}/{_maxHealth:0}";
-        TooltipText = missing
-            ? "Commander indicator. Commander is missing."
-            : "Commander health. Commander death fails the mission.";
+        TooltipText = tooltip;
         QueueRedraw();
     }
 

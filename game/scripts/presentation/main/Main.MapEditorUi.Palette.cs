@@ -12,23 +12,23 @@ public partial class Main
 
         ClearChildren(_mapEditorPaletteList);
         _mapEditorToolButtons.Clear();
-        AddToolButton("select", "Select\nLeft-drag moves selected items.", MapEditorToolMode.Select);
-        AddToolButton("marker", "Add Marker\nClick the map to place a marker.", MapEditorToolMode.AddMarker);
-        AddToolButton("rect", "Add Rect Region\nDrag to create a rectangular region.", MapEditorToolMode.AddRectRegion);
-        AddToolButton("circle", "Add Circle Region\nDrag to create a circular region.", MapEditorToolMode.AddCircleRegion);
-        AddToolButton("delete", "Delete\nClick a marker, region, or object to preview deletion.", MapEditorToolMode.Delete);
+        AddToolButton("select", L("ui.editor.tool.select.tooltip"), MapEditorToolMode.Select);
+        AddToolButton("marker", L("ui.editor.tool.marker.tooltip"), MapEditorToolMode.AddMarker);
+        AddToolButton("rect", L("ui.editor.tool.rect.tooltip"), MapEditorToolMode.AddRectRegion);
+        AddToolButton("circle", L("ui.editor.tool.circle.tooltip"), MapEditorToolMode.AddCircleRegion);
+        AddToolButton("delete", L("ui.editor.tool.delete.tooltip"), MapEditorToolMode.Delete);
 
         AddPaletteSpacer();
-        _mapEditorSnapToggle = AddPaletteIconButton("snap", "Snap (G)\nToggle 10-unit editor snapping.", () =>
+        _mapEditorSnapToggle = AddPaletteIconButton("snap", L("ui.editor.tool.snap.tooltip"), () =>
         {
             ToggleMapEditorSnap();
         });
 
         AddPaletteSpacer();
-        AddPaletteIconButton("undo", "Undo (Ctrl+Z)", UndoMapEditor);
-        AddPaletteIconButton("redo", "Redo (Ctrl+Y / Ctrl+Shift+Z)", RedoMapEditor);
-        AddPaletteIconButton("duplicate", "Duplicate\nDuplicate the selected marker, region, or object.", DuplicateMapEditorSelection);
-        AddPaletteIconButton("delete", "Delete...\nPreview dependency-aware deletion.", BeginMapEditorDelete);
+        AddPaletteIconButton("undo", L("ui.editor.tool.undo.tooltip"), UndoMapEditor);
+        AddPaletteIconButton("redo", L("ui.editor.tool.redo.tooltip"), RedoMapEditor);
+        AddPaletteIconButton("duplicate", L("ui.editor.tool.duplicate.tooltip"), DuplicateMapEditorSelection);
+        AddPaletteIconButton("delete", L("ui.editor.tool.delete_preview.tooltip"), BeginMapEditorDelete);
     }
 
     private void AddToolButton(string iconId, string tooltip, MapEditorToolMode mode)
@@ -67,17 +67,6 @@ public partial class Main
         _lastActionMessage = $"Map editor tool: {mode}.";
         ClearMapEditorPendingDecisions();
         RefreshMapEditorPanel();
-    }
-
-    private static void ApplyMapEditorCursor(MapEditorToolMode mode)
-    {
-        var cursor = mode switch
-        {
-            MapEditorToolMode.AddMarker or MapEditorToolMode.AddRectRegion or MapEditorToolMode.AddCircleRegion => Input.CursorShape.Cross,
-            MapEditorToolMode.Delete => Input.CursorShape.Forbidden,
-            _ => Input.CursorShape.Arrow
-        };
-        Input.SetDefaultCursorShape(cursor);
     }
 
     private void ToggleMapEditorSnap()

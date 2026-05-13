@@ -39,11 +39,18 @@ public partial class HudResourceBar : Panel
         }
     }
 
-    public void UpdateValues(int materials, int poweredBuildings, int totalBuildings, int playerUnits)
+    public void UpdateValues(
+        int materials,
+        int poweredBuildings,
+        int totalBuildings,
+        int playerUnits,
+        string materialsTooltip,
+        string powerTooltip,
+        string populationTooltip)
     {
-        _materials.UpdateValue($"{materials:0}", "MAT", "Materials available for construction, training, and repair.");
-        _power.UpdateValue($"{poweredBuildings:0}/{totalBuildings:0}", "PWR", "Powered player structures over live player structures.");
-        _population.UpdateValue($"{playerUnits:0}/--", "POP", "Live player units. No troop cap is enforced yet.");
+        _materials.UpdateValue($"{materials:0}", "MAT", materialsTooltip);
+        _power.UpdateValue($"{poweredBuildings:0}/{totalBuildings:0}", "PWR", powerTooltip);
+        _population.UpdateValue($"{playerUnits:0}/--", "POP", populationTooltip);
     }
 }
 

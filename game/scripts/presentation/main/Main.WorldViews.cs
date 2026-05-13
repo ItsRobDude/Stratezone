@@ -148,6 +148,8 @@ public partial class Main
             var knownToPlayer = building.FactionId != ContentIds.Factions.PrivateMilitary ||
                 _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position);
             view.SetCameraZoom(cameraZoom);
+            view.LabelsSuppressed = _mapEditorEnabled;
+            view.ShowAlwaysOnLabel = !_mapEditorEnabled && _debugLabelsEnabled;
             view.Visible = !building.IsDestroyed &&
                 knownToPlayer &&
                 IsCircleInsideWorldBounds(building.Position, building.FootprintWorldRadius, visibleWorldBounds);
@@ -201,6 +203,8 @@ public partial class Main
                 IsCircleInsideWorldBounds(unit.Position, view.SelectionRadius, visibleWorldBounds);
             view.SetSelected(_selectedUnitEntityIds.Contains(unit.EntityId));
             view.SetCameraZoom(cameraZoom);
+            view.LabelsSuppressed = _mapEditorEnabled;
+            view.ShowAlwaysOnLabel = !_mapEditorEnabled && _debugLabelsEnabled;
         }
 
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);

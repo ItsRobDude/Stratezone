@@ -76,17 +76,13 @@ public partial class Main
         {
             foreach (var pair in _mapEditorToolButtons)
             {
-                if (pair.Value is MapEditorIconButton iconButton)
-                {
-                    iconButton.SetActive(pair.Key == _mapEditorOverlay.ToolMode);
-                }
-                else
-                {
-                    pair.Value.ButtonPressed = pair.Key == _mapEditorOverlay.ToolMode;
-                }
+                pair.Value.IsActive = pair.Key == _mapEditorOverlay.ToolMode;
             }
 
-            _mapEditorSnapToggle?.SetActive(_mapEditorOverlay.SnapEnabled);
+            if (_mapEditorSnapToggle is not null)
+            {
+                _mapEditorSnapToggle.IsActive = _mapEditorOverlay.SnapEnabled;
+            }
             RefreshMissionPickerSelection();
             RefreshMapEditorInspector();
         }

@@ -14,6 +14,7 @@ public partial class Main : Node2D
     private const string DefaultMissionId = ContentIds.Missions.FirstLanding;
     private const string InitialMissionEnvironmentVariable = "STRATEZONE_MISSION_ID";
     private const string DebugHotkeysEnvironmentVariable = "STRATEZONE_DEBUG_HOTKEYS";
+    private const string DebugLabelsEnvironmentVariable = "STRATEZONE_DEBUG_LABELS";
 
     private static readonly string[] BuildHotkeyOrder =
     [
@@ -75,6 +76,7 @@ public partial class Main : Node2D
     private float _hudRefreshElapsedSeconds = HudRefreshIntervalSeconds;
     private bool _briefingOverlayVisible;
     private bool _debugHotkeyHintsEnabled;
+    private bool _debugLabelsEnabled;
 
     public override void _Ready()
     {
@@ -84,6 +86,10 @@ public partial class Main : Node2D
         _localization = LocalizationCatalog.LoadFromGameData(gameRoot);
         _debugHotkeyHintsEnabled = string.Equals(
             System.Environment.GetEnvironmentVariable(DebugHotkeysEnvironmentVariable),
+            "1",
+            StringComparison.Ordinal);
+        _debugLabelsEnabled = string.Equals(
+            System.Environment.GetEnvironmentVariable(DebugLabelsEnvironmentVariable),
             "1",
             StringComparison.Ordinal);
         _lastActionMessage = L("ui.action.initial_hint");
@@ -330,7 +336,7 @@ public partial class Main : Node2D
         _hudAlertsTicker = new HudAlertsTicker
         {
             Name = "HudAlertsTicker",
-            MouseFilter = Control.MouseFilterEnum.Ignore
+            MouseFilter = Control.MouseFilterEnum.Pass
         };
         _gameHudRoot.AddChild(_hudAlertsTicker);
 
@@ -671,14 +677,21 @@ public partial class Main : Node2D
             Mathf.RoundToInt(_simulation.Materials),
             livePlayerBuildings.Count(building => building.IsPowered),
             livePlayerBuildings.Length,
-            livePlayerUnits);
+            livePlayerUnits,
+            L("ui.tooltip.resource.materials", SimulationMessage.Args(("materials", $"{Mathf.RoundToInt(_simulation.Materials):0}"))),
+            L(
+                "ui.tooltip.resource.power",
+                SimulationMessage.Args(
+                    ("powered", livePlayerBuildings.Count(building => building.IsPowered)),
+                    ("total", livePlayerBuildings.Length))),
+            L("ui.tooltip.resource.population", SimulationMessage.Args(("units", livePlayerUnits))));
         UpdateCommanderIndicator();
         if (_hudObjective is not null)
         {
             _hudObjective.Text = GetActiveObjectiveText();
         }
 
-        _hudAlertsTicker?.UpdateAlerts(GetVisibleAlertSnapshots());
+        _hudAlertsTicker?.UpdateAlerts(GetVisibleAlertSnapshots(), L("ui.tooltip.alerts"));
         UpdateBriefingOverlay();
         UpdateCommandPanel();
         UpdateMissionResultOverlay();

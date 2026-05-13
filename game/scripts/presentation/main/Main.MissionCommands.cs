@@ -33,13 +33,6 @@ public partial class Main
             !building.IsDestroyed) == true;
     }
 
-    private string GetBuilderCommandPanelHint()
-    {
-        return !HasPlayerColonyHub() && IsBuildingCommandAvailable(ContentIds.Buildings.ColonyHub)
-            ? L("sim.placement.requires_colony_hub")
-            : L("ui.command.grunt_selection_hint");
-    }
-
     private string GetTrainingCommandSummary()
     {
         if (_catalog is null)

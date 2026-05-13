@@ -85,13 +85,18 @@ public partial class Main
             unit.Definition.Id == ContentIds.Units.Commander);
         if (commander is null)
         {
-            _hudCommander.UpdateCommander(0, 1, missing: true);
+            _hudCommander.UpdateCommander(0, 1, missing: true, L("ui.tooltip.commander.missing"));
             return;
         }
 
         _hudCommander.UpdateCommander(
             Mathf.RoundToInt(commander.Health),
             Mathf.RoundToInt(commander.Definition.Health),
-            commander.IsDestroyed);
+            commander.IsDestroyed,
+            L(
+                "ui.tooltip.commander.health",
+                SimulationMessage.Args(
+                    ("health", $"{Mathf.RoundToInt(commander.Health):0}"),
+                    ("maxHealth", $"{Mathf.RoundToInt(commander.Definition.Health):0}"))));
     }
 }

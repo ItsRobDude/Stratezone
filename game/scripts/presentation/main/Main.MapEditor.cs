@@ -15,7 +15,7 @@ public partial class Main
     private Panel? _mapEditorInspectorPanel;
     private VBoxContainer? _mapEditorInspectorList;
     private PopupMenu? _mapEditorContextMenu;
-    private readonly Dictionary<MapEditorToolMode, Button> _mapEditorToolButtons = [];
+    private readonly Dictionary<MapEditorToolMode, MapEditorIconButton> _mapEditorToolButtons = [];
     private readonly List<string> _mapEditorMissionPickerIds = [];
     private OptionButton? _mapEditorMissionPicker;
     private MapEditorIconButton? _mapEditorSnapToggle;
@@ -478,7 +478,14 @@ public partial class Main
 
         foreach (var unitView in _simUnitViews.Values)
         {
-            unitView.ShowAlwaysOnLabel = false;
+            unitView.LabelsSuppressed = enabled;
+            unitView.ShowAlwaysOnLabel = !enabled && _debugLabelsEnabled;
+        }
+
+        foreach (var buildingView in _buildingViews.Values)
+        {
+            buildingView.LabelsSuppressed = enabled;
+            buildingView.ShowAlwaysOnLabel = !enabled && _debugLabelsEnabled;
         }
 
         if (enabled)
@@ -487,7 +494,7 @@ public partial class Main
         }
         else
         {
-            Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
+            ApplyMapEditorCursor(MapEditorToolMode.Select);
         }
 
         if (_missionCalloutView is not null)
@@ -497,6 +504,32 @@ public partial class Main
 
         _fogOfWarView?.QueueRedraw();
         SyncWorldViews();
+    }
+
+    private void ApplyMapEditorCursor(MapEditorToolMode mode)
+    {
+        var cursor = mode switch
+        {
+            MapEditorToolMode.AddMarker or MapEditorToolMode.AddRectRegion or MapEditorToolMode.AddCircleRegion => Input.CursorShape.Cross,
+            MapEditorToolMode.Delete => Input.CursorShape.Forbidden,
+            _ => Input.CursorShape.Arrow
+        };
+        Input.SetDefaultCursorShape(cursor);
+        DisplayServer.CursorSetShape(cursor switch
+        {
+            Input.CursorShape.Cross => DisplayServer.CursorShape.Cross,
+            Input.CursorShape.Forbidden => DisplayServer.CursorShape.Forbidden,
+            _ => DisplayServer.CursorShape.Arrow
+        });
+        if (_uiLayoutRoot is not null)
+        {
+            _uiLayoutRoot.MouseDefaultCursorShape = cursor switch
+            {
+                Input.CursorShape.Cross => Control.CursorShape.Cross,
+                Input.CursorShape.Forbidden => Control.CursorShape.Forbidden,
+                _ => Control.CursorShape.Arrow
+            };
+        }
     }
 
     private bool TryCreateEditedMissionRuntimeInputs(out MissionDefinition mission, out MapDefinition map)

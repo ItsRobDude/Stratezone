@@ -37,6 +37,8 @@ public partial class Main : Node2D
 
     private readonly Dictionary<int, GreyboxBuilding> _buildingViews = [];
     private readonly Dictionary<int, GreyboxSimUnit> _simUnitViews = [];
+    private readonly Dictionary<string, MissionMarkerDefinition> _markersById = new(StringComparer.Ordinal);
+    private readonly List<MissionCalloutSnapshot> _calloutBuffer = [];
     private readonly List<ResourceWellView> _resourceWellViews = [];
     private readonly HashSet<string> _availableUnitIds = new(StringComparer.Ordinal);
     private readonly HashSet<string> _availableBuildingIds = new(StringComparer.Ordinal);
@@ -274,6 +276,12 @@ public partial class Main : Node2D
         _activeMissionId = mission.Id;
         var runtime = MissionRuntimeFactory.Create(_catalog, mission, map);
         _activeMission = mission;
+        _markersById.Clear();
+        foreach (var marker in mission.Markers)
+        {
+            _markersById[marker.Id] = marker;
+        }
+
         _availableUnitIds.Clear();
         _availableBuildingIds.Clear();
         foreach (var unitId in mission.AvailableUnitIds)

@@ -5,13 +5,14 @@ public readonly record struct MissionCalloutSnapshot(Vector2 Position, string Te
 public partial class MissionCalloutView : Node2D
 {
     private static readonly Font? CalloutFont = GD.Load<Font>("res://assets/fonts/inter_or_similar.tres");
-    private IReadOnlyList<MissionCalloutSnapshot> _callouts = [];
+    private readonly List<MissionCalloutSnapshot> _callouts = [];
     private Rect2 _visibleWorldBounds;
     private float _cameraZoom = 1.0f;
 
     public void UpdateCallouts(IReadOnlyList<MissionCalloutSnapshot> callouts, Rect2 visibleWorldBounds, float cameraZoom)
     {
-        _callouts = callouts;
+        _callouts.Clear();
+        _callouts.AddRange(callouts);
         _visibleWorldBounds = visibleWorldBounds;
         _cameraZoom = cameraZoom;
         QueueRedraw();

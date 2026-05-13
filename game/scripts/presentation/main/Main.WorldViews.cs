@@ -126,11 +126,33 @@ public partial class Main
 
         var visibleWorldBounds = GetExpandedCameraWorldBounds(OffscreenCullPaddingWorld);
         var cameraZoom = CurrentCameraZoom();
+        var liveBuildingIds = new HashSet<int>();
+        foreach (var building in _simulation.Buildings)
+        {
+            if (!building.IsDestroyed)
+            {
+                liveBuildingIds.Add(building.EntityId);
+            }
+        }
+
+        var liveUnitIds = new HashSet<int>();
+        foreach (var unit in _simulation.Units)
+        {
+            if (!unit.IsDestroyed)
+            {
+                liveUnitIds.Add(unit.EntityId);
+            }
+        }
 
         foreach (var building in _simulation.Buildings)
         {
             if (!_buildingViews.TryGetValue(building.EntityId, out var view))
             {
+                if (building.IsDestroyed)
+                {
+                    continue;
+                }
+
                 view = new GreyboxBuilding
                 {
                     Name = $"Building_{building.EntityId}_{building.Definition.Id}",
@@ -177,11 +199,16 @@ public partial class Main
             view.Visible = IsCircleInsideWorldBounds(well.Position, 48.0f, visibleWorldBounds);
         }
 
-        _selectedUnitEntityIds.RemoveWhere(unitId => !_simulation.Units.Any(unit => unit.EntityId == unitId && !unit.IsDestroyed));
+        _selectedUnitEntityIds.RemoveWhere(unitId => !liveUnitIds.Contains(unitId));
         foreach (var unit in _simulation.Units)
         {
             if (!_simUnitViews.TryGetValue(unit.EntityId, out var view))
             {
+                if (unit.IsDestroyed)
+                {
+                    continue;
+                }
+
                 view = new GreyboxSimUnit
                 {
                     Name = $"SimUnit_{unit.EntityId}_{unit.Definition.Id}",
@@ -207,10 +234,31 @@ public partial class Main
             view.ShowAlwaysOnLabel = !_mapEditorEnabled && _debugLabelsEnabled;
         }
 
+        PruneDeadWorldViews(liveBuildingIds, liveUnitIds);
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
         _mapRegionView?.UpdateBridgeStates(_simulation.Bridges);
         _fogOfWarView?.UpdateFromState(_simulation.PlayerFog, visibleWorldBounds);
         UpdateMissionCallouts(visibleWorldBounds, cameraZoom);
+    }
+
+    private void PruneDeadWorldViews(HashSet<int> liveBuildingIds, HashSet<int> liveUnitIds)
+    {
+        foreach (var buildingId in _buildingViews.Keys.Where(id => !liveBuildingIds.Contains(id)).ToArray())
+        {
+            _buildingViews[buildingId].QueueFree();
+            _buildingViews.Remove(buildingId);
+            if (_selectedBuildingEntityId == buildingId)
+            {
+                _selectedBuildingEntityId = null;
+            }
+        }
+
+        foreach (var unitId in _simUnitViews.Keys.Where(id => !liveUnitIds.Contains(id)).ToArray())
+        {
+            _simUnitViews[unitId].QueueFree();
+            _simUnitViews.Remove(unitId);
+            _selectedUnitEntityIds.Remove(unitId);
+        }
     }
 
     private void UpdateMissionCallouts(Rect2 visibleWorldBounds, float cameraZoom)
@@ -227,11 +275,11 @@ public partial class Main
             return;
         }
 
-        var callouts = new List<MissionCalloutSnapshot>();
+        _calloutBuffer.Clear();
         foreach (var callout in _activeMission.Presentation.MapCallouts)
         {
-            var marker = _activeMission.Markers.FirstOrDefault(marker => string.Equals(marker.Id, callout.MarkerId, StringComparison.Ordinal));
-            if (marker is null || !_simulation.IsExploredByFaction(ContentIds.Factions.PlayerExpedition, marker.Position))
+            if (!_markersById.TryGetValue(callout.MarkerId, out var marker) ||
+                !_simulation.IsExploredByFaction(ContentIds.Factions.PlayerExpedition, marker.Position))
             {
                 continue;
             }
@@ -239,10 +287,10 @@ public partial class Main
             var text = L(callout.TextKey);
             if (!string.IsNullOrWhiteSpace(text))
             {
-                callouts.Add(new MissionCalloutSnapshot(new Vector2(marker.Position.X, marker.Position.Y), text));
+                _calloutBuffer.Add(new MissionCalloutSnapshot(new Vector2(marker.Position.X, marker.Position.Y), text));
             }
         }
 
-        _missionCalloutView.UpdateCallouts(callouts, visibleWorldBounds, cameraZoom);
+        _missionCalloutView.UpdateCallouts(_calloutBuffer, visibleWorldBounds, cameraZoom);
     }
 }

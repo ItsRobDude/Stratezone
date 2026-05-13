@@ -21,7 +21,6 @@ public partial class MapEditorOverlay
         DrawSelectionHandles();
         DrawCreationPreview();
         DrawPointerDimensionHint();
-        DrawLegend();
     }
 
     private void CompleteShapeCreation(Vector2 endWorld)
@@ -196,6 +195,7 @@ public partial class MapEditorOverlay
         {
             var selected = _session.SelectionKind == MapEditorSelectionKind.Region &&
                 string.Equals(_session.SelectedId, region.Id, StringComparison.Ordinal);
+            var hovered = IsHovered(MapEditorSelectionKind.Region, region.Id);
             var fill = RegionFill(region);
             var outline = selected
                 ? new Color(1.0f, 0.94f, 0.35f, 0.95f)
@@ -207,11 +207,19 @@ public partial class MapEditorOverlay
                 var rect = new Rect2(ToGodot(region.Center) - (size * 0.5f), size);
                 DrawRect(rect, fill);
                 DrawRect(rect, outline, false, selected ? 4.0f : 2.0f);
+                if (hovered)
+                {
+                    DrawRect(rect.Grow(2.0f), UiPalette.AccentCommand, false, 1.0f);
+                }
             }
             else if (region.Shape == "circle")
             {
                 DrawCircle(ToGodot(region.Center), region.Radius, fill);
                 DrawArc(ToGodot(region.Center), region.Radius, 0, Mathf.Tau, 72, outline, selected ? 4.0f : 2.0f);
+                if (hovered)
+                {
+                    DrawArc(ToGodot(region.Center), region.Radius + 2.0f, 0, Mathf.Tau, 72, UiPalette.AccentCommand, 1.0f);
+                }
             }
         }
     }
@@ -272,6 +280,7 @@ public partial class MapEditorOverlay
         {
             var selected = _session.SelectionKind == MapEditorSelectionKind.Object &&
                 string.Equals(_session.SelectedId, mapObject.Id, StringComparison.Ordinal);
+            var hovered = IsHovered(MapEditorSelectionKind.Object, mapObject.Id);
             var runtimeBridge = _simulation?.Bridges.FirstOrDefault(bridge => string.Equals(bridge.Id, mapObject.Id, StringComparison.Ordinal));
             var intact = runtimeBridge?.IsIntact ?? mapObject.StartsIntact;
             var fill = intact
@@ -289,11 +298,19 @@ public partial class MapEditorOverlay
                 var rect = new Rect2(ToGodot(mapObject.Center) - (size * 0.5f), size);
                 DrawRect(rect, fill);
                 DrawRect(rect, outline, false, selected ? 4.0f : 2.0f);
+                if (hovered)
+                {
+                    DrawRect(rect.Grow(2.0f), UiPalette.AccentCommand, false, 1.0f);
+                }
             }
             else if (mapObject.Shape == "circle")
             {
                 DrawCircle(ToGodot(mapObject.Center), mapObject.Radius, fill);
                 DrawArc(ToGodot(mapObject.Center), mapObject.Radius, 0, Mathf.Tau, 72, outline, selected ? 4.0f : 2.0f);
+                if (hovered)
+                {
+                    DrawArc(ToGodot(mapObject.Center), mapObject.Radius + 2.0f, 0, Mathf.Tau, 72, UiPalette.AccentCommand, 1.0f);
+                }
             }
 
             var healthText = runtimeBridge is null
@@ -343,11 +360,17 @@ public partial class MapEditorOverlay
         {
             var selected = _session.SelectionKind == MapEditorSelectionKind.Marker &&
                 string.Equals(_session.SelectedId, marker.Id, StringComparison.Ordinal);
+            var hovered = IsHovered(MapEditorSelectionKind.Marker, marker.Id);
             var color = MarkerColor(marker);
             var position = ToGodot(marker.Position);
             DrawMarkerRanges(marker);
             DrawCircle(position, selected ? MarkerDrawRadius + 4.0f : MarkerDrawRadius, color);
             DrawArc(position, selected ? MarkerDrawRadius + 7.0f : MarkerDrawRadius + 3.0f, 0, Mathf.Tau, 32, new Color(1.0f, 1.0f, 1.0f, selected ? 0.95f : 0.55f), selected ? 3.0f : 1.4f);
+            if (hovered)
+            {
+                DrawArc(position, selected ? MarkerDrawRadius + 10.0f : MarkerDrawRadius + 6.0f, 0, Mathf.Tau, 32, UiPalette.AccentCommand, 1.0f);
+            }
+
             DrawString(
                 ThemeDB.FallbackFont,
                 position + new Vector2(12, -10),

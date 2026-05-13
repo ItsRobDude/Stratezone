@@ -26,6 +26,8 @@ public partial class MapEditorOverlay : Node2D
     private Vector2 _createStartWorld;
     private Vector2 _createCurrentWorld;
     private Vector2 _lastPointerWorld;
+    private MapEditorSelectionKind _hoverKind = MapEditorSelectionKind.None;
+    private string? _hoverId;
 
     public bool EditorEnabled { get; private set; }
     public bool IsDragging => _isDragging || _isCreatingShape || _activeResizeHandle != MapEditorResizeHandle.None;
@@ -113,6 +115,7 @@ public partial class MapEditorOverlay : Node2D
             _isDragging = false;
             _isCreatingShape = false;
             _activeResizeHandle = MapEditorResizeHandle.None;
+            ClearHover();
             _session.CancelEditAction();
         }
 
@@ -125,6 +128,7 @@ public partial class MapEditorOverlay : Node2D
         _isDragging = false;
         _isCreatingShape = false;
         _activeResizeHandle = MapEditorResizeHandle.None;
+        ClearHover();
         _session.CancelEditAction();
         QueueRedraw();
     }
@@ -278,6 +282,7 @@ public partial class MapEditorOverlay : Node2D
             return true;
         }
 
+        UpdateHover(snapped);
         return false;
     }
 
@@ -479,6 +484,61 @@ public partial class MapEditorOverlay : Node2D
     private static SimVector2 ToSim(Vector2 vector)
     {
         return new SimVector2(vector.X, vector.Y);
+    }
+
+    private bool IsHovered(MapEditorSelectionKind kind, string id)
+    {
+        return _hoverKind == kind && string.Equals(_hoverId, id, StringComparison.Ordinal);
+    }
+
+    private void ClearHover()
+    {
+        _hoverKind = MapEditorSelectionKind.None;
+        _hoverId = null;
+    }
+
+    private void UpdateHover(Vector2 worldPosition)
+    {
+        var position = ToSim(worldPosition);
+        var (kind, id) = HitTestHover(position);
+        if (_hoverKind == kind && string.Equals(_hoverId, id, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _hoverKind = kind;
+        _hoverId = id;
+        QueueRedraw();
+    }
+
+    private (MapEditorSelectionKind Kind, string? Id) HitTestHover(SimVector2 position)
+    {
+        var marker = _session.Markers
+            .Select(item => (Marker: item, Distance: item.Position.DistanceTo(position)))
+            .Where(item => item.Distance <= MarkerHitRadius)
+            .OrderBy(item => item.Distance)
+            .FirstOrDefault();
+        if (marker.Marker is not null)
+        {
+            return (MapEditorSelectionKind.Marker, marker.Marker.Id);
+        }
+
+        var mapObject = _session.Objects
+            .Where(item => item.Contains(position))
+            .OrderBy(item => item.Area)
+            .FirstOrDefault();
+        if (mapObject is not null)
+        {
+            return (MapEditorSelectionKind.Object, mapObject.Id);
+        }
+
+        var region = _session.Regions
+            .Where(item => item.Contains(position))
+            .OrderBy(item => item.Area)
+            .FirstOrDefault();
+        return region is null
+            ? (MapEditorSelectionKind.None, null)
+            : (MapEditorSelectionKind.Region, region.Id);
     }
 
     private static string FormatFloat(float value)

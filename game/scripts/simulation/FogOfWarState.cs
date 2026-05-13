@@ -19,6 +19,7 @@ public sealed class FogOfWarState
     public float MinY { get; }
     public float MaxY { get; }
     public float CellSize { get; }
+    public bool EditorReveal { get; set; }
 
     public void BeginVisibilityUpdate()
     {
@@ -51,16 +52,31 @@ public sealed class FogOfWarState
 
     public bool IsVisible(SimVector2 position)
     {
+        if (EditorReveal)
+        {
+            return true;
+        }
+
         return _visible.Contains(ToCell(position));
     }
 
     public bool IsExplored(SimVector2 position)
     {
+        if (EditorReveal)
+        {
+            return true;
+        }
+
         return _explored.Contains(ToCell(position));
     }
 
     public IEnumerable<FogCell> GetUnexploredCells()
     {
+        if (EditorReveal)
+        {
+            yield break;
+        }
+
         var minCellX = ToCellX(MinX);
         var maxCellX = ToCellX(MaxX);
         var minCellY = ToCellY(MinY);

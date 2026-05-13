@@ -5,24 +5,20 @@ public partial class Main
 {
     private void SetupMissionResultOverlay()
     {
-        var uiRoot = GetNode<CanvasLayer>("UiRoot");
         _missionResultPanel = new Panel
         {
             Name = "MissionResultPanel",
-            Visible = false,
-            Position = new Vector2(360, 250),
-            Size = new Vector2(620, 210)
+            Visible = false
         };
-        uiRoot.AddChild(_missionResultPanel);
+        (_gameHudRoot ?? _uiLayoutRoot)?.AddChild(_missionResultPanel);
 
         _missionResultLabel = new Label
         {
             Name = "MissionResultLabel",
-            Position = new Vector2(24, 24),
-            Size = new Vector2(572, 162),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            ThemeTypeVariation = "LabelTitle"
         };
         _missionResultPanel.AddChild(_missionResultLabel);
         ApplyMissionResultScale();
@@ -79,14 +75,17 @@ public partial class Main
             Mathf.Min(desiredPanelSize.Y, maxPanelSize.Y));
         var padding = 24.0f * _uiScale;
 
-        _missionResultPanel.Position = new Vector2(
-            Mathf.Max(margin, (viewportSize.X - panelSize.X) * 0.5f),
-            Mathf.Max(margin, (viewportSize.Y - panelSize.Y) * 0.5f));
-        _missionResultPanel.Size = panelSize;
+        _missionResultPanel.AnchorLeft = 0.5f;
+        _missionResultPanel.AnchorTop = 0.5f;
+        _missionResultPanel.AnchorRight = 0.5f;
+        _missionResultPanel.AnchorBottom = 0.5f;
+        _missionResultPanel.OffsetLeft = panelSize.X * -0.5f;
+        _missionResultPanel.OffsetTop = panelSize.Y * -0.5f;
+        _missionResultPanel.OffsetRight = panelSize.X * 0.5f;
+        _missionResultPanel.OffsetBottom = panelSize.Y * 0.5f;
         _missionResultLabel.Position = new Vector2(padding, padding);
         _missionResultLabel.Size = new Vector2(
             Mathf.Max(120.0f, panelSize.X - (padding * 2.0f)),
             Mathf.Max(48.0f, panelSize.Y - (padding * 2.0f)));
-        _missionResultLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(24 * _uiScale));
     }
 }

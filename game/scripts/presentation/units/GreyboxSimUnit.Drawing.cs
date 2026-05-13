@@ -70,7 +70,7 @@ public partial class GreyboxSimUnit
 
     private bool ShouldShowUnitLabel()
     {
-        return _selected || _cameraZoom >= UnitLabelZoomThreshold;
+        return _selected || _hovered || (ShowAlwaysOnLabel && _cameraZoom >= UnitLabelZoomThreshold);
     }
 
     private bool ShouldDrawPathDebug()

@@ -1,7 +1,12 @@
 using Godot;
+using Stratezone.Simulation;
 
 public partial class CommandPanelView : Panel
 {
+    private const float PanelHeight = 80.0f;
+    private const float ButtonSize = 56.0f;
+    private const float InnerPadding = 12.0f;
+
     private readonly Label _title = new();
     private readonly HBoxContainer _buttons = new();
     private readonly Label _hint = new();
@@ -11,43 +16,48 @@ public partial class CommandPanelView : Panel
 
     public override void _Ready()
     {
-        _title.Position = new Vector2(12, 8);
-        _title.Size = new Vector2(920, 28);
+        MouseFilter = MouseFilterEnum.Pass;
+
+        _title.ThemeTypeVariation = "LabelSecondary";
+        _title.HorizontalAlignment = HorizontalAlignment.Left;
+        _title.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         AddChild(_title);
 
-        _buttons.Position = new Vector2(12, 40);
-        _buttons.Size = new Vector2(920, 58);
+        _buttons.MouseFilter = MouseFilterEnum.Pass;
         AddChild(_buttons);
 
-        _hint.Position = new Vector2(12, 104);
-        _hint.Size = new Vector2(920, 32);
-        _hint.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        _hint.ThemeTypeVariation = "LabelSecondary";
+        _hint.HorizontalAlignment = HorizontalAlignment.Right;
+        _hint.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         AddChild(_hint);
     }
 
-    public void ApplyUiScale(float uiScale, int baseFontSize, Vector2 viewportSize)
+    public void ApplyUiScale(float uiScale, Vector2 viewportSize)
     {
         _uiScale = uiScale;
         var margin = 16.0f * uiScale;
-        var panelHeight = 142.0f * uiScale;
-        var panelWidth = Mathf.Clamp(viewportSize.X - (margin * 2.0f), 640.0f * uiScale, 900.0f * uiScale);
-        Size = new Vector2(panelWidth, panelHeight);
-        Position = new Vector2(margin, Mathf.Max(margin, viewportSize.Y - panelHeight - margin));
-        _title.Size = new Vector2(panelWidth - (24.0f * uiScale), 24.0f * uiScale);
-        _buttons.Size = new Vector2(panelWidth - (24.0f * uiScale), 58.0f * uiScale);
-        _hint.Size = new Vector2(panelWidth - (24.0f * uiScale), 32.0f * uiScale);
-        _title.Position = new Vector2(12, 8) * uiScale;
-        _buttons.Position = new Vector2(12, 38) * uiScale;
-        _hint.Position = new Vector2(12, 104) * uiScale;
-        _title.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(baseFontSize * uiScale));
-        _hint.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt((baseFontSize - 2) * uiScale));
+        var panelHeight = PanelHeight * uiScale;
+        AnchorLeft = 0.0f;
+        AnchorTop = 1.0f;
+        AnchorRight = 1.0f;
+        AnchorBottom = 1.0f;
+        OffsetLeft = margin;
+        OffsetRight = -margin;
+        OffsetTop = -panelHeight - margin;
+        OffsetBottom = -margin;
 
-        var buttonWidth = Mathf.Clamp((panelWidth - (34.0f * uiScale)) / 8.0f, 70.0f * uiScale, 92.0f * uiScale);
-        var buttonHeight = 54.0f * uiScale;
-        foreach (var child in _buttons.GetChildren().OfType<Button>())
+        var localWidth = Mathf.Max(640.0f * uiScale, viewportSize.X - (margin * 2.0f));
+        var buttonSize = ButtonSize * uiScale;
+        _title.Position = new Vector2(InnerPadding, 6.0f) * uiScale;
+        _title.Size = new Vector2(180.0f, 18.0f) * uiScale;
+        _buttons.Position = new Vector2(InnerPadding, 18.0f) * uiScale;
+        _buttons.Size = new Vector2(Mathf.Max(0.0f, localWidth - (InnerPadding * 2.0f * uiScale)), buttonSize);
+        _hint.Position = new Vector2(localWidth - (350.0f * uiScale) - (InnerPadding * uiScale), 6.0f * uiScale);
+        _hint.Size = new Vector2(350.0f, 18.0f) * uiScale;
+
+        foreach (var child in _buttons.GetChildren().OfType<CommandIconButton>())
         {
-            child.CustomMinimumSize = new Vector2(buttonWidth, buttonHeight);
-            child.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt((baseFontSize - 4) * uiScale));
+            child.ApplyUiScale(uiScale);
         }
     }
 
@@ -74,42 +84,161 @@ public partial class CommandPanelView : Panel
             child.QueueFree();
         }
 
-        var buttonWidth = Mathf.Clamp((Size.X - (34.0f * _uiScale)) / 8.0f, 70.0f * _uiScale, 92.0f * _uiScale);
         foreach (var action in actions)
         {
-            var button = new Button
-            {
-                Text = FormatButtonText(action),
-                Disabled = !action.Enabled,
-                TooltipText = action.Hint,
-                CustomMinimumSize = new Vector2(buttonWidth, 54.0f * _uiScale)
-            };
-            button.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(14 * _uiScale));
-            button.MouseEntered += () => _hint.Text = action.Hint;
+            var button = new CommandIconButton();
+            button.Configure(action);
+            button.ApplyUiScale(_uiScale);
+            button.MouseEntered += () => _hint.Text = action.Tooltip;
             button.MouseExited += () => _hint.Text = _defaultHint;
             button.Pressed += action.Execute;
             _buttons.AddChild(button);
         }
     }
 
-    private static string FormatButtonText(CommandPanelAction action)
-    {
-        var icon = string.IsNullOrWhiteSpace(action.Icon) ? string.Empty : $"{action.Icon}\n";
-        var cost = string.IsNullOrWhiteSpace(action.Cost) ? string.Empty : $"\n{action.Cost}";
-        return $"{icon}{action.Label}{cost}";
-    }
-
     private bool HasMouseOverButton()
     {
-        return _buttons.GetChildren().OfType<Button>().Any(button => button.GetRect().HasPoint(button.GetLocalMousePosition()));
+        return _buttons.GetChildren().OfType<CommandIconButton>().Any(button =>
+            new Rect2(Vector2.Zero, button.Size).HasPoint(button.GetLocalMousePosition()));
     }
 
     private static string BuildActionSignature(string title, IReadOnlyList<CommandPanelAction> actions, string hint)
     {
         return string.Join(
             "\u001f",
-            actions.Select(action => $"{action.Label}\u001e{action.Hint}\u001e{action.Enabled}\u001e{action.Icon}\u001e{action.Cost}")
+            actions.Select(action => $"{action.Name}\u001e{action.Hotkey}\u001e{action.Tooltip}\u001e{action.Enabled}\u001e{action.IconId}\u001e{action.Cost}\u001e{action.Active}")
                 .Prepend(title)
                 .Append(hint));
+    }
+}
+
+public partial class CommandIconButton : Button
+{
+    private static readonly Font? IconFont = GD.Load<Font>("res://assets/fonts/inter_or_similar.tres");
+    private CommandPanelAction? _action;
+    private float _uiScale = 1.0f;
+
+    public void Configure(CommandPanelAction action)
+    {
+        _action = action;
+        Text = string.Empty;
+        TooltipText = string.IsNullOrWhiteSpace(action.Tooltip)
+            ? action.Name
+            : $"{action.Name}\n{action.Tooltip}";
+        Disabled = !action.Enabled;
+        ThemeTypeVariation = action.Active ? "ButtonActive" : string.Empty;
+        MouseFilter = MouseFilterEnum.Stop;
+        QueueRedraw();
+    }
+
+    public void ApplyUiScale(float uiScale)
+    {
+        _uiScale = uiScale;
+        CustomMinimumSize = new Vector2(56.0f, 56.0f) * uiScale;
+        QueueRedraw();
+    }
+
+    public override void _Draw()
+    {
+        base._Draw();
+        if (_action is null)
+        {
+            return;
+        }
+
+        var alpha = Disabled ? 0.45f : 1.0f;
+        var iconColor = IconColor(_action.IconId, alpha);
+        DrawCommandIcon(_action.IconId, new Rect2(new Vector2(14, 12) * _uiScale, new Vector2(28, 26) * _uiScale), iconColor);
+        DrawHotkeyBadge(_action.Hotkey, alpha);
+        DrawCost(_action.Cost, alpha);
+    }
+
+    private void DrawHotkeyBadge(string hotkey, float alpha)
+    {
+        if (string.IsNullOrWhiteSpace(hotkey))
+        {
+            return;
+        }
+
+        var rect = new Rect2(new Vector2(4, 4) * _uiScale, new Vector2(16, 16) * _uiScale);
+        DrawRect(rect, UiPalette.PanelHeader with { A = 0.95f * alpha });
+        DrawRect(rect, UiPalette.PanelOutline with { A = alpha }, false, Mathf.Max(1.0f, _uiScale));
+        DrawText(hotkey, rect.Position + new Vector2(4.0f, 12.0f) * _uiScale, UiPalette.TextPrimary with { A = alpha }, Mathf.RoundToInt(UiPalette.FontSizeLabel * _uiScale));
+    }
+
+    private void DrawCost(string cost, float alpha)
+    {
+        if (string.IsNullOrWhiteSpace(cost))
+        {
+            return;
+        }
+
+        var fontSize = Mathf.RoundToInt(UiPalette.FontSizeLabel * _uiScale);
+        var textSize = IconFont?.GetStringSize(cost, HorizontalAlignment.Left, -1, fontSize) ?? Vector2.Zero;
+        var position = new Vector2(Size.X - textSize.X - (5.0f * _uiScale), Size.Y - (6.0f * _uiScale));
+        DrawText(cost, position, UiPalette.TextSecondary with { A = alpha }, fontSize);
+    }
+
+    private static Color IconColor(string iconId, float alpha)
+    {
+        var color = iconId switch
+        {
+            ContentIds.Buildings.PowerPlant or ContentIds.Buildings.Pylon => UiPalette.AccentPower,
+            ContentIds.Buildings.ExtractorRefinery => UiPalette.AccentResource,
+            ContentIds.Buildings.DefenseTower or ContentIds.Buildings.GunTower or ContentIds.Buildings.RocketTower => UiPalette.AccentWall,
+            ContentIds.Units.Commander => UiPalette.AccentCommand,
+            _ => UiPalette.TextPrimary
+        };
+        color.A *= alpha;
+        return color;
+    }
+
+    private void DrawCommandIcon(string iconId, Rect2 rect, Color color)
+    {
+        if (iconId.StartsWith("building_", StringComparison.Ordinal))
+        {
+            DrawRect(new Rect2(rect.Position + new Vector2(3, 7) * _uiScale, new Vector2(22, 16) * _uiScale), color with { A = color.A * 0.25f });
+            DrawRect(new Rect2(rect.Position + new Vector2(3, 7) * _uiScale, new Vector2(22, 16) * _uiScale), color, false, Mathf.Max(2.0f, 2.0f * _uiScale));
+            if (iconId == ContentIds.Buildings.Pylon)
+            {
+                DrawLine(rect.Position + new Vector2(14, 2) * _uiScale, rect.Position + new Vector2(14, 25) * _uiScale, color, Mathf.Max(2.0f, 2.0f * _uiScale));
+                DrawLine(rect.Position + new Vector2(7, 12) * _uiScale, rect.Position + new Vector2(21, 12) * _uiScale, color, Mathf.Max(2.0f, 2.0f * _uiScale));
+            }
+            else if (iconId.Contains("tower", StringComparison.Ordinal))
+            {
+                DrawLine(rect.Position + new Vector2(7, 23) * _uiScale, rect.Position + new Vector2(21, 23) * _uiScale, color, Mathf.Max(2.0f, 2.0f * _uiScale));
+                DrawCircle(rect.Position + new Vector2(14, 8) * _uiScale, 5.0f * _uiScale, color);
+            }
+
+            return;
+        }
+
+        var center = rect.Position + new Vector2(14, 12) * _uiScale;
+        DrawCircle(center + new Vector2(0, -4) * _uiScale, 5.0f * _uiScale, color);
+        DrawLine(center + new Vector2(0, 2) * _uiScale, center + new Vector2(0, 15) * _uiScale, color, Mathf.Max(3.0f, 3.0f * _uiScale));
+        DrawLine(center + new Vector2(-8, 8) * _uiScale, center + new Vector2(8, 8) * _uiScale, color, Mathf.Max(2.0f, 2.0f * _uiScale));
+        if (iconId == ContentIds.Units.Rover)
+        {
+            DrawRect(new Rect2(rect.Position + new Vector2(4, 10) * _uiScale, new Vector2(22, 12) * _uiScale), color with { A = color.A * 0.25f });
+            DrawRect(new Rect2(rect.Position + new Vector2(4, 10) * _uiScale, new Vector2(22, 12) * _uiScale), color, false, Mathf.Max(2.0f, 2.0f * _uiScale));
+        }
+        else if (iconId == ContentIds.Units.Guardian)
+        {
+            DrawArc(center + new Vector2(0, 6) * _uiScale, 12.0f * _uiScale, -0.1f, Mathf.Pi + 0.1f, 20, color, Mathf.Max(2.0f, 2.0f * _uiScale));
+        }
+        else if (iconId == ContentIds.Units.Rifleman)
+        {
+            DrawLine(center + new Vector2(6, 2) * _uiScale, center + new Vector2(15, -5) * _uiScale, color, Mathf.Max(2.0f, 2.0f * _uiScale));
+        }
+    }
+
+    private void DrawText(string text, Vector2 position, Color color, int fontSize)
+    {
+        if (IconFont is null)
+        {
+            return;
+        }
+
+        DrawString(IconFont, position, text, HorizontalAlignment.Left, -1, fontSize, color);
     }
 }

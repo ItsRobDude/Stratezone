@@ -18,7 +18,7 @@ public partial class Main
     private readonly Dictionary<MapEditorToolMode, Button> _mapEditorToolButtons = [];
     private readonly List<string> _mapEditorMissionPickerIds = [];
     private OptionButton? _mapEditorMissionPicker;
-    private CheckBox? _mapEditorSnapToggle;
+    private MapEditorIconButton? _mapEditorSnapToggle;
     private bool _mapEditorEnabled;
     private string _lastMapEditorExportSummary = "No export yet.";
     private MapEditorSavePreview? _pendingMapEditorSave;
@@ -48,15 +48,16 @@ public partial class Main
         {
             Name = "MapEditorPanel",
             Visible = false,
-            Modulate = new Color(1.0f, 1.0f, 1.0f, 0.92f)
+            MouseFilter = Control.MouseFilterEnum.Stop
         };
         _uiLayoutRoot.AddChild(_mapEditorPanel);
 
         _mapEditorLabel = new Label
         {
             Name = "MapEditorLabel",
-            Position = new Vector2(12, 10),
-            AutowrapMode = TextServer.AutowrapMode.WordSmart
+            ThemeTypeVariation = "LabelSecondary",
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            MouseFilter = Control.MouseFilterEnum.Ignore
         };
         _mapEditorPanel.AddChild(_mapEditorLabel);
         SetupMapEditorToolPanels();
@@ -192,16 +193,12 @@ public partial class Main
 
             if (inputEvent is InputEventMouseMotion)
             {
-                if (_mapEditorOverlay.IsDragging)
+                var beforeRevision = _mapEditorOverlay.Revision;
+                _mapEditorOverlay.UpdatePointerAction(GetGlobalMousePosition());
+                if (_mapEditorOverlay.Revision != beforeRevision)
                 {
-                    var beforeRevision = _mapEditorOverlay.Revision;
-                    _mapEditorOverlay.UpdatePointerAction(GetGlobalMousePosition());
-                    if (_mapEditorOverlay.Revision != beforeRevision)
-                    {
-                        ClearMapEditorPendingDecisions();
-                        ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
-                    }
-
+                    ClearMapEditorPendingDecisions();
+                    ClearPendingMapEditorSave("Map editor save preview cleared after edit.");
                     RefreshMapEditorPanel();
                 }
 
@@ -285,6 +282,7 @@ public partial class Main
             _placementGhost?.Clear();
             _selectionBoxView?.Clear();
             _mapEditorOverlay?.SetEditorEnabled(true);
+            ApplyMapEditorModePresentation(enabled: true);
             if (_mapEditorPanel is not null)
             {
                 _mapEditorPanel.Visible = true;
@@ -299,6 +297,7 @@ public partial class Main
         ReinitializeMapEditorMissionFromEdits(null);
         _mapEditorEnabled = false;
         _mapEditorOverlay?.SetEditorEnabled(false);
+        ApplyMapEditorModePresentation(enabled: false);
         if (_mapEditorPanel is not null)
         {
             _mapEditorPanel.Visible = false;
@@ -418,6 +417,7 @@ public partial class Main
         ReinitializeMapEditorMissionFromEdits(markerPosition.Value);
         _mapEditorEnabled = false;
         _mapEditorOverlay?.SetEditorEnabled(false);
+        ApplyMapEditorModePresentation(enabled: false);
         if (_mapEditorPanel is not null)
         {
             _mapEditorPanel.Visible = false;
@@ -442,6 +442,11 @@ public partial class Main
         _placementBuildingId = null;
         _placementGhost?.Clear();
         SetupSimulation(mission, map);
+        if (_mapEditorEnabled && _simulation is not null)
+        {
+            _simulation.PlayerFog.EditorReveal = true;
+        }
+
         ResetCameraToMissionStart();
         if (cameraFocus is not null)
         {
@@ -457,6 +462,41 @@ public partial class Main
         _pendingMapEditorSave = null;
         _mapEditorSavePreviewSummary = string.Empty;
         RefreshMapEditorPanel();
+    }
+
+    private void ApplyMapEditorModePresentation(bool enabled)
+    {
+        if (_gameHudRoot is not null)
+        {
+            _gameHudRoot.Visible = !enabled;
+        }
+
+        if (_simulation is not null)
+        {
+            _simulation.PlayerFog.EditorReveal = enabled;
+        }
+
+        foreach (var unitView in _simUnitViews.Values)
+        {
+            unitView.ShowAlwaysOnLabel = false;
+        }
+
+        if (enabled)
+        {
+            ApplyMapEditorCursor(_mapEditorOverlay?.ToolMode ?? MapEditorToolMode.Select);
+        }
+        else
+        {
+            Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
+        }
+
+        if (_missionCalloutView is not null)
+        {
+            _missionCalloutView.Visible = !enabled;
+        }
+
+        _fogOfWarView?.QueueRedraw();
+        SyncWorldViews();
     }
 
     private bool TryCreateEditedMissionRuntimeInputs(out MissionDefinition mission, out MapDefinition map)
@@ -605,53 +645,14 @@ public partial class Main
         }
 
         RefreshMapEditorToolPanels();
+        var missionName = _localization?.ContentName(_activeMissionId, _activeMission?.DisplayName ?? _activeMissionId)
+            ?? _activeMission?.DisplayName
+            ?? _activeMissionId;
+        var unsavedLabel = _mapEditorOverlay.Revision == 0
+            ? "No unsaved edits"
+            : $"Edits: {_mapEditorOverlay.Revision} unsaved";
         _mapEditorLabel.Text =
-            "F5 Map Editor/Tuner\n" +
-            $"{_mapEditorOverlay.SelectedSummary}\n" +
-            "Palette selects mode | Left-drag: move/create/resize | Right-click: actions | G: snap | P: pathing | Shift+F5: re-init\n" +
-            "Ctrl+S: preview/write JSON | Ctrl+Z/Y: undo/redo | E: copy selected | J: copy all\n" +
-            _lastMapEditorExportSummary +
-            MapEditorSavePanelText();
-    }
-
-    private void ApplyMapEditorPanelScale()
-    {
-        if (_mapEditorPanel is null || _mapEditorLabel is null)
-        {
-            return;
-        }
-
-        var viewportSize = GetSafeHudSize();
-        var panelSize = new Vector2(720, 330) * _uiScale;
-        _mapEditorPanel.Size = panelSize;
-        _mapEditorPanel.Position = new Vector2(16, Mathf.Max(16.0f, viewportSize.Y - panelSize.Y - 16.0f));
-        _mapEditorLabel.Size = new Vector2(696, 310) * _uiScale;
-        _mapEditorLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(12 * _uiScale));
-
-        if (_mapEditorPalettePanel is not null)
-        {
-            _mapEditorPalettePanel.Size = new Vector2(210, 430) * _uiScale;
-            _mapEditorPalettePanel.Position = new Vector2(16, 210) * _uiScale;
-            if (_mapEditorPaletteList is not null)
-            {
-                _mapEditorPaletteList.Size = new Vector2(190, 410) * _uiScale;
-                _mapEditorPaletteList.AddThemeConstantOverride("separation", Mathf.RoundToInt(4 * _uiScale));
-            }
-        }
-
-        if (_mapEditorInspectorPanel is not null)
-        {
-            var inspectorSize = new Vector2(330, Mathf.Max(430, viewportSize.Y - 260)) * _uiScale;
-            _mapEditorInspectorPanel.Size = inspectorSize;
-            _mapEditorInspectorPanel.Position = new Vector2(
-                Mathf.Max(16.0f, viewportSize.X - inspectorSize.X - 16.0f),
-                16.0f);
-            if (_mapEditorInspectorList is not null)
-            {
-                _mapEditorInspectorList.Size = inspectorSize - new Vector2(20, 20);
-                _mapEditorInspectorList.AddThemeConstantOverride("separation", Mathf.RoundToInt(4 * _uiScale));
-            }
-        }
+            $"F5 closes editor   |   Mission: {missionName}   |   {unsavedLabel}";
     }
 
     private void LogMapEditorWarning(string operation, string message)

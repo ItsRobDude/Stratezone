@@ -50,6 +50,21 @@ public partial class Main
         _mapRegionView.UpdateFromMap(_simulation?.Map);
     }
 
+    private void SetupMissionCalloutView()
+    {
+        if (_worldRoot is null)
+        {
+            return;
+        }
+
+        _missionCalloutView = new MissionCalloutView
+        {
+            Name = "MissionCalloutView",
+            ZIndex = 22
+        };
+        _worldRoot.AddChild(_missionCalloutView);
+    }
+
     private void SetupFogOfWarView()
     {
         if (_worldRoot is null)
@@ -191,5 +206,39 @@ public partial class Main
         _energyWallView?.UpdateSegments(_simulation.EnergyWalls);
         _mapRegionView?.UpdateBridgeStates(_simulation.Bridges);
         _fogOfWarView?.UpdateFromState(_simulation.PlayerFog, visibleWorldBounds);
+        UpdateMissionCallouts(visibleWorldBounds, cameraZoom);
+    }
+
+    private void UpdateMissionCallouts(Rect2 visibleWorldBounds, float cameraZoom)
+    {
+        if (_missionCalloutView is null || _simulation is null || _activeMission is null)
+        {
+            return;
+        }
+
+        _missionCalloutView.Visible = !_mapEditorEnabled;
+        if (_mapEditorEnabled)
+        {
+            _missionCalloutView.UpdateCallouts([], visibleWorldBounds, cameraZoom);
+            return;
+        }
+
+        var callouts = new List<MissionCalloutSnapshot>();
+        foreach (var callout in _activeMission.Presentation.MapCallouts)
+        {
+            var marker = _activeMission.Markers.FirstOrDefault(marker => string.Equals(marker.Id, callout.MarkerId, StringComparison.Ordinal));
+            if (marker is null || !_simulation.IsExploredByFaction(ContentIds.Factions.PlayerExpedition, marker.Position))
+            {
+                continue;
+            }
+
+            var text = L(callout.TextKey);
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                callouts.Add(new MissionCalloutSnapshot(new Vector2(marker.Position.X, marker.Position.Y), text));
+            }
+        }
+
+        _missionCalloutView.UpdateCallouts(callouts, visibleWorldBounds, cameraZoom);
     }
 }

@@ -51,7 +51,11 @@ public partial class Main
             " | ",
             TrainHotkeyOrder
                 .Where(IsUnitCommandAvailable)
-                .Select(unitId => $"{GetTrainHotkeyLabel(unitId)} {UnitShortName(_catalog.GetUnit(unitId))}"));
+                .Select(unitId => L(
+                    "ui.command.hotkey_suffix",
+                    SimulationMessage.Args(
+                        ("name", UnitShortName(_catalog.GetUnit(unitId))),
+                        ("hotkey", GetTrainHotkeyLabel(unitId))))));
     }
 
     private static string GetTrainHotkeyLabel(string unitId)

@@ -9,11 +9,11 @@ public partial class Main : Node2D
     private const float DefaultUiScale = 1.1f;
     private const float MinUiScale = 0.8f;
     private const float MaxUiScale = 2.4f;
-    private const int HudBaseFontSize = 18;
     private const float OffscreenCullPaddingWorld = 180.0f;
     private const float HudRefreshIntervalSeconds = 0.12f;
     private const string DefaultMissionId = ContentIds.Missions.FirstLanding;
     private const string InitialMissionEnvironmentVariable = "STRATEZONE_MISSION_ID";
+    private const string DebugHotkeysEnvironmentVariable = "STRATEZONE_DEBUG_HOTKEYS";
 
     private static readonly string[] BuildHotkeyOrder =
     [
@@ -46,8 +46,12 @@ public partial class Main : Node2D
     private RtsSimulation? _simulation;
     private Camera2D? _camera;
     private Control? _uiLayoutRoot;
-    private Panel? _statusPanel;
-    private Label? _statusLabel;
+    private Control? _gameHudRoot;
+    private HudResourceBar? _hudResourceBar;
+    private HudCommanderIndicator? _hudCommander;
+    private Label? _hudObjective;
+    private HudAlertsTicker? _hudAlertsTicker;
+    private MissionBriefingOverlay? _briefingOverlay;
     private CommandPanelView? _commandPanel;
     private Panel? _missionResultPanel;
     private Label? _missionResultLabel;
@@ -55,6 +59,7 @@ public partial class Main : Node2D
     private EnergyWallView? _energyWallView;
     private FogOfWarView? _fogOfWarView;
     private MapRegionView? _mapRegionView;
+    private MissionCalloutView? _missionCalloutView;
     private SelectionBoxView? _selectionBoxView;
     private Node2D? _worldRoot;
     private readonly HashSet<int> _selectedUnitEntityIds = [];
@@ -68,6 +73,8 @@ public partial class Main : Node2D
     private Vector2 _lastViewportSize;
     private string _lastActionMessage = string.Empty;
     private float _hudRefreshElapsedSeconds = HudRefreshIntervalSeconds;
+    private bool _briefingOverlayVisible;
+    private bool _debugHotkeyHintsEnabled;
 
     public override void _Ready()
     {
@@ -75,6 +82,10 @@ public partial class Main : Node2D
         _gameRoot = gameRoot;
         _catalog = ContentCatalog.LoadFromGameData(gameRoot);
         _localization = LocalizationCatalog.LoadFromGameData(gameRoot);
+        _debugHotkeyHintsEnabled = string.Equals(
+            System.Environment.GetEnvironmentVariable(DebugHotkeysEnvironmentVariable),
+            "1",
+            StringComparison.Ordinal);
         _lastActionMessage = L("ui.action.initial_hint");
         _worldRoot = GetNode<Node2D>("WorldRoot");
 
@@ -83,6 +94,7 @@ public partial class Main : Node2D
         SetupHud();
         SetupMissionResultOverlay();
         SetupMapRegionView();
+        SetupMissionCalloutView();
         SetupMapEditorOverlay();
         SyncWorldViews();
         SetupEnergyWallView();
@@ -131,6 +143,11 @@ public partial class Main : Node2D
             }
 
             if (_mapEditorEnabled)
+            {
+                return;
+            }
+
+            if (HandleBriefingHotkey(keyEvent.Keycode))
             {
                 return;
             }
@@ -275,38 +292,59 @@ public partial class Main : Node2D
 
     private void SetupHud()
     {
-        var uiRoot = GetNode<CanvasLayer>("UiRoot");
-        _uiLayoutRoot = new Control
+        _uiLayoutRoot = GetNode<Control>("UiRoot/HudRoot");
+        _uiLayoutRoot.Name = "HudRoot";
+        _uiLayoutRoot.MouseFilter = Control.MouseFilterEnum.Pass;
+        _uiLayoutRoot.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+
+        _gameHudRoot = new Control
         {
-            Name = "HudRoot",
+            Name = "GameHudRoot",
             MouseFilter = Control.MouseFilterEnum.Pass
         };
-        _uiLayoutRoot.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        uiRoot.AddChild(_uiLayoutRoot);
+        _gameHudRoot.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        _uiLayoutRoot.AddChild(_gameHudRoot);
 
-        _statusPanel = new Panel
+        _hudResourceBar = new HudResourceBar
         {
-            Name = "StatusPanel",
-            Position = new Vector2(16, 16)
+            Name = "HudResourceBar"
         };
-        _statusPanel.Modulate = new Color(1.0f, 1.0f, 1.0f, 0.9f);
-        _uiLayoutRoot.AddChild(_statusPanel);
+        _gameHudRoot.AddChild(_hudResourceBar);
 
-        _statusLabel = new Label
+        _hudCommander = new HudCommanderIndicator
         {
-            Name = "StatusLabel",
-            Text = string.Empty,
-            Position = new Vector2(14, 10),
-            AutowrapMode = TextServer.AutowrapMode.WordSmart
+            Name = "HudCommander"
         };
-        _statusPanel.AddChild(_statusLabel);
+        _gameHudRoot.AddChild(_hudCommander);
+
+        _hudObjective = new Label
+        {
+            Name = "HudObjective",
+            ThemeTypeVariation = "LabelTitle",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        _gameHudRoot.AddChild(_hudObjective);
+
+        _hudAlertsTicker = new HudAlertsTicker
+        {
+            Name = "HudAlertsTicker",
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        _gameHudRoot.AddChild(_hudAlertsTicker);
 
         _commandPanel = new CommandPanelView
         {
-            Name = "CommandPanel",
-            Modulate = new Color(1.0f, 1.0f, 1.0f, 0.92f)
+            Name = "CommandPanel"
         };
-        _uiLayoutRoot.AddChild(_commandPanel);
+        _gameHudRoot.AddChild(_commandPanel);
+
+        _briefingOverlay = new MissionBriefingOverlay
+        {
+            Name = "MissionBriefingOverlay"
+        };
+        _gameHudRoot.AddChild(_briefingOverlay);
         ApplyUiScale();
     }
 
@@ -490,20 +528,34 @@ public partial class Main : Node2D
 
     private void ApplyUiScale()
     {
-        if (_statusPanel is null || _statusLabel is null)
+        if (_uiLayoutRoot is null)
         {
             return;
         }
 
-        _statusPanel.Size = new Vector2(660, 174) * _uiScale;
-        _statusLabel.Size = new Vector2(636, 154) * _uiScale;
-        _statusLabel.AddThemeFontSizeOverride("font_size", Mathf.RoundToInt(HudBaseFontSize * _uiScale));
-        if (_commandPanel is not null)
+        var viewportSize = GetSafeHudSize();
+        _lastViewportSize = viewportSize;
+        _hudResourceBar?.ApplyUiScale(_uiScale);
+        _hudCommander?.ApplyUiScale(_uiScale);
+        _hudAlertsTicker?.ApplyUiScale(_uiScale);
+        if (_hudObjective is not null)
         {
-            _lastViewportSize = GetSafeHudSize();
-            _commandPanel.ApplyUiScale(_uiScale, HudBaseFontSize, _lastViewportSize);
+            _hudObjective.AnchorLeft = 0.5f;
+            _hudObjective.AnchorTop = 0.0f;
+            _hudObjective.AnchorRight = 0.5f;
+            _hudObjective.AnchorBottom = 0.0f;
+            _hudObjective.OffsetLeft = -360.0f * _uiScale;
+            _hudObjective.OffsetRight = 360.0f * _uiScale;
+            _hudObjective.OffsetTop = 24.0f * _uiScale;
+            _hudObjective.OffsetBottom = 54.0f * _uiScale;
         }
 
+        if (_commandPanel is not null)
+        {
+            _commandPanel.ApplyUiScale(_uiScale, viewportSize);
+        }
+
+        _briefingOverlay?.ApplyUiScale(_uiScale, viewportSize);
         ApplyMissionResultScale();
         ApplyMapEditorPanelScale();
     }
@@ -604,40 +656,30 @@ public partial class Main : Node2D
 
     private void UpdateHud()
     {
-        if (_statusLabel is null || _simulation is null)
+        if (_simulation is null)
         {
             return;
         }
 
-        var placementLine = L("ui.hud.build_line");
-        if (_placementBuildingId is not null && _catalog is not null)
+        var livePlayerBuildings = _simulation.Buildings
+            .Where(building => building.FactionId == ContentIds.Factions.PlayerExpedition && !building.IsDestroyed)
+            .ToArray();
+        var livePlayerUnits = _simulation.Units.Count(unit =>
+            unit.FactionId == ContentIds.Factions.PlayerExpedition &&
+            !unit.IsDestroyed);
+        _hudResourceBar?.UpdateValues(
+            Mathf.RoundToInt(_simulation.Materials),
+            livePlayerBuildings.Count(building => building.IsPowered),
+            livePlayerBuildings.Length,
+            livePlayerUnits);
+        UpdateCommanderIndicator();
+        if (_hudObjective is not null)
         {
-            var definition = _catalog.GetBuilding(_placementBuildingId);
-            var validation = _simulation.ValidatePlacement(_placementBuildingId, ToSim(GetGlobalMousePosition()));
-            placementLine = L(
-                "ui.hud.placing_line",
-                SimulationMessage.Args(
-                    ("building", BuildingName(definition)),
-                    ("cost", definition.Cost),
-                    ("reason", LocalizedPlacement(validation))));
+            _hudObjective.Text = GetActiveObjectiveText();
         }
 
-        var powered = _simulation.Buildings.Count(building => building.IsPowered);
-        _statusLabel.Text =
-            L(
-                "ui.hud.status_line",
-                SimulationMessage.Args(
-                    ("materials", $"{_simulation.Materials:0}"),
-                    ("buildings", _simulation.Buildings.Count),
-                    ("powered", powered),
-                    ("walls", _simulation.EnergyWalls.Count))) + "\n" +
-            GetMissionHudLine() + "\n" +
-            GetMissionBriefingHudLine() + "\n" +
-            GetMissionReadabilityHudLine() + "\n" +
-            GetCommanderHudLine() + "\n" +
-            L("ui.hud.alert_line", SimulationMessage.Args(("alerts", GetAlertSummary()))) + "\n" +
-            L("ui.hud.scale_line", SimulationMessage.Args(("scale", $"{_uiScale:0.0}"))) + "\n" +
-            $"{placementLine} | {_lastActionMessage}";
+        _hudAlertsTicker?.UpdateAlerts(GetVisibleAlertSnapshots());
+        UpdateBriefingOverlay();
         UpdateCommandPanel();
         UpdateMissionResultOverlay();
     }

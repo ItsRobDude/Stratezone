@@ -72,4 +72,26 @@ public partial class Main
                 ("maxHealth", $"{commander.Definition.Health:0}"),
                 ("status", L(statusKey))));
     }
+
+    private void UpdateCommanderIndicator()
+    {
+        if (_simulation is null || _hudCommander is null)
+        {
+            return;
+        }
+
+        var commander = _simulation.Units.FirstOrDefault(unit =>
+            unit.FactionId == ContentIds.Factions.PlayerExpedition &&
+            unit.Definition.Id == ContentIds.Units.Commander);
+        if (commander is null)
+        {
+            _hudCommander.UpdateCommander(0, 1, missing: true);
+            return;
+        }
+
+        _hudCommander.UpdateCommander(
+            Mathf.RoundToInt(commander.Health),
+            Mathf.RoundToInt(commander.Definition.Health),
+            commander.IsDestroyed);
+    }
 }

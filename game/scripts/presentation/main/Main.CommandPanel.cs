@@ -31,12 +31,14 @@ public partial class Main
                     ? L("ui.command.requires_grunt")
                     : blockedReason ?? L("ui.command.place_building", SimulationMessage.Args(("building", BuildingName(definition))));
                 return new CommandPanelAction(
-                    $"{index + 1} {BuildingShortName(definition)}",
+                    BuildingName(definition),
+                    $"{index + 1}",
                     BuildingDetail(definition, hint),
                     enabled,
                     () => EnterPlacementMode(buildingId),
-                    BuildingIcon(definition.Id),
-                    L("ui.action_bar.cost", SimulationMessage.Args(("cost", definition.Cost))));
+                    definition.Id,
+                    L("ui.action_bar.cost", SimulationMessage.Args(("cost", definition.Cost))),
+                    _placementBuildingId == buildingId);
             }));
 
         actions.AddRange(TrainHotkeyOrder
@@ -52,7 +54,8 @@ public partial class Main
                     ? LocalizedProduction(validation!)
                     : L("ui.command.select_barracks_for_training");
                 return new CommandPanelAction(
-                    $"{GetTrainHotkeyLabel(unitId)} {UnitShortName(unit)}",
+                    UnitName(unit),
+                    GetTrainHotkeyLabel(unitId),
                     UnitDetail(unit, hint),
                     enabled,
                     () =>
@@ -66,7 +69,7 @@ public partial class Main
                         var result = _simulation.TryQueueUnit(unitId, _selectedBuildingEntityId.Value);
                         _lastActionMessage = LocalizedProduction(result);
                     },
-                    UnitIcon(unit.Id),
+                    unit.Id,
                     TrainingCostLabel(unit, selectedBuilding));
             }));
 
@@ -77,7 +80,8 @@ public partial class Main
             {
                 var validation = _simulation.ValidateGuardianRetrofit(selectedBuilding.EntityId);
                 actions.Add(new CommandPanelAction(
-                    L("ui.command.guardian_retrofit_label"),
+                    BarracksUpgradeName(upgrade),
+                    "U",
                     BarracksUpgradeDetail(upgrade, validation),
                     validation.Success,
                     () =>
@@ -85,7 +89,7 @@ public partial class Main
                         var result = _simulation.TryStartGuardianRetrofit(selectedBuilding.EntityId);
                         _lastActionMessage = LocalizedUpgrade(result);
                     },
-                    "L2",
+                    ContentIds.Units.Guardian,
                     BarracksUpgradeCostLabel(upgrade, selectedBuilding)));
             }
         }
@@ -100,7 +104,8 @@ public partial class Main
                     var key = upgradeId == ContentIds.Buildings.GunTower ? "G" : "T";
                     var validation = _simulation.ValidateBuildingUpgrade(selectedBuilding!.EntityId, upgradeId);
                     return new CommandPanelAction(
-                        $"{key} {BuildingShortName(upgrade)}",
+                        BuildingName(upgrade),
+                        key,
                         BuildingDetail(upgrade, LocalizedUpgrade(validation)),
                         validation.Success,
                         () =>
@@ -108,7 +113,7 @@ public partial class Main
                             var result = _simulation.TryUpgradeBuilding(selectedBuilding.EntityId, upgradeId);
                             _lastActionMessage = LocalizedUpgrade(result);
                         },
-                        BuildingIcon(upgrade.Id),
+                        upgrade.Id,
                         L("ui.action_bar.cost", SimulationMessage.Args(("cost", upgrade.Cost))));
                 }));
         }
@@ -278,31 +283,4 @@ public partial class Main
         return _localization?.ContentName(definition.Id, definition.DisplayName) ?? definition.DisplayName;
     }
 
-    private static string UnitIcon(string unitId)
-    {
-        return unitId switch
-        {
-            ContentIds.Units.Grunt => "W",
-            ContentIds.Units.Cadet => "C",
-            ContentIds.Units.Rifleman => "R",
-            ContentIds.Units.Guardian => "G",
-            ContentIds.Units.Rover => "RV",
-            _ => "U"
-        };
-    }
-
-    private static string BuildingIcon(string buildingId)
-    {
-        return buildingId switch
-        {
-            ContentIds.Buildings.PowerPlant => "PWR",
-            ContentIds.Buildings.Pylon => "PYL",
-            ContentIds.Buildings.Barracks => "BRK",
-            ContentIds.Buildings.ExtractorRefinery => "EXT",
-            ContentIds.Buildings.DefenseTower => "WALL",
-            ContentIds.Buildings.GunTower => "GUN",
-            ContentIds.Buildings.RocketTower => "RKT",
-            _ => "BLD"
-        };
-    }
 }

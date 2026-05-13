@@ -1,8 +1,10 @@
 public sealed record CommandPanelAction(
-    string Label,
-    string Hint,
+    string Name,
+    string Hotkey,
+    string Tooltip,
     bool Enabled,
     Action Execute,
-    string Icon = "",
-    string Cost = ""
+    string IconId = "",
+    string Cost = "",
+    bool Active = false
 );

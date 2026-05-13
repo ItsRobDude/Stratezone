@@ -3,10 +3,11 @@ using Stratezone.Simulation;
 public partial class Main
 {
     private const int MaxHudAlerts = 3;
+    private const float HudAlertLifetimeSeconds = 4.0f;
     private const float UnderAttackAlertCooldownSeconds = 4.0f;
     private const float PowerAlertCooldownSeconds = 3.0f;
 
-    private readonly Queue<string> _hudAlerts = [];
+    private readonly List<HudAlertEntry> _hudAlerts = [];
     private readonly HashSet<int> _spottedEnemyUnitIds = [];
     private readonly HashSet<int> _spottedEnemyBuildingIds = [];
     private readonly Dictionary<int, float> _lastPlayerUnitHealth = [];
@@ -192,22 +193,27 @@ public partial class Main
     private void PushAlert(string key, IReadOnlyDictionary<string, string>? args = null)
     {
         var text = L(key, ResolveMessageArgs(args));
-        if (_hudAlerts.Count > 0 && _hudAlerts.Last() == text)
+        if (_hudAlerts.Count > 0 && _hudAlerts[^1].Text == text)
         {
             return;
         }
 
-        _hudAlerts.Enqueue(text);
+        _hudAlerts.Add(new HudAlertEntry(text, _simulation?.ElapsedSeconds ?? 0.0f));
         while (_hudAlerts.Count > MaxHudAlerts)
         {
-            _hudAlerts.Dequeue();
+            _hudAlerts.RemoveAt(0);
         }
     }
 
-    private string GetAlertSummary()
+    private IReadOnlyList<HudAlertSnapshot> GetVisibleAlertSnapshots()
     {
-        return _hudAlerts.Count == 0
-            ? L("ui.alert.none")
-            : string.Join(" / ", _hudAlerts);
+        var elapsed = _simulation?.ElapsedSeconds ?? 0.0f;
+        _hudAlerts.RemoveAll(alert => elapsed - alert.CreatedSeconds >= HudAlertLifetimeSeconds);
+        return _hudAlerts
+            .OrderByDescending(alert => alert.CreatedSeconds)
+            .Select(alert => new HudAlertSnapshot(alert.Text, elapsed - alert.CreatedSeconds))
+            .ToArray();
     }
+
+    private sealed record HudAlertEntry(string Text, float CreatedSeconds);
 }

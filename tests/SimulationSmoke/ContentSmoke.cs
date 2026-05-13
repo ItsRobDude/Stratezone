@@ -11,7 +11,7 @@ internal static class ContentSmoke
         var ridgeMission = context.WellsAtTheRidgeMission;
         var ridgeMap = context.WellsAtTheRidgeMap;
 
-        Assert(localization.Translate("ui.hud.build_line").Contains("Build:", StringComparison.Ordinal), "English localization catalog loads HUD strings");
+        Assert(localization.Translate("ui.action_bar.no_selection_hint").Contains("Bottom bar", StringComparison.Ordinal), "English localization catalog loads action-bar HUD strings");
         Assert(localization.Translate("missing.test.key") == "[[missing.test.key]]", "missing localization keys are obvious");
         Assert(localization.ContentName(ContentIds.Units.Grunt) == "Grunt", "content name localization keys resolve stable content ids");
         Assert(localization.ContentShortName(ContentIds.Buildings.ExtractorRefinery) == "Extractor", "content short-name localization keys resolve compact UI labels");

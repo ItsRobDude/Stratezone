@@ -34,6 +34,8 @@ public partial class GreyboxSimUnit : Node2D
     private Vector2? _lastPosition;
     private bool _isMoving;
     private bool _isAttacking;
+    private bool _hovered;
+    private bool _showAlwaysOnLabel;
     private string? _attackTargetKey;
     private float _runMovementGraceSeconds;
     private float _attackEngagementGraceSeconds;
@@ -44,6 +46,20 @@ public partial class GreyboxSimUnit : Node2D
 
     public UnitState State => _state ?? throw new InvalidOperationException("GreyboxSimUnit has not been initialized.");
     public float SelectionRadius { get; private set; } = 22.0f;
+    public bool ShowAlwaysOnLabel
+    {
+        get => _showAlwaysOnLabel;
+        set
+        {
+            if (_showAlwaysOnLabel == value)
+            {
+                return;
+            }
+
+            _showAlwaysOnLabel = value;
+            ApplyZoomDetailVisibility();
+        }
+    }
 
     public void Initialize(UnitState state, LocalizationCatalog? localization = null)
     {
@@ -130,6 +146,13 @@ public partial class GreyboxSimUnit : Node2D
         if (_attackEngagementGraceSeconds > 0.0f)
         {
             _attackEngagementGraceSeconds = MathF.Max(0.0f, _attackEngagementGraceSeconds - deltaSeconds);
+        }
+
+        var hovered = GlobalPosition.DistanceTo(GetGlobalMousePosition()) <= SelectionRadius;
+        if (hovered != _hovered)
+        {
+            _hovered = hovered;
+            ApplyZoomDetailVisibility();
         }
 
         if (_isMoving && _runMovementGraceSeconds <= 0.0f && !IsMoving(Position))

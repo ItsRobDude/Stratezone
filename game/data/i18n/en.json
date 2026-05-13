@@ -1,5 +1,4 @@
 {
-  "schema_version": 1,
   "locale": "en",
   "strings": {
     "unit.unit_grunt.name": "Grunt",

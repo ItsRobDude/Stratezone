@@ -242,7 +242,7 @@ Exit criteria:
 - Level 2 can be added mostly through data plus narrow simulation/presentation seams
 - map data can express blocked terrain, readable base/expansion areas, resource basins, tower-wall chokepoint candidates, and explicit restricted-build maps without relying on scene-only placement, and the F5 editor/tuner can inspect those authored facts during a running mission
 - map object data can express Mission 2 bridge crossings, and smoke coverage proves intact/broken/repaired bridge passability
-- Barracks Guardian upgrade has replaced Armory Annex as the Level 2 Guardian unlock path in runtime, data, and smoke coverage
+- Barracks Guardian upgrade is the Level 2 Guardian unlock path in runtime, data, and smoke coverage
 - mission starts can support the approved demo shapes without duplicating scene setup logic
 - `Main.cs` and smoke coverage have clear ownership, split points, or a documented reason to stay together; current code has command-panel helpers split to `Main.CommandPanel.cs` and mission smoke grouped into scenario files
 - scenario checks can prove a mission route without replaying every unrelated system assertion; current smoke coverage proves a Mission 2 base/Extractor/Barracks/Pylon-corridor/Guardian route

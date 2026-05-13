@@ -21,7 +21,6 @@ internal static class ContentSmoke
         var guardianDefinition = catalog.GetUnit(ContentIds.Units.Guardian);
         var mediumTankDefinition = catalog.GetUnit(ContentIds.Units.MediumTank);
         var tankDefinition = catalog.GetUnit(ContentIds.Units.Tank);
-        var armoryAnnexDefinition = catalog.GetBuilding(ContentIds.Buildings.ArmoryAnnex);
         var gunTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.GunTower);
         var rocketTowerDefinition = catalog.GetBuilding(ContentIds.Buildings.RocketTower);
 
@@ -33,9 +32,8 @@ internal static class ContentSmoke
         Assert(guardianDefinition.TrainTimeSeconds == 9.0f, "Guardian trains slower as a specialist");
         Assert(catalog.GetUnit(ContentIds.Units.Grunt).TrainTimeSeconds > guardianDefinition.TrainTimeSeconds, "Grunt stays slow and expensive compared with infantry");
         Assert(guardianDefinition.Role == "anti_armor_infantry", "Guardian content role is the anti-armor infantry proof role");
-        Assert(guardianDefinition.RequiredAddonBuildingId is null, "Guardian no longer uses the legacy Armory Annex training gate");
+        Assert(guardianDefinition.RequiredAddonBuildingId is null, "Guardian does not use a physical add-on training gate");
         Assert(guardianDefinition.RequiredBarracksUpgradeId == ContentIds.BarracksUpgrades.GuardianRetrofit, "Guardian training requires the Barracks Guardian Retrofit");
-        Assert(!armoryAnnexDefinition.TrainingUnlockUnitIds.Contains(ContentIds.Units.Guardian), "Armory Annex no longer declares the Guardian unlock");
         Assert(guardianDefinition.AttackDamage < riflemanDefinition.AttackDamage, "Guardian keeps lower raw damage than Rifleman");
         Assert(DamagePerSecondAgainst(guardianDefinition, riflemanDefinition) < DamagePerSecondAgainst(riflemanDefinition, riflemanDefinition), "Guardian is not a better anti-infantry Rifleman");
         Assert(DamagePerSecondAgainst(guardianDefinition, mediumTankDefinition) > DamagePerSecondAgainst(riflemanDefinition, mediumTankDefinition) * 2.0f, "Guardian energy fire outperforms Rifleman ballistics against Medium Tanks");
@@ -85,6 +83,7 @@ internal static class ContentSmoke
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.Barracks), "Level 2 pressure trigger watches Barracks construction");
         Assert(ridgeMission.MissionTriggers[0].WatchedPlayerBuildingIds.Contains(ContentIds.Buildings.ExtractorRefinery), "Level 2 pressure trigger coalesces first Extractor construction");
         Assert(ridgeMission.EnemyAiProfile.PatrolMarkerIds.Count == 3, "Level 2 owns three authored enemy patrol markers to encourage top/bottom scouting");
+        Assert(ridgeMission.EnemyAiProfile.RandomSeed == 202, "Level 2 owns an explicit deterministic enemy AI random seed");
         Assert(ridgeMission.Markers.Count >= 15, "Level 2 exposes enough authored mission markers for map editor/tuner route work");
         Assert(ridgeMission.Markers.Any(marker => marker.Id == "enemy_wall_power_pylon"), "Level 2 has a stable wall-power Pylon marker for map editor/tuner work");
         Assert(ridgeMission.Markers.Any(marker => marker.Id == "enemy_defense") && ridgeMission.Markers.Any(marker => marker.Id == "enemy_defense_south"), "Level 2 has stable Defense Tower markers for wall-link tuning");

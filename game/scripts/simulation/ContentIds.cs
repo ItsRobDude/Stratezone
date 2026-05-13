@@ -37,7 +37,6 @@ public static class ContentIds
     {
         public const string ColonyHub = "building_colony_hub";
         public const string Barracks = "building_barracks";
-        public const string ArmoryAnnex = "building_armory_annex";
         public const string VehicleBay = "building_vehicle_bay";
         public const string PowerPlant = "building_power_plant";
         public const string Pylon = "building_pylon";

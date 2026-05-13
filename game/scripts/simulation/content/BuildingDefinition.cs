@@ -29,5 +29,12 @@ public sealed record BuildingDefinition(
     string? UpgradeFromBuildingId,
     bool UpgradePreservesWallAnchor,
     float SightRange,
+    DestroyedRevealDefinition? DestroyedReveal,
     IReadOnlyList<string> Tags
+);
+
+public sealed record DestroyedRevealDefinition(
+    string UnitId,
+    int Count,
+    bool Occupant
 );

@@ -29,7 +29,7 @@ Current locked vision choices:
 - Cadets should be the fastest, cheapest, weakest, easiest-to-kill combat troop. Riflemen should train only slightly slower and be a small step up. Guardians should be slower, more expensive specialist anti-armor / anti-defense infantry.
 - Colony Hub is where new units spawn.
 - Barracks controls what can be trained by level, allowed troop count, and upgrade unlocks.
-- Guardian production should be unlocked by upgrading the Barracks itself, not by building an Armory Annex. Vehicle Bay remains a powered physical Barracks add-on for Rover/heavy-armor capacity.
+- Guardian production should be unlocked by upgrading the Barracks itself. Vehicle Bay remains a powered physical Barracks add-on for Rover/heavy-armor capacity.
 - Vehicle Bay is silently locked and hidden in Level 1.
 - Power Plant generates power in a small radius. Underpowered buildings shut off.
 - Pylons link power over long distances.
@@ -50,6 +50,8 @@ Current locked vision choices:
 - Mission presentation should use short field-command briefings, direct objective verbs, sparse map callouts, truthful success/failure messages, and localizable player-facing strings.
 - Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
 - Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule; enemy Hub occupants must be killed before a mission can complete.
+- Destroyed Barracks quietly release three same-faction Cadets, and destroyed Power Plants quietly release one same-faction Cadet; these are intentionally undocumented in-game flavor surprises inspired by Dominion: Storm Over Gift 3.
+- Static fallback positions for AI markers, such as `EnemyAiMarkers.FirstLanding`, exist only for legacy test fixtures and are not a second source of truth. Mission data wins.
 - Ancient-tech mystery is out of scope for now.
 - Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless the roadmap is explicitly reopened. Artillery Battery remains a preferred Mission 5 siege candidate.
 - Visual tone is military-industrial with restrained near-future utility tech.

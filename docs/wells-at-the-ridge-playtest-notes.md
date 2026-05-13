@@ -24,7 +24,7 @@ This note records the current Level 2 stabilization evidence. It is a route-proo
 
 ## Guardian Retrofit Evidence
 
-- Guardian production remains gated by `barracks_upgrade_guardian_retrofit`, not Armory Annex.
+- Guardian production remains gated by `barracks_upgrade_guardian_retrofit`.
 - Current retrofit tuning is cost 350, duration 25 seconds, 2 required Grunts, and required Grunt range 10.
 - Smoke coverage proves the player route can train the second Grunt, start the retrofit, complete it while powered, then queue and produce a Guardian.
 - Smoke coverage also proves enemy Guardian production must complete the same retrofit gate before producing Guardians.
@@ -49,3 +49,5 @@ This note records the current Level 2 stabilization evidence. It is a route-proo
 - Wall-route assault readability still depends on visual clarity and player discovery, not just route legality.
 - Bridge art/readability will be greybox at first, so the first hands-on run must judge whether the crossing state is understandable before final terrain art exists.
 - Restart/quit/readability UI is intentionally minimal and should be rechecked once Level 2 is played in-editor.
+- Cadets are currently cheaper emergency bodies, not a proven cost-efficiency choice against Riflemen; the next hands-on pass should watch whether they feel useful or merely like filler.
+- Hub-released Medium Tanks fire immediately with friendly-fire AOE. If playtests show the released tank routinely wrecks surviving friendly troops at the wreck site, lower `unit_medium_tank.area_radius` from 1.0 to 0.5 before adding cooldown or grace-window mechanics.

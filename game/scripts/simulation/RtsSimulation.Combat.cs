@@ -90,7 +90,7 @@ public sealed partial class RtsSimulation
         foreach (var unit in idleCombatUnits.Take(groupSize - committedCount))
         {
             unit.IsEnemyAttackCommitted = true;
-            unit.IsEnemyScout = false;
+            unit.IsEnemyRoaming = false;
             unit.IsEnemyRetreating = false;
             _knownCommittedEnemyIds.Add(unit.EntityId);
             committedNow++;
@@ -128,7 +128,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        scout.IsEnemyScout = true;
+        scout.IsEnemyRoaming = true;
         _enemyOfficer.ScoutDispatched = true;
         SetUnitPathTo(scout, _enemyAi.RallyPosition);
     }
@@ -152,7 +152,7 @@ public sealed partial class RtsSimulation
                 unit.Definition.CanAttack &&
                 unit.HealthRatio >= EnemyRetreatRecoverRatio &&
                 !unit.IsEnemyAttackCommitted &&
-                !unit.IsEnemyScout)
+                !unit.IsEnemyRoaming)
             .OrderBy(unit => unit.Position.DistanceTo(_enemyAi.HubPosition))
             .Take(patrolGroupSize)
             .ToArray();
@@ -172,7 +172,7 @@ public sealed partial class RtsSimulation
 
         foreach (var unit in idleCombatUnits)
         {
-            unit.IsEnemyScout = true;
+            unit.IsEnemyRoaming = true;
             unit.IsEnemyRetreating = false;
             unit.TargetUnitEntityId = null;
             unit.TargetBuildingEntityId = null;
@@ -182,8 +182,8 @@ public sealed partial class RtsSimulation
 
         _enemyPatrolDestinationIndexes.Add(destinationIndex);
         _enemyPatrolDispatches++;
-        _enemyOfficer.PatrolDispatches = _enemyPatrolDispatches;
-        _enemyOfficer.PatrolAreasVisited = _enemyPatrolDestinationIndexes.Count;
+        _enemyTelemetry.PatrolDispatches = _enemyPatrolDispatches;
+        _enemyTelemetry.PatrolAreasVisited = _enemyPatrolDestinationIndexes.Count;
         _nextEnemyPatrolDispatchSeconds = _elapsedSeconds + Math.Max(1.0f, _enemyAi.Profile.PatrolIntervalSeconds);
     }
 
@@ -234,8 +234,11 @@ public sealed partial class RtsSimulation
             var targetUnit = FindNearestHostileUnitForBuilding(building);
             if (targetUnit is not null)
             {
-                CombatResolver.ResolveBuildingAttack(building, targetUnit, _units, _buildings);
-                RecomputePower();
+                if (CombatResolver.ResolveBuildingAttack(building, targetUnit, _units, _buildings))
+                {
+                    RecomputePower();
+                }
+
                 continue;
             }
 
@@ -250,8 +253,10 @@ public sealed partial class RtsSimulation
                 continue;
             }
 
-            CombatResolver.ResolveBuildingAttack(building, targetBuilding, _units, _buildings);
-            RecomputePower();
+            if (CombatResolver.ResolveBuildingAttack(building, targetBuilding, _units, _buildings))
+            {
+                RecomputePower();
+            }
         }
     }
 
@@ -317,6 +322,16 @@ public sealed partial class RtsSimulation
             return;
         }
 
+        var visibleCommander = FindVisibleCommanderForEnemy();
+        if (_enemyOfficer.CommanderSighted && visibleCommander is not null)
+        {
+            unit.TargetUnitEntityId = visibleCommander.EntityId;
+            unit.TargetBuildingEntityId = null;
+            unit.TargetBridgeId = null;
+            TickUnitAttackTarget(unit, visibleCommander, deltaSeconds);
+            return;
+        }
+
         var target = GetEnemyTargetBuilding(unit);
         unit.TargetUnitEntityId = null;
         unit.TargetBuildingEntityId = target?.EntityId;
@@ -334,7 +349,7 @@ public sealed partial class RtsSimulation
         var baseIntruder = FindEnemyBaseIntruder(unit);
         if (baseIntruder is not null)
         {
-            unit.IsEnemyScout = false;
+            unit.IsEnemyRoaming = false;
             unit.TargetUnitEntityId = baseIntruder.EntityId;
             unit.TargetBuildingEntityId = null;
             unit.TargetBridgeId = null;
@@ -342,7 +357,7 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        if (unit.IsEnemyScout)
+        if (unit.IsEnemyRoaming)
         {
             TickEnemyScout(unit, deltaSeconds * _enemyAi.Profile.PressureSlowdownMultiplier);
         }
@@ -400,7 +415,7 @@ public sealed partial class RtsSimulation
     {
         if (!unit.IsEnemyRetreating)
         {
-            _enemyOfficer.RetreatsOrdered++;
+            _enemyTelemetry.RetreatsOrdered++;
         }
 
         unit.IsEnemyRetreating = true;
@@ -530,7 +545,7 @@ public sealed partial class RtsSimulation
 
         if (_knownWallBlockedEnemyIds.Add(unit.EntityId))
         {
-            _enemyOfficer.WallBlocksEncountered++;
+            _enemyTelemetry.WallBlocksEncountered++;
         }
         var startAnchor = FindLiveBuilding(blockingWall.StartAnchorEntityId);
         var endAnchor = FindLiveBuilding(blockingWall.EndAnchorEntityId);
@@ -556,6 +571,15 @@ public sealed partial class RtsSimulation
             .OrderBy(candidate => candidate.Definition.Id == ContentIds.Units.Commander ? 0 : 1)
             .ThenBy(candidate => candidate.Position.DistanceTo(unit.Position))
             .FirstOrDefault();
+    }
+
+    private UnitState? FindVisibleCommanderForEnemy()
+    {
+        return _units.FirstOrDefault(candidate =>
+            candidate.FactionId == ContentIds.Factions.PlayerExpedition &&
+            candidate.Definition.Id == ContentIds.Units.Commander &&
+            !candidate.IsDestroyed &&
+            IsCurrentlyObservedByFaction(ContentIds.Factions.PrivateMilitary, candidate.Position));
     }
 
     private BuildingState? FindEnemyPriorityBuilding(UnitState unit)
@@ -590,8 +614,10 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        CombatResolver.ResolveUnitAttack(unit, target, _units, _buildings);
-        RecomputePower();
+        if (CombatResolver.ResolveUnitAttack(unit, target, _units, _buildings))
+        {
+            RecomputePower();
+        }
     }
 
     private void TryUnitAttackBridge(UnitState unit, BridgeState target)
@@ -621,8 +647,10 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        CombatResolver.ResolveUnitAttack(attacker, target, _units, _buildings);
-        RecomputePower();
+        if (CombatResolver.ResolveUnitAttack(attacker, target, _units, _buildings))
+        {
+            RecomputePower();
+        }
     }
 
     private UnitState? FindNearestEnemyUnitInRange(UnitState unit)

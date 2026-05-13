@@ -94,7 +94,7 @@ The first prototype should support these content categories:
 - objectives
 - Barracks upgrades
 
-Future categories such as campaign progression, achievements, broad abstract upgrade trees, and store metadata should wait until the related milestone requires them. Vehicle Bay add-ons and armed tower upgrades should be represented as building records first, because they are physical map objects or in-place building conversions. Guardian production is represented by one explicit Barracks upgrade record, not an Armory Annex building.
+Future categories such as campaign progression, achievements, broad abstract upgrade trees, and store metadata should wait until the related milestone requires them. Vehicle Bay add-ons and armed tower upgrades should be represented as building records first, because they are physical map objects or in-place building conversions. Guardian production is represented by one explicit Barracks upgrade record.
 
 ## Unit Definition
 
@@ -240,6 +240,13 @@ Optional relationship fields for physical add-ons and in-place upgrades:
 - `heavy_armor_capacity_delta`
 - `upgrade_from_building_id`
 - `upgrade_preserves_wall_anchor`
+- `destroyed_reveal`
+
+Optional `destroyed_reveal` fields:
+
+- `unit_id`
+- `count`
+- `occupant`
 
 First-pass building IDs:
 
@@ -251,7 +258,6 @@ First-pass building IDs:
 - `building_defense_tower`
 - `building_gun_tower`
 - `building_rocket_tower`
-- `building_armory_annex` (legacy reserved record; not the first-demo Guardian unlock path)
 - `building_vehicle_bay`
 - `building_med_hall`
 - `building_logistics_repair_pad`
@@ -261,8 +267,10 @@ Prototype rules:
 
 - `building_colony_hub` is the spawn location for trained units.
 - `building_barracks` controls what can be trained by level, troop capacity, and unlocks.
-- `building_armory_annex` is a legacy reserved record. The first-demo Guardian path is a Barracks upgrade, not an Armory Annex building.
 - `building_vehicle_bay` is a powered Barracks add-on that unlocks Rover training and heavy-armor capacity where the mission allows it. In First Landing it is silently locked and hidden from the player.
+- `building_colony_hub` has a destroyed reveal of one `unit_medium_tank` with `occupant: true`.
+- `building_barracks` has a quiet destroyed reveal of three `unit_cadet` with `occupant: false`.
+- `building_power_plant` has a quiet destroyed reveal of one `unit_cadet` with `occupant: false`.
 - `building_power_plant` provides local power.
 - `building_pylon` extends or links power.
 - prototype Pylon link range is `30` content units so expansion chains read as deliberate infrastructure, not dense pylon spam.

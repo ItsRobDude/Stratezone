@@ -65,7 +65,7 @@ internal static class FirstLandingMissionSmoke
         Assert(routeSimulation.IsLineBlockedByEnergyWall(new SimVector2(-300, -140), enemyCentralExtractor.Position), "mission enemy wall blocks the direct player-base route to the central Extractor");
         enemyForwardPylon.ApplyDamage(9999, "explosive");
         TickFor(routeSimulation, 0.1f);
-        Assert(routeSimulation.EnemyOfficer.PowerStrikesTaken == 1, "destroying the enemy Pylon counts as an internal power strike");
+        Assert(routeSimulation.EnemyAiTelemetry.PowerStrikesTaken == 1, "destroying the enemy Pylon counts as internal power-strike telemetry");
         Assert(!enemyCentralExtractor.IsPowered, "destroying the enemy Pylon shuts off the central enemy Extractor");
         Assert(!routeSimulation.EnergyWalls.Any(wall =>
         {
@@ -90,7 +90,7 @@ internal static class FirstLandingMissionSmoke
         Assert(pacedMissionSimulation.EnemyOfficer.ScoutDispatched, "mission AI can dispatch a scout before the first attack");
         Assert(pacedMissionSimulation.Units.Any(unit =>
             unit.FactionId == ContentIds.Factions.PrivateMilitary &&
-            unit.IsEnemyScout &&
+            unit.IsEnemyRoaming &&
             !unit.IsEnemyAttackCommitted), "scouting does not commit the whole enemy base to an attack");
         TickFor(pacedMissionSimulation, 20.0f);
         Assert(pacedMissionSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary) ||

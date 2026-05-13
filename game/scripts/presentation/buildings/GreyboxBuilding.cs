@@ -447,9 +447,6 @@ public partial class GreyboxBuilding : Node2D
             case ContentIds.Buildings.Barracks:
                 DrawBarracks(fill, outline);
                 break;
-            case ContentIds.Buildings.ArmoryAnnex:
-                DrawArmoryAnnex(fill, outline);
-                break;
             case ContentIds.Buildings.VehicleBay:
                 DrawVehicleBay(fill, outline);
                 break;
@@ -493,15 +490,6 @@ public partial class GreyboxBuilding : Node2D
         }
 
         DrawRect(new Rect2(new Vector2(-11, 6), new Vector2(22, 17)), new Color(0.12f, 0.17f, 0.18f));
-    }
-
-    private void DrawArmoryAnnex(Color fill, Color outline)
-    {
-        DrawRect(new Rect2(new Vector2(-28, -24), new Vector2(56, 48)), fill);
-        DrawRect(new Rect2(new Vector2(-28, -24), new Vector2(56, 48)), outline, false, 3.0f);
-        DrawLine(new Vector2(-18, 10), new Vector2(18, -12), new Color(0.95f, 0.82f, 0.36f), 4.0f);
-        DrawLine(new Vector2(-18, -12), new Vector2(18, 10), new Color(0.95f, 0.82f, 0.36f), 4.0f);
-        DrawCircle(Vector2.Zero, 7.0f, new Color(0.14f, 0.18f, 0.18f));
     }
 
     private void DrawVehicleBay(Color fill, Color outline)

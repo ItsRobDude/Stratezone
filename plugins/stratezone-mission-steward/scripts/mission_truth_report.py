@@ -67,7 +67,6 @@ def main() -> int:
     hidden_level_1_buildings = [
         building_id
         for building_id in [
-            "building_armory_annex",
             "building_vehicle_bay",
             "building_med_hall",
             "building_logistics_repair_pad",

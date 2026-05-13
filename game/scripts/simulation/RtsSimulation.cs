@@ -12,12 +12,6 @@ public sealed partial class RtsSimulation
     private const float FogCellSize = 64.0f;
     private const float EnemyRegroupDelaySeconds = 18.0f;
 
-    public static SimVector2 EnemyHubPosition => EnemyAiMarkers.FirstLanding.HubPosition;
-    public static SimVector2 EnemyPowerPlantPosition => EnemyAiMarkers.FirstLanding.PowerPlantPosition;
-    public static SimVector2 EnemyBarracksPosition => EnemyAiMarkers.FirstLanding.BarracksPosition;
-    public static SimVector2 EnemyExtractorPosition => EnemyAiMarkers.FirstLanding.ExtractorPosition;
-    public static SimVector2 EnemyDefenseTowerPosition => EnemyAiMarkers.FirstLanding.DefenseTowerPosition;
-
     private readonly ContentCatalog _catalog;
     private readonly List<BuildingState> _buildings = [];
     private readonly List<UnitState> _units = [];
@@ -29,18 +23,18 @@ public sealed partial class RtsSimulation
     private readonly HashSet<string>? _trainableUnitIds;
     private readonly FogOfWarState _playerFog = new(-1400, 1400, -900, 900, FogCellSize);
     private readonly FogOfWarState _enemyFog = new(-1400, 1400, -900, 900, FogCellSize);
-    private readonly HashSet<int> _hubTankReveals = [];
-    private readonly HashSet<int> _buildingCadetReveals = [];
+    private readonly HashSet<int> _destroyedBuildingReveals = [];
     private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives;
     private readonly MissionTriggerSystem _missionTriggers;
     private readonly MapDefinition? _map;
     private readonly EnemyOfficerState _enemyOfficer = new();
+    private readonly EnemyAiTelemetry _enemyTelemetry = new();
     private readonly HashSet<int> _knownCommittedEnemyIds = [];
     private readonly HashSet<int> _knownDestroyedEnemyPowerIds = [];
     private readonly HashSet<int> _knownWallBlockedEnemyIds = [];
     private readonly HashSet<int> _enemyPatrolDestinationIndexes = [];
-    private readonly Random _enemyPatrolRandom = new(42);
+    private readonly Random _enemyPatrolRandom;
     private float _elapsedSeconds;
     private float _nextEnemyPatrolDispatchSeconds;
     private int _enemyPatrolDispatches;
@@ -65,6 +59,7 @@ public sealed partial class RtsSimulation
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
+        _enemyPatrolRandom = new Random(_enemyAi.Profile.RandomSeed);
         _nextEnemyPatrolDispatchSeconds = _enemyAi.Profile.FirstPatrolDelaySeconds;
         _missionObjectives = new MissionObjectiveSystem(objectiveIds);
         _missionTriggers = new MissionTriggerSystem(missionTriggers);
@@ -94,6 +89,7 @@ public sealed partial class RtsSimulation
     public float ElapsedSeconds => _elapsedSeconds;
     public EnemyAiProfileDefinition EnemyAiProfile => _enemyAi.Profile;
     public EnemyOfficerState EnemyOfficer => _enemyOfficer;
+    public EnemyAiTelemetry EnemyAiTelemetry => _enemyTelemetry;
     public bool EnemyProductionOnline => HasPoweredBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.Barracks) &&
         HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub);
 
@@ -344,8 +340,7 @@ public sealed partial class RtsSimulation
         }
 
         RecomputeFog();
-        RevealCadetsForDestroyedBuildings();
-        RevealTanksForDestroyedHubs();
+        RevealDestroyedBuildingUnits();
         UpdateEnemyOfficerState();
         UpdateMissionState();
     }

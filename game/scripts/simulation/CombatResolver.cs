@@ -15,7 +15,7 @@ internal static class CombatResolver
             return false;
         }
 
-        ResolveDamage(
+        var destroyedBuilding = ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
             attacker.Position,
@@ -25,11 +25,13 @@ internal static class CombatResolver
             attacker.Definition.FriendlyFire,
             attacker.Definition.TargetFilters,
             directTarget.Position,
+            directTarget,
+            null,
             units,
             buildings);
         attacker.RegisterOutgoingAttack(directTarget.Position);
         attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
-        return true;
+        return destroyedBuilding;
     }
 
     public static bool ResolveUnitAttack(
@@ -43,7 +45,7 @@ internal static class CombatResolver
             return false;
         }
 
-        ResolveDamage(
+        var destroyedBuilding = ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
             attacker.Position,
@@ -53,11 +55,13 @@ internal static class CombatResolver
             attacker.Definition.FriendlyFire,
             attacker.Definition.TargetFilters,
             directTarget.Position,
+            null,
+            directTarget,
             units,
             buildings);
         attacker.RegisterOutgoingAttack(directTarget.Position);
         attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
-        return true;
+        return destroyedBuilding;
     }
 
     public static bool ResolveBuildingAttack(
@@ -71,7 +75,7 @@ internal static class CombatResolver
             return false;
         }
 
-        ResolveDamage(
+        var destroyedBuilding = ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
             attacker.Position,
@@ -81,10 +85,12 @@ internal static class CombatResolver
             attacker.Definition.FriendlyFire,
             attacker.Definition.TargetFilters,
             directTarget.Position,
+            directTarget,
+            null,
             units,
             buildings);
         attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
-        return true;
+        return destroyedBuilding;
     }
 
     public static bool ResolveBuildingAttack(
@@ -98,7 +104,7 @@ internal static class CombatResolver
             return false;
         }
 
-        ResolveDamage(
+        var destroyedBuilding = ResolveDamage(
             attacker.EntityId,
             attacker.FactionId,
             attacker.Position,
@@ -108,10 +114,12 @@ internal static class CombatResolver
             attacker.Definition.FriendlyFire,
             attacker.Definition.TargetFilters,
             directTarget.Position,
+            null,
+            directTarget,
             units,
             buildings);
         attacker.AttackCooldownRemaining = MathF.Max(0.05f, attacker.Definition.AttackCooldown);
-        return true;
+        return destroyedBuilding;
     }
 
     public static bool TryCrushInfantry(UnitState crusher, SimVector2 start, SimVector2 end, IReadOnlyList<UnitState> units)
@@ -144,7 +152,7 @@ internal static class CombatResolver
         return didCrush;
     }
 
-    private static void ResolveDamage(
+    private static bool ResolveDamage(
         int sourceEntityId,
         string sourceFactionId,
         SimVector2 sourcePosition,
@@ -154,10 +162,40 @@ internal static class CombatResolver
         bool friendlyFire,
         IReadOnlyList<string> targetFilters,
         SimVector2 center,
+        UnitState? directUnit,
+        BuildingState? directBuilding,
         IReadOnlyList<UnitState> units,
         IReadOnlyList<BuildingState> buildings)
     {
         var radius = areaRadius > 0.0f ? RtsSimulation.ToWorldRadius(areaRadius) : 0.0f;
+
+        if (areaRadius <= 0.0f)
+        {
+            if (directUnit is not null &&
+                directUnit.EntityId != sourceEntityId &&
+                !directUnit.IsDestroyed &&
+                CanDamageFaction(sourceFactionId, directUnit.FactionId, friendlyFire) &&
+                MatchesUnitFilters(directUnit.Definition, targetFilters))
+            {
+                directUnit.ApplyDamage(damage, damageType);
+                directUnit.RegisterIncomingAttack(sourcePosition);
+            }
+
+            if (directBuilding is not null &&
+                directBuilding.EntityId != sourceEntityId &&
+                !directBuilding.IsDestroyed &&
+                CanDamageFaction(sourceFactionId, directBuilding.FactionId, friendlyFire) &&
+                targetFilters.Contains("building", StringComparer.Ordinal))
+            {
+                var destroyed = directBuilding.ApplyDamage(damage, damageType);
+                directBuilding.RegisterIncomingAttack(sourcePosition);
+                return destroyed;
+            }
+
+            return false;
+        }
+
+        var destroyedBuilding = false;
 
         foreach (var unit in units)
         {
@@ -185,9 +223,11 @@ internal static class CombatResolver
                 continue;
             }
 
-            building.ApplyDamage(damage, damageType);
+            destroyedBuilding |= building.ApplyDamage(damage, damageType);
             building.RegisterIncomingAttack(sourcePosition);
         }
+
+        return destroyedBuilding;
     }
 
     private static bool CanAttack(float damage, float cooldown, bool targetDestroyed)
@@ -208,9 +248,7 @@ internal static class CombatResolver
 
     private static bool IsInDamageArea(SimVector2 position, SimVector2 center, float radius)
     {
-        return radius <= 0.0f
-            ? position.DistanceTo(center) <= 0.001f
-            : position.DistanceTo(center) <= radius;
+        return position.DistanceTo(center) <= radius;
     }
 
     private static float DistancePointToSegment(SimVector2 point, SimVector2 start, SimVector2 end)

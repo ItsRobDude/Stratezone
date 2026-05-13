@@ -14,7 +14,7 @@ Generated with `python plugins\stratezone-mission-steward\scripts\mission_truth_
 - Enemy starts with 3 Riflemen, 1 Colony Hub, 1 Barracks, 1 Power Plant, 2 Pylons, and 2 Defense Towers.
 - Level 1 trainable units remain Grunt, Cadet, and Rifleman.
 - Commander, Guardian, and Rover remain authored-only player units for Level 1.
-- Hidden/deferred Level 1 buildings remain Armory Annex, Vehicle Bay, Med Hall, Logistics / Repair Pad, and Artillery Battery.
+- Hidden/deferred Level 1 buildings remain Vehicle Bay, Med Hall, Logistics / Repair Pad, and Artillery Battery.
 - Mission rules remain destroy all enemies, protect Commander, black unexplored fog, explored terrain stays visible, and the permanent Colony Hub destruction rule reveals a Medium Tank occupant.
 - Mission presentation now includes localized retry hint, tactical note, and sparse map callouts for the central well and enemy power line.
 - Enemy AI profile remains slow/readable: first attack at 115 seconds, attack group size 1, pressure slowdown 0.55, train time multiplier 1.8.
@@ -58,4 +58,5 @@ Checks covered:
 - A full natural manual win/loss replay was not performed during this closeout; current confidence comes from existing user win-run evidence, deterministic smoke coverage, and Godot headless scene load.
 - First Landing pacing is still tunable. The evidence proves the route and AI profile, not final feel.
 - The enemy Pylon weak point is intentionally discoverable rather than tutorial-obvious; future playtests should watch whether players notice it without a heavy prompt.
+- Hub-released Medium Tanks fire immediately with friendly-fire AOE. If playtests show the released tank routinely wrecks surviving friendly troops at the wreck site, lower `unit_medium_tank.area_radius` from 1.0 to 0.5 before adding cooldown or grace-window mechanics.
 - Final art, audio, minimap, packaged build flow, and public-demo readability are still later milestones.

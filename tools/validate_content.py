@@ -251,7 +251,6 @@ def validate_required_first_landing(records: dict[str, dict[str, Any]]) -> list[
         "unit_tank",
         "building_colony_hub",
         "building_barracks",
-        "building_armory_annex",
         "building_vehicle_bay",
         "building_power_plant",
         "building_pylon",
@@ -365,6 +364,7 @@ def validate_mission_profiles(records: dict[str, dict[str, Any]]) -> list[str]:
         "central_well_rebuild_cooldown_seconds",
         "pressure_slowdown_multiplier",
         "train_time_multiplier",
+        "random_seed",
     }
 
     map_object_ids = collect_map_object_ids(records)
@@ -515,6 +515,33 @@ def validate_map_objects(records: dict[str, dict[str, Any]]) -> list[str]:
     return errors
 
 
+def validate_destroyed_reveals(records: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    for record_id, record in records.items():
+        if not record_id.startswith("building_"):
+            continue
+
+        reveal = record.get("destroyed_reveal")
+        if reveal is None:
+            continue
+        if not isinstance(reveal, dict):
+            errors.append(f"{record['_source_path']}: {record_id}.destroyed_reveal must be an object")
+            continue
+
+        unit_id = reveal.get("unit_id")
+        if unit_id not in records or not str(unit_id).startswith("unit_"):
+            errors.append(f"{record['_source_path']}: {record_id}.destroyed_reveal.unit_id references missing unit '{unit_id}'")
+
+        count = reveal.get("count")
+        if not isinstance(count, int) or count <= 0:
+            errors.append(f"{record['_source_path']}: {record_id}.destroyed_reveal.count must be a positive integer")
+
+        if not isinstance(reveal.get("occupant"), bool):
+            errors.append(f"{record['_source_path']}: {record_id}.destroyed_reveal.occupant must be boolean")
+
+    return errors
+
+
 def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
     errors: list[str] = []
     path = I18N_ROOT / "en.json"
@@ -574,6 +601,7 @@ def main() -> int:
     errors.extend(validate_unit_and_building_combat_fields(records))
     errors.extend(validate_mission_profiles(records))
     errors.extend(validate_map_objects(records))
+    errors.extend(validate_destroyed_reveals(records))
     errors.extend(validate_i18n(records))
 
     if errors:

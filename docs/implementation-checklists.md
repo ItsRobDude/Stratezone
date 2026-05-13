@@ -64,7 +64,6 @@ Initial IDs are defined in `docs/content-data-spec.md` and repeated here for che
 - `building_defense_tower`
 - `building_gun_tower`
 - `building_rocket_tower`
-- `building_armory_annex` (legacy placeholder; not the planned first-demo Guardian unlock path)
 - `building_vehicle_bay`
 - `building_med_hall`
 - `building_logistics_repair_pad`
@@ -159,6 +158,7 @@ Acceptance checks:
 - Rover can run over enemy infantry if that behavior is included
 - all required enemy targets destroyed triggers win
 - destroyed Barracks and Power Plants release same-faction Cadets before victory/loss checks finish
+- destroyed-building reveals are data-driven, silent, and do not emit player-facing reveal events
 - destroying either Colony Hub releases a Medium Tank occupant, and hostile Hub occupants must be killed before mission completion
 - Guardian energy fire, released Medium Tanks, and Rocket Tower explosives outperform comparable ballistic options against armored vehicles
 - Cadet recruits fastest, Rifleman recruits only slightly slower, and Guardian recruits slower as a specialist; current content data should be retuned if it does not match that feel
@@ -181,7 +181,7 @@ Acceptance checks:
 - hand-written files over the 900-line review trigger are split or have a documented reason to stay together
 - broad smoke coverage is split or grouped enough that a failed mission route points to the relevant system quickly
 - mission data has a repeatable pattern for markers, starting entities, resource wells, objectives, failure conditions, and AI profile
-- Barracks Guardian upgrade has a runtime/data path that replaces the old Armory Annex Guardian gate
+- Barracks Guardian upgrade has a runtime/data path for the Guardian gate
 - mission setup supports deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force starts without copying scene logic
 - map data can represent first-pass terrain regions, passability blockers, readable base/expansion pockets, resource basins, chokepoint markers, and explicit restricted-build scenarios
 - new mission setup can be added through data plus narrow simulation/presentation seams
@@ -220,7 +220,7 @@ Acceptance checks:
 - enemy power or extractor infrastructure can be scouted and attacked
 - Barracks Guardian upgrade and Guardian production are included if the Level 2 route can carry the first unlock without losing the resource-race proof
 - Guardian remains anti-armor / anti-defense specialist if introduced here
-- Armory Annex is not used as the Guardian unlock path
+- Guardian production uses the Barracks Guardian upgrade path
 - player-facing warnings report only known events, not hidden attack planning
 - early raid triggers coalesce or queue behind cooldowns instead of stacking when Barracks and first Extractor appear back to back
 - early enemy patrols visit a few authored exploration areas before the main attack timer, encouraging scouting without hidden-plan alerts

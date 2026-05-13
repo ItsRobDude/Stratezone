@@ -176,6 +176,7 @@ public sealed class ContentCatalog
                 GetOptionalString(record, "upgrade_from_building_id"),
                 GetOptionalBool(record, "upgrade_preserves_wall_anchor"),
                 GetOptionalFloat(record, "sight_range"),
+                LoadDestroyedReveal(record),
                 LoadStringArray(record, "tags")
             );
 
@@ -553,7 +554,22 @@ public sealed class ContentCatalog
             GetOptionalString(profile, "defense_tower_marker") ?? EnemyAiProfileDefinition.Default.DefenseTowerMarkerId,
             GetOptionalString(profile, "rally_marker") ?? EnemyAiProfileDefinition.Default.RallyMarkerId,
             LoadStringArray(profile, "patrol_markers"),
-            GetOptionalString(profile, "central_island_attack_via_bridge_id") ?? string.Empty);
+            GetOptionalString(profile, "central_island_attack_via_bridge_id") ?? string.Empty,
+            GetOptionalInt(profile, "random_seed", EnemyAiProfileDefinition.Default.RandomSeed));
+    }
+
+    private static DestroyedRevealDefinition? LoadDestroyedReveal(JsonElement record)
+    {
+        if (!record.TryGetProperty("destroyed_reveal", out var reveal) ||
+            reveal.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        return new DestroyedRevealDefinition(
+            reveal.GetProperty("unit_id").GetString() ?? string.Empty,
+            reveal.TryGetProperty("count", out var count) ? count.GetInt32() : 0,
+            reveal.TryGetProperty("occupant", out var occupant) && occupant.GetBoolean());
     }
 
     private static SimVector2 LoadVector(JsonElement record)

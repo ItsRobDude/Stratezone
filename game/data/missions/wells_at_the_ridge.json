@@ -210,6 +210,7 @@
         "max_central_well_rebuilds": 2,
         "pressure_slowdown_multiplier": 0.8,
         "train_time_multiplier": 1.4,
+        "random_seed": 202,
         "hub_marker": "enemy_base",
         "power_plant_marker": "enemy_power",
         "barracks_marker": "enemy_barracks",

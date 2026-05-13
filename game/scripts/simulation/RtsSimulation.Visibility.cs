@@ -27,50 +27,37 @@ public sealed partial class RtsSimulation
         return factionId == ContentIds.Factions.PrivateMilitary ? _enemyFog : _playerFog;
     }
 
-    private void RevealTanksForDestroyedHubs()
+    private void RevealDestroyedBuildingUnits()
     {
-        foreach (var hub in _buildings.Where(building =>
-            building.Definition.Id == ContentIds.Buildings.ColonyHub &&
-            building.IsDestroyed &&
-            !_hubTankReveals.Contains(building.EntityId)).ToArray())
-        {
-            _hubTankReveals.Add(hub.EntityId);
-            AddUnit(ContentIds.Units.MediumTank, hub.FactionId, hub.Position + new SimVector2(85, 45), true);
-        }
-    }
-
-    private void RevealCadetsForDestroyedBuildings()
-    {
+        // Intentional: destroyed-building reveals do not raise player-facing events.
+        // They are quiet on-map consequences documented in system contracts.
         foreach (var building in _buildings.Where(building =>
             building.IsDestroyed &&
-            !_buildingCadetReveals.Contains(building.EntityId)).ToArray())
+            building.Definition.DestroyedReveal is not null &&
+            !_destroyedBuildingReveals.Contains(building.EntityId)).ToArray())
         {
-            var cadetCount = GetDestroyedBuildingCadetCount(building.Definition.Id);
-            if (cadetCount <= 0)
+            var reveal = building.Definition.DestroyedReveal!;
+            if (reveal.Count <= 0 || string.IsNullOrWhiteSpace(reveal.UnitId))
             {
                 continue;
             }
 
-            _buildingCadetReveals.Add(building.EntityId);
-            foreach (var offset in GetDestroyedBuildingCadetOffsets(cadetCount))
+            _destroyedBuildingReveals.Add(building.EntityId);
+            foreach (var offset in GetDestroyedBuildingRevealOffsets(reveal.Count, reveal.Occupant))
             {
-                AddUnit(ContentIds.Units.Cadet, building.FactionId, building.Position + offset);
+                AddUnit(reveal.UnitId, building.FactionId, building.Position + offset, reveal.Occupant);
             }
         }
     }
 
-    private static int GetDestroyedBuildingCadetCount(string buildingId)
+    private static IEnumerable<SimVector2> GetDestroyedBuildingRevealOffsets(int count, bool occupant)
     {
-        return buildingId switch
+        if (occupant && count == 1)
         {
-            ContentIds.Buildings.Barracks => 3,
-            ContentIds.Buildings.PowerPlant => 1,
-            _ => 0
-        };
-    }
+            yield return new SimVector2(85, 45);
+            yield break;
+        }
 
-    private static IEnumerable<SimVector2> GetDestroyedBuildingCadetOffsets(int count)
-    {
         var spacing = 34.0f;
         for (var index = 0; index < count; index++)
         {

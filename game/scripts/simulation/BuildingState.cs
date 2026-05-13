@@ -34,18 +34,20 @@ public sealed class BuildingState
     public float FootprintWorldRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius);
     public float OccupancyRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius + Definition.PlacementBuffer);
 
-    internal void ApplyDamage(float rawDamage, string damageType)
+    internal bool ApplyDamage(float rawDamage, string damageType)
     {
         if (IsDestroyed || rawDamage <= 0.0f)
         {
-            return;
+            return false;
         }
 
+        var wasDestroyed = IsDestroyed;
         var resistance = Definition.DamageResistances.TryGetValue(damageType, out var value)
             ? value
             : 0.0f;
         var finalDamage = rawDamage * MathF.Max(0.0f, 1.0f - resistance);
         Health = MathF.Max(0.0f, Health - finalDamage);
+        return !wasDestroyed && IsDestroyed;
     }
 
     internal float Repair(float healthAmount)

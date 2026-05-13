@@ -198,6 +198,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - The first mission objective is to destroy all enemies on the map.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule. Enemy Hub occupants must be killed before a mission can complete.
+- Destroyed Barracks quietly release three same-faction Cadets, and destroyed Power Plants quietly release one same-faction Cadet. These releases apply to both factions, are not Hub occupants, and should not be telegraphed through HUD, briefing, map callout, or localization text.
 - The first playable milestone should be playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until the RTS loop works.
 - The first public build should be a demo, not an Early Access or sellable release claim. The current target for that demo is the first five levels, but the project is still pre-demo and does not yet have a reliable finished level-design pipeline.
 - Ancient tech is omitted for now.

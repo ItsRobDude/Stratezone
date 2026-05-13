@@ -34,7 +34,7 @@ public sealed class UnitState
     public SimVector2 TargetFormationOffset { get; internal set; }
     public bool IsBlockedByEnergyWall { get; internal set; }
     public bool IsEnemyAttackCommitted { get; internal set; }
-    public bool IsEnemyScout { get; internal set; }
+    public bool IsEnemyRoaming { get; internal set; }
     public bool IsEnemyRetreating { get; internal set; }
     public bool IsColonyHubOccupant { get; internal set; }
     public SimVector2? LastIncomingAttackOrigin { get; private set; }

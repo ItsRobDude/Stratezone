@@ -95,7 +95,7 @@ var blockedEnemy = wallSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.
 TickFor(wallSimulation, 5.0f);
 Assert(blockedEnemy.IsBlockedByEnergyWall, "enemy pressure recognizes a blocking energy wall");
 Assert(blockedEnemy.TargetBuildingEntityId == firstTower.Building?.EntityId || blockedEnemy.TargetBuildingEntityId == secondTower.Building?.EntityId, "blocked enemy targets a wall anchor");
-Assert(wallSimulation.EnemyOfficer.WallBlocksEncountered == 1, "enemy officer internally remembers a wall block without spamming repeat counts");
+Assert(wallSimulation.EnemyAiTelemetry.WallBlocksEncountered == 1, "enemy telemetry records a wall block without spamming repeat counts");
 TickFor(wallSimulation, 70.0f);
 Assert(wallSimulation.EnergyWalls.Count == 0, "destroying a wall anchor drops the energy wall segment");
 
@@ -148,9 +148,9 @@ Assert(pursuedRifleman.Health < pursuedRifleman.Definition.Health, "attack pursu
 
 var enemyBaseSimulation = new RtsSimulation(catalog, startingMaterials, [], 800);
 enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
-enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, EnemyAiMarkers.FirstLanding.PowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+enemyBaseSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, EnemyAiMarkers.FirstLanding.BarracksPosition, ContentIds.Factions.PrivateMilitary);
 TickFor(enemyBaseSimulation, 0.1f);
 Assert(enemyBaseSimulation.ProductionOrders.Count == 1, "enemy base queues production from powered Barracks");
 Assert(enemyBaseSimulation.EnemyMaterials <= 700, "enemy production and construction spend resources when queued");
@@ -159,9 +159,9 @@ Assert(enemyBaseSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factio
 
 var lowResourceEnemySimulation = new RtsSimulation(catalog, startingMaterials, [], 75);
 lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
-lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, EnemyAiMarkers.FirstLanding.PowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+lowResourceEnemySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, EnemyAiMarkers.FirstLanding.BarracksPosition, ContentIds.Factions.PrivateMilitary);
 TickFor(lowResourceEnemySimulation, 0.1f);
 Assert(lowResourceEnemySimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Cadet), "enemy production can choose Cadets when resources are too low for Riflemen");
 
@@ -174,11 +174,11 @@ var enemyGuardianRetrofitSimulation = new RtsSimulation(
     null,
     [ContentIds.Units.Grunt, ContentIds.Units.Cadet, ContentIds.Units.Rifleman, ContentIds.Units.Guardian]);
 enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, RtsSimulation.EnemyPowerPlantPosition, ContentIds.Factions.PrivateMilitary);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
+enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, EnemyAiMarkers.FirstLanding.PowerPlantPosition, ContentIds.Factions.PrivateMilitary);
 enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Pylon, EnemyAiMarkers.FirstLanding.BasePylonPosition, ContentIds.Factions.PrivateMilitary);
 enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Pylon, EnemyAiMarkers.FirstLanding.ForwardPylonPosition, ContentIds.Factions.PrivateMilitary);
-var enemyRetrofitBarracks = enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, RtsSimulation.EnemyBarracksPosition, ContentIds.Factions.PrivateMilitary);
+var enemyRetrofitBarracks = enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, EnemyAiMarkers.FirstLanding.BarracksPosition, ContentIds.Factions.PrivateMilitary);
 enemyGuardianRetrofitSimulation.AddStartingBuilding(ContentIds.Buildings.DefenseTower, EnemyAiMarkers.FirstLanding.DefenseTowerPosition, ContentIds.Factions.PrivateMilitary);
 TickFor(enemyGuardianRetrofitSimulation, 0.1f);
 Assert(enemyGuardianRetrofitSimulation.ProductionOrders.Any(order => order.FactionId == ContentIds.Factions.PrivateMilitary && order.UnitId == ContentIds.Units.Grunt), "enemy AI trains Grunts first when Guardian Retrofit is mission-enabled but understaffed");
@@ -330,10 +330,10 @@ Assert(spawnedCadets[0].Position.DistanceTo(spawnedCadets[1].Position) > 24.0f, 
 var enemyConstructionSimulation = new RtsSimulation(
     catalog,
     startingMaterials,
-    [("well_first_landing_central", RtsSimulation.EnemyExtractorPosition)],
+    [("well_first_landing_central", EnemyAiMarkers.FirstLanding.ExtractorPosition)],
     1000);
 enemyConstructionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-enemyConstructionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+enemyConstructionSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
 TickFor(enemyConstructionSimulation, 0.1f);
 Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary && building.Definition.Id == ContentIds.Buildings.PowerPlant), "enemy construction planner builds a Power Plant");
 Assert(enemyConstructionSimulation.Buildings.Any(building => building.FactionId == ContentIds.Factions.PrivateMilitary && building.Definition.Id == ContentIds.Buildings.Barracks), "enemy construction planner builds a Barracks");
@@ -397,7 +397,7 @@ Assert(Math.Abs(cancelTargetHub.Health - hubHealthAfterAttack) < 0.01f, "Riflema
 
 var enemyRangeParitySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 enemyRangeParitySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-enemyRangeParitySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+enemyRangeParitySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
 var playerStandingRifleman = enemyRangeParitySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
 var riflemanRange = RtsSimulation.ToWorldRadius(catalog.GetUnit(ContentIds.Units.Rifleman).AttackRange);
 var enemyOverrangeRifleman = enemyRangeParitySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(riflemanRange + 16.0f, 0));
@@ -443,14 +443,14 @@ enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new 
 enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(-210, -120));
 var priorityExtractor = enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(-160, -120));
 enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(-120, -120));
-enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+enemyPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
 var priorityEnemy = enemyPrioritySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(-80, -120));
 TickFor(enemyPrioritySimulation, 0.2f);
 Assert(priorityEnemy.TargetBuildingEntityId == priorityExtractor.EntityId, "enemy target priority favors visible Extractor before base cracking");
 
 var commanderPrioritySimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 commanderPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-commanderPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
+commanderPrioritySimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
 var exposedCommander = commanderPrioritySimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(520, 120));
 var commanderHunter = commanderPrioritySimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(600, 120));
 TickFor(commanderPrioritySimulation, 0.2f);
@@ -459,14 +459,14 @@ Assert(commanderHunter.TargetUnitEntityId == exposedCommander.EntityId, "enemy t
 
 var retreatSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-var retreatingEnemy = retreatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, RtsSimulation.EnemyHubPosition + new SimVector2(-180, 0));
+retreatSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
+var retreatingEnemy = retreatSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, EnemyAiMarkers.FirstLanding.HubPosition + new SimVector2(-180, 0));
 TickFor(retreatSimulation, 0.2f);
 retreatingEnemy.ApplyDamage(34, "ballistic");
-var retreatDistanceBefore = retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition);
+var retreatDistanceBefore = retreatingEnemy.Position.DistanceTo(EnemyAiMarkers.FirstLanding.HubPosition);
 TickFor(retreatSimulation, 0.3f);
 Assert(retreatingEnemy.IsEnemyRetreating, "badly damaged committed enemies can retreat toward base");
-Assert(retreatingEnemy.Position.DistanceTo(RtsSimulation.EnemyHubPosition) < retreatDistanceBefore, "retreating enemy moves closer to its base");
+Assert(retreatingEnemy.Position.DistanceTo(EnemyAiMarkers.FirstLanding.HubPosition) < retreatDistanceBefore, "retreating enemy moves closer to its base");
 TickFor(retreatSimulation, 20.0f);
 Assert(!retreatingEnemy.IsEnemyRetreating && !retreatingEnemy.IsEnemyAttackCommitted, "badly damaged enemies stand down after reaching their base");
 TickFor(retreatSimulation, 20.0f);
@@ -474,13 +474,13 @@ Assert(!retreatingEnemy.IsEnemyAttackCommitted, "badly damaged enemies are not i
 
 var regroupSimulation = new RtsSimulation(catalog, startingMaterials, [], 450);
 regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
-regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, RtsSimulation.EnemyHubPosition, ContentIds.Factions.PrivateMilitary);
-var doomedAttacker = regroupSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, RtsSimulation.EnemyHubPosition + new SimVector2(-180, 0));
+regroupSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, EnemyAiMarkers.FirstLanding.HubPosition, ContentIds.Factions.PrivateMilitary);
+var doomedAttacker = regroupSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, EnemyAiMarkers.FirstLanding.HubPosition + new SimVector2(-180, 0));
 TickFor(regroupSimulation, 0.2f);
 Assert(doomedAttacker.IsEnemyAttackCommitted, "enemy attacker is committed before the regroup test");
 doomedAttacker.ApplyDamage(999, "ballistic");
 TickFor(regroupSimulation, 0.2f);
-Assert(regroupSimulation.EnemyOfficer.AttackGroupsLost == 1, "enemy officer internally remembers a wiped committed attack group");
+Assert(regroupSimulation.EnemyAiTelemetry.AttackGroupsLost == 1, "enemy telemetry records a wiped committed attack group");
 Assert(regroupSimulation.EnemyOfficer.NextAttackAllowedSeconds > regroupSimulation.ElapsedSeconds, "wiped attack group creates a regroup delay");
 
 var missionLossSimulation = new RtsSimulation(catalog, startingMaterials, []);
@@ -632,5 +632,8 @@ FirstLandingMissionSmoke.Run(context);
 WellsAtTheRidgeSmoke.Run(context);
 MissionTriggerSmoke.Run(context);
 MapEditorSmoke.Run(context);
+CombatRobustnessSmoke.Run(context);
+BuildingDestroyedRevealSmoke.Run(context);
+EnemyAiBehaviorSmoke.Run(context);
 
 Console.WriteLine("Simulation smoke checks passed.");

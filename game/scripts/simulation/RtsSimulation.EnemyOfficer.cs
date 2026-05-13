@@ -30,7 +30,7 @@ public sealed partial class RtsSimulation
             unit.IsDestroyed);
         if (destroyedCommitted)
         {
-            _enemyOfficer.AttackGroupsLost++;
+            _enemyTelemetry.AttackGroupsLost++;
             _enemyOfficer.NextAttackAllowedSeconds = MathF.Max(
                 _enemyOfficer.NextAttackAllowedSeconds,
                 _elapsedSeconds + EnemyRegroupDelaySeconds);
@@ -53,7 +53,7 @@ public sealed partial class RtsSimulation
         {
             if (_knownDestroyedEnemyPowerIds.Add(building.EntityId))
             {
-                _enemyOfficer.PowerStrikesTaken++;
+                _enemyTelemetry.PowerStrikesTaken++;
             }
         }
     }

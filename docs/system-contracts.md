@@ -92,6 +92,25 @@ Acceptance checks:
 - blocked placement is rejected
 - an unpowered or unsupported build decision is rejected or clearly marked inactive according to the final implementation choice
 
+### Destroyed-Building Reveals
+
+Prototype behavior:
+
+- destroying either faction's Colony Hub releases one same-faction Medium Tank marked as a Hub occupant; hostile Hub occupants block mission completion until killed
+- destroying either faction's Barracks quietly releases three same-faction Cadets
+- destroying either faction's Power Plant quietly releases one same-faction Cadet
+- Barracks and Power Plant Cadets are not Hub occupants and should only gate victory as normal live enemies
+- Barracks and Power Plant material trade should still favor the attacker; the reveal creates a closeout fight, not an economic punishment for infrastructure strikes
+- these reveals are on-map consequences only, with no HUD copy, briefing mention, map callout, localization key, or reveal event
+
+Acceptance checks:
+
+- each configured destroyed-building reveal spawns the configured same-faction unit count once
+- Hub Medium Tanks are marked as occupants and hostile occupants block mission completion
+- Barracks and Power Plant Cadets are not marked as occupants
+- buildings without a destroyed-reveal rule spawn nothing
+- destroyed-building reveals do not emit a player-facing simulation event
+
 ## Resource System
 
 Owns:
@@ -171,7 +190,7 @@ Owns:
 
 Prototype behavior:
 
-- Guardian training is unlocked by upgrading the Barracks itself where the mission allows it; it does not require an Armory Annex
+- Guardian training is unlocked by upgrading the Barracks itself where the mission allows it
 - Vehicle Bay unlocks Rover training and expands heavy-armor capacity where the mission allows it
 - Level 1 silently hides and locks Vehicle Bay; it should not appear as a disabled player command in the first mission
 - physical add-ons require power; unpowered add-ons stop providing unlocks or capacity until power returns
@@ -238,7 +257,7 @@ Tunable placeholders:
 - Heavy Tank ballistic resistance: about 0.8 so Riflemen are nearly useless against heavy armor
 - building explosive resistance: negative, while building ballistic resistance stays high enough to protect the siege ratio
 - Colony Hub siege ratio: keep 1200 health and 0.25 ballistic resistance until playtests prove the base cracks too slowly or too quickly
-- destroyed Barracks and Power Plants release a small same-faction Cadet group before final mission-state evaluation
+- destroyed Barracks release three same-faction Cadets and destroyed Power Plants release one same-faction Cadet before final mission-state evaluation
 
 Mission availability contract:
 
@@ -358,6 +377,7 @@ Prototype behavior:
 - bridge damage is explicit; idle unit auto-fire should not target bridges as if they were normal hostile units or buildings
 - a Grunt can repair or rebuild a bridge by physically reaching its geometry and working over time
 - bridge repair spends materials based on missing health percentage, matching the existing building repair cost shape
+- until bridges have authored build costs or per-bridge repair overrides, full bridge repair costs 60% of bridge max health in materials
 - the first pass must avoid bridge soft-locks: Mission 2 needs at least one player-repairable route to the enemy island/base objective
 - enemy bridge repair is deferred until playtest evidence shows the AI needs it
 

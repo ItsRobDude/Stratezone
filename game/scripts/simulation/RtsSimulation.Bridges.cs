@@ -5,6 +5,8 @@ namespace Stratezone.Simulation;
 public sealed partial class RtsSimulation
 {
     private const float BridgeInteractionRange = 1.5f;
+    // Bridges do not have build costs yet; full bridge repair is locked by smoke tests
+    // at 60% of max health until map-object data grows a per-bridge repair override.
     private const float BridgeRepairMaterialCostPerHealth = FullRepairCostFraction;
 
     private void InitializeBridges(

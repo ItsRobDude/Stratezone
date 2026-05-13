@@ -72,13 +72,13 @@ Gameplay shape:
 - Defense Tower walls matter because of map shape
 - enemy power and extractor routes are useful strike targets
 - player chooses between expanding, walling, repairing bridges, severing bridge access, or attacking
-- Guardian production can enter here through a Barracks upgrade, not an Armory Annex
+- Guardian production can enter here through a Barracks upgrade
 - enemy armor, hardened defense, or tower anchors should justify Guardian use if the unlock enters Level 2
 
 Content boundary:
 
 - same-tech enemy only, reskinned red or alternate color
-- no Armory Annex
+- no extra Guardian-unlock building
 - no Vehicle Bay requirement
 - no broad tech layer beyond the Barracks Guardian upgrade if Level 2 takes that unlock
 - Med Hall, Logistics / Repair Pad, and Artillery stay out unless the mission cannot work without one
@@ -1017,7 +1017,7 @@ Purpose: make progression happen through RTS objects on the map instead of abstr
 
 Direction:
 
-- Barracks upgrade unlocks Guardian/explosive tech where the mission allows it; no Armory Annex is planned for the first demo path.
+- Barracks upgrade unlocks Guardian/explosive tech where the mission allows it.
 - Vehicle Bay unlocks Rover/heavy-armor capacity where the mission allows it.
 - Vehicle Bay should be physical, powered, attackable, and adjacent to Barracks.
 - Guardian unlock should remain tied to a powered Barracks rather than an abstract campaign research tree.
@@ -1498,7 +1498,7 @@ Direction:
 - Prove power, Pylons, Barracks, Extractor/Refinery, basic repair, basic combat, scouting, enemy weak-point attack, Commander protection, and destroy-all-enemies win.
 - Use meadow/field terrain with a central well, enemy Pylon weak point, and simple choke.
 - Keep enemy pressure slow and readable.
-- No Vehicle Bay, Med Hall, Logistics / Repair Pad, Artillery, or Armory Annex.
+- No Vehicle Bay, Med Hall, Logistics / Repair Pad, or Artillery.
 
 ### Mission 2: Wells at the Ridge
 
@@ -1510,7 +1510,7 @@ Direction:
 - Prove scarce wells, cliffs/water/ridges, readable clearings, resource basins, Defense Tower wall placement, and enemy power/extractor routes.
 - The central island well should sit near the actual center lane, with authored bridge crossings and a buildable power corridor so the player can chain Pylons to it without guessing invisible placement pockets.
 - The enemy may contest the central island well, but should not start with it or claim it on the opening tick.
-- Guardian production is unlocked through a Barracks upgrade, not an Armory Annex.
+- Guardian production is unlocked through a Barracks upgrade.
 - Enemy Guardian production follows the same runtime gate: train/staff Grunts, complete the Barracks upgrade, then train Guardians.
 - Use enemy armor, hardened defense, or tower anchors only if needed to justify Guardian use.
 - Enemy contests wells, rebuilds only with resources, and targets known infrastructure without hidden-plan warnings.
@@ -1558,7 +1558,7 @@ Direction:
 ### Demo Outline Guardrails
 
 - Mission 2 is not a prebuilt-base start.
-- Guardian unlock comes from Barracks upgrade, not Armory Annex.
+- Guardian unlock comes from Barracks upgrade.
 - Mission 5 is no-base.
 - Support/siege count remains tight: powered Grunt-hacked defense equipment in Mission 4 and Artillery/authored siege equipment in Mission 5 are the current preferred pair.
 - Med Hall, Logistics / Repair Pad, Neutral Repair Platform, player loadouts, timer-loss missions, broad campaign tech tree, and broad tank roster stay cut from the first demo unless playtests reopen them.
@@ -1598,7 +1598,7 @@ These are not planned for the first demo, but can be reconsidered if a specific 
 
 These are implementation debts created by the approved outline:
 
-1. Tune and playtest the Barracks Guardian upgrade path now that player and enemy runtime/data both use it instead of the Armory Annex placeholder path. Current smoke coverage proves the Mission 2 route can train a second Grunt, complete Guardian Retrofit, and produce a Guardian.
+1. Tune and playtest the Barracks Guardian upgrade path. Current smoke coverage proves the Mission 2 route can train a second Grunt, complete Guardian Retrofit, and produce a Guardian.
 2. Support mission start patterns without scene-copying: deployed starter base, player-built base, partial damaged base, allotted/irreplaceable troops, and no-base force.
 3. Add Level 2 map logic for blocked terrain, readable base spaces, resource basins, chokepoint markers, and Defense Tower wall route proof. Current runtime/data covers terrain blockers, readable clearings, basins, and chokepoint markers; Level 2 still needs playtest-grade wall-route tuning.
 4. Add event trigger grace/cooldown/coalescing so normal early build milestones do not stack immediate raids. First-pass mission trigger runtime/data now coalesces Mission 2 Barracks and first Extractor construction into one pressure beat.

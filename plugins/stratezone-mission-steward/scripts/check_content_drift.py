@@ -104,7 +104,6 @@ def main() -> int:
     )
 
     unavailable_level_1_buildings = {
-        "building_armory_annex",
         "building_vehicle_bay",
         "building_med_hall",
         "building_logistics_repair_pad",
@@ -186,6 +185,22 @@ def main() -> int:
     barracks = buildings.get("building_barracks", {})
     require(barracks.get("requires_power") is True, "Barracks should require power.")
     require(barracks.get("provides_training_rules") is True, "Barracks should own training rules.")
+    require(
+        barracks.get("destroyed_reveal") == {"unit_id": "unit_cadet", "count": 3, "occupant": False},
+        "Barracks should keep its quiet three-Cadet destroyed-building reveal.",
+    )
+
+    colony_hub = buildings.get("building_colony_hub", {})
+    require(
+        colony_hub.get("destroyed_reveal") == {"unit_id": "unit_medium_tank", "count": 1, "occupant": True},
+        "Colony Hub should keep its Medium Tank occupant destroyed-building reveal.",
+    )
+
+    power_plant = buildings.get("building_power_plant", {})
+    require(
+        power_plant.get("destroyed_reveal") == {"unit_id": "unit_cadet", "count": 1, "occupant": False},
+        "Power Plant should keep its quiet one-Cadet destroyed-building reveal.",
+    )
 
     vehicle_bay = buildings.get("building_vehicle_bay", {})
     require(vehicle_bay.get("requires_power") is True, "Vehicle Bay should remain powered.")
@@ -256,6 +271,7 @@ def main() -> int:
             read_text("docs/content-data-spec.md"),
             read_text("docs/implementation-checklists.md"),
             read_text("docs/first-landing-mission-spec.md"),
+            read_text("docs/system-contracts.md"),
         ]
     )
     for content_id in expected_trainable + sorted(level_1_locked_units):

@@ -225,13 +225,13 @@ internal static class WellsAtTheRidgeSmoke
         Assert(runtime.Mission.EnemyAiProfile.MaxPatrolDispatches == 3, "Level 2 enemy profile dispatches a few early patrols instead of a single lane scout");
         Assert(patrolPositions.Length == 3, "Level 2 enemy profile has three authored patrol areas for top/bottom exploration pressure");
         TickFor(simulation, runtime.Mission.EnemyAiProfile.FirstPatrolDelaySeconds + 0.2f);
-        Assert(simulation.EnemyOfficer.PatrolDispatches == 1, "Level 2 sends its first patrol to an authored exploration marker before the main attack timer");
+        Assert(simulation.EnemyAiTelemetry.PatrolDispatches == 1, "Level 2 sends its first patrol to an authored exploration marker before the main attack timer");
         Assert(EnemyPatrolsAtAuthoredDestinations(simulation, patrolPositions).Count >= 1, "Level 2 first patrol uses an authored exploration destination");
         TickFor(simulation, runtime.Mission.EnemyAiProfile.PatrolIntervalSeconds + 0.2f);
-        Assert(simulation.EnemyOfficer.PatrolDispatches == 2, "Level 2 sends a second early patrol instead of collapsing all pressure into the bridge lane");
+        Assert(simulation.EnemyAiTelemetry.PatrolDispatches == 2, "Level 2 sends a second early patrol instead of collapsing all pressure into the bridge lane");
         TickFor(simulation, runtime.Mission.EnemyAiProfile.PatrolIntervalSeconds + 0.2f);
-        Assert(simulation.EnemyOfficer.PatrolDispatches == 3, "Level 2 sends a third early patrol before normal attack pressure starts");
-        Assert(simulation.EnemyOfficer.PatrolAreasVisited == 3, "Level 2 patrols fan out across all three authored exploration areas");
+        Assert(simulation.EnemyAiTelemetry.PatrolDispatches == 3, "Level 2 sends a third early patrol before normal attack pressure starts");
+        Assert(simulation.EnemyAiTelemetry.PatrolAreasVisited == 3, "Level 2 patrols fan out across all three authored exploration areas");
     }
 
     private static void ValidateWallDoesNotBlockFire(SmokeTestContext context)
@@ -262,7 +262,7 @@ internal static class WellsAtTheRidgeSmoke
             .Where(unit =>
                 unit.FactionId == ContentIds.Factions.PrivateMilitary &&
                 !unit.IsDestroyed &&
-                unit.IsEnemyScout &&
+                unit.IsEnemyRoaming &&
                 unit.MoveTarget is not null)
             .Select(unit => Array.FindIndex(patrolPositions.ToArray(), position => position.DistanceTo(unit.MoveTarget!.Value) < 0.01f))
             .Where(index => index >= 0)

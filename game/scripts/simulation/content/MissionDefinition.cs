@@ -102,7 +102,8 @@ public sealed record EnemyAiProfileDefinition(
     string DefenseTowerMarkerId,
     string RallyMarkerId,
     IReadOnlyList<string> PatrolMarkerIds,
-    string CentralIslandAttackViaBridgeId
+    string CentralIslandAttackViaBridgeId,
+    int RandomSeed
 )
 {
     public static EnemyAiProfileDefinition Default { get; } = new(
@@ -129,5 +130,6 @@ public sealed record EnemyAiProfileDefinition(
         "enemy_defense",
         "enemy_rally",
         [],
-        string.Empty);
+        string.Empty,
+        42);
 }

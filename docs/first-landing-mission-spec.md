@@ -89,14 +89,14 @@ Buildings need power immediately to function. Power affects both:
 - where the player can reasonably expand
 - whether powered buildings remain active
 
-Destroyed buildings should disappear from the active playfield rather than leaving blocking-looking footprint outlines. Barracks and Power Plants release a small same-faction Cadet group when destroyed, so cracking either side's infrastructure can still produce a short closeout fight.
+Destroyed buildings should disappear from the active playfield rather than leaving blocking-looking footprint outlines. Barracks release three same-faction Cadets and Power Plants release one same-faction Cadet when destroyed, so cracking either side's infrastructure can still produce a short closeout fight. These Cadet releases are intentionally not called out through HUD, briefing, or map-callout text.
 
 Unit production rule for Level 1:
 
 - Colony Hub is the spawn location.
 - Barracks controls what can be trained, the allowed troop count, and level-based unlocks.
 - A powered Barracks accepts a small serial training queue so repeated Rifleman/Cadet clicks are not lost; one unit trains at a time per Barracks.
-- Guardian production is planned as a later Barracks upgrade, not an Armory Annex. Vehicle Bay remains the preferred later physical add-on for Rover/heavy-armor capacity.
+- Guardian production is planned as a later Barracks upgrade. Vehicle Bay remains the preferred later physical add-on for Rover/heavy-armor capacity.
 - Current Level 1 mission data exposes Grunt, Cadet, and Rifleman training to both the player and first enemy AI. Guardian, Rover, and Commander records may exist and may be scenario-start units, but they are not trainable in Level 1.
 - Cadets should recruit in only a few seconds. They are the fastest to build, cheapest combat troop, weakest troop, and easiest troop to kill.
 - Riflemen should still train quickly, only slightly slower and stronger than Cadets. First-pass target is roughly 3-4 seconds for the player-facing build/recruit feel.
@@ -115,7 +115,7 @@ Level 1 should use:
 - Pylon
 - Extractor/Refinery
 - Defense Tower
-- Armory Annex is a legacy placeholder record and is not planned as the Guardian unlock path. Vehicle Bay remains later add-on support and is not player-buildable in the current Level 1 slice
+- Vehicle Bay remains later add-on support and is not player-buildable in the current Level 1 slice
 - Vehicle Bay is silently locked and hidden from the Level 1 player, not shown as a disabled tease
 - Gun Tower, if the first armed-tower pass is ready
 - Rocket Tower, only if explosive friendly-fire behavior is ready
@@ -145,7 +145,7 @@ First-pass unit intent:
 - Riflemen die very quickly and work best with support, numbers, or harassment timing.
 - Grouped infantry should spread into a small formation on move and attack orders; the greybox should not teach players to stack ten Riflemen on one impact point.
 - Cadets are cheaper and weaker than Riflemen, giving the player and enemy a disposable early infantry option.
-- Guardians are beefier than Riflemen and deal slightly less raw damage, but their energy fire is the first infantry anti-armor proof role: worse than Riflemen into basic infantry, meaningfully better into Medium and Heavy Tanks. In later missions, Guardian production should come from a powered/upgraded Barracks rather than an Armory Annex.
+- Guardians are beefier than Riflemen and deal slightly less raw damage, but their energy fire is the first infantry anti-armor proof role: worse than Riflemen into basic infantry, meaningfully better into Medium and Heavy Tanks. In later missions, Guardian production should come from a powered/upgraded Barracks.
 - Rovers scout and cannot shoot, but can run over and instantly kill exposed basic infantry; if Barracks add-ons are active, they require a powered Vehicle Bay.
 - Medium Tanks are the Hub-destruction occupant vehicle: lower damage, smaller splash, and roughly half the anti-infantry time-to-kill burden of the old heavy tank record. A released Medium Tank should also be a better anti-armor answer than Rifleman fire.
 - Heavy Tanks are the promoted version of the old tank record and should stay later/heavier than the Hub occupant tank.

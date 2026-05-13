@@ -636,5 +636,6 @@ MapEditorSmoke.Run(context);
 CombatRobustnessSmoke.Run(context);
 BuildingDestroyedRevealSmoke.Run(context);
 EnemyAiBehaviorSmoke.Run(context);
+PowerDirtySmoke.Run(context);
 
 Console.WriteLine("Simulation smoke checks passed.");

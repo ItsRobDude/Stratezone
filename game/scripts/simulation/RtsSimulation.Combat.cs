@@ -236,7 +236,8 @@ public sealed partial class RtsSimulation
             {
                 if (CombatResolver.ResolveBuildingAttack(building, targetUnit, _units, _buildings))
                 {
-                    RecomputePower();
+                    MarkPowerDirty();
+                    EnsurePowerCurrent();
                 }
 
                 continue;
@@ -255,7 +256,8 @@ public sealed partial class RtsSimulation
 
             if (CombatResolver.ResolveBuildingAttack(building, targetBuilding, _units, _buildings))
             {
-                RecomputePower();
+                MarkPowerDirty();
+                EnsurePowerCurrent();
             }
         }
     }
@@ -616,7 +618,8 @@ public sealed partial class RtsSimulation
 
         if (CombatResolver.ResolveUnitAttack(unit, target, _units, _buildings))
         {
-            RecomputePower();
+            MarkPowerDirty();
+            EnsurePowerCurrent();
         }
     }
 
@@ -649,7 +652,8 @@ public sealed partial class RtsSimulation
 
         if (CombatResolver.ResolveUnitAttack(attacker, target, _units, _buildings))
         {
-            RecomputePower();
+            MarkPowerDirty();
+            EnsurePowerCurrent();
         }
     }
 

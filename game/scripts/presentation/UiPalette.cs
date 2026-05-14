@@ -20,8 +20,8 @@ public static class UiPalette
     public static readonly Color Error = Color.FromHtml("#ff5a4a");
     public static readonly Color Success = Color.FromHtml("#6ce072");
 
-    public const int FontSizeTitle = 22;
-    public const int FontSizeHudValue = 18;
-    public const int FontSizeBody = 14;
-    public const int FontSizeLabel = 12;
+    public const int FontSizeTitle = 28;
+    public const int FontSizeHudValue = 22;
+    public const int FontSizeBody = 16;
+    public const int FontSizeLabel = 13;
 }

@@ -6,9 +6,6 @@ using Stratezone.Simulation.Tools;
 
 public partial class Main : Node2D
 {
-    private const float DefaultUiScale = 1.1f;
-    private const float MinUiScale = 0.8f;
-    private const float MaxUiScale = 2.4f;
     private const float OffscreenCullPaddingWorld = 180.0f;
     private const float HudRefreshIntervalSeconds = 0.12f;
     private const string DefaultMissionId = ContentIds.Missions.FirstLanding;
@@ -70,8 +67,6 @@ public partial class Main : Node2D
     private MissionDefinition? _activeMission;
     private bool _leftMouseSelecting;
     private Vector2 _selectionStartWorld;
-    private float _uiScale = DefaultUiScale;
-    private Vector2 _lastViewportSize;
     private string _lastActionMessage = string.Empty;
     private float _hudRefreshElapsedSeconds = HudRefreshIntervalSeconds;
     private bool _briefingOverlayVisible;
@@ -94,6 +89,7 @@ public partial class Main : Node2D
             StringComparison.Ordinal);
         _lastActionMessage = L("ui.action.initial_hint");
         _worldRoot = GetNode<Node2D>("WorldRoot");
+        InitializeUiScaleDefault();
 
         SetupSimulation(ResolveInitialMissionId());
         SetupCamera();
@@ -117,6 +113,7 @@ public partial class Main : Node2D
         var deltaSeconds = (float)delta;
         HandleCameraPan(delta);
         ApplyUiScaleIfViewportChanged();
+        UpdateUiScaleIndicator(deltaSeconds);
 
         if (_simulation is not null && !_mapEditorEnabled)
         {
@@ -351,6 +348,7 @@ public partial class Main : Node2D
             Name = "MissionBriefingOverlay"
         };
         _gameHudRoot.AddChild(_briefingOverlay);
+        SetupUiScaleIndicator();
         ApplyUiScale();
     }
 
@@ -403,29 +401,6 @@ public partial class Main : Node2D
         UpdateMapEditorOverlayData();
         SyncWorldViews();
         UpdateHud();
-    }
-
-    private bool HandleUiScaleHotkey(Key keycode)
-    {
-        if (keycode == Key.F9)
-        {
-            SetUiScale(_uiScale - 0.2f);
-            return true;
-        }
-
-        if (keycode == Key.F10)
-        {
-            SetUiScale(_uiScale + 0.2f);
-            return true;
-        }
-
-        if (keycode == Key.F8)
-        {
-            SetUiScale(DefaultUiScale);
-            return true;
-        }
-
-        return false;
     }
 
     private bool IsSelectedBuilding(string buildingId)
@@ -523,58 +498,6 @@ public partial class Main : Node2D
         var result = _simulation.TryUpgradeBuilding(_selectedBuildingEntityId.Value, upgradeId);
         _lastActionMessage = LocalizedUpgrade(result);
         return true;
-    }
-
-    private void SetUiScale(float scale)
-    {
-        _uiScale = Mathf.Clamp(scale, MinUiScale, MaxUiScale);
-        ApplyUiScale();
-        _lastActionMessage = L("ui.action.ui_scale_set", SimulationMessage.Args(("scale", $"{_uiScale:0.0}")));
-    }
-
-    private void ApplyUiScale()
-    {
-        if (_uiLayoutRoot is null)
-        {
-            return;
-        }
-
-        var viewportSize = GetSafeHudSize();
-        _lastViewportSize = viewportSize;
-        _hudResourceBar?.ApplyUiScale(_uiScale);
-        _hudCommander?.ApplyUiScale(_uiScale);
-        _hudAlertsTicker?.ApplyUiScale(_uiScale);
-        if (_hudObjective is not null)
-        {
-            _hudObjective.AnchorLeft = 0.5f;
-            _hudObjective.AnchorTop = 0.0f;
-            _hudObjective.AnchorRight = 0.5f;
-            _hudObjective.AnchorBottom = 0.0f;
-            _hudObjective.OffsetLeft = -360.0f * _uiScale;
-            _hudObjective.OffsetRight = 360.0f * _uiScale;
-            _hudObjective.OffsetTop = 24.0f * _uiScale;
-            _hudObjective.OffsetBottom = 54.0f * _uiScale;
-        }
-
-        if (_commandPanel is not null)
-        {
-            _commandPanel.ApplyUiScale(_uiScale, viewportSize);
-        }
-
-        _briefingOverlay?.ApplyUiScale(_uiScale, viewportSize);
-        ApplyMissionResultScale();
-        ApplyMapEditorPanelScale();
-    }
-
-    private void ApplyUiScaleIfViewportChanged()
-    {
-        var viewportSize = GetSafeHudSize();
-        if (viewportSize == _lastViewportSize)
-        {
-            return;
-        }
-
-        ApplyUiScale();
     }
 
     private void EnterPlacementMode(string buildingId)
@@ -700,11 +623,6 @@ public partial class Main : Node2D
     private static SimVector2 ToSim(Vector2 vector)
     {
         return new SimVector2(vector.X, vector.Y);
-    }
-
-    private Vector2 GetSafeHudSize()
-    {
-        return GetViewport().GetVisibleRect().Size;
     }
 
 }

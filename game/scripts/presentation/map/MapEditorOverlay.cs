@@ -7,6 +7,7 @@ using Stratezone.Simulation.Tools;
 public partial class MapEditorOverlay : Node2D
 {
     private const float MarkerHitRadius = 26.0f;
+    private const float HoverMarkerHitRadius = 18.0f;
     private const float MarkerDrawRadius = 8.0f;
     private const float LabelFontSize = 13.0f;
     private const float ResizeHandleTolerance = 14.0f;
@@ -515,7 +516,7 @@ public partial class MapEditorOverlay : Node2D
     {
         var marker = _session.Markers
             .Select(item => (Marker: item, Distance: item.Position.DistanceTo(position)))
-            .Where(item => item.Distance <= MarkerHitRadius)
+            .Where(item => item.Distance <= HoverMarkerHitRadius)
             .OrderBy(item => item.Distance)
             .FirstOrDefault();
         if (marker.Marker is not null)

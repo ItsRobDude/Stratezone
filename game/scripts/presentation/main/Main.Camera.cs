@@ -52,7 +52,7 @@ public partial class Main
 
     private void HandleCameraPan(double delta)
     {
-        if (_camera is null)
+        if (_camera is null || (_mapEditorEnabled && EditorTextInputHasFocus()))
         {
             return;
         }

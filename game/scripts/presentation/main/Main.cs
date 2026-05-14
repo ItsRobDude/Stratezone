@@ -112,6 +112,7 @@ public partial class Main : Node2D
     {
         var deltaSeconds = (float)delta;
         HandleCameraPan(delta);
+        HandleMapEditorEdgePan(deltaSeconds);
         ApplyUiScaleIfViewportChanged();
         UpdateUiScaleIndicator(deltaSeconds);
 

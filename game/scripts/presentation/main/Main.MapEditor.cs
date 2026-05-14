@@ -191,6 +191,11 @@ public partial class Main
                 return false;
             }
 
+            if (TryHandleMapEditorNavigationMouse(inputEvent))
+            {
+                return true;
+            }
+
             if (inputEvent is InputEventMouseMotion)
             {
                 var beforeRevision = _mapEditorOverlay.Revision;

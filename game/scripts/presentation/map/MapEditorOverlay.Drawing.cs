@@ -21,6 +21,8 @@ public partial class MapEditorOverlay
         DrawSelectionHandles();
         DrawCreationPreview();
         DrawPointerDimensionHint();
+        DrawLegend();
+        DrawHoverInfoCard();
     }
 
     private void CompleteShapeCreation(Vector2 endWorld)
@@ -167,6 +169,148 @@ public partial class MapEditorOverlay
         }
 
         return string.Empty;
+    }
+
+    private void DrawHoverInfoCard()
+    {
+        if (_isDragging || _isCreatingShape || _activeResizeHandle != MapEditorResizeHandle.None)
+        {
+            return;
+        }
+
+        var lines = HoverInfoLines();
+        if (lines.Length == 0)
+        {
+            return;
+        }
+
+        const int fontSize = (int)LabelFontSize;
+        var font = ThemeDB.FallbackFont;
+        var textWidth = lines
+            .Select(line => font.GetStringSize(line, HorizontalAlignment.Left, -1, fontSize).X)
+            .DefaultIfEmpty(0.0f)
+            .Max();
+        var width = Mathf.Clamp(textWidth + 24.0f, 150.0f, 280.0f);
+        var lineHeight = 17.0f;
+        var height = 14.0f + (lineHeight * lines.Length);
+        var viewportBounds = GetViewportTransform().AffineInverse() *
+            new Rect2(Vector2.Zero, GetViewport().GetVisibleRect().Size);
+        var position = _lastPointerWorld + new Vector2(16.0f, 8.0f);
+        if (position.X + width > viewportBounds.End.X - 8.0f)
+        {
+            position.X = _lastPointerWorld.X - width - 16.0f;
+        }
+
+        if (position.Y + height > viewportBounds.End.Y - 8.0f)
+        {
+            position.Y = _lastPointerWorld.Y - height - 12.0f;
+        }
+
+        position.X = Mathf.Max(viewportBounds.Position.X + 8.0f, position.X);
+        position.Y = Mathf.Max(viewportBounds.Position.Y + 8.0f, position.Y);
+
+        var rect = new Rect2(position, new Vector2(width, height));
+        DrawRect(rect, UiPalette.PanelBg with { A = 0.92f });
+        DrawRect(new Rect2(rect.Position, new Vector2(rect.Size.X, 24.0f)), UiPalette.PanelHeader with { A = 0.96f });
+        DrawRect(rect, UiPalette.PanelOutline with { A = 0.88f }, false, 1.0f);
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var color = index == 0 ? UiPalette.TextPrimary : UiPalette.TextSecondary;
+            DrawString(
+                font,
+                rect.Position + new Vector2(10.0f, 18.0f + (index * lineHeight)),
+                lines[index],
+                HorizontalAlignment.Left,
+                rect.Size.X - 20.0f,
+                fontSize,
+                color);
+        }
+    }
+
+    private string[] HoverInfoLines()
+    {
+        if (_hoverId is null || _hoverKind == MapEditorSelectionKind.None)
+        {
+            return [];
+        }
+
+        if (_hoverKind == MapEditorSelectionKind.Marker)
+        {
+            var marker = _session.Markers.FirstOrDefault(marker => string.Equals(marker.Id, _hoverId, StringComparison.Ordinal));
+            if (marker is null)
+            {
+                return [];
+            }
+
+            var content = marker.ContentIds.Count == 0 ? "none" : string.Join(", ", marker.ContentIds.Take(2));
+            if (marker.ContentIds.Count > 2)
+            {
+                content += " ...";
+            }
+
+            return
+            [
+                marker.Id,
+                $"content: {content}",
+                $"pos: {FormatFloat(marker.Position.X)}, {FormatFloat(marker.Position.Y)}",
+                $"tags: {FormatHoverTags(marker.Tags)}"
+            ];
+        }
+
+        if (_hoverKind == MapEditorSelectionKind.Region)
+        {
+            var region = _session.Regions.FirstOrDefault(region => string.Equals(region.Id, _hoverId, StringComparison.Ordinal));
+            if (region is null)
+            {
+                return [];
+            }
+
+            var size = region.Shape == "circle"
+                ? $"r {FormatFloat(region.Radius)}"
+                : $"{FormatFloat(region.Size.X)} x {FormatFloat(region.Size.Y)}";
+            return
+            [
+                region.Id,
+                $"type: {region.RegionType}",
+                $"shape: {region.Shape} | size: {size}",
+                $"tags: {FormatHoverTags(region.Tags)}"
+            ];
+        }
+
+        if (_hoverKind == MapEditorSelectionKind.Object)
+        {
+            var mapObject = _session.Objects.FirstOrDefault(item => string.Equals(item.Id, _hoverId, StringComparison.Ordinal));
+            if (mapObject is null)
+            {
+                return [];
+            }
+
+            var runtimeBridge = _simulation?.Bridges.FirstOrDefault(bridge => string.Equals(bridge.Id, mapObject.Id, StringComparison.Ordinal));
+            var health = runtimeBridge is null
+                ? FormatFloat(mapObject.MaxHealth)
+                : $"{FormatFloat(runtimeBridge.CurrentHealth)}/{FormatFloat(runtimeBridge.MaxHealth)}";
+            var intact = runtimeBridge?.IsIntact ?? mapObject.StartsIntact;
+            return
+            [
+                mapObject.Id,
+                $"type: {mapObject.ObjectType}",
+                $"health: {health}",
+                $"intact: {(intact ? "yes" : "no")}"
+            ];
+        }
+
+        return [];
+    }
+
+    private static string FormatHoverTags(IReadOnlyList<string> tags)
+    {
+        if (tags.Count == 0)
+        {
+            return "none";
+        }
+
+        var text = string.Join(", ", tags.Take(2));
+        return tags.Count > 2 ? $"{text} ..." : text;
     }
 
     private void DrawPathingDebugLayer()

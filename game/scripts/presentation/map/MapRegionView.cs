@@ -15,9 +15,7 @@ public partial class MapRegionView : Node2D
         }
         else
         {
-            _regions = map.TerrainRegions
-                .Where(region => ShouldDrawRegion(region, map.UsesRestrictedBuildRegions))
-                .ToArray();
+            _regions = map.TerrainRegions.ToArray();
         }
 
         QueueRedraw();
@@ -85,16 +83,6 @@ public partial class MapRegionView : Node2D
             DrawCircle(ToGodot(region.Center), region.Radius, fill);
             DrawArc(ToGodot(region.Center), region.Radius, 0, Mathf.Tau, 72, outline, 2.0f);
         }
-    }
-
-    private static bool ShouldDrawRegion(MapRegionDefinition region, bool showBuildRegionHints)
-    {
-        if (region.BlocksMovement || region.BlocksBuilding)
-        {
-            return true;
-        }
-
-        return showBuildRegionHints;
     }
 
     private static Color GetFill(MapRegionDefinition region)

@@ -324,7 +324,8 @@ public partial class MapEditorOverlay
             _simulation.Buildings,
             _simulation.EnergyWalls,
             _simulation.Map?.TerrainRegions ?? [],
-            _simulation.Bridges);
+            _simulation.Bridges,
+            bounds: _simulation.PlayableBounds);
         foreach (var cell in cells)
         {
             var size = new Vector2(cell.Size, cell.Size);

@@ -47,7 +47,8 @@ public sealed partial class RtsSimulation
             _buildings,
             GetBlockingEnergyWallsForFaction(factionId),
             _map?.TerrainRegions ?? [],
-            _bridges).Success;
+            _bridges,
+            _playableBounds).Success;
     }
 
     public bool DebugDamageBridge(string bridgeId, float amount)

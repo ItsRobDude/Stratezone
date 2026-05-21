@@ -112,7 +112,8 @@ public sealed partial class RtsSimulation
             _buildings,
             GetBlockingEnergyWallsForFaction(unit.FactionId),
             _map?.TerrainRegions ?? [],
-            _bridges);
+            _bridges,
+            _playableBounds);
 
         if (path.Success)
         {

@@ -262,12 +262,27 @@ public sealed class ContentCatalog
                 LoadStringArray(record, "required_features"),
                 LoadMapRegions(record),
                 LoadMapObjects(record),
-                LoadStringArray(record, "tags"));
+                LoadStringArray(record, "tags"),
+                LoadPlayableBounds(record));
 
             maps.Add(map.Id, map);
         }
 
         return maps;
+    }
+
+    private static PlayableBounds LoadPlayableBounds(JsonElement record)
+    {
+        if (!record.TryGetProperty("playable_bounds", out var bounds) || bounds.ValueKind != JsonValueKind.Object)
+        {
+            return PlayableBounds.Default;
+        }
+
+        return new PlayableBounds(
+            bounds.GetProperty("min_x").GetSingle(),
+            bounds.GetProperty("max_x").GetSingle(),
+            bounds.GetProperty("min_y").GetSingle(),
+            bounds.GetProperty("max_y").GetSingle());
     }
 
     private static IReadOnlyList<MapObjectDefinition> LoadMapObjects(JsonElement record)

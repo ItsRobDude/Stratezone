@@ -21,8 +21,9 @@ public sealed partial class RtsSimulation
     private readonly List<BridgeState> _bridges = [];
     private readonly List<SimulationEvent> _events = [];
     private readonly HashSet<string>? _trainableUnitIds;
-    private readonly FogOfWarState _playerFog = new(-1400, 1400, -900, 900, FogCellSize);
-    private readonly FogOfWarState _enemyFog = new(-1400, 1400, -900, 900, FogCellSize);
+    private readonly PlayableBounds _playableBounds;
+    private readonly FogOfWarState _playerFog;
+    private readonly FogOfWarState _enemyFog;
     private readonly HashSet<int> _destroyedBuildingReveals = [];
     private readonly EnemyAiSystem _enemyAi;
     private readonly MissionObjectiveSystem _missionObjectives;
@@ -56,6 +57,9 @@ public sealed partial class RtsSimulation
     {
         _catalog = catalog;
         _map = map;
+        _playableBounds = map?.PlayableBounds ?? PlayableBounds.Default;
+        _playerFog = new FogOfWarState(_playableBounds.MinX, _playableBounds.MaxX, _playableBounds.MinY, _playableBounds.MaxY, FogCellSize);
+        _enemyFog = new FogOfWarState(_playableBounds.MinX, _playableBounds.MaxX, _playableBounds.MinY, _playableBounds.MaxY, FogCellSize);
         Materials = startingMaterials;
         EnemyMaterials = enemyStartingMaterials;
         _enemyAi = new EnemyAiSystem(enemyAiMarkers ?? EnemyAiMarkers.FirstLanding, enemyAiProfile);
@@ -85,6 +89,7 @@ public sealed partial class RtsSimulation
     public IReadOnlyList<SimulationEvent> Events => _events;
     public FogOfWarState PlayerFog => _playerFog;
     public MapDefinition? Map => _map;
+    public PlayableBounds PlayableBounds => _playableBounds;
     public MissionState MissionState { get; private set; } = new(MissionStatus.Active, "Objective: establish the outpost.");
     public float ElapsedSeconds => _elapsedSeconds;
     public EnemyAiProfileDefinition EnemyAiProfile => _enemyAi.Profile;

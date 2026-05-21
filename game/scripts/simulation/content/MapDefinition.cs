@@ -2,6 +2,22 @@ using Stratezone.Simulation;
 
 namespace Stratezone.Simulation.Content;
 
+public sealed record PlayableBounds(float MinX, float MaxX, float MinY, float MaxY)
+{
+    public static readonly PlayableBounds Default = new(-1120.0f, 1320.0f, -760.0f, 700.0f);
+
+    public float Width => MaxX - MinX;
+    public float Height => MaxY - MinY;
+
+    public bool Contains(SimVector2 point, float padding = 0.0f)
+    {
+        return point.X >= MinX - padding &&
+            point.X <= MaxX + padding &&
+            point.Y >= MinY - padding &&
+            point.Y <= MaxY + padding;
+    }
+}
+
 public sealed record MapDefinition(
     string Id,
     string DisplayName,
@@ -11,7 +27,8 @@ public sealed record MapDefinition(
     IReadOnlyList<string> RequiredFeatures,
     IReadOnlyList<MapRegionDefinition> TerrainRegions,
     IReadOnlyList<MapObjectDefinition> MapObjects,
-    IReadOnlyList<string> Tags)
+    IReadOnlyList<string> Tags,
+    PlayableBounds PlayableBounds)
 {
     public bool HasBuildableClearings => TerrainRegions.Any(region => region.AllowsBuilding);
     public bool UsesRestrictedBuildRegions => RequiresBuildableRegions && HasBuildableClearings;

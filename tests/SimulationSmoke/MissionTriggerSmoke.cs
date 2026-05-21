@@ -12,8 +12,8 @@ internal static class MissionTriggerSmoke
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, hubPosition).Success, "trigger route deploys Level 2 Colony Hub");
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, hubPosition + new SimVector2(-260, -120)).Success, "trigger route places powered support");
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(-180, -260)).Success, "trigger route places watched Barracks");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270)).Success, "trigger route starts a legal well power chain");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-610, 245)).Success, "trigger route powers the start well approach");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1340, 60)).Success, "trigger route starts a legal well power chain");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-750, 380)).Success, "trigger route powers the start well approach");
         var extractor = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["player_start_well"]);
         Assert(extractor.Success, $"trigger route places watched first Extractor ({extractor.MessageKey}: {extractor.Message})");
 

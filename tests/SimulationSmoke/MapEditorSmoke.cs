@@ -36,14 +36,14 @@ internal static class MapEditorSmoke
         Assert(markerExport.Contains("\"x\": 620", StringComparison.Ordinal), "marker export includes nudged x position");
         Assert(markerExport.Contains("\"y\": -85", StringComparison.Ordinal), "marker export includes nudged y position");
 
-        Assert(session.SelectAt(new SimVector2(-555, 420)), "map editor can select a terrain region by position");
+        Assert(session.SelectAt(new SimVector2(-860, 420)), "map editor can select a terrain region by position");
         Assert(session.SelectionKind == MapEditorSelectionKind.Region, "terrain selection uses region kind");
         Assert(session.SelectedId == "player_start_well_basin", "map editor picks the smallest matching terrain region");
-        session.MoveSelectedTo(new SimVector2(-610, 420));
+        session.MoveSelectedTo(new SimVector2(-880, 420));
         var regionExport = session.ExportSelectedSnippet();
         Assert(regionExport.Contains("\"id\": \"player_start_well_basin\"", StringComparison.Ordinal), "region export includes stable id");
-        Assert(regionExport.Contains("\"radius\": 190", StringComparison.Ordinal), "region export preserves circle radius");
-        Assert(regionExport.Contains("\"x\": -610", StringComparison.Ordinal), "region export includes moved x center");
+        Assert(regionExport.Contains("\"radius\": 200", StringComparison.Ordinal), "region export preserves circle radius");
+        Assert(regionExport.Contains("\"x\": -880", StringComparison.Ordinal), "region export includes moved x center");
         Assert(regionExport.Contains("\"y\": 420", StringComparison.Ordinal), "region export includes moved y center");
 
         Assert(session.SelectRegion("central_island_buildable"), "map editor can select a region by stable id");

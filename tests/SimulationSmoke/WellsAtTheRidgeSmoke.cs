@@ -25,8 +25,8 @@ internal static class WellsAtTheRidgeSmoke
         var blockedTerrainPlacement = simulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, westWater.Center);
         Assert(!blockedTerrainPlacement.IsLegal, "Level 2 water channel rejects building placement");
         Assert(blockedTerrainPlacement.MessageKey == "sim.placement.blocked_by_terrain", "blocked terrain placement returns a stable message key");
-        var outsideMarkedRegionPlacement = simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270));
-        Assert(outsideMarkedRegionPlacement.IsLegal, $"Level 2 allows powered Pylon placement outside marked base regions ({outsideMarkedRegionPlacement.MessageKey}: {outsideMarkedRegionPlacement.Reason})");
+        var firstPylonPlacement = simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-1340, 60));
+        Assert(firstPylonPlacement.IsLegal, $"Level 2 allows a first Pylon to extend power from the Power Plant ({firstPylonPlacement.MessageKey}: {firstPylonPlacement.Reason})");
 
         Assert(simulation.Bridges.Count == 2, "Level 2 runtime creates bridge state from map objects");
         Assert(simulation.Bridges.All(bridge => bridge.IsIntact), "Level 2 bridges start intact");
@@ -96,14 +96,16 @@ internal static class WellsAtTheRidgeSmoke
         var pathProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
         simulation.CommandUnitMove(pathProbe.EntityId, runtime.Markers["central_island_well"]);
         Assert(pathProbe.PathWaypoints.Count > 0 && !pathProbe.IsPathBlocked, "Level 2 intact west bridge allows pathing to the island well");
+        Assert(pathProbe.PathWaypoints.All(point => MathF.Abs(point.Y) < 200), "Level 2 intact west bridge gives the direct route through the bridge corridor");
         pathProbe.ApplyDamage(9999, "debug");
 
         simulation.DebugDamageBridge(bridge.Id, bridge.MaxHealth + 1.0f);
         Assert(!bridge.IsIntact, "Level 2 bridge damage can collapse an intact bridge");
-        var blockedProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
-        simulation.CommandUnitMove(blockedProbe.EntityId, runtime.Markers["central_island_well"]);
-        Assert(blockedProbe.IsPathBlocked, "Level 2 collapsed bridge blocks the same island route");
-        blockedProbe.ApplyDamage(9999, "debug");
+        var detourProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
+        simulation.CommandUnitMove(detourProbe.EntityId, runtime.Markers["central_island_well"]);
+        Assert(!detourProbe.IsPathBlocked, "Level 2 collapsed west bridge does not soft-lock the island - an N/S lane detour exists");
+        Assert(detourProbe.PathWaypoints.Any(point => MathF.Abs(point.Y) > 360), "Level 2 collapsed west bridge forces the path to detour around the water channel via an N or S lane");
+        detourProbe.ApplyDamage(9999, "debug");
 
         var grunt = simulation.Units.First(unit =>
             unit.FactionId == ContentIds.Factions.PlayerExpedition &&
@@ -119,6 +121,7 @@ internal static class WellsAtTheRidgeSmoke
         var restoredProbe = simulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PlayerExpedition, new SimVector2(-650, 0));
         simulation.CommandUnitMove(restoredProbe.EntityId, runtime.Markers["central_island_well"]);
         Assert(!restoredProbe.IsPathBlocked, "Level 2 restored bridge reopens island pathing without mission restart");
+        Assert(restoredProbe.PathWaypoints.All(point => MathF.Abs(point.Y) < 200), "Level 2 restored bridge reclaims the direct route instead of forcing the detour");
     }
 
     private static void ValidateEnemyBridgeAwareDeferral(SmokeTestContext context)
@@ -277,10 +280,10 @@ internal static class WellsAtTheRidgeSmoke
 
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.ColonyHub, landingZone).Success, "Level 2 natural route deploys the Colony Hub at the landing marker");
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, landingZone + new SimVector2(-260, -120)).Success, "Level 2 natural route places a Power Plant from the landing marker");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270)).Success, "Level 2 natural route can start a Pylon chain from base");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-610, 245)).Success, "Level 2 natural route can power the player well approach");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-510, 120)).Success, "Level 2 natural route can reach the west bridge approach");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-170, 20)).Success, "Level 2 natural route can extend power onto the island");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1340, 60)).Success, "Level 2 natural route can start a Pylon chain from base");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-750, 380)).Success, "Level 2 natural route can power the player well approach");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-300, 500)).Success, "Level 2 natural route can route Pylons south around the water channel");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-150, 60)).Success, "Level 2 natural route can extend power onto the island");
         var contestedWellPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["central_island_well"]);
         Assert(contestedWellPlacement.Success, $"Level 2 natural route can power the island Extractor without exact designer-only coordinates ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Message})");
         var enemyForwardPylon = simulation.Buildings.Single(building =>
@@ -308,12 +311,12 @@ internal static class WellsAtTheRidgeSmoke
         Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.PowerPlant, hubPosition + new SimVector2(-260, -120)).Success, "Level 2 route places Power Plant inside landing clearing");
         var barracks = simulation.TryPlaceBuilding(ContentIds.Buildings.Barracks, hubPosition + new SimVector2(-180, -260));
         Assert(barracks.Success, $"Level 2 route places Barracks ({barracks.MessageKey}: {barracks.Message})");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1040, 270)).Success, "Level 2 route can start a Pylon chain toward the player well");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-610, 245)).Success, "Level 2 route can power the player well approach");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-1340, 60)).Success, "Level 2 route can start a Pylon chain toward the player well");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-750, 380)).Success, "Level 2 route can power the player well approach");
         var startWellPlacement = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, playerWell);
         Assert(startWellPlacement.Success, $"Level 2 route captures the safe start well ({startWellPlacement.MessageKey}: {startWellPlacement.Message})");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-510, 120)).Success, "Level 2 route can extend a Pylon toward the west bridge");
-        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-170, 20)).Success, "Level 2 route can continue Pylon power onto the island without blocking the well");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-300, 500)).Success, "Level 2 route can route Pylons south around the water channel");
+        Assert(simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-150, 60)).Success, "Level 2 route can continue Pylon power onto the island without blocking the well");
         var contestedWellPlacement = simulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, runtime.Markers["central_island_well"]);
         Assert(contestedWellPlacement.IsLegal, $"Level 2 route can legally power an Extractor at the island well ({contestedWellPlacement.MessageKey}: {contestedWellPlacement.Reason})");
         Assert(simulation.TryQueueUnit(ContentIds.Units.Grunt, barracks.Building!.EntityId).Success, "Level 2 route trains the second Grunt needed for retrofit staffing");

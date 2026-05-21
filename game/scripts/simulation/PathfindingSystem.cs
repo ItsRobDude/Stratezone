@@ -4,10 +4,6 @@ namespace Stratezone.Simulation;
 
 internal static class PathfindingSystem
 {
-    private const float MinX = -1120.0f;
-    private const float MaxX = 1320.0f;
-    private const float MinY = -760.0f;
-    private const float MaxY = 700.0f;
     private const float CellSize = 32.0f;
     private const float UnitClearance = 18.0f;
     private const int DestinationFallbackRadiusCells = 6;
@@ -18,9 +14,10 @@ internal static class PathfindingSystem
         IReadOnlyList<BuildingState> buildings,
         IReadOnlyList<EnergyWallSegment> blockingWalls,
         IReadOnlyList<MapRegionDefinition> terrainRegions,
-        IReadOnlyList<BridgeState>? bridges = null)
+        IReadOnlyList<BridgeState>? bridges = null,
+        PlayableBounds? bounds = null)
     {
-        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, bridges ?? [], start);
+        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, bridges ?? [], start, bounds ?? PlayableBounds.Default);
         var startCell = grid.ToCell(start);
         var preferredDestination = grid.ToCell(destination);
         var candidateDestinations = grid.GetDestinationCandidates(preferredDestination, startCell)
@@ -49,9 +46,11 @@ internal static class PathfindingSystem
         IReadOnlyList<EnergyWallSegment> blockingWalls,
         IReadOnlyList<MapRegionDefinition> terrainRegions,
         IReadOnlyList<BridgeState> bridges,
-        float cellSize = 64.0f)
+        float cellSize = 64.0f,
+        PlayableBounds? bounds = null)
     {
-        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, bridges, new SimVector2(MinX, MinY), cellSize);
+        var resolvedBounds = bounds ?? PlayableBounds.Default;
+        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, bridges, new SimVector2(resolvedBounds.MinX, resolvedBounds.MinY), resolvedBounds, cellSize);
         var cells = new List<PathfindingDebugCell>();
         for (var x = 0; x <= grid.MaxCellX; x++)
         {
@@ -178,6 +177,7 @@ internal static class PathfindingSystem
         private readonly IReadOnlyList<MapRegionDefinition> _terrainRegions;
         private readonly IReadOnlyList<BridgeState> _bridges;
         private readonly HashSet<int> _ignoredStartBlockers;
+        private readonly PlayableBounds _bounds;
         private readonly float _cellSize;
         private readonly int _maxCellX;
         private readonly int _maxCellY;
@@ -191,15 +191,17 @@ internal static class PathfindingSystem
             IReadOnlyList<MapRegionDefinition> terrainRegions,
             IReadOnlyList<BridgeState> bridges,
             SimVector2 start,
+            PlayableBounds bounds,
             float cellSize = CellSize)
         {
             _buildings = buildings;
             _blockingWalls = blockingWalls;
             _terrainRegions = terrainRegions;
             _bridges = bridges;
+            _bounds = bounds;
             _cellSize = cellSize;
-            _maxCellX = (int)MathF.Floor((MaxX - MinX) / _cellSize);
-            _maxCellY = (int)MathF.Floor((MaxY - MinY) / _cellSize);
+            _maxCellX = (int)MathF.Floor((bounds.MaxX - bounds.MinX) / _cellSize);
+            _maxCellY = (int)MathF.Floor((bounds.MaxY - bounds.MinY) / _cellSize);
             _ignoredStartBlockers = buildings
                 .Where(building => !building.IsDestroyed)
                 .Where(building => building.Position.DistanceTo(start) <= building.FootprintWorldRadius + UnitClearance)
@@ -209,16 +211,16 @@ internal static class PathfindingSystem
 
         public PathCell ToCell(SimVector2 point)
         {
-            var x = (int)MathF.Floor((Math.Clamp(point.X, MinX, MaxX) - MinX) / _cellSize);
-            var y = (int)MathF.Floor((Math.Clamp(point.Y, MinY, MaxY) - MinY) / _cellSize);
+            var x = (int)MathF.Floor((Math.Clamp(point.X, _bounds.MinX, _bounds.MaxX) - _bounds.MinX) / _cellSize);
+            var y = (int)MathF.Floor((Math.Clamp(point.Y, _bounds.MinY, _bounds.MaxY) - _bounds.MinY) / _cellSize);
             return new PathCell(Math.Clamp(x, 0, _maxCellX), Math.Clamp(y, 0, _maxCellY));
         }
 
         public SimVector2 ToCenter(PathCell cell)
         {
             return new SimVector2(
-                MinX + (cell.X * _cellSize) + (_cellSize / 2.0f),
-                MinY + (cell.Y * _cellSize) + (_cellSize / 2.0f));
+                _bounds.MinX + (cell.X * _cellSize) + (_cellSize / 2.0f),
+                _bounds.MinY + (cell.Y * _cellSize) + (_cellSize / 2.0f));
         }
 
         public IEnumerable<PathCell> GetDestinationCandidates(PathCell preferred, PathCell start)

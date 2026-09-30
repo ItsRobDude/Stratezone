@@ -17,7 +17,7 @@ First Landing is a small, ugly, playable RTS proof. It should make the player sa
 - **Internal name:** First Landing
 - **Target length:** 5-10 minutes
 - **Pacing:** tame but active
-- **Mode:** top-down mission RTS
+- **Mode:** mission RTS, 45° orthographic rotatable camera (3D presentation; see `docs/3d-presentation-plan.md`)
 - **Visual target:** bright, readable meadows or fields with light forest
 - **Art requirement:** placeholder shapes are acceptable
 - **Story requirement:** no cutscenes for this pass

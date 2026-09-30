@@ -1,0 +1,539 @@
+# 3D Presentation Overhaul Plan
+
+Status: **accepted; all blocking decisions locked** (2026-09-30).
+
+Rob has decided to move presentation to 3D, with custom characters and real animation. The work is split into three tracks:
+- **Track A:** fix building footprints and pathfinding. This is needed regardless of 3D.
+- **Track B:** overhaul controls and hotkeys to real-RTS conventions.
+- **Track C:** the 3D presentation itself.
+
+The pivot-rule docs pass is done (2026-09-30): `AGENTS.md`, `README.md`, `docs/technical-architecture.md`, `docs/scaffold-plan.md`, and the related lines in the other docs now describe the 3D direction.
+
+What the assets should look like, and how armored characters are rigged and animated, lives in `docs/3d-art-direction.md`. The existing sprites are the design bible.
+
+## Locked Decisions (Rob, 2026-09-30)
+
+- **3D presentation** with real animation. The simulation stays 2D and Godot-free.
+- **Camera:** fixed 45° pitch, **orthographic** projection, **free rotation** on middle-mouse drag, `Home` resets to north, wheel zooms.
+- **Hardware:** the Steam Deck is the weakest target and sets the performance floor. The desktops (Radeon RX 6900-class, RTX 5090) are not a constraint.
+- **Characters are built in full by us.** No stock characters ship. Only *some* animations come from Mixamo. Custom animations are expected for anything Mixamo lacks.
+- **Hotkeys get a full overhaul** modeled on real RTS conventions. The current bindings are not preserved.
+- **Building footprint and pathing problems are fixed as their own workstream.** Buildings look roughly the right size today; the invisible blocking shapes are the problem.
+- **Footprints follow each building's real shape plus a small buffer.** They are not generic circles or squares: an L-shaped building blocks an L, and a round silo blocks a circle.
+- **Buildings are physical objects made of walls and a roof.** They block movement exactly where they stand. Players (and the enemy) can wall off routes with buildings, or trap themselves with a bad layout. There is no guaranteed walking lane. The old rule, "spacing buffer to prevent over-cramming", is retired.
+- **Grid hotkeys.** Command-bar keys match button positions (`Q W E R T` / `A S D F G` / `Z X C V B`), like the StarCraft II and Age of Empires IV grid presets.
+- **New unit commands:** Stop, Hold Position, Attack-move, and Shift-queued orders.
+  - Rally points are not wanted for now.
+  - Patrol may come later.
+
+## Open Decisions
+
+None blocking. Values to tune during implementation:
+- footprint buffer size
+- unit `collision_radius`
+- zoom range
+- hero scale
+
+## Goal
+
+The game presents the same simulation as:
+- animated custom infantry
+- rigid-part vehicles
+- modular 3D buildings
+- terrain generated from map data
+
+It uses an orthographic 45° camera that rotates freely, stays readable, and holds frame rate on the Steam Deck with a full battle on screen.
+
+The durable rule does not change: *RimWorld for colony stakes, Dominion/C&C-style RTS for battlefield control.*
+
+## What Stays The Same
+
+- **The simulation rules don't change for 3D.** Nothing under `game/scripts/simulation/` references Godot. It works on a flat plane (`SimVector2`, pixels, +Y = south). Track A changes sim pathing and placement because they're broken, not because of 3D.
+- **Terrain art never becomes gameplay truth.** The 3D terrain is generated *from* map data.
+- **The HUD stays a `CanvasLayer` Control tree** over the 3D viewport.
+- **The F5 map editor stays a 2D top-down data tool**, with a "preview in 3D" toggle later.
+
+## Current State (facts the plan is built on)
+
+- **Scene:** `Main` is a Node2D with `WorldRoot` (Node2D) and `UiRoot` (CanvasLayer). Views are layered by ZIndex.
+- **Camera:** Camera2D with WASD/arrow pan and wheel zoom 0.55–1.8. No rotation.
+- **Units:** Sprite2D with 8 directional frames. Animation state is guessed from position deltas and timers. There are no health bars and no death animations.
+- **Buildings:** Sprite2D (south frame only). The placement ghost is a square, while the sim uses circles.
+- **Map:** `_Draw` rects and circles. Level 1 has no terrain regions.
+- **Fog:** 64 px cells.
+- **Picking:** 2D canvas only (`GetGlobalMousePosition`, world-space box select).
+- **Scale:** 1 content unit = 24 px.
+  - Level 1 is about 102×61 units.
+  - Level 2 is about 142×92 units.
+- **Renderer:** Godot 4.6.2 .NET, Forward+.
+
+## Track A: Footprints And Pathfinding
+
+### Diagnosis
+
+**1. New troops spawn inside the Colony Hub and walk through buildings.**
+- Units spawn at `hub.Position + (70 + 34 × row, …)` px (`RtsSimulation.Production.cs:299-307`).
+- The Hub footprint radius is 96 px, so the first six spawns are *inside* it.
+- Pathfinding then ignores every building within footprint + clearance of a unit's start point **for the entire path** (`PathfindingSystem.cs:205-209, 304`). So fresh troops, Grunts repairing, and defenders parked next to buildings path straight through them.
+
+**2. Blocking shapes don't match the buildings, so visible gaps aren't real gaps.**
+- Every building blocks a circle (`FootprintWorldRadius` + 18 px clearance), whatever its shape.
+- Placement spacing uses a different, larger circle (footprint + buffer on both buildings, `RtsSimulation.cs:193`).
+- Pathing runs on a coarse 32 px grid.
+- Result: two Barracks at minimum spacing *look* like they have a gap, but only a 12 px band is left open. That is narrower than one grid cell, so the grid sees a solid wall.
+- The reverse also happens: a box-shaped building's corners stick out past its circle, and units walk through them.
+
+**3. Staircase paths.**
+- The 8-direction grid path is "smoothed" only by removing collinear points (`PathfindingSystem.cs:124-149`), so units zigzag across open ground.
+
+**4. Units stack and ghost through each other.**
+- Movement is a straight line between waypoints, with no unit-to-unit separation (`RtsSimulation.Movement.cs:101-104`).
+
+**5. Pathing cost explodes with troop count.**
+- Every `FindPath` builds a fresh grid and tests each cell against every building, wall, and region with LINQ (`PathfindingSystem.cs:291-306`).
+- An unreachable target tries up to about 168 fallback cells, each a full A* search (`:23-31, 226-260`).
+- A blocked unit re-requests a path every tick (`RtsSimulation.Movement.cs:136-139`).
+- Chasers repath every 32 px of target movement.
+
+**6. What you see is not what blocks.**
+- The 2D sprite extends above the collision circle.
+- The placement ghost is a square (`PlacementGhost.cs`).
+- The building click area merges sprite bounds with the footprint (`GreyboxBuilding.cs:255-273`).
+
+### Fix plan
+
+The rule this track delivers: **buildings block exactly where their walls are.** If a soldier visibly fits through a gap, it walks through. If the gap is too tight, it's a wall, and that's the player's layout choice.
+
+- **A1. Shape-accurate footprints.**
+  - Each building's footprint is its real ground outline: one or more convex polygons, plus circles for round parts such as silos and tower bases. Coordinates are content units relative to the building origin, with fixed orientation.
+  - It lives in `buildings.json`, so content data stays the sim's source of truth.
+  - A small uniform placement buffer (proposed 0.25 content units, about 6 px) keeps models from touching or clipping. It is not a spacing rule.
+  - **Sources:**
+    - Until 3D models exist, outlines are hand-authored to match the current building art.
+    - Once models exist, the Blender export script takes the model's ground outline (a slice just above ground, simplified and split into convex parts) and writes it into content data.
+    - A validator flags drift between a model and its footprint.
+  - **Everything uses the same shape:**
+    - placement overlap
+    - pathing
+    - the placement ghost
+    - click-picking
+    - **weapon and repair range to buildings, measured to the nearest point on the outline.** Today these use the center plus a radius (`RtsSimulation.Combat.cs:480, 525, 679-696`, `RtsSimulation.Repair.cs:154`, `CombatResolver.cs:221`).
+  - This closes the open footprint/buffer item in `docs/product-roadmap.md`.
+- **A2. "Fits if it looks like it fits".**
+  - **Cached obstacle grid:** building shapes, terrain blockers, energy walls, and broken bridges are drawn into a cached 8 px grid (1/3 content unit).
+  - **Clearance field:** from that grid, compute a distance-to-nearest-obstacle field. A cell is passable for a unit when that distance is at least the unit's radius. Visible gaps and real gaps then agree to within about 4 px.
+  - **Per-unit radius:** units get a `collision_radius` in content data. Proposed starting values:
+    - infantry about 0.6
+    - Rover about 1.1
+    - tanks about 1.5
+  - So a gap that lets a Rifleman through can still stop a tank.
+  - The grid and field update locally when a building, wall, or bridge changes (a revision counter, like the power dirty flag), not on every path request.
+  - **Navmesh fallback:** if the grid proves too slow or imprecise with many building shapes, the fallback is a navigation mesh, for example DotRecast (a pure C#, zlib-licensed library). That is a new dependency and needs approval first.
+- **A3. Spawn from the door.**
+  - Spawning buildings (the Colony Hub) get an authored `exit_point` just outside their footprint. Units spawn there and step clear of the door.
+  - If a bad layout walls the exit, units spawn at the nearest free cell. If that's inside a walled pocket, they're stuck until the player opens it. That is intended.
+  - The whole-path "ignore buildings near my start" exemption is removed. A unit that starts inside blocked space paths out from its nearest free cell.
+- **A4. Reachability.**
+  - Connected-region labels (per unit-radius class) answer "can I get there?" instantly.
+  - When a target is walled off, the unit moves to the nearest reachable point with one search. Today that can mean about 168 full searches.
+- **A5. Straight paths.** Line-of-sight string-pulling over the grid path, using the clearance field, so open-ground moves are 1–2 straight segments.
+- **A6. Separation.** A spatial hash plus separation steering, so units don't stack. Group arrivals spread using the existing formation offsets.
+- **A7. Request budget.**
+  - Blocked units retry on a timer or when the nav revision changes.
+  - Chase repaths run on a timer.
+  - A per-tick cap limits path searches.
+- **A8. AI and building walls.**
+  - **Placement:** the enemy AI rejects a placement that would disconnect its own Hub exit from its internal AI rally position. The player is allowed to wall themselves in; the AI shouldn't do it by accident.
+  - **Attack:** when an attack target is unreachable because of *building* walls, attackers pick the nearest blocking building on their route and destroy it. This extends today's energy-wall-blocked handling (`RtsSimulation.Combat.cs:529-560`), which only checks energy walls along a straight line.
+- **A9. Tests** in `tests/SimulationSmoke`:
+  - A soldier passes a gap exactly one soldier wide but a tank does not.
+  - A sealed ring of buildings blocks everything.
+  - No spawn lands inside a footprint.
+  - A walled-off target resolves with a bounded search count.
+  - Open-field paths have at most 2 waypoints.
+  - Range to an L-shaped building is measured to its nearest wall.
+  - The AI never walls off its own Hub exit.
+  - 100 units re-pathing in one tick stays within a set time budget.
+
+Track A is pure sim plus content data plus tests. It can start immediately, and the current 2D view keeps working: its ghost and outline switch to drawing the real footprint shapes. Contract changes go into `docs/system-contracts.md`. Schema changes go into `docs/content-data-spec.md`: footprint shape, `exit_point`, and `collision_radius`.
+
+## Track B: Controls And Hotkeys Overhaul
+
+### Principles
+
+These follow StarCraft II, Age of Empires IV, and C&C Remastered conventions.
+
+- **The number row is control groups only.** Today 1–6 are build keys whose meaning shifts per mission, because unavailable buildings are filtered out of the list.
+- **A context command card with fixed slots.** A slot never shifts when something is unavailable; it greys out. Buttons show their key.
+- **F-keys are player navigation.** Developer tools move to `Ctrl+Shift` in dev builds only.
+- **Every binding is a named Godot input action** defined in one keymap file. Buttons read their labels from it, which enables a rebinding UI later (Steam players expect one) and a shipped Steam Input config for the Deck.
+- **WASD camera pan is removed.** It collides with command keys.
+
+### Command-card layout: grid (locked)
+
+When you select something, the bottom command bar shows its buttons: train Cadet, upgrade tower, and so on.
+
+- **Layout.** The buttons sit in a 3-row block that mirrors the left side of the keyboard: `Q W E R T` on top, `A S D F G` in the middle, `Z X C V B` on the bottom.
+- **Keys follow position, not name.** The top-left button is always `Q` and the one below it is always `A`, whatever the button does.
+- **Why:**
+  - Every card works the same way.
+  - No two buttons share a key. Today `G` means both Guardian and Gun Tower, and `W` trains a Grunt *and* pans the camera.
+  - Translation can't break it.
+  - It maps cleanly to a Steam Deck layout.
+- **Universal habits stay:** `A` = attack-move, number row = control groups, `Esc` = cancel.
+
+### Keymap
+
+**Mouse**
+
+| Input | Action |
+| --- | --- |
+| Left click / drag | Select / box select |
+| Shift + click or drag | Add to or remove from selection |
+| Ctrl + click, or double-click | Select all of that type on screen |
+| Right click | Smart command: move, attack, repair, or bridge (existing behavior) |
+| Shift + right click | Queue the command (new) |
+| Middle drag | Rotate camera |
+| Wheel | Zoom |
+| Screen edge | Pan |
+
+**Camera and navigation**
+
+| Key | Action |
+| --- | --- |
+| Arrow keys | Pan |
+| `Home` | Reset rotation to north |
+| `Space` | Jump to last alert |
+| `Backspace` | Center on Colony Hub |
+| `F1` | Select next idle Grunt (double-tap centers) |
+| `F2` | Select all combat units |
+| `F3` | Select Commander (double-tap centers) |
+
+**Control groups**
+
+| Key | Action |
+| --- | --- |
+| `Ctrl + 1–0` | Set group |
+| `Shift + 1–0` | Add selection to group |
+| `1–0` | Recall group; double-tap centers the camera |
+
+**Command cards**
+
+| Selection | Q | W | E | R | T | A |
+| --- | --- | --- | --- | --- | --- | --- |
+| Units | Move | Stop | Hold | (Patrol, later) | | Attack-move |
+| Barracks | Grunt | Cadet | Rifleman | Guardian | Rover (with Vehicle Bay) | Guardian retrofit |
+| Defense Tower | Gun Tower upgrade | Rocket Tower upgrade | | | | |
+| Build card | Colony Hub | Power Plant | Pylon | Barracks | | Extractor |
+
+- **Units card:** the S/D slots hold context actions, such as Grunt Repair.
+- **Barracks card:** Shift + key queues 5.
+- **Build card:** S = Defense Tower; D = Vehicle Bay (hidden until unlocked, slot reserved). `B` opens the build card from anything; with nothing selected it is the default card. Shift + place keeps placing.
+
+**System**
+
+| Key | Action |
+| --- | --- |
+| `Esc` | Cancel mode, then deselect, then pause menu |
+| `F10` | Game menu |
+| `Pause` | Pause |
+| `O` | Objectives / briefing (was F1) |
+
+- UI scale moves into an options menu (it was F8–F11).
+- Dev-only, under `Ctrl+Shift`: restart (F4), map editor (F5), next mission (F6), commander debug (F7), quit (F12).
+- Map editor keys stay modal inside the editor.
+
+**Steam Deck.** Ship a Steam Input layout:
+- right trackpad = mouse
+- R2 = left click, L2 = right click
+- L1/R1 = Shift/Ctrl
+- D-pad or left stick = pan
+- back grips = control groups
+- a touch or radial menu for the grid slots
+
+The grid layout is what makes this mapping clean.
+
+**Sim work implied:** Stop, Hold Position, Attack-move, and the Shift command queue. Control groups, idle-Grunt and army selection, and camera jumps are presentation-only.
+
+## Track C: 3D Presentation
+
+### World scale
+
+- **1 content unit = 1 Godot unit ("1 m").** The sim maps as `(x / 24, 0, y / 24)`. Sim +Y maps to Godot +Z, so the default yaw looks north like today's screen.
+- **RTS "hero scale".** Ranges are short (a Rifleman shoots 6 m; a Barracks is 4 m wide), so infantry are modeled at about 2.0–2.3 m and vehicles at 3–5 m. A building mesh base matches its footprint exactly (Track A1). Upper structure may overhang slightly.
+- **Lock with a scale-lineup scene** before modeling: Hub, Barracks, Pylon, Defense Tower, Rifleman, Rover, and Medium Tank at sim footprints. View it through the gameplay camera at close, default, and far zoom, and also at Steam Deck resolution (1280×800).
+
+### Camera
+
+- **Setup:** orthographic `Camera3D`, 45° pitch.
+- **Zoom:** matches today's framing, about 30 m (close) to about 95 m (far) of ground across the screen.
+- **Controls:**
+  - Free yaw on middle-drag, with `Home` to reset to north.
+  - Pan with arrows, the screen edge, and the minimap.
+  - The focus point is clamped to `playable_bounds`.
+- **Minimap:** moves earlier than "later", because rotation makes orientation loss real. It shows a rotated view trapezoid and supports click-to-pan.
+
+### Flat gameplay ground
+
+- Every passable surface is at y = 0, including bridge decks.
+- Visual terrain drops below it (water, banks) or rises above it only inside blocked regions (cliffs, rocks, forest floor).
+- This means:
+  - Units need no height sampling.
+  - Picking is one ray-to-plane test.
+  - Rings, ghosts, and decals stay flat.
+  - It matches "no height bonuses yet".
+
+### Presentation architecture
+
+- **Node tree.** `Main` becomes a plain `Node` with three children:
+  - `World3D`
+  - `World2D` (legacy greybox, used by the editor and the fallback)
+  - `UiRoot`
+- **New code goes in `game/scripts/presentation/world3d/`, one owner per file:**
+
+| File | Owns |
+| --- | --- |
+| `RtsCamera3D` | camera controls and the ground footprint of the view |
+| `GroundPicker` | mouse ray to the ground plane |
+| `UnitView3D` | position, smoothed yaw, animation state, team color |
+| `BuildingView3D` | power, damage, and upgrade-module visuals |
+| `EnergyWallView3D` | energy wall visuals |
+| `TerrainBuilder` | terrain generated from map data |
+| `FogOfWar3D` | fog post-process |
+| `WorldOverlay2D` | screen-space health bars, labels, callouts |
+| `SelectionRings3D` | selection rings |
+
+- **Picking seam.** An `IWorldPicker` does three things: screen to sim point, entities under a point, and entities in a screen rect. The 2D and 3D worlds each implement it, so selection logic is shared.
+  - 3D click-select projects each unit's body center to the screen and tests a screen radius, so clicking a soldier's head works.
+  - Box select tests projected positions against the screen rectangle.
+  - Hover is one query per frame, not a poll in every view.
+- **Health bars and labels:** one screen-space `_Draw` pass using `Camera3D.UnprojectPosition`. They stay crisp at any rotation and cost one canvas draw.
+- **Selection rings:** one `MultiMeshInstance3D` of flat ring quads.
+- **Fog of war:** a full-screen post-process.
+  1. Reconstruct world XZ from depth.
+  2. Sample an R8 explored texture, uploaded when `ExploredRevision` changes.
+  3. Paint unexplored areas black with a soft edge.
+  - One shader covers terrain, props, and third-party assets. The existing visibility rules still hide units and buildings.
+- **Energy walls:** chains of glowing columns and beams, plus a ground-line decal. A single ribbon plane vanishes edge-on under rotation, and walls are path-blocking gameplay.
+- **Placement ghost:** the exact sim footprint shape plus the building mesh, in green or red.
+- **Small sim-side additions** (facts only):
+  - `UnitRenderSnapshot` exposes explicit activity (moving, attacking, fleeing, working/repairing), replacing the delta and timer guessing.
+  - A unit-killed event carries position, facing, and cause (shot or crushed), for death clips on short-lived corpses.
+  - `CameraZoom` leaves the sim snapshots.
+
+## Asset Pipeline
+
+### Characters (custom, built by us)
+
+- **One shared base body and proportions** for all infantry: Grunt, Cadet, Rifleman, Guardian, Commander.
+  - Unit identity comes from the gear kit (helmet, armor plates, pack, weapon) and silhouette.
+  - Team color comes from a mask channel times a per-instance shader uniform, so the enemy "reskin in red" is the same mesh.
+- **Rig** (researched 2026-09-30; details in `docs/3d-art-direction.md`, "Armored Characters").
+  - Mixamo's auto-rigger rigs the unarmored base body once, with the "No Fingers (25)" skeleton. That is the only game skeleton.
+  - Armor and gear are **rigid-weighted**: 100% to one bone, inside one merged mesh per unit. Smooth weights only on the undersuit at joints.
+  - 2–4 baked helper bones (pauldrons, maybe thigh plates), 28 bones or fewer in total.
+- **All clips are baked onto that one skeleton in Blender:**
+  - Mixamo downloads for our uploaded character (no retargeting needed)
+  - custom clips authored on the Mixamo Rig control rig
+  - mocap or asset-pack clips, retargeted in Blender with the free Retarget extension
+- **Shared library.** Helper-bone motion is baked into every clip. Godot imports one shared `anims.glb` as an `AnimationLibrary`, used by every infantry unit's `AnimationPlayer`.
+- **No import-time retargeting for our own skeleton.** Godot's humanoid retargeting (BoneMap → `SkeletonProfileHumanoid`) would freeze the helper bones. It stays in reserve for third-party libraries only.
+- **Mixamo (partial):** locomotion and common combat clips.
+  - Download settings: FBX, 30 fps, **In Place** for locomotion, "without skin", with one fixed Arm-Space value chosen for the bulky Guardian.
+  - Rob downloads them (Adobe account) in one batched session from a clip list.
+  - Mixamo animations are royalty-free for commercial games but may not be redistributed as raw files. Record them in the asset provenance notes.
+- **Custom clips.** Expected, because Mixamo likely lacks these:
+  - Grunt build/repair work loop with a tool
+  - Guardian energy-weapon firing stance
+  - crushed-by-vehicle death
+  - Commander-specific idles
+- **Authoring routes for custom clips:**
+  - Hand keyframing in Blender with an IK control rig.
+  - Video-to-motion capture tools (record reference, convert, clean up).
+  - Claude-scripted procedural clips for mechanical motion: recoil, breathing idle, tool swings, weapon bob. Scripted clips are serviceable for loops, but not for expressive acting.
+- **Blender pipeline scripts** (Claude writes and runs them headless or through Blender MCP):
+  - batch-import clips
+  - delete leaf bones and add helper bones
+  - rigid-weight the plates and join the mesh
+  - run a clearance check and NLA arm corrections
+  - bake with visual keying
+  - export one GLB per unit plus `anims.glb` and a clip manifest
+  - The full step table is in `docs/3d-art-direction.md`.
+- **Crowd spike exception:** the P0 performance spike may use any stock Mixamo character as a throwaway stand-in. It never ships.
+
+### Clip list (first pass)
+
+| Unit | Clips |
+| --- | --- |
+| Grunt | unarmed idle, run, fleeing run, work loop (custom), death |
+| Cadet, Rifleman | rifle idle, rifle run, rifle fire, 2 death variants |
+| Guardian | heavy idle, heavy run, energy-weapon fire (custom), death |
+| Commander | pistol idle, pistol run, pistol fire, death |
+| Shared | crushed death (custom); hit react (later) |
+
+### Vehicles
+
+- Rover, Medium Tank, and later Heavy Tank are rigid part hierarchies:
+  - Rover: hull and wheels.
+  - Tanks: hull, turret, and barrel.
+- The turret yaws to the target. A UV-scroll shader handles tracks and wheels.
+- No skeleton.
+
+### Buildings
+
+- **A modular military-industrial kit** (panels, vents, pipes, catwalks, lights, antennas). It shares one trim sheet and a team-color mask.
+- **The mesh base equals the sim footprint** (Track A1). The export script writes the ground outline into `buildings.json`, and a validator flags drift.
+- **States come from instance uniforms and small child nodes:**
+  - **Powered vs. unpowered:** lights, fans, radar spin, desaturation, sparks.
+  - **Damage:** smoke below 50% health, fire below 25%.
+  - **Destroyed:** explosion and debris, then removed.
+  - **Tower upgrades:** Gun and Rocket modules mount on the Defense Tower base, a literal in-place upgrade.
+  - **Barracks Guardian retrofit:** add-on module.
+  - **Construction** stays instant; an optional 0.5–1 s deploy rise is presentation only.
+- **Level 1 set first:** Hub, Barracks, Power Plant, Pylon, Extractor, Defense Tower with Gun and Rocket modules. Then Vehicle Bay.
+
+### Terrain and props
+
+- **`TerrainBuilder`** generates the ground at mission load from `maps.json` regions, deterministic per map:
+  - **Ground:** 32 m chunks with a 4-layer splat shader (grass, dirt, rock, mud).
+  - **Water:** sunken bed, water plane, and a shoreline foam band.
+  - **Cliff and rock regions:** raised rock kit meshes.
+  - **Forest regions:** `MultiMesh` tree and undergrowth scatter, with edge falloff.
+  - **Resource basins:** orange dirt splat and ore rocks.
+  - **Bridges:** kit meshes, intact and broken.
+  - **A 20–30 m border skirt**, so rotation never shows the void.
+- **Roads are decoration,** derived from lane centerlines, bridges, and base markers. An explicit non-gameplay `decor` list is added to map data only if needed.
+- **Textures:** Poly Haven CC0 ground textures to start.
+- **Props:** CC0 low-poly trees and rocks, restyled to one palette.
+- **Level 1** needs its first terrain regions authored.
+- This closes the "editor can't show the vibe" gap: regions drawn in the F5 editor become real terrain in 3D.
+
+### Budgets (set by the Steam Deck)
+
+| Asset | Triangles (LOD0) | Texture | Draw calls |
+| --- | --- | --- | --- |
+| Infantry | 2k–4k | 512²–1k², team mask | 1 (+ shadow) |
+| Vehicle | 3k–6k | 1k² | 2–4 parts |
+| Small building | 2k–6k | shared 2k² trim sheet | 1–3 |
+| Colony Hub | 6k–12k | shared trim sheet | 2–4 |
+| Tree / rock | 200–800 | shared atlas | MultiMesh, 1 per species |
+
+Godot generates mesh LODs on import. On the Deck an infantry model is roughly 20–60 px tall, so silhouette, pose, and team color matter far more than detail.
+
+### Character rendering tech
+
+- **`Skeleton3D` + `AnimationPlayer` per unit:**
+  - about 25 runtime bones
+  - one merged mesh and material per unit (gear merged at export)
+  - offscreen units don't animate
+  - at far zoom, animation advances at a staggered 15–20 Hz (`AnimationMixer` manual callback)
+  - no per-frame allocations in C# sync
+- **Fallback if the Deck misses the bar:** vertex animation textures with one `MultiMeshInstance3D` per unit type. Both sit behind one `UnitVisual` seam.
+  - Research shows CPU-side animation evaluation, not GPU skinning, is Godot's crowd bottleneck. One reported case was about 100 animated characters at 60 fps on desktop hardware.
+  - The Deck's CPU is weaker. Treat VAT as a likely need at the 300-infantry stress bar, not a remote one.
+  - Mitigations: a manual `advance()` scheduler and no `AnimationTree`.
+
+## Performance Targets
+
+| Target | Value |
+| --- | --- |
+| Floor device | Steam Deck (LCD and OLED), 1280×800 |
+| Deck, typical battles | 60 fps on a "Deck" quality preset |
+| Deck, stress bar | at least 40 fps (Deck 40 Hz mode), never below 30 |
+| Stress bar content | 300 animated infantry, 30 vehicles, 40 buildings, about 5k tree/rock instances |
+| Desktop | RX 6900-class and RTX 5090 are not constraints. A "High" preset may raise shadows, ambient occlusion, anti-aliasing, and foliage density. |
+| Deck OS | Measure a native Linux export and the Windows build under Proton in P0; pick the ship path from the numbers |
+| Deck renderer | Measure Forward+ vs. the Mobile renderer in the P0 spike |
+| Textures | VRAM-compressed with mipmaps |
+| Shadows (Deck preset) | 1 directional light, 1–2 short cascades; blob decals for units at far zoom if needed |
+
+## Mockup Review (Wells at the Ridge)
+
+The mockup is effectively Level 2: two bases, a central island well, two bridges, and north/south flank lanes. The visual direction is right. Layout notes:
+
+1. **It is top-down, not 45°.** With rotation, cliffs and tall trees beside lanes will hide units, so keep tall features at map edges and deep in blocked regions, with low shrubs and rocks at lane borders.
+2. **The roads read as single-file.** The data lanes are about 13 m wide, but the art pinches forest onto a 3 m track. Draw the road as a 3–4 m decal inside a 12–16 m open lane.
+3. **The base clearings are tight.** The data radius is about 17 m. Recommend 20–22 m (480–530 px), with an open side toward the well.
+4. **The bridges are too narrow.** At 5 m, a Medium Tank plugs the crossing. Recommend 7–8 m, or a ford on one channel.
+5. **There are only three wells.** One small flank well per lane would make the long routes worth contesting.
+
+Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules.
+
+## Order Of Work
+
+1. **Docs lock pass.** Update AGENTS, README, technical-architecture, and scaffold-plan (plus the other lines listed below) to the locked decisions.
+2. **Track A: footprints and pathing.** Sim plus tests; the 2D view keeps working.
+3. **P0 spikes** (can run alongside step 2):
+   - the scale lineup
+   - the crowd spike: 300 animated stand-ins, rotating ortho camera, profiled **on the Steam Deck** for Forward+ vs. Mobile and Linux vs. Proton
+4. **Track B: input layer and keymap,** plus the new sim verbs. The keymap is renderer-agnostic, so it lands in the 2D build first.
+5. **P1: 3D greybox parity.**
+   - Primitive stand-ins sized from sim footprints.
+   - Camera, picking seam, fog, overlays, rings, walls, ghost, minimap.
+   - A 2D/3D toggle.
+   - **Exit:** Levels 1 and 2 are playable end to end in 3D.
+6. **P2: terrain generator,** Level 1 regions, and the Level 2 data fixes.
+7. **P3: characters.**
+   - The base body and rig first, then the Rifleman end to end.
+   - Then Cadet, Grunt, Commander, Guardian.
+   - The custom clips.
+8. **P4: vehicles.**
+9. **P5: buildings kit,** with the Level 1 set first.
+10. **P6: retire 2D.** Remove the sprite views and atlas tools, and update asset READMEs and provenance notes.
+
+## Docs And Tools To Update
+
+- **`AGENTS.md`**
+  - Visual style lock (line 89)
+  - Art pipeline (58)
+  - "Presentation owns sprites" (135)
+  - "top-down" wording
+  - Hardware and camera locks
+- **`README.md`**: line 28.
+- **`docs/technical-architecture.md`**
+  - Visual mode (36)
+  - Renderer remarks (52, 61)
+  - Camera (440–447)
+  - The "Avoid ... full 3D modeling, complex animation" guidance (465–478)
+  - Performance targets (497–510)
+  - Platforms (514–525): the Steam Deck makes Linux/Proton testing required
+- **`docs/scaffold-plan.md`**: lines 23, 25, 81, 105.
+- **`docs/project-identity.md`**: art pipeline (137–139); keep the readability pillar in 3D terms.
+- **`docs/product-roadmap.md`**
+  - Art lines (18–19)
+  - Footprint and buffer open item: closed by Track A
+- **`docs/engineering-standards.md`**: lines 89–91.
+- **`docs/first-landing-mission-spec.md`**: "Mode: top-down mission RTS" (line 20).
+- **Building-wall rule** (Track A decisions). Replace "spacing buffer to prevent over-cramming" with "footprints follow the building shape plus a small buffer; buildings are physical walls; players can wall off routes or trap themselves" in:
+  - `AGENTS.md` line 105
+  - `docs/technical-architecture.md` lines 66, 254, 531
+  - `docs/system-contracts.md` lines 70, 80
+  - `docs/product-roadmap.md` lines 168, 493
+- **`docs/system-contracts.md`**: pathing, placement, spawn/exit point, unit radius, range-to-outline, AI wall handling, and new unit-verb contracts (Tracks A and B).
+- **`docs/content-data-spec.md`**
+  - Footprint shape (polygons and circles)
+  - `exit_point` and `collision_radius`
+  - `placement_buffer` meaning (217, 300)
+  - The stale bridge example (437–438)
+  - `decor`, only if added
+- **`docs/release-roadmap.md`**: Steam Deck verification, Steam Input config, rebinding UI.
+- **`game/assets/units/README.md` and `game/assets/buildings/README.md`**: replaced by 3D asset conventions.
+
+## Risks
+
+- **Art and animation throughput is the real bottleneck.** Building characters in full plus custom clips is the largest cost in this plan. Mitigations:
+  - one base body
+  - rigid gear
+  - a lean clip list
+  - shared animation libraries
+  - a modular building kit
+  - CC0 terrain props
+  - greybox primitives that keep the game playable at every step
+- **Readability on a 7" Deck screen.** Guarded by hero scale, strong team color, overlay health bars, and the orthographic camera.
+- **Occlusion from rotation.** Handled by terrain-generator placement rules first.
+- **Crowd performance on the Deck.** Front-loaded as the P0 spike, with VAT as the known fallback. Godot's CPU animation cost makes VAT a realistic outcome for large battles on the Deck.
+- **Mixamo is no longer actively updated by Adobe** *(indirect report)*. Download the full clip list early, in batched sessions, and keep the source FBX files archived outside the repo.
+- **Behavior changes from Track A.** Small buffers, building walls, per-unit radius, and separation change how bases pack and how fights flow.
+  - Re-run the Level 1 and Level 2 playtest checks after Track A.
+  - Check that authored missions don't start with the player or enemy already walled in.
+- **Scope creep into "3D features"** (height advantage, destructible terrain, physics ragdolls): out of scope unless the design docs reopen them.

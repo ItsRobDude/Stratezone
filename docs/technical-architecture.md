@@ -31,11 +31,16 @@ The first prototype stack is locked as:
 
 - **Engine:** Godot 4
 - **Language:** C# for game logic and larger systems
-- **Target:** native desktop first, Windows as the first practical platform
+- **Target:** native desktop first, Windows as the first practical platform. The Steam Deck is the performance floor; ship it as a native Linux build or the Windows build under Proton, decided by measurement.
 - **Distribution direction:** itch.io and Steam-friendly packaged builds
-- **Visual mode:** readable 2D top-down military-industrial presentation
+- **Visual mode:** readable 3D military-industrial presentation.
+  - Skeletal-animated infantry, rigid-part vehicles, modular buildings, and terrain generated from map data.
+  - A fixed 45° orthographic camera with free rotation.
+  - The simulation remains a 2D plane; presentation maps it onto the 3D ground at 1 content unit = 1 Godot unit.
+  - Details: `docs/3d-presentation-plan.md`.
+- **Renderer:** Godot Forward+ on desktop. The Steam Deck renderer (Forward+ or Mobile) is chosen from the crowd-performance spike.
 
-If the project pivots to another engine, update this document, `README.md`, `AGENTS.md`, and `docs/scaffold-plan.md` in the same pass.
+If the project pivots to another engine or visual mode, update this document, `README.md`, `AGENTS.md`, and `docs/scaffold-plan.md` in the same pass.
 
 ## Core Philosophy
 
@@ -49,7 +54,7 @@ That means:
 - simulation state should be serializable
 - UI should display simulation truth, not invent parallel truth
 
-The project should avoid custom engine work. Stratezone is hard because it is a systems game, not because it needs a clever renderer.
+The project should avoid custom engine work. Stratezone is hard because it is a systems game, not because it needs a clever renderer. The 3D presentation uses stock Godot 3D features (skeletal animation, MultiMesh, shaders, post-process) rather than custom rendering tech.
 
 ## Practical Constraints
 
@@ -58,19 +63,26 @@ The architecture is shaped around these realities:
 - the project is likely to be built with heavy AI assistance
 - the primary development machine is Windows
 - the game may eventually be sold as a downloadable desktop indie game
-- art production should assume AI-assisted concepts, Adobe Illustrator vectorization, cleanup, and generated turntable/directional frames, not a large art team or reliable paid artist pipeline
+- art production is a small in-house Blender pipeline, not a large art team or a reliable paid-artist pipeline:
+  - Custom characters on one shared base body and skeleton, with gear kits per unit.
+  - A modular building kit.
+  - Selected Mixamo clips plus custom animation.
+  - CC0 terrain props and textures.
+  - Scripted (bpy) automation for cleanup and export.
+  - Designs follow the established 2D concept and sprite art; AI-assisted concepts remain acceptable as reference.
+- the Steam Deck sets the performance and readability floor (1280×800, small screen)
 - the first playable mission matters more than future-perfect engine abstraction
 - levels are fresh authored scenarios rather than a persistent colony campaign
 - resource gathering uses powered refinery/extractor buildings on scarce limited wells that trickle resources and can deplete, not survival-style hauling
 - fog of war uses black unexplored areas; explored areas stay visible after scouting rather than reverting to gray shroud, and units/buildings in explored areas remain visible in real time
-- building placement should feel freeform, with no visible grid, while still enforcing footprint buffers and spacing constraints
+- building placement should feel freeform, with no visible grid. Footprints follow each building's real outline plus a small buffer, and buildings are physical walls that players and AI can use to wall off routes (or trap themselves)
 - first prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower
 - Guardian production is planned as a Barracks upgrade; Vehicle Bay is planned as a powered physical Barracks add-on built adjacent to the Barracks
 - Gun Tower and Rocket Tower should be modeled as in-place Defense Tower upgrades that keep wall-anchor behavior while adding direct attack stats and higher cost
 - first prototype units are Grunt, Cadet, Rifleman, Guardian, Rover, and Commander
 - Colony Hub is the spawn location for trained units, while Barracks controls what can be trained by level, troop capacity, and unlocks
 - enemy bases can rebuild and produce from limited resources
-- First Landing is a playable ugly 5-10 minute top-down mission before art direction or cutscenes
+- First Landing is a playable ugly 5-10 minute mission before final art or cutscenes
 - the first public build target is a demo built from the first five levels, but the project is still pre-demo and should not optimize release tooling ahead of working level design
 - debugging must be straightforward enough for future Codex runs to reason about quickly
 
@@ -189,7 +201,7 @@ Simulation-owned systems:
 
 Presentation-owned systems:
 
-- sprites
+- 3D models, materials, and team-color shading
 - animations
 - particles
 - camera movement
@@ -251,7 +263,7 @@ Owns terrain, buildability, passability, resource wells, starting zones, neutral
 
 Early requirements:
 
-- freeform-feeling placement with hidden footprint/buffer constraints
+- freeform-feeling placement using shape-accurate building footprints (real outline plus a small buffer)
 - passability checks
 - adjacency checks for physical Barracks add-ons such as Vehicle Bay
 - resource-well positions
@@ -437,18 +449,30 @@ Because levels start as fresh scenarios, save/load should prioritize in-mission 
 
 Keep input mapping explicit.
 
-Likely early controls:
+Controls follow real-RTS conventions. The full keymap is in `docs/3d-presentation-plan.md` (Track B).
 
-- left click select
-- drag select
-- right click move/attack/context
-- keyboard camera pan
-- mouse edge pan if desired
-- mouse wheel zoom
-- hotkeys for build categories later
-- escape/cancel
+- **Mouse:**
+  - left click selects, drag box-selects
+  - Shift adds to the selection; Ctrl+click or double-click selects all of a type on screen
+  - right click is the smart command (move, attack, repair, bridge); Shift + right click queues it
+- **Camera:**
+  - arrow keys and screen edge pan
+  - middle-mouse drag rotates; `Home` resets to north
+  - mouse wheel zooms
+  - WASD does not pan
+- **Command card:** a grid, where keys follow button position (`Q W E R T` / `A S D F G` / `Z X C V B`) and slots never shift. `B` opens the build card.
+- **Control groups:** `Ctrl + 1–0` sets, `1–0` recalls, and double-tap centers the camera.
+- **Unit commands:** Stop, Hold Position, Attack-move (`A`), and Shift-queued orders.
+- **Navigation:**
+  - `F1` idle Grunt, `F2` all combat units, `F3` Commander
+  - `Space` jumps to the last alert, `Backspace` centers on the Hub
+- **Escape:** cancel, then deselect, then pause menu.
+- **Developer hotkeys** live behind `Ctrl+Shift` in dev builds only.
+- **Bindings:** every binding is a named Godot input action defined in one keymap. Button labels read from it, which enables rebinding and a Steam Input layout for the Steam Deck.
 
-Use Godot UI for HUD and panels unless a later architecture change justifies a different layer.
+In 3D, picking goes through one screen-to-world seam: a mouse ray to the flat ground plane, plus screen-space tests for units and footprints. Views don't poll the mouse individually.
+
+Use Godot UI for HUD and panels unless a later architecture change justifies a different layer. The HUD stays a `CanvasLayer` over the 3D viewport. Health bars and world labels draw in one screen-space overlay pass.
 
 Early HUD surfaces:
 
@@ -460,22 +484,32 @@ Early HUD surfaces:
 - build menu
 - objective tracker
 - classic RTS alert line for player-known warnings
-- minimap later, not required first
+- minimap with a rotated view outline and click-to-pan, needed once camera rotation lands
 
 ## Art and Asset Pipeline
 
-Early assets should favor readability and iteration speed.
+Assets must favor readability at RTS distance (infantry are roughly 20–60 px tall on a Steam Deck) and a lean production pipeline. Full direction lives in `docs/3d-presentation-plan.md`.
 
-Recommended approach:
+- **Design reference.** The established 2D concept and sprite designs define silhouettes, gear, proportions, and color schemes. 3D assets should stay as close to them as practical. The old hand-drawn/cel rendering look is not itself required.
+- **Characters.**
+  - One shared base body and humanoid skeleton for all infantry.
+  - Armor and gear are rigid-weighted (100% to one bone) inside one merged mesh per unit. A few baked helper bones handle plates that span joints.
+  - Team color comes from a mask channel times a per-instance shader uniform.
+  - The skeleton comes from Mixamo's auto-rigger on our base body.
+  - Animation mixes selected Mixamo clips with custom clips. All clips are baked onto that one skeleton in Blender and shared as a single `AnimationLibrary` (`anims.glb`).
+  - Godot's humanoid retargeting is kept in reserve for third-party libraries only.
+  - Details: `docs/3d-art-direction.md`.
+- **Vehicles:** rigid part hierarchies (hull, turret, barrel, wheels). No skeletons.
+- **Buildings.**
+  - A modular military-industrial kit on a shared trim sheet.
+  - The mesh base matches the building's sim footprint outline.
+  - Power, damage, and upgrade states come from shader uniforms and small child nodes.
+- **Terrain:** generated at mission load from map-data regions, with CC0 ground textures and props. Terrain art never becomes gameplay truth.
+- **Readability effects:** particles, muzzle flashes, smoke, lights, and selection rings.
+- **Scripted Blender (bpy) steps** handle repeatable cleanup and export: bone stripping, gear parenting, footprint outline export, GLB export.
+- **Provenance:** stable asset naming and manifest keys, plus provenance notes for every Mixamo clip and CC0 asset.
 
-- AI-assisted concept exploration
-- Photoshop cleanup and transparent PNG exports
-- simple top-down sprites
-- minimal animation at first
-- particles, muzzle flashes, smoke, lights, and selection rings for motion/readability
-- stable asset naming and manifest keys once the asset set grows
-
-Avoid making the first prototype depend on full 3D modeling, complex animation, or large sprite sheets.
+The old 2D sprite atlases and 8-direction frame tools are legacy. Retire them once 3D reaches parity.
 
 ## Debugging and Developer Tools
 
@@ -505,21 +539,36 @@ Early rules:
 - keep UI updates tied to state changes where practical
 - keep particles bounded
 - keep pathfinding simple and visible before scaling unit counts
-- first-pass pathfinding stays engine-native/simple: simulation-owned coarse grid routing, no third-party pathfinding dependency yet
+- pathfinding stays simulation-owned with no third-party dependency yet:
+  - a cached fine grid that updates when buildings, walls, or bridges change
+  - a clearance field for per-unit radius
+  - reachability labels and straightened paths
+  - a per-tick path-request budget
+  - A navmesh library needs explicit approval first.
+- **3D presentation targets, with the Steam Deck as the floor:**
+  - 60 fps in typical battles on the Deck preset
+  - at least 40 fps, never below 30, at a stress bar of 300 animated infantry, 30 vehicles, 40 buildings, and about 5k tree/rock instances
+- **3D presentation rules:**
+  - one merged mesh and material per unit
+  - about 25 runtime bones
+  - no animation offscreen, reduced animation rate at far zoom
+  - `MultiMesh` for props and selection rings
+  - VRAM-compressed textures
 
-The first playable mission does not need hundreds of units. It needs clear systems and satisfying pressure.
+The first playable mission does not need hundreds of units. It needs clear systems and satisfying pressure. The stress bar exists so later missions never hit a rendering wall.
 
 ## Platform and Packaging Direction
 
 First target:
 
 - Windows desktop packaged build
+- Steam Deck as the performance floor from the first 3D spike onward. Measure the native Linux export and the Windows build under Proton, then pick the ship path from the numbers.
 
 Later targets:
 
 - itch.io downloadable build
-- Steam demo/build
-- Linux if the Godot path stays straightforward
+- Steam demo/build, with a shipped Steam Input layout for the Deck
+- desktop Linux (it largely comes along with Deck support)
 - macOS only when signing/notarization complexity is worth it
 
 Browser/web is not the default if Godot C# remains the technical path.
@@ -528,6 +577,7 @@ Browser/web is not the default if Godot C# remains the technical path.
 
 - Exact repo layout after Godot scaffolding.
 - Whether JSON remains the long-term content data format or Godot resources earn their place later.
-- Exact building footprint/buffer values for constrained maps.
+- Exact footprint outlines and the small placement buffer value for each building (Track A of `docs/3d-presentation-plan.md`).
 - Exact grunt replacement cost relative to basic combat units.
-- Whether the first-pass simulation grid should later be replaced by Godot navigation, a flow-field layer, or a dedicated RTS pathfinding helper.
+- Whether the cached simulation grid should later be replaced by a navmesh (for example DotRecast), a flow-field layer, or a dedicated RTS pathfinding helper.
+- Steam Deck renderer (Forward+ or Mobile) and ship path (native Linux or Proton), decided by the crowd spike.

@@ -48,14 +48,26 @@ Current locked vision choices:
 - Repair should work in First Landing and cost materials based on missing health percentage.
 - Player alerts should feel like classic RTS command warnings, but only for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.
 - Mission presentation should use short field-command briefings, direct objective verbs, sparse map callouts, truthful success/failure messages, and localizable player-facing strings.
-- Level 1 is a small 5-10 minute top-down mission in bright readable meadows/fields with light forest.
+- Level 1 is a small 5-10 minute mission in bright readable meadows/fields with light forest.
 - Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule; enemy Hub occupants must be killed before a mission can complete.
 - Destroyed Barracks quietly release three same-faction Cadets, and destroyed Power Plants quietly release one same-faction Cadet; these are intentionally undocumented in-game flavor surprises inspired by Dominion: Storm Over Gift 3.
 - Static fallback positions for AI markers, such as `EnemyAiMarkers.FirstLanding`, exist only for legacy test fixtures and are not a second source of truth. Mission data wins.
 - Ancient-tech mystery is out of scope for now.
 - Med Hall, Logistics / Repair Pad, and Neutral Repair Platform are cut from the first demo unless the roadmap is explicitly reopened. Artillery Battery remains a preferred Mission 5 siege candidate.
 - Visual tone is military-industrial with restrained near-future utility tech.
-- Art production should assume AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames while paid art is out of reach.
+- Presentation is 3D with real animation. The camera is a fixed 45° orthographic RTS camera that rotates freely: middle-mouse drag rotates, `Home` resets to north. The simulation stays 2D and Godot-free underneath.
+- 3D assets should stay faithful to the established 2D concept and sprite designs (silhouettes, gear, proportions, color schemes) as closely as practical. The old hand-drawn/cel rendering look is not itself a requirement.
+- Characters and buildings are built by us in Blender. No stock characters ship.
+  - All infantry share one base body and skeleton; unit identity comes from gear and silhouette.
+  - Animation mixes selected Mixamo clips with custom clips.
+  - AI-assisted concept art remains acceptable as design reference.
+- The Steam Deck is the weakest target and sets the performance floor. The development desktops are not a constraint.
+- Building footprints follow each building's real outline plus a small buffer, not generic circles or squares. Buildings are physical walls: players and the enemy can wall off routes with buildings or trap themselves with a bad layout.
+- Controls follow real-RTS conventions:
+  - a grid command card (`Q W E R T` / `A S D F G` / `Z X C V B` by button position)
+  - the number row for control groups
+  - Stop, Hold Position, Attack-move, and Shift-queued orders
+  - Rally points and Patrol are not planned for now.
 - The first public build target is a five-level demo. The project is still pre-demo and should not be marketed from the current greybox mission.
 - Failure criteria can vary per mission: commander killed, main base destroyed, convoy failed, transport failed, required Grunt/equipment lost, or combinations of those. Timer-expiry failures are not planned for the first demo unless the user explicitly reopens that scope.
 
@@ -73,7 +85,9 @@ Read the focused docs before making broad changes:
 8. `docs/content-roadmap.md` for mission archetypes, map-content direction, and first-demo content-shape decisions.
 9. `docs/implementation-checklists.md` for acceptance checks, done rules, and baseline content IDs.
 10. `docs/release-roadmap.md` for public build, itch.io, and Steam readiness.
-11. Code and assets once implementation begins.
+11. `docs/3d-presentation-plan.md` for the 3D presentation overhaul, the building footprint/pathfinding fix, and the controls/hotkey overhaul.
+12. `docs/3d-art-direction.md` for what 3D assets should look like (the existing sprites are the design bible) and how armored characters are rigged and animated.
+13. Code and assets once implementation begins.
 
 If code and docs drift, fix the drift deliberately. Do not silently turn current implementation accidents into product truth.
 
@@ -85,8 +99,8 @@ Locked first prototype technical direction:
 
 - Engine: Godot 4
 - Language: C#
-- Target platforms: Windows first, then itch.io/Steam-friendly desktop packaging
-- Visual style: readable 2D top-down military-industrial sci-fi
+- Target platforms: Windows first, the Steam Deck as the performance floor (Linux native or Proton, decided by measurement), then itch.io/Steam-friendly desktop packaging
+- Visual style: readable 3D military-industrial sci-fi through an orthographic 45° rotatable camera, over a 2D simulation (see `docs/3d-presentation-plan.md`)
 
 If this direction changes, update this file and the README in the same pass.
 
@@ -102,7 +116,10 @@ If this direction changes, update this file and the README in the same pass.
 - Prefer in-place armed tower upgrades from existing Defense Towers so players can establish walls quickly, then invest in weapons without losing the wall role.
 - Make grunts valuable as expensive recruitable units, not life-sim colonists.
 - Grunts must not be given combat utility in the first prototype; fleeing is their defensive behavior.
-- Building placement should not show a visible grid, but structures need spacing/buffer constraints so small maps cannot be over-crammed.
+- Building placement should not show a visible grid.
+  - Each footprint is the building's real outline plus a small buffer.
+  - Pathing, placement, picking, and ranges to buildings all use that same shape.
+  - Buildings block movement exactly where their walls are, so walling with buildings is allowed.
 - Prefer infrastructure strikes over simple unit-spam victory.
 - Keep factions, lore, and unit rosters small until the core loop is fun.
 - Do not add ancient-tech systems, mystery artifacts, or alien-tech progression unless the user reopens that scope.
@@ -132,7 +149,7 @@ If this direction changes, update this file and the README in the same pass.
 Keep simulation state separate from presentation.
 
 - Simulation owns resources, grunts, jobs, power, combat rules, events, mission objectives, AI, and saveable state.
-- Presentation owns sprites, animation, particles, camera, sound, and UI rendering.
+- Presentation owns 3D models, animation, particles, camera, sound, and UI rendering.
 - Content data owns units, buildings, factions, missions, maps, event definitions, and balance values.
 
 Avoid burying gameplay rules directly inside scene/UI code. The game should be testable and tunable without opening every visual object.
@@ -165,6 +182,8 @@ When adding or changing game direction, update the smallest relevant doc:
 - `docs/engineering-standards.md` for validation and process changes.
 - `docs/product-roadmap.md` for milestone status and open decisions.
 - `docs/release-roadmap.md` for public-build or storefront-readiness changes.
+- `docs/3d-presentation-plan.md` for 3D presentation, asset pipeline, camera, controls, and footprint/pathing plan changes.
+- `docs/3d-art-direction.md` for 3D asset look, per-asset design notes, palette, and armored-character rigging/animation guidance.
 - Future design docs only when a topic needs more detail than these files can hold.
 
 Keep docs concrete. Prefer player verbs, systems, constraints, and examples over vague mood language.

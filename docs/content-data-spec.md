@@ -213,8 +213,8 @@ Required fields:
 - `build_time_seconds`
 - `health`
 - `damage_resistances`
-- `footprint_radius`
-- `placement_buffer`
+- `footprint_radius` (current circle stand-in; replaced by a shape-accurate footprint in Track A, see below)
+- `placement_buffer` (becomes a small uniform model-separation buffer, not an anti-cramming rule)
 - `requires_power`
 - `provides_power`
 - `power_radius`
@@ -287,6 +287,12 @@ Prototype rules:
 - Armed tower attack stats live directly on the building record.
 
 Tunable placeholder example:
+
+Planned schema changes (Track A of `docs/3d-presentation-plan.md`, not implemented yet). The field names will be finalized when Track A lands.
+
+- **Footprint shape:** a list of convex polygons and/or circles, in content units relative to the building origin, with fixed orientation. It matches the building's real ground outline and replaces `footprint_radius`. Until 3D models exist, outlines are hand-authored to match the current art. Once models exist, the Blender export script writes them from the model's ground outline, and a validator flags drift.
+- **`exit_point`:** for buildings that spawn units (Colony Hub). An offset just outside the footprint where new units appear.
+- **`collision_radius`:** on unit definitions. Used by clearance-aware pathing, so a gap can admit infantry but stop vehicles.
 
 ```text
 id: building_barracks

@@ -15,8 +15,13 @@ The intended product is:
 - packageable as a desktop indie game
 - scoped around authored missions before sandbox or procedural expansion
 - shaped like a campaign arc of simulation-driven missions, not a story-heavy cutscene campaign
-- visually practical for AI-assisted concept art plus Photoshop cleanup
-- realistic about asset production: AI-assisted concepts, Illustrator vectorization, cleanup, and turntable-derived directional frames are valid working paths while paid art is out of reach
+- presented in readable 3D through a fixed 45° orthographic, freely rotating RTS camera, with 3D assets faithful to the established 2D concept and sprite designs
+- realistic about asset production:
+  - a lean in-house Blender pipeline (one shared infantry body and skeleton, a modular building kit)
+  - selected Mixamo clips plus custom animation
+  - CC0 terrain props
+  - AI-assisted concepts as reference while paid art is out of reach
+- performant on the Steam Deck, which is the weakest supported target
 - grounded in restrained near-future military utility rather than ancient-tech mystery
 - built around limited RTS-style resource wells, not survival-game resource hauling
 
@@ -39,6 +44,7 @@ Current docs in place:
 - `docs/content-data-spec.md`
 - `docs/implementation-checklists.md`
 - `docs/release-roadmap.md`
+- `docs/3d-presentation-plan.md`
 
 The initial `game/` project, placeholder content data, and validation stack exist. The greybox slice now supports camera pan/zoom, click and box selection, right-click move and attack commands with small formation spread, idle combat-unit auto-fire against visible hostile troops and tanks, grunt-driven building placement, powered construction rules, resource extraction, short serial Barracks queues for Level 1 units, Barracks Guardian Retrofit unlock state for later missions, reusable mission start-pattern data, Mission 2 player-built-base route smoke coverage, mission trigger grace/coalescing, localized mission briefing/objective/result/retry/tactical/callout fields, quick restart/dev quit hotkeys, basic combat with outgoing and incoming fire flashes, enemy production/rebuild pressure from limited resources, strategic contested-well rebuild throttles, base-breach defensive response, fog visibility, Defense Tower wall links with hostile path blocking and end buffers, in-place armed tower upgrades, a forward enemy Pylon weak point that powers the central Extractor and tower-wall route, Commander loss, destroy-all-enemies win state, a localized bottom action bar with command costs, queued-count feedback, hover details, and a dev-only F5 in-game map editor/tuner overlay with a visible tool palette, inspector edits, marker/region creation, dependency-aware delete, resize handles, undo/redo, snap toggle, mission picker, validation panel, source diff-preview saves, and JSON snippet export. The editor's marker/region/object selection, creation/deletion/resize, materialization, validation, and guarded save behavior are covered by simulation smoke checks.
 
@@ -56,7 +62,19 @@ The first prototype stack is locked as Godot 4 with C#.
 - Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
 - The first enemy faction is a private military force using the same basic buildings and technology as the player, reskinned in red or an alternate color until later art direction proves a stronger need.
 - Commander units are controllable troops, not abstract heroes. They should be used in the same practical RTS spirit as Dominion-style commanders: valuable, vulnerable, mission-relevant units on the map.
-- The first mission is a small 5-10 minute top-down RTS scenario in bright readable meadows/fields with light forest.
+- The first mission is a small 5-10 minute RTS scenario in bright readable meadows/fields with light forest.
+- Presentation moves to 3D (decided 2026-09-30):
+  - a fixed 45° orthographic camera with free rotation
+  - custom characters built in Blender on one shared skeleton
+  - selected Mixamo clips plus custom animation
+  - the Steam Deck as the performance floor
+  - Plan and order of work: `docs/3d-presentation-plan.md`.
+- Building footprints follow each building's real outline plus a small buffer. Buildings are physical walls that players and enemies can use to wall off routes, or trap themselves with.
+- Controls follow real-RTS conventions:
+  - a grid command card
+  - number-row control groups
+  - Stop, Hold Position, Attack-move, and Shift-queued orders
+  - Rally points and Patrol are not planned for now.
 - Fog of war uses black unexplored areas. Explored areas stay visible after scouting instead of reverting to gray shroud, and units/buildings in explored terrain remain visible in real time.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding weaponry and higher cost.
@@ -69,7 +87,7 @@ The first prototype stack is locked as Godot 4 with C#.
 - Defense Towers create energy walls between compatible tower pairs; enemies must destroy or disable a tower to open the path.
 - Enemy bases should rebuild and produce from limited resources, racing the player for additional wells, but Level 1 should do this slower than normal.
 - Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule; hostile Hub occupants must be killed before mission completion.
-- The first playable target is playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until gameplay works.
+- The first playable target is playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until gameplay works. Art direction is now active through the 3D overhaul.
 - Explosive friendly fire exists; normal gunfire does not.
 - First-pass combat balance should follow the old-school RTS formula: basic infantry die quickly, base structures take a long time to crack with small arms, armor shrugs off ballistics, and explosives are the siege lane.
 - Ancient tech is out of scope for now.
@@ -77,6 +95,11 @@ The first prototype stack is locked as Godot 4 with C#.
 - Missions can have varied failure criteria: commander killed, main base destroyed, transport lost, convoy failed, required Grunt/equipment lost, or combined fail states. Timer-expiry mission failures are not planned for the first demo.
 
 ## Near-Term Priorities
+
+0. 3D presentation overhaul (decided 2026-09-30). The order of work is in `docs/3d-presentation-plan.md`.
+   - **Track A:** fix building footprints and pathfinding. Real outline shapes, buildings as physical walls, spawn from the Hub exit, clearance-aware cached nav grid, separation, and a path-request budget. This is needed regardless of 3D and lands first.
+   - **Track B:** overhaul controls and hotkeys to real-RTS conventions (grid command card, control groups, Stop/Hold/Attack-move/Shift-queue).
+   - **Track C:** the 3D presentation, starting with a scale lineup and a crowd-performance spike on the Steam Deck, then 3D greybox parity.
 
 1. First Landing tactical route closeout
    - Treat the user-completed win run as the first playable proof for the current greybox slice.
@@ -165,7 +188,7 @@ Systems:
 - in-place Defense Tower upgrades into armed tower variants
 - construction with recruitable grunt units
 - first fog-of-war pass
-- hidden placement spacing/buffer constraints with no visible grid
+- shape-accurate building footprints (real outline plus a small buffer) with no visible grid; buildings can wall off routes
 
 Exit criteria:
 
@@ -455,8 +478,8 @@ Code and tool work:
 - versioned build artifact
 - clean install/uninstall behavior
 - save/load or clearly documented mission-run expectations
-- stable performance on target hardware
-- final credits and license audit
+- stable performance on target hardware, with the Steam Deck as the floor
+- final credits and license audit, including Mixamo and CC0 asset provenance
 - post-launch patch process
 
 Store/business work:
@@ -484,13 +507,13 @@ These are not first-prototype commitments:
 - persistent expedition progression, only if mission-first structure earns it
 - sandbox/skirmish
 - modder-facing map editor distribution and safe map-pack loading after the internal editor/tuner proves useful
-- polished terrain-art pipeline beyond the first greybox/prototype terrain kit
+- hand-authored terrain art beyond the data-generated 3D terrain (`docs/3d-presentation-plan.md`)
 - mod support
 - multiplayer
 
 ## Open Decisions
 
-- Exact building footprint/buffer values for constrained maps.
+- Exact footprint outlines, the small placement buffer value, and unit `collision_radius` values (tuned in Track A).
 - Grunt replacement cost relative to basic combat units.
 - Exact Level 3 route/map shape for making Vehicle Bay/Rover matter without replacing infantry.
 - Exact Guardian Retrofit cost, build time, and Grunt-count tuning after Level 2 playtests.

@@ -93,7 +93,9 @@ At normal zoom, the player should quickly understand:
 - this line or glow means powered territory
 - this energy wall blocks enemy movement
 
-Small, clear, slightly chunky assets are better than detailed art that collapses into noise.
+Small, clear, slightly chunky assets are better than detailed art that collapses into noise. This matters more in 3D, where infantry may be only 20–60 px tall on a Steam Deck and the camera rotates:
+- silhouette, pose, and team color must read from every angle
+- units use slightly exaggerated "hero scale" proportions
 
 ### 4. Pressure creates decisions
 
@@ -136,7 +138,13 @@ Prefer:
 - data-driven units and buildings once patterns are clear
 - simple AI director events before complex emergent storytelling
 - practical art pipelines over asset-production fantasies
-- AI-assisted art, Illustrator vectorization, cleanup, and turntable-derived directional frames when that is the realistic way to get usable assets
+- a lean in-house 3D pipeline:
+  - one shared infantry body and skeleton with gear kits
+  - a modular building kit
+  - selected Mixamo clips plus custom animation
+  - CC0 terrain props
+  - scripted Blender cleanup and export
+- designs that stay faithful to the established 2D concept and sprite art; AI-assisted concepts remain valid as reference
 
 ## What Stratezone Is Not
 
@@ -184,7 +192,9 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Resource gathering uses refinery/extractor buildings placed over scarce limited wells that trickle resources and can deplete.
 - The first enemy faction is a private military force with the same basic technology and buildings as the player, reskinned in red or another alternate color until the art direction proves a stronger need.
 - Commander units are controllable troops, not abstract heroes. They should be used in the practical Dominion-style RTS spirit: valuable, vulnerable, mission-relevant units on the map.
-- The first mission is a small 5-10 minute top-down scenario set in bright readable meadows/fields with light forest.
+- The first mission is a small 5-10 minute scenario set in bright readable meadows/fields with light forest.
+- Presentation is 3D through a fixed 45° orthographic RTS camera that rotates freely. The simulation stays 2D underneath. The Steam Deck is the performance floor.
+- Buildings are physical walls. Footprints follow each building's real outline plus a small buffer. Players and enemies can wall off routes with buildings, or trap themselves with a bad layout.
 - First prototype buildings are Colony Hub, Barracks, Power Plant, Pylon, Extractor/Refinery, and Defense Tower.
 - The first defensive structure is the Defense Tower. Two nearby compatible Defense Towers create an energy wall that blocks enemy movement.
 - Gun Towers and Rocket Towers are preferred as in-place upgrades from Defense Towers. They keep wall-anchor behavior while adding attacks and higher cost.
@@ -200,6 +210,7 @@ Avoid making everything too sleek, too magical, too cosmic, or too alien-tech-dr
 - Destroying either player's or enemy's Colony Hub releases a Medium Tank occupant as a permanent rule. Enemy Hub occupants must be killed before a mission can complete.
 - Destroyed Barracks quietly release three same-faction Cadets, and destroyed Power Plants quietly release one same-faction Cadet. These releases apply to both factions, are not Hub occupants, and should not be telegraphed through HUD, briefing, map callout, or localization text.
 - The first playable milestone should be playable ugly: placeholder shapes are acceptable, no story cutscenes are required, and art direction can wait until the RTS loop works.
+- Art direction is now active through the 3D overhaul (`docs/3d-presentation-plan.md`). Greybox primitives keep the game playable at every step of it.
 - The first public build should be a demo, not an Early Access or sellable release claim. The current target for that demo is the first five levels, but the project is still pre-demo and does not yet have a reliable finished level-design pipeline.
 - Ancient tech is omitted for now.
 - The sci-fi tone is military-industrial with restrained future utility tech.

@@ -86,9 +86,10 @@ Recommended editor setup:
 
 - Godot Editor for scenes, project settings, maps, UI, and runtime checks
 - VS Code or JetBrains Rider for C# editing
-- Photoshop for asset cleanup
+- Blender 5.1 for 3D modeling, rigging, animation, and scripted (bpy) cleanup/export to GLB. Pipeline scripts belong in `tools/` and must run headless.
+- Photoshop/Illustrator for textures, UI, and concept cleanup
 
-Do not add a second engine, custom renderer, or large framework without a concrete reason tied to the first playable mission.
+Do not add a second engine, custom renderer, or large framework without a concrete reason tied to the first playable mission. The 3D presentation uses stock Godot 3D features.
 
 ## Code Organization Standards
 

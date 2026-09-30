@@ -32,7 +32,8 @@ Current public-build decision: the first public build is a demo, not a prototype
 
 These tools should appear as the project matures:
 
-- **Godot export presets:** Windows export first, later Linux if low-friction.
+- **Godot export presets:** Windows export first. A Steam Deck path follows: a native Linux export or the Windows build under Proton, chosen by measured performance in the 3D crowd spike.
+- **Steam Deck checks:** performance on the Deck quality preset (60 fps typical, at least 40 fps at the stress bar), a Steam Input layout for the grid command card and control groups, and readable UI at 1280×800.
 - **C# build checks:** compile project and simulation tests from repeatable commands.
 - **Repo scripts:** root-level commands in `tools/` or documented commands in `docs/engineering-standards.md`.
 - **Content validation:** verify units, buildings, missions, factions, and balance data load before runtime.
@@ -50,12 +51,12 @@ Before any public build, Stratezone needs:
 - the first five demo levels to exist and play coherently, or a deliberately reduced public-scope decision recorded before release work begins
 - a packaged Windows build that runs outside the editor
 - a main menu or direct mission start that does not require developer explanation
-- settings for resolution/window mode, volume, and input basics
+- settings for resolution/window mode, volume, graphics preset (including the Deck preset), and input basics, with hotkey rebinding before any paid release
 - clear win/loss/restart flow
 - a known issues list
 - visible version/build info
 - credits and third-party license notes
-- asset provenance notes for generated, purchased, or edited art/audio
+- asset provenance notes for generated, purchased, or edited art/audio, including every Mixamo animation and CC0 texture/prop used
 - a clean install/run test on a machine or folder outside the repo
 
 ## Milestone 7: Demo Readability and Localization Gate
@@ -114,7 +115,7 @@ Store/page work:
 - screenshots from the actual build
 - short description that matches the build
 - install notes if needed
-- minimum supported OS/hardware notes
+- minimum supported OS/hardware notes (the Steam Deck is the reference floor)
 
 Exit criteria:
 
@@ -185,9 +186,9 @@ Code and tooling work:
 - versioned build artifact
 - clean install/uninstall behavior
 - save/load or clearly documented mission-run expectations
-- stable performance on target hardware
+- stable performance on target hardware, with the Steam Deck as the floor
 - final credits and license audit
-- final input/settings pass
+- final input/settings pass, including hotkey rebinding and the Steam Input layout
 - post-launch patch process
 
 Business/store work:

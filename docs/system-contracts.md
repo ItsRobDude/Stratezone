@@ -16,7 +16,7 @@ The contracts are implementation-ready enough to prevent guessing, but intention
 
 Simulation owns game truth. Presentation reads it.
 
-Simulation owns resources, power, grunts, jobs, combat outcomes, fog truth, mission objectives, enemy production, and saveable state. Presentation owns sprites, animation, selection visuals, particles, camera, audio, and UI rendering.
+Simulation owns resources, power, grunts, jobs, combat outcomes, fog truth, mission objectives, enemy production, and saveable state. Presentation owns 3D models, animation, selection visuals, particles, camera, audio, and UI rendering.
 
 Scene scripts may submit commands and display results. They should not secretly become the only place where rules live.
 
@@ -57,7 +57,7 @@ Acceptance checks:
 Owns:
 
 - build legality
-- hidden footprint and spacing constraints
+- shape-accurate building footprints and the small placement buffer
 - Barracks add-on adjacency legality
 - in-place tower upgrade legality
 - grunt construction jobs
@@ -67,7 +67,15 @@ Owns:
 Prototype behavior:
 
 - placement should feel freeform, with no visible grid
-- structures still need footprints and buffer spacing
+- **Footprint shape.** Each building's footprint follows its real ground outline (convex polygons plus circles for round parts) plus a small uniform buffer that keeps models from touching. Generic circles or squares are not acceptable stand-ins.
+- **One shape everywhere.** Placement, pathing, the placement ghost, click-picking, and weapon/repair ranges to buildings all use the same footprint. Range to a building is measured to the nearest point on its outline.
+- **Buildings are physical walls.**
+  - Units cannot pass through a footprint.
+  - A gap between buildings is passable only if the unit's `collision_radius` fits.
+  - Players and enemies may wall off routes with buildings or trap themselves with a bad layout. There is no guaranteed walking lane.
+  - The enemy AI must not wall off its own Colony Hub exit by accident.
+- **Spawning.** Units produced at the Colony Hub spawn at its exit point outside the footprint, never inside it.
+- The implementation plan for these rules is Track A of `docs/3d-presentation-plan.md`.
 - grunts construct buildings by player command
 - grunts construct Barracks add-ons adjacent to the Barracks by player command
 - grunts can upgrade a Defense Tower into an armed tower variant in place when the player pays the cost and requirements
@@ -77,7 +85,8 @@ Prototype behavior:
 
 Tunable placeholders:
 
-- building buffer: enough to prevent over-cramming on small maps
+- building buffer: small and uniform (starting proposal 0.25 content units). It only keeps models from touching; it is not an anti-cramming or walkway rule.
+- unit `collision_radius`: per unit type, so a gap a Rifleman fits through can still stop a tank
 - build time: short enough for a 5-10 minute Level 1
 - repair rate: useful but not combat-dominating
 - repair cost: proportional to missing health and cheaper than full replacement unless playtests prove repair is too safe
@@ -335,7 +344,7 @@ Prototype behavior:
 - upgrading a Defense Tower preserves its wall-anchor identity while the upgrade is underway, unless the tower is destroyed or unpowered
 - tower walls block enemy pathing
 - hostile tower walls block with enough clearance that units cannot slip directly between anchors
-- hostile tower walls use a short end-cap buffer so an authored chokepoint can seal against nearby cliffs/water/blocked terrain instead of being bypassed by walking around the tower sprite
+- hostile tower walls use a short end-cap buffer so an authored chokepoint can seal against nearby cliffs/water/blocked terrain instead of being bypassed by walking around the tower
 - tower walls block movement, not line-of-fire; units may shoot through a wall if their weapon range reaches the target
 - building placement cannot cut through an active wall gap
 - first-pass pathing uses a coarse simulation grid around live building footprints and hostile wall segments

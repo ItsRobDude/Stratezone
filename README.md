@@ -17,6 +17,8 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 - [Content Data Spec](docs/content-data-spec.md): first-pass data shapes for units, buildings, resources, factions, missions, and events.
 - [Implementation Checklists](docs/implementation-checklists.md): milestone acceptance checks, done rules, and baseline content IDs.
 - [Release Roadmap](docs/release-roadmap.md): path from prototype to itch.io/Steam-ready public builds.
+- [3D Presentation Plan](docs/3d-presentation-plan.md): the 3D overhaul, footprint and pathfinding fixes, and the controls and hotkey overhaul.
+- [3D Art Direction](docs/3d-art-direction.md): how the 3D assets should look (the existing sprites are the design bible) and how armored characters are rigged and animated.
 
 ## Current Intent
 
@@ -25,7 +27,13 @@ The target feel is **RimWorld-style colony stakes** meeting **late-90s military-
 - Keep colony stakes light enough to support RTS pacing; this is not a survival game.
 - Shape the first demo like an authored campaign arc of simulation-driven missions, not a story-heavy cutscene campaign.
 - Build the first prototype in Godot 4 with C#.
-- Keep visuals readable and production-friendly: top-down 2D, chunky silhouettes, strong UI, particles, terrain texture work, and a realistic AI/vector/turntable asset pipeline.
+- Keep visuals readable and production-friendly:
+  - 3D models with real animation, seen through a fixed 45° orthographic RTS camera that rotates freely
+  - chunky silhouettes, strong team color, strong UI, particles, and terrain generated from map data
+  - 3D assets that stay faithful to the established 2D concept and sprite designs
+  - the simulation stays 2D and engine-independent underneath
+  - see [docs/3d-presentation-plan.md](docs/3d-presentation-plan.md)
+- Treat the Steam Deck as the performance floor.
 - Prefer systems that can become a real packaged indie game for itch.io or Steam.
 
 ## Core Fantasy

@@ -28,6 +28,8 @@ The current first-pass storage format is JSON under `game/data/`.
 
 This is intentionally simple and text-reviewable. Godot resources can replace or wrap this later only if they make authoring, validation, or runtime loading meaningfully better.
 
+Schema versioning is intentionally absent from the current JSON envelope. When the first incompatible format change requires migration gating, reintroduce `schema_version` with real loader and validation behavior.
+
 Acceptable future options:
 
 - Godot resources under `game/data/`

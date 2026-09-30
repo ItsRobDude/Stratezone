@@ -37,6 +37,10 @@ public partial class GreyboxSimUnit : Node2D
     private bool _hovered;
     private bool _showAlwaysOnLabel;
     private bool _labelsSuppressed;
+    private UnitRenderSnapshot _lastRenderSnapshot;
+    private bool _hasRenderSnapshot;
+    private bool _wasHitFlashing;
+    private bool _wasAttackFlashing;
     private string? _attackTargetKey;
     private float _runMovementGraceSeconds;
     private float _attackEngagementGraceSeconds;
@@ -99,7 +103,7 @@ public partial class GreyboxSimUnit : Node2D
     {
         _selected = selected;
         ApplyZoomDetailVisibility();
-        QueueRedraw();
+        RequestRedrawIfChanged();
     }
 
     public void SetCameraZoom(float cameraZoom)
@@ -112,7 +116,7 @@ public partial class GreyboxSimUnit : Node2D
 
         _cameraZoom = nextZoom;
         ApplyZoomDetailVisibility();
-        QueueRedraw();
+        RequestRedrawIfChanged();
     }
 
     public void UpdateFromState(UnitState state)
@@ -142,7 +146,7 @@ public partial class GreyboxSimUnit : Node2D
         }
 
         Visible = !state.IsDestroyed;
-        QueueRedraw();
+        RequestRedrawIfChanged(state);
     }
 
     public override void _Process(double delta)
@@ -174,6 +178,7 @@ public partial class GreyboxSimUnit : Node2D
         {
             _isMoving = false;
             UpdateDirectionalTexture();
+            RequestRedrawIfChanged();
         }
 
         if (_isAttacking &&
@@ -184,6 +189,7 @@ public partial class GreyboxSimUnit : Node2D
             _isAttacking = false;
             _attackTargetKey = null;
             UpdateDirectionalTexture();
+            RequestRedrawIfChanged();
         }
 
         if (_isAttacking && _attackAnimationConfig is not null)
@@ -194,6 +200,7 @@ public partial class GreyboxSimUnit : Node2D
             {
                 _attackAnimationFrameIndex = nextFrameIndex;
                 UpdateDirectionalTexture();
+                RequestRedrawIfChanged();
             }
 
             return;
@@ -207,7 +214,45 @@ public partial class GreyboxSimUnit : Node2D
             {
                 _runAnimationFrameIndex = nextFrameIndex;
                 UpdateDirectionalTexture();
+                RequestRedrawIfChanged();
             }
         }
+    }
+
+    private void RequestRedrawIfChanged(UnitState? state = null)
+    {
+        state ??= _state;
+        if (state is null)
+        {
+            QueueRedraw();
+            return;
+        }
+
+        var isHitFlashing = state.HitFlashSeconds > 0.0f;
+        var isAttackFlashing = state.AttackFlashSeconds > 0.0f;
+        var snapshot = UnitRenderSnapshot.From(
+            state,
+            _facingAngle,
+            _selected,
+            _isMoving,
+            _isAttacking,
+            _runAnimationFrameIndex,
+            _attackAnimationFrameIndex,
+            _cameraZoom,
+            _label?.Text ?? string.Empty);
+        if (isHitFlashing ||
+            isAttackFlashing ||
+            _wasHitFlashing ||
+            _wasAttackFlashing ||
+            !_hasRenderSnapshot ||
+            snapshot != _lastRenderSnapshot)
+        {
+            QueueRedraw();
+        }
+
+        _lastRenderSnapshot = snapshot;
+        _hasRenderSnapshot = true;
+        _wasHitFlashing = isHitFlashing;
+        _wasAttackFlashing = isAttackFlashing;
     }
 }

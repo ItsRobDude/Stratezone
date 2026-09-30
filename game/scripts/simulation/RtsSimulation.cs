@@ -35,12 +35,14 @@ public sealed partial class RtsSimulation
     private readonly HashSet<int> _knownDestroyedEnemyPowerIds = [];
     private readonly HashSet<int> _knownWallBlockedEnemyIds = [];
     private readonly HashSet<int> _enemyPatrolDestinationIndexes = [];
+    private readonly HashSet<int> _knownDestroyedPowerBuildingIds = [];
     private readonly Random _enemyPatrolRandom;
     private float _elapsedSeconds;
     private float _nextEnemyPatrolDispatchSeconds;
     private int _enemyPatrolDispatches;
     private int _enemyPatrolDestinationOffset = -1;
     private int _nextEntityId = 1;
+    private bool _powerDirty = true;
 
     public RtsSimulation(
         ContentCatalog catalog,
@@ -95,8 +97,17 @@ public sealed partial class RtsSimulation
     public EnemyAiProfileDefinition EnemyAiProfile => _enemyAi.Profile;
     public EnemyOfficerState EnemyOfficer => _enemyOfficer;
     public EnemyAiTelemetry EnemyAiTelemetry => _enemyTelemetry;
-    public bool EnemyProductionOnline => HasPoweredBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.Barracks) &&
-        HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub);
+    public bool EnemyProductionOnline
+    {
+        get
+        {
+            EnsurePowerCurrent();
+            return HasPoweredBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.Barracks) &&
+                HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub);
+        }
+    }
+
+    internal int DebugPowerRecomputeCount { get; private set; }
 
     public static float ToWorldRadius(float contentRadius)
     {
@@ -125,7 +136,8 @@ public sealed partial class RtsSimulation
             targetWell.ExtractorEntityId = building.EntityId;
         }
 
-        RecomputePower();
+        MarkPowerDirty();
+        EnsurePowerCurrent();
         RecomputeFog();
         UpdateMissionState();
         return building;
@@ -139,6 +151,7 @@ public sealed partial class RtsSimulation
     private PlacementValidation ValidatePlacementForFaction(string factionId, string buildingId, SimVector2 position, float availableMaterials)
     {
         var definition = _catalog.GetBuilding(buildingId);
+        EnsurePowerCurrent();
 
         if (definition.Id == ContentIds.Buildings.ColonyHub &&
             HasLiveBuilding(factionId, ContentIds.Buildings.ColonyHub))
@@ -277,7 +290,8 @@ public sealed partial class RtsSimulation
             well.ExtractorEntityId = building.EntityId;
         }
 
-        RecomputePower();
+        MarkPowerDirty();
+        EnsurePowerCurrent();
         RecomputeFog();
         UpdateMissionState();
         _events.Add(new SimulationEvent(
@@ -306,7 +320,7 @@ public sealed partial class RtsSimulation
 
         _elapsedSeconds += deltaSeconds;
         TickPresentationState(deltaSeconds);
-        RecomputePower();
+        EnsurePowerCurrent();
         TickBarracksUpgrades(deltaSeconds);
         _enemyAi.Tick(this, deltaSeconds);
         _missionTriggers.Tick(this, _elapsedSeconds);
@@ -415,7 +429,8 @@ public sealed partial class RtsSimulation
         var upgrade = _catalog.GetBuilding(upgradeBuildingId);
         SpendMaterialsForFaction(factionId, upgrade.Cost);
         validation.Building.UpgradeTo(upgrade);
-        RecomputePower();
+        MarkPowerDirty();
+        EnsurePowerCurrent();
         RecomputeFog();
         UpdateMissionState();
         return new UpgradeResult(
@@ -428,6 +443,7 @@ public sealed partial class RtsSimulation
 
     private UpgradeResult ValidateBuildingUpgradeForFaction(string factionId, int buildingEntityId, string upgradeBuildingId)
     {
+        EnsurePowerCurrent();
         var building = FindLiveBuilding(buildingEntityId);
         if (building is null || building.FactionId != factionId)
         {
@@ -484,6 +500,7 @@ public sealed partial class RtsSimulation
 
     private bool HasPoweredBuilding(string factionId, string buildingId)
     {
+        EnsurePowerCurrent();
         return _buildings.Any(building =>
             building.FactionId == factionId &&
             building.Definition.Id == buildingId &&
@@ -651,6 +668,7 @@ public sealed partial class RtsSimulation
 
     private void RecomputePower()
     {
+        DebugPowerRecomputeCount++;
         foreach (var building in _buildings)
         {
             building.IsPowered = !building.IsDestroyed && !building.Definition.RequiresPower;
@@ -679,6 +697,39 @@ public sealed partial class RtsSimulation
         }
 
         RecomputeEnergyWalls();
+        _knownDestroyedPowerBuildingIds.Clear();
+        foreach (var building in _buildings.Where(building => building.IsDestroyed))
+        {
+            _knownDestroyedPowerBuildingIds.Add(building.EntityId);
+        }
+    }
+
+    private void MarkPowerDirty()
+    {
+        _powerDirty = true;
+    }
+
+    private void EnsurePowerCurrent()
+    {
+        RefreshPowerDirtyFromDestroyedBuildings();
+        if (!_powerDirty)
+        {
+            return;
+        }
+
+        RecomputePower();
+        _powerDirty = false;
+    }
+
+    private void RefreshPowerDirtyFromDestroyedBuildings()
+    {
+        foreach (var building in _buildings)
+        {
+            if (building.IsDestroyed && _knownDestroyedPowerBuildingIds.Add(building.EntityId))
+            {
+                MarkPowerDirty();
+            }
+        }
     }
 
     private void RecomputeEnergyWalls()

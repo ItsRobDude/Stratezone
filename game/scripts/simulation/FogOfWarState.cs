@@ -20,6 +20,7 @@ public sealed class FogOfWarState
     public float MaxY { get; }
     public float CellSize { get; }
     public bool EditorReveal { get; set; }
+    public int ExploredRevision { get; private set; }
 
     public void BeginVisibilityUpdate()
     {
@@ -45,7 +46,7 @@ public sealed class FogOfWarState
 
                 var key = (cellX, cellY);
                 _visible.Add(key);
-                _explored.Add(key);
+                MarkExplored(key);
             }
         }
     }
@@ -116,5 +117,13 @@ public sealed class FogOfWarState
         return new SimVector2(
             MinX + (cellX * CellSize) + (CellSize * 0.5f),
             MinY + (cellY * CellSize) + (CellSize * 0.5f));
+    }
+
+    private void MarkExplored((int X, int Y) cell)
+    {
+        if (_explored.Add(cell))
+        {
+            ExploredRevision++;
+        }
     }
 }

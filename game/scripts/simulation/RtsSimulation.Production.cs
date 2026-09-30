@@ -42,6 +42,7 @@ public sealed partial class RtsSimulation
 
     private ProductionValidation ValidateUnitProductionForFaction(string factionId, string unitId, int? producerBuildingEntityId, float availableMaterials)
     {
+        EnsurePowerCurrent();
         var unit = _catalog.GetUnit(unitId);
 
         if (_trainableUnitIds is not null && !_trainableUnitIds.Contains(unit.Id))

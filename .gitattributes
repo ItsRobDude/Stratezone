@@ -1,0 +1,23 @@
+* text=auto eol=lf
+
+# Windows-only shell scripts keep CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ttf binary
+*.otf binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.pdf binary
+
+# Godot text resources.
+*.import text eol=lf
+*.tres text eol=lf
+*.tscn text eol=lf

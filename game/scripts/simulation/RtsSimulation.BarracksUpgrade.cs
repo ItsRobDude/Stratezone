@@ -120,6 +120,7 @@ public sealed partial class RtsSimulation
 
     private UpgradeResult ValidateBarracksUpgradeForFaction(string factionId, string upgradeId, int barracksEntityId)
     {
+        EnsurePowerCurrent();
         var building = FindLiveBuilding(barracksEntityId);
         if (building is null || building.FactionId != factionId)
         {

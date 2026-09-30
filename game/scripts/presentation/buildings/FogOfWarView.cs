@@ -7,11 +7,15 @@ public partial class FogOfWarView : Node2D
     private Rect2? _visibleWorldBounds;
     private readonly List<FogCell> _unexploredCellCache = [];
     private int _lastExploredRevision = -1;
+    private bool _lastEditorReveal;
     private Rect2? _lastVisibleWorldBounds;
 
     public void UpdateFromState(FogOfWarState fog, Rect2 visibleWorldBounds)
     {
-        var fogChanged = fog.ExploredRevision != _lastExploredRevision;
+        // Mission re-init swaps in a new fog instance, and the F5 editor toggles reveal without exploring cells.
+        var fogChanged = !ReferenceEquals(fog, _fog) ||
+            fog.ExploredRevision != _lastExploredRevision ||
+            fog.EditorReveal != _lastEditorReveal;
         var boundsChanged = _lastVisibleWorldBounds is null ||
             BoundsChangedMeaningfully(_lastVisibleWorldBounds.Value, visibleWorldBounds);
 
@@ -19,6 +23,7 @@ public partial class FogOfWarView : Node2D
         if (fogChanged)
         {
             _lastExploredRevision = fog.ExploredRevision;
+            _lastEditorReveal = fog.EditorReveal;
             _unexploredCellCache.Clear();
             foreach (var cell in fog.GetUnexploredCells())
             {

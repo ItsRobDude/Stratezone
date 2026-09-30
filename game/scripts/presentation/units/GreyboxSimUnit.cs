@@ -230,6 +230,8 @@ public partial class GreyboxSimUnit : Node2D
 
         var isHitFlashing = state.HitFlashSeconds > 0.0f;
         var isAttackFlashing = state.AttackFlashSeconds > 0.0f;
+        // The selected-unit path line is drawn in local space, so it must follow the unit every frame.
+        var isDrawingPath = ShouldDrawPathDebug() && state.MoveTarget is not null;
         var snapshot = UnitRenderSnapshot.From(
             state,
             _facingAngle,
@@ -240,7 +242,8 @@ public partial class GreyboxSimUnit : Node2D
             _attackAnimationFrameIndex,
             _cameraZoom,
             _label?.Text ?? string.Empty);
-        if (isHitFlashing ||
+        if (isDrawingPath ||
+            isHitFlashing ||
             isAttackFlashing ||
             _wasHitFlashing ||
             _wasAttackFlashing ||

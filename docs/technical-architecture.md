@@ -230,15 +230,18 @@ The first implementation uses a small text-reviewable English catalog. Additiona
 
 ## Game Loop Direction
 
-Use a deterministic or mostly deterministic simulation tick where practical.
+The simulation runs at a **fixed step rate**, proposed at 20 steps per second (`TickSeconds = 0.05`). Presentation interpolates between steps. This is the classic RTS pattern: StarCraft II and Supreme Commander run their game logic at about 16 and 10 steps per second. It makes outcomes identical at any frame rate and stops simulation cost from scaling with the display's refresh rate.
+
+This is planned as Track A0 in `docs/3d-presentation-plan.md`. The current code still ticks once per rendered frame with a variable delta (`Main.cs`).
 
 Recommended flow:
 
 1. Input layer converts mouse/keyboard/gamepad events into game commands.
-2. Command layer validates whether the action is legal.
-3. Simulation tick applies commands, jobs, AI, combat, power updates, and events.
-4. Presentation reads the updated simulation state and animates toward it.
-5. UI displays current state, warnings, objectives, and selected entity actions.
+2. Command layer validates whether the action is legal; accepted commands are queued for the next step boundary.
+3. The frame loop accumulates real time and runs whole fixed simulation steps (`Step()`), capping catch-up at a few steps per frame. Tests use `Advance(seconds)`, which runs the same whole steps.
+4. Each step applies commands, jobs, AI, combat, power updates, and events.
+5. Presentation reads the latest two step states and interpolates positions and facing by the leftover accumulator fraction, so motion stays smooth at any frame rate.
+6. UI displays current state, warnings, objectives, and selected entity actions.
 
 Do not tie combat or economy outcomes to animation completion unless there is a deliberate reason.
 
@@ -544,6 +547,7 @@ Early rules:
   - a clearance field for per-unit radius
   - reachability labels and straightened paths
   - a per-tick path-request budget
+  - group orders path once per radius class, and members follow formation offsets with separation steering
   - A navmesh library needs explicit approval first.
 - **3D presentation targets, with the Steam Deck as the floor:**
   - 60 fps in typical battles on the Deck preset
@@ -552,6 +556,7 @@ Early rules:
   - one merged mesh and material per unit
   - about 25 runtime bones
   - no animation offscreen, reduced animation rate at far zoom
+  - optionally, far-zoom strategic icons that replace unit models, decided on the Deck in the P0 scale lineup
   - `MultiMesh` for props and selection rings
   - VRAM-compressed textures
 

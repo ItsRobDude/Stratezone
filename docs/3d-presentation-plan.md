@@ -100,10 +100,30 @@ The durable rule does not change: *RimWorld for colony stakes, Dominion/C&C-styl
 - The placement ghost is a square (`PlacementGhost.cs`).
 - The building click area merges sprite bounds with the footprint (`GreyboxBuilding.cs:255-273`).
 
+**7. Game logic runs once per rendered frame with a variable time step.**
+- `Main._Process` calls `_simulation.Tick(deltaSeconds)` every frame (`Main.cs:130`).
+- A 144 Hz desktop runs the whole simulation 144 times a second: pathing, combat, AI, power, fog. A Deck at 40 fps runs it 40 times.
+- Results can differ with frame rate, and every per-tick cost above is multiplied by the display's refresh rate.
+
+**8. Every unit plans its own path, even when a whole group gets one order.**
+- A 20-unit move order runs 20 independent searches toward 20 formation spots, with 20 repaths when things change.
+- The classic RTS answer is one search per group, with members following offsets. Company of Heroes and Dawn of War pathfind per squad; Supreme Commander 2 used shared flow fields.
+
 ### Fix plan
 
 The rule this track delivers: **buildings block exactly where their walls are.** If a soldier visibly fits through a gap, it walks through. If the gap is too tight, it's a wall, and that's the player's layout choice.
 
+- **A0. Fixed-rate simulation with smooth rendering. Do this first; everything else in Track A is cheaper on top of it.**
+  - **Sim-owned step length.** The sim owns one step length, proposed 20 steps per second (`TickSeconds = 0.05`). This follows the classic RTS pattern: StarCraft II's game logic runs about 16 times a second on Normal speed, Supreme Commander about 10.
+  - **Two sim methods:**
+    - `Step()` runs exactly one fixed step.
+    - `Advance(seconds)` runs as many whole steps as fit and carries the remainder.
+  - **`Main` accumulates frame time and calls `Step()`.** It caps catch-up at a few steps per frame, so a hitch can't spiral into a freeze.
+  - **Player commands** are queued and applied at the next step boundary, never mid-step.
+  - **Presentation interpolates.** Views keep the previous and current step's position and facing, and draw between them by `accumulator / TickSeconds`. Movement stays smooth at any frame rate while game logic runs at 20 Hz.
+  - **Result:** the same inputs give the same outcome on a 144 Hz desktop and a 40 Hz Deck. Sim CPU cost no longer scales with refresh rate. Smoke tests can assert exact step-by-step behavior.
+  - **Test impact:** smoke tests currently call `Tick` with 0.1–1000 s jumps. They move to `Advance(seconds)`. Watch smoke-test runtime, since a 1000 s jump becomes 20,000 steps; this is fine once A2's cached grid lands.
+  - Update the "Game Loop Direction" section of `docs/technical-architecture.md` to match.
 - **A1. Shape-accurate footprints.**
   - Each building's footprint is its real ground outline: one or more convex polygons, plus circles for round parts such as silos and tower bases. Coordinates are content units relative to the building origin, with fixed orientation.
   - It lives in `buildings.json`, so content data stays the sim's source of truth.
@@ -138,6 +158,12 @@ The rule this track delivers: **buildings block exactly where their walls are.**
   - When a target is walled off, the unit moves to the nearest reachable point with one search. Today that can mean about 168 full searches.
 - **A5. Straight paths.** Line-of-sight string-pulling over the grid path, using the clearance field, so open-ground moves are 1–2 straight segments.
 - **A6. Separation.** A spatial hash plus separation steering, so units don't stack. Group arrivals spread using the existing formation offsets.
+- **A6b. Group moves path once.**
+  - A move or attack order for several units runs **one search per radius class** (infantry together, vehicles together) from the group's center to the destination.
+  - Each member follows the shared path plus its formation offset, with separation steering (A6) handling the crowding.
+  - A member re-paths on its own only when it's blocked or has strayed too far from the shared route, for example after being split by a wall.
+  - Chase and attack groups share the path to the target area too, then break into individual approach points near the target.
+  - **Flow fields** are the next step if large groups still stutter on the Deck: one "which way to go" grid per destination, shared by every unit headed there, as Supreme Commander 2 did. They're listed as an open architecture option in `docs/technical-architecture.md` and are not built unless profiling asks for them.
 - **A7. Request budget.**
   - Blocked units retry on a timer or when the nav revision changes.
   - Chase repaths run on a timer.
@@ -154,6 +180,8 @@ The rule this track delivers: **buildings block exactly where their walls are.**
   - Range to an L-shaped building is measured to its nearest wall.
   - The AI never walls off its own Hub exit.
   - 100 units re-pathing in one tick stays within a set time budget.
+  - The same command script gives identical unit positions when run as 20 separate `Step()` calls or as one `Advance(1.0)`.
+  - A 20-unit group move runs at most 2 path searches (one per radius class), not 20.
 
 Track A is pure sim plus content data plus tests. It can start immediately, and the current 2D view keeps working: its ghost and outline switch to drawing the real footprint shapes. Contract changes go into `docs/system-contracts.md`. Schema changes go into `docs/content-data-spec.md`: footprint shape, `exit_point`, and `collision_radius`.
 
@@ -432,6 +460,14 @@ Godot generates mesh LODs on import. On the Deck an infantry model is roughly 20
   - Research shows CPU-side animation evaluation, not GPU skinning, is Godot's crowd bottleneck. One reported case was about 100 animated characters at 60 fps on desktop hardware.
   - The Deck's CPU is weaker. Treat VAT as a likely need at the 300-infantry stress bar, not a remote one.
   - Mitigations: a manual `advance()` scheduler and no `AnimationTree`.
+- **Far-zoom strategic icons (optional, decided in the P0 scale lineup).**
+  - At the farthest zoom band, units swap from animated models to flat team-colored type icons. Supreme Commander's strategic zoom is the reference.
+  - The icons are one `MultiMeshInstance3D` of camera-facing quads, or glyphs in the screen-space overlay. Either way that's one draw call and zero animation cost.
+  - Two payoffs:
+    - **Readability on a 7" Deck screen,** where a crisp icon may beat a 20 px soldier.
+    - **Performance,** because the worst case for animation cost (the whole army on screen at far zoom) is exactly when models are replaced.
+  - Buildings, terrain, and VFX keep rendering normally.
+  - Test it on the Deck next to the plain far-zoom view before deciding. If adopted, it may make the VAT fallback unnecessary.
 
 ## Performance Targets
 
@@ -462,10 +498,10 @@ Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules
 ## Order Of Work
 
 1. **Docs lock pass.** Update AGENTS, README, technical-architecture, and scaffold-plan (plus the other lines listed below) to the locked decisions.
-2. **Track A: footprints and pathing.** Sim plus tests; the 2D view keeps working.
+2. **Track A: footprints and pathing.** Start with A0 (fixed-rate simulation and render interpolation), then footprints, the nav grid, and group paths. Sim plus tests; the 2D view keeps working.
 3. **P0 spikes** (can run alongside step 2):
-   - the scale lineup
-   - the crowd spike: 300 animated stand-ins, rotating ortho camera, profiled **on the Steam Deck** for Forward+ vs. Mobile and Linux vs. Proton
+   - the scale lineup, including the far-zoom strategic-icon A/B
+   - the crowd spike: 300 animated stand-ins, rotating ortho camera, profiled **on the Steam Deck** for Forward+ vs. Mobile, Linux vs. Proton, and with and without far-zoom icons
 4. **Track B: input layer and keymap,** plus the new sim verbs. The keymap is renderer-agnostic, so it lands in the 2D build first.
 5. **P1: 3D greybox parity.**
    - Primitive stand-ins sized from sim footprints.

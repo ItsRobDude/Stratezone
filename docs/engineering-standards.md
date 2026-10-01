@@ -235,7 +235,7 @@ Current validation commands:
 
 - `python tools/validate_content.py`
 - `dotnet build game/Stratezone.csproj`
-- `%LOCALAPPDATA%/Microsoft/WinGet/Packages/GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.6.2-stable_mono_win64/Godot_v4.6.2-stable_mono_win64_console.exe --headless --path game --quit`
+- `%LOCALAPPDATA%/Microsoft/WinGet/Packages/GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7-stable_mono_win64/Godot_v4.7-stable_mono_win64_console.exe --headless --path game --quit`
 
 `tools/validate_content.py` also validates the first-pass English localization catalog under `game/data/i18n/en.json`.
 

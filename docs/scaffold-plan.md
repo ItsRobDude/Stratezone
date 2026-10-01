@@ -114,7 +114,7 @@ Current validation command:
 
 - `python tools/validate_content.py`
 
-Godot .NET 4.6.2 and .NET SDK 8 are the current local tool targets. If `godot` is not on PATH in the current shell, use the installed Godot console executable directly from the WinGet package folder.
+Godot .NET 4.7 and .NET SDK 8 are the current local tool targets. If `godot` is not on PATH in the current shell, use the installed Godot console executable directly from the WinGet package folder.
 
 Open/compile validation should use:
 

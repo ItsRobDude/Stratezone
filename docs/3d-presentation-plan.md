@@ -83,7 +83,7 @@ The durable rule does not change: *RimWorld for colony stakes, Dominion/C&C-styl
 - **Scale:** 1 content unit = 24 px.
   - Level 1 is about 102×61 units.
   - Level 2 is about 142×92 units.
-- **Renderer:** Godot 4.6.2 .NET, Forward+.
+- **Renderer:** Godot 4.7 .NET, Forward+.
 
 ## Track A: Footprints And Pathfinding
 

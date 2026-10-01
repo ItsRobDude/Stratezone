@@ -215,6 +215,8 @@ Individual checks:
 
 Always launch Godot through `tools/godot.ps1`. It resolves the Godot .NET build that matches the `Godot.NET.Sdk` pin in `game/Stratezone.csproj` and fails when the log shows engine or C# errors, because a wrong Godot build can exit 0 without loading any C#.
 
+3D binaries (`.blend`, `.fbx`, `.glb`, `.exr`, and similar) go through Git LFS, with Blender sources under `art/` and only runtime exports under `game/assets/`. Do not download LFS art you do not need: no LFS checkout in CI, and `GIT_LFS_SKIP_SMUDGE=1` for cloud sessions that only touch code or data. See `docs/engineering-standards.md` "Large Files (Git LFS)".
+
 Git hooks live in `.githooks/`; enable them once per clone with `git config core.hooksPath .githooks`. pre-commit runs the content and drift checks when data or docs are staged and blocks local agent state; pre-push runs the build and simulation smoke. Do not bypass them with `--no-verify`.
 
 Every closeout should also report:

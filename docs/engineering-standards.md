@@ -249,8 +249,26 @@ Do not call a Godot executable directly. `tools/godot.ps1` resolves the Godot .N
 
 Git hooks in `.githooks/` (enable with `git config core.hooksPath .githooks`):
 
-- pre-commit: blocks local agent state (`.claude/worktrees/`, `.claude/settings.local.json`, nested repository gitlinks); runs content validation and the drift check when `game/data/`, `docs/`, `AGENTS.md`, or the validators are staged; warns on hand-written `.cs` files over 900 lines and on large `.uid`/`.import` churn mixed into code commits.
-- pre-push: runs the Godot C# build and simulation smoke unless every pushed change is Markdown.
+- pre-commit: blocks local agent state (`.claude/worktrees/`, `.claude/settings.local.json`, nested repository gitlinks); runs content validation and the drift check when `game/data/`, `docs/`, `AGENTS.md`, or the validators are staged; blocks staged files over 50 MB outside Git LFS and warns over 5 MB; warns on hand-written `.cs` files over 900 lines and on large `.uid`/`.import` churn mixed into code commits.
+- pre-push: runs the Godot C# build and simulation smoke unless every pushed change is Markdown. It then runs `git lfs pre-push` to upload LFS files, because `core.hooksPath` replaces the hook `git lfs install` would add.
+
+## Large Files (Git LFS)
+
+3D source and export binaries go through Git LFS (rules in `.gitattributes`): `*.blend`, `*.fbx`, `*.glb`, `*.exr`, `*.hdr`, `*.psd`, `*.kra`, and PNGs under `game/assets/terrain/`. Existing 2D sprite PNGs stay in plain git; they retire with the 2D presentation.
+
+Layout:
+
+- Blender, Mixamo FBX, and texture source files live under `art/` at the repo root, outside the Godot project, so Godot never tries to import `.blend` files.
+- Only runtime exports (GLBs, terrain outputs) go under `game/assets/`.
+- Blender backup files (`*.blend1`, `*.blend@`) are ignored.
+
+GitHub Free includes 10 GiB of LFS storage and 10 GiB of LFS download per month; going over blocks LFS until the next month. Bandwidth rules:
+
+- `.lfsconfig` (committed) sets `fetchexclude` for authoring sources (`*.blend`, `*.fbx`, `*.psd`, `*.kra`). Fresh clones, worktrees, CI, and cloud agent sessions get pointer files for those and download only runtime exports. Pull a source on demand with `git lfs pull --include="*.blend" --exclude=""`.
+- The art machine overrides that once in `.git/config` with `git config lfs.fetchexclude ""`, so its worktrees get real `.blend` files from the shared local LFS store without downloading.
+- CI jobs that only validate data or simulation must not enable LFS checkout (`actions/checkout` defaults to `lfs: false`). Cloud agent sessions that do not need art should clone with `GIT_LFS_SKIP_SMUDGE=1`.
+- Keep GitHub's "Include Git LFS objects in archives" repository setting off, so source zip downloads do not spend LFS bandwidth.
+- Storage counts every committed version and is not reclaimed by later deletes. Commit `.blend` files at meaningful milestones, not on every save.
 
 Later validation should add:
 

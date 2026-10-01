@@ -11,6 +11,11 @@ builds/
 exports/
 artifacts/
 
+# Blender backup and autosave files
+*.blend[0-9]
+*.blend[0-9][0-9]
+*.blend@
+
 # Logs and temporary files
 *.log
 *.tmp

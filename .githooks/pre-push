@@ -1,6 +1,13 @@
 #!/bin/sh
-# Stratezone pre-push hook. Logic lives in tools/git_hooks/pre_push.py.
+# Stratezone pre-push hook: build/smoke checks (tools/git_hooks/pre_push.py), then the
+# Git LFS upload that `git lfs install` would add if core.hooksPath did not replace it.
 # Enable once per clone: git config core.hooksPath .githooks
 root=$(git rev-parse --show-toplevel) || exit 1
 if command -v python >/dev/null 2>&1; then py=python; else py=python3; fi
-exec "$py" "$root/tools/git_hooks/pre_push.py" "$@"
+refs=$(cat)
+printf '%s\n' "$refs" | "$py" "$root/tools/git_hooks/pre_push.py" "$@" || exit $?
+command -v git-lfs >/dev/null 2>&1 || {
+    echo >&2 "pre-push: git-lfs is not installed, so LFS files cannot be uploaded. Install Git LFS and retry."
+    exit 2
+}
+printf '%s\n' "$refs" | git lfs pre-push "$@"

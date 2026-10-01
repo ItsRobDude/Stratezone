@@ -32,6 +32,10 @@ VALIDATORS = (
 LINE_REVIEW_TRIGGER = 900
 IMPORT_CHURN_THRESHOLD = 20
 GITLINK_MODE = "160000"
+# Staged blob sizes. LFS-tracked files stage as ~130-byte pointers, so only files
+# outside the .gitattributes LFS rules can trip these.
+LARGE_BLOB_WARNING = 5 * 1024 * 1024
+LARGE_BLOB_BLOCK = 50 * 1024 * 1024
 
 
 def git(*args: str) -> str:
@@ -39,17 +43,35 @@ def git(*args: str) -> str:
     return result.stdout.decode("utf-8", errors="replace")
 
 
-def staged_entries() -> list[tuple[str, str]]:
-    """(new_mode, path) for every added, copied, modified, or type-changed path."""
-    raw = git("diff", "--cached", "--raw", "-z", "--no-renames", "--diff-filter=ACMT")
+def staged_entries() -> list[tuple[str, str, str]]:
+    """(new_mode, new_blob, path) for every added, copied, modified, or type-changed path."""
+    raw = git("diff", "--cached", "--raw", "--no-abbrev", "-z", "--no-renames", "--diff-filter=ACMT")
     parts = raw.split("\0")
-    entries: list[tuple[str, str]] = []
+    entries: list[tuple[str, str, str]] = []
     for meta, path in zip(parts[0::2], parts[1::2]):
         if not meta.startswith(":"):
             break
-        new_mode = meta[1:].split()[1]
-        entries.append((new_mode, path))
+        fields = meta[1:].split()
+        entries.append((fields[1], fields[3], path))
     return entries
+
+
+def blob_sizes(blobs: list[str]) -> dict[str, int]:
+    if not blobs:
+        return {}
+    result = subprocess.run(
+        ["git", "cat-file", "--batch-check=%(objectname) %(objectsize)"],
+        cwd=ROOT,
+        input="\n".join(blobs).encode("ascii"),
+        capture_output=True,
+        check=True,
+    )
+    sizes: dict[str, int] = {}
+    for line in result.stdout.decode("ascii", errors="replace").splitlines():
+        name, _, size = line.partition(" ")
+        if size.isdigit():
+            sizes[name] = int(size)
+    return sizes
 
 
 def run_validator(args: list[str]) -> tuple[bool, str]:
@@ -68,15 +90,26 @@ def line_count(path: Path) -> int:
 
 def main() -> int:
     entries = staged_entries()
-    paths = [path for _, path in entries]
+    paths = [path for _, _, path in entries]
     errors: list[str] = []
     warnings: list[str] = []
 
-    for mode, path in entries:
+    for mode, _, path in entries:
         if path in BLOCKED_PATHS or path.startswith(BLOCKED_PREFIXES):
             errors.append(f"{path}: local agent state must not be committed (see .gitignore).")
         elif mode == GITLINK_MODE:
             errors.append(f"{path}: nested repository or worktree gitlink; unstage it with `git rm --cached {path}`.")
+
+    sizes = blob_sizes([blob for mode, blob, _ in entries if mode != GITLINK_MODE])
+    for mode, blob, path in entries:
+        size = sizes.get(blob, 0)
+        megabytes = size / (1024 * 1024)
+        if size > LARGE_BLOB_BLOCK:
+            errors.append(
+                f"{path} is {megabytes:.1f} MB outside Git LFS; add an LFS rule in .gitattributes or keep it out of git."
+            )
+        elif size > LARGE_BLOB_WARNING:
+            warnings.append(f"{path} is {megabytes:.1f} MB outside Git LFS; should it be an LFS file?")
 
     if any(path.startswith(VALIDATE_TRIGGERS) for path in paths):
         for validator in VALIDATORS:

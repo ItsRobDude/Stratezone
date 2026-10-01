@@ -1,0 +1,7 @@
+# Git LFS fetch policy (committed). Authoring sources are not downloaded by fresh
+# clones, worktrees, CI, or cloud agent sessions; runtime exports (.glb, .exr, terrain
+# textures) still are, so the game runs. Art machines override this in .git/config:
+#   git config lfs.fetchexclude ""
+# Pull sources on demand: git lfs pull --include="*.blend" --exclude=""
+[lfs]
+	fetchexclude = *.blend,*.fbx,*.psd,*.kra

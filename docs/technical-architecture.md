@@ -268,6 +268,7 @@ Early requirements:
 
 - freeform-feeling placement using shape-accurate building footprints (real outline plus a small buffer)
 - passability checks
+- a deterministic ground height field built from authored hill/ridge/plateau/depression shapes (Track D of `docs/3d-presentation-plan.md`). It drives slope blocking, near-flat building placement, and height-scaled weapon range and exploration sight.
 - adjacency checks for physical Barracks add-ons such as Vehicle Bay
 - resource-well positions
 - base start area
@@ -473,7 +474,7 @@ Controls follow real-RTS conventions. The full keymap is in `docs/3d-presentatio
 - **Developer hotkeys** live behind `Ctrl+Shift` in dev builds only.
 - **Bindings:** every binding is a named Godot input action defined in one keymap. Button labels read from it, which enables rebinding and a Steam Input layout for the Steam Deck.
 
-In 3D, picking goes through one screen-to-world seam: a mouse ray to the flat ground plane, plus screen-space tests for units and footprints. Views don't poll the mouse individually.
+In 3D, picking goes through one screen-to-world seam: a mouse ray marched against the sim's ground height field, plus screen-space tests for units and footprints. Views don't poll the mouse individually. Presentation reads ground height only through `GroundHeightAt`, which calls the sim.
 
 Use Godot UI for HUD and panels unless a later architecture change justifies a different layer. The HUD stays a `CanvasLayer` over the 3D viewport. Health bars and world labels draw in one screen-space overlay pass.
 

@@ -70,6 +70,12 @@ The first prototype stack is locked as Godot 4 with C#.
   - the Steam Deck as the performance floor
   - Plan and order of work: `docs/3d-presentation-plan.md`.
 - Building footprints follow each building's real outline plus a small buffer. Buildings are physical walls that players and enemies can use to wall off routes, or trap themselves with.
+- Playable elevation uses smooth hills authored in map data (decided 2026-09-30, debuting in Level 2):
+  - Slopes that are too steep are impassable.
+  - Height difference scales weapon range and exploration sight both ways, with a hard block for big climbs.
+  - There is no uphill damage penalty.
+  - Crest cover (hills blocking shots) is deferred.
+  - Details: Track D of `docs/3d-presentation-plan.md`.
 - Controls follow real-RTS conventions:
   - a grid command card
   - number-row control groups
@@ -522,3 +528,5 @@ These are not first-prototype commitments:
 - Exact Level 4 and Level 5 encounter layouts and failure-condition details.
 - Whether Steam starts with the public five-level demo, a separate playtest branch, or a later Early Access candidate.
 - Whether the first paid release targets itch.io first, Steam first, or both after the demo proves itself.
+- Exact elevation numbers after Level 2 playtests: range/sight scaling per meter, the clamps, the hard-block height, and the maximum walkable slope. Also whether crest cover (hill crests blocking shots) is worth adding.
+- Whether the optional Gaea terrain dressing pass becomes the standard for map shorelines, cliffs, and borders after a side-by-side trial on Wells at the Ridge in P2.

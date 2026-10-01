@@ -429,6 +429,36 @@ Acceptance checks:
 - an enemy in explored terrain remains visible after the scout leaves
 - an enemy in never-explored black fog is hidden
 
+## Elevation
+
+Decided 2026-09-30, debuting in Level 2. This section records the planned contract; the implementation plan is Track D of `docs/3d-presentation-plan.md`.
+
+Owns:
+
+- the ground height field built from authored map shapes (hill, ridge, plateau, depression) and water levels
+- slope passability
+- height-scaled weapon range and exploration sight
+
+Planned behavior:
+
+- **Height is simulation truth.** Terrain art (including any Gaea dressing) follows the height field and never defines it.
+- **Slope passability:** cells steeper than the maximum walkable slope block movement (starting proposal 30°). There are no slope speed modifiers.
+- **Placement:** buildings need near-flat ground under their footprint (starting proposal: at most 8°).
+- **Weapon range** scales with height difference Δh (shooter minus target, in meters). Starting proposal:
+  - effective range = base × (1 + 0.06 × Δh), clamped to 0.6×–1.25×
+  - a target more than 6 m above the shooter can only be hit from within 2 m horizontally
+  - This applies to units and armed towers. There is no uphill damage penalty.
+- **Exploration sight** scales the same way per fog cell. Cells more than 6 m above the viewer reveal only within 2 m. So plateau tops stay unexplored, and enemies there stay hidden, until scouted.
+- **Hill crests do not block shots yet.** Crest cover is a possible upgrade after Level 2 playtests.
+- **Tunables** live in content data (`elevation_rules`), not code constants.
+
+Acceptance checks (when implemented):
+
+- effective range and sight match the formula at sample height differences, including both clamps and the hard block
+- paths climb gentle slopes and route around steep faces
+- an unexplored plateau top stays unrevealed from below until a unit climbs or gets within the close-reveal distance
+- maps without hill shapes behave exactly as before
+
 ## Mission Objective System
 
 Owns:

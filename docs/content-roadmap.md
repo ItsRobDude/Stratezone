@@ -241,7 +241,11 @@ Purpose: create hard blockers, natural base edges, and attack lanes.
 Recommendation:
 
 - Use cliffs/ridges early as simple impassable regions.
-- Do not add height bonuses yet.
+- Playable elevation arrives in Level 2 as smooth hills authored in map data (decided 2026-09-30, Track D of `docs/3d-presentation-plan.md`):
+  - Slopes too steep to climb block movement.
+  - Height difference scales weapon range and exploration sight both ways: high ground reaches and sees farther, and big climbs block shots until the shooter is close.
+  - Hill crests do not block shots yet.
+- Use ridges as lookout posts and defensive high ground over lanes, bridges, and wells.
 - Use them to frame readable base spaces, wells, and tower-wall chokepoints.
 
 ### Water and Marsh

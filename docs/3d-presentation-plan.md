@@ -6,6 +6,7 @@ Rob has decided to move presentation to 3D, with custom characters and real anim
 - **Track A:** fix building footprints and pathfinding. This is needed regardless of 3D.
 - **Track B:** overhaul controls and hotkeys to real-RTS conventions.
 - **Track C:** the 3D presentation itself.
+- **Track D:** playable elevation (smooth hills that scale weapon range and sight), debuting in Level 2.
 
 The pivot-rule docs pass is done (2026-09-30): `AGENTS.md`, `README.md`, `docs/technical-architecture.md`, `docs/scaffold-plan.md`, and the related lines in the other docs now describe the 3D direction.
 
@@ -25,14 +26,31 @@ What the assets should look like, and how armored characters are rigged and anim
 - **New unit commands:** Stop, Hold Position, Attack-move, and Shift-queued orders.
   - Rally points are not wanted for now.
   - Patrol may come later.
+- **Playable elevation: smooth hills** (Company of Heroes / Total Annihilation style), not discrete cliff levels. See Track D.
+  - Units walk anywhere that isn't too steep.
+  - **Height difference scales weapon range both ways.**
+    - Shooting downhill reaches farther and shooting uphill reaches shorter, scaled by the height difference.
+    - Past a big climb, targets above can't be hit until the shooter is almost on top of them.
+  - **Height difference scales sight (exploration) the same way.**
+    - Ridges reveal farther.
+    - Looking uphill reveals less, so plateau tops stay unexplored, and enemies up there stay hidden, until scouted.
+  - There is no uphill damage penalty; range carries the rule.
+  - **Hill crests blocking shots (line-of-fire cover) is deferred** as a possible upgrade if Level 2 playtests ask for it.
+  - **Debuts in Level 2** (Wells at the Ridge).
 
 ## Open Decisions
 
-None blocking. Values to tune during implementation:
+Values to tune during implementation:
 - footprint buffer size
 - unit `collision_radius`
 - zoom range
 - hero scale
+- elevation numbers (maximum walkable slope, range/sight scaling, hard-block height; starting proposals in Track D)
+
+Deferred on purpose (possible upgrade after Level 2 playtests):
+- **Crest cover:** hill crests blocking shots between shooter and target.
+  - It is cheap to compute at our short ranges (a few height-grid samples per shot).
+  - The real cost is unit behavior: repositioning until a clear shot exists. It also needs a player-facing "no line of fire" cue.
 
 ## Goal
 
@@ -301,15 +319,15 @@ The grid layout is what makes this mapping clean.
   - The focus point is clamped to `playable_bounds`.
 - **Minimap:** moves earlier than "later", because rotation makes orientation loss real. It shows a rotated view trapezoid and supports click-to-pan.
 
-### Flat gameplay ground
+### Gameplay ground height
 
-- Every passable surface is at y = 0, including bridge decks.
-- Visual terrain drops below it (water, banks) or rises above it only inside blocked regions (cliffs, rocks, forest floor).
-- This means:
-  - Units need no height sampling.
-  - Picking is one ray-to-plane test.
-  - Rings, ghosts, and decals stay flat.
-  - It matches "no height bonuses yet".
+- **The sim owns ground height** (Track D). Walkable ground is a smooth height field; maps without hills are simply height 0 everywhere.
+- **One seam, `GroundHeightAt(simPoint)`.** Presentation reads height only through it, and it calls the sim's height field. The sim and the visuals can't disagree, and no presentation code assumes y = 0.
+- **Picking:** the mouse ray marches against the height grid (cheap at our map sizes) instead of intersecting one plane.
+- **Units and buildings** sit at the sampled height. Units tilt slightly to the slope for vehicles only; infantry stay upright.
+- **Selection rings, the placement ghost, and footprint outlines conform to the terrain:** flat quads offset and tilted by the surface normal, or Godot `Decal`s where a quad would visibly float.
+- **Visual terrain may add fine detail** on walkable ground only within a small tolerance of the gameplay height (Gaea section). It may rise or drop freely inside blocked regions and under water.
+- **Bridge decks** are authored at the height of the banks they connect.
 
 ### Presentation architecture
 
@@ -348,6 +366,85 @@ The grid layout is what makes this mapping clean.
   - `UnitRenderSnapshot` exposes explicit activity (moving, attacking, fleeing, working/repairing), replacing the delta and timer guessing.
   - A unit-killed event carries position, facing, and cause (shot or crushed), for death clips on short-lived corpses.
   - `CameraZoom` leaves the sim snapshots.
+
+## Track D: Elevation (Smooth Hills)
+
+Decided 2026-09-30:
+- smooth hills, walkable wherever the slope isn't too steep
+- height difference scales weapon range and sight both ways
+- a hard block for big climbs
+- no uphill damage penalty
+- crest cover deferred
+- debuts in Level 2
+
+**Height is gameplay truth, so it lives in map data and the sim, not in art.** "Terrain art never becomes gameplay truth" still holds: the 3D terrain and any Gaea dressing follow the sim's height field.
+
+- **D1. Height field in the sim.**
+  - A Godot-free `HeightField` is built at mission load from map data.
+  - The grid is 1 content unit (1 m, 24 px) per cell with bilinear sampling. Heights are in content units, and the grid is deterministic.
+  - It exposes `GroundHeightAt(SimVector2)` and `SlopeAt(SimVector2)` on `RtsSimulation`.
+  - It is rebuilt on map load and on F5 editor edits only.
+  - Maps without hill shapes are height 0 everywhere, so Level 1 is unaffected.
+- **D2. Authoring in map data and the F5 editor.**
+  - New terrain-shape entries in `maps.json`:
+    - `hill`: center, x/y radii, peak height, falloff
+    - `ridge`: polyline, width, crest height, falloff
+    - `plateau`: polygon, top height, edge slope width
+    - `depression`: negative height
+  - Positive shapes combine by maximum; depressions then cut below it.
+  - Water regions get a `water_level` (default 0). The shoreline is where the height field meets it.
+  - The F5 editor creates, moves, and resizes these like regions.
+  - The 2D greybox view and the editor draw **contour lines plus slope-blocked cells**, so elevation is visible and playable in 2D before 3D exists.
+  - The schema goes into `docs/content-data-spec.md` when implemented.
+- **D3. Slopes and pathing.**
+  - Cells steeper than the maximum walkable slope become blockers in Track A's cached nav grid. This is just one more obstacle source.
+  - Start with one threshold for everyone (proposal 30°). Separate vehicle thresholds only if playtests ask.
+  - **No slope speed modifiers** (not requested).
+  - **Building placement** requires near-flat ground under the footprint (proposal: at most 8°). A building sits at its footprint's average height, with a visual foundation plinth hiding small gaps.
+- **D4. Height scales weapon range, both ways.** These are deterministic multipliers with no randomness. Tunables live in a content data block (`elevation_rules`).
+  - **Height difference:** Δh = shooter ground height − target ground height, in meters. Buildings use their base height.
+  - **Effective range** = base range × (1 + 0.06 × Δh), clamped to 0.6×–1.25×. That's +6% per meter downhill and −6% per meter uphill (proposal).
+    - Example: a Rifleman's 6 m range becomes 7.4 m shooting from 4 m up, and 4.6 m shooting 4 m uphill.
+  - **Hard block (proposal):** a target more than 6 m above the shooter can only be hit from within 2 m horizontally. This is the "you can't shoot up a cliff" case.
+  - **Scope:** it applies to units and armed towers alike, so a Gun Tower on a hill really does outrange attackers below, and attackers must close in to hit it.
+  - **No uphill damage penalty.** Range carries the rule.
+  - **Where it applies:** auto-targeting, attack approach points, and chase logic all use effective range. Attackers climbing toward a target naturally close the distance.
+  - **Enemy AI** gets the rule automatically but does not seek high ground yet. Authored AI markers can place defenders on hills.
+  - **Readability:**
+    - The selected unit's range ring is drawn as the *effective* boundary over the terrain: it bulges downhill, pulls in uphill, and collapses at cliffs.
+    - The boundary is found by sampling directions against the height field.
+    - Any new player-facing text goes through localization.
+- **D5. Height scales sight for exploration, the same way.**
+  - Fog reveal uses a per-cell effective sight radius: base sight × (1 + 0.06 × (viewer height − cell height)), clamped to 0.6×–1.25×.
+  - Cells more than 6 m above the viewer are revealed only within 2 m.
+  - **Effects:**
+    - Ridges become lookout posts, which is good for Wells at the Ridge's unproven flank-lane scouting.
+    - Plateau tops stay unexplored until someone climbs or scouts them.
+  - **This works with the existing fog rule, not against it.** Enemies are visible in real time only inside explored ground and can slip back into unexplored fog to hide. An unexplored plateau top stays black, and enemies up there stay hidden, until it's revealed.
+  - The cost is small: each viewer checks only the cells within 1.25× its sight radius against the height grid, and only when it moves.
+- **D6. Level 2 debut.**
+  - Rework Wells at the Ridge with a ridge that matters, for example a lookout ridge over a bridge approach or a flank well on a rise.
+  - Use gentle climbable slopes and steep blocked faces.
+  - Do it together with the mockup-review data fixes (base clearings, bridge width, flank wells).
+  - Level 1 stays flat.
+- **D7. Tests** in `tests/SimulationSmoke`:
+  - Height sampling is deterministic.
+  - Steep faces produce slope-blocked cells.
+  - Paths climb a gentle slope and route around a steep face.
+  - Effective range matches the formula at sample Δh values, including both clamps.
+  - The hard block holds beyond 6 m up and releases within 2 m.
+  - Sight reveals farther downhill and less uphill.
+  - An unexplored plateau top stays unrevealed from below until a unit climbs.
+  - Building placement is rejected on steep ground.
+  - Hill shapes survive an F5 editor save/load round trip.
+
+**Presentation side.** This lands with P1 (the picking seam, conforming rings and ghost) and P2 (the terrain mesh from the height field). See "Gameplay ground height" in Track C.
+- **Visibility.** With a 45° camera and a maximum walkable slope below 45°, **a unit standing on walkable ground can never be hidden by the hill it's on.** Only faces steeper than 45° (blocked cliffs) and props (trees) can occlude. So keep steep faces short or away from lanes.
+- **Reading height through an orthographic camera.** Orthographic projection flattens depth cues, so hills must read through:
+  - lighting and shadows
+  - slope-based texturing (rock on steep faces, grass on gentle ones)
+  - possibly a subtle elevation tint
+- Put a test hill in the P0 scale lineup to check this at Deck size.
 
 ## Asset Pipeline
 
@@ -435,6 +532,40 @@ The grid layout is what makes this mapping clean.
 - **Props:** CC0 low-poly trees and rocks, restyled to one palette.
 - **Level 1** needs its first terrain regions authored.
 - This closes the "editor can't show the vibe" gap: regions drawn in the F5 editor become real terrain in 3D.
+- **Water look:** color comes from water depth (shallow turquoise to deep blue, as in the mockup), with foam where the water surface meets the bank. The shape of the bed is what sells it, which is where Gaea helps (next section).
+
+### Optional Gaea dressing pass (P2)
+
+Rob owns a QuadSpinner Gaea Professional license, currently installed on his other machine.
+
+- **What Gaea is for:** making the *non-playable* terrain look like the mockup:
+  - shorelines and lake beds
+  - cliffs, rock outcrops, and ridges inside blocked regions
+  - the map border skirt
+  - natural texture-blend masks (erosion flow, deposits, slope rock, wet banks)
+- **What Gaea is not for:** it never authors map layout or playable ground. `maps.json` stays the only gameplay truth.
+- **Round trip:**
+  1. **Mask export (script in `tools/`).**
+     - Rasterize one map's regions from `maps.json` into grayscale PNG masks over playable bounds plus the skirt, at a fixed meters-per-pixel. Masks: water, blocked/cliff, forest, walkable, lanes/roads, resource basins.
+     - Also export the sim's **gameplay height field** (Track D) as a 32-bit EXR.
+  2. **Gaea template graph (built once by Rob).**
+     - File nodes read the masks and the gameplay height field.
+     - Cliffs and rocks appear only inside blocked masks, and lake and river beds are carved only inside water masks.
+     - Walkable ground follows the gameplay height field. Gaea adds only fine detail there (erosion streaks, small bumps) within ±0.25 m.
+     - **Hills and ridges themselves are authored in map data (Track D2), never in Gaea.** Gaea dresses them.
+     - Outputs: a 16/32-bit heightmap plus splat masks (rock, dirt/deposits, sand/wet bank, grass) and a shoreline mask for foam and scatter density.
+  3. **Scripted builds.** The Professional edition's command-line automation (variables plus batch builds) rebuilds the template per map. This needs Gaea installed on the machine running the script.
+  4. **`TerrainBuilder` uses Gaea output when present.**
+     - It uses the heightmap for cliffs, beds, and the skirt, and the masks for splat blending and prop scatter density (boulders, reeds, lily pads along shorelines).
+     - Without Gaea output it falls back to the procedural-from-regions terrain, so the game never depends on Gaea being available.
+  5. **Validation (automated, fails the build):**
+     - Every walkable cell's visual height is within ±0.25 m of the gameplay height field.
+     - Every water-region cell is below that region's `water_level`.
+     - **The waterline is the water region's edge in map data.** Bank slopes happen only below it, so land stays walkable, at its gameplay height, right up to where gameplay says water begins.
+- **Outputs are committed per map** as derived art assets under `game/assets/terrain/<map_id>/`. When a map's layout changes, re-export the masks and re-run the graph. A stale output fails validation instead of silently lying.
+- **When to adopt:** build the procedural terrain first. Then do one Gaea pass on Wells at the Ridge (shorelines, top and bottom cliffs, border) and compare side by side at the gameplay camera. Adopt it as the standard dressing pass only if it clearly wins.
+- **Mountains beside roads:** visual-only cliffs next to a lane are fine. Keep the tallest mass back from the lane edge, because the rotating 45° camera can hide units behind it. Walkable hills and ridges that troops can stand on are gameplay terrain from Track D. Gaea only dresses them.
+- **License:** Professional is Gaea's commercial tier. Skim the EULA once before shipping Gaea-derived output, and record Gaea in the asset provenance notes.
 
 ### Budgets (set by the Steam Deck)
 
@@ -498,7 +629,8 @@ Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules
 ## Order Of Work
 
 1. **Docs lock pass.** Update AGENTS, README, technical-architecture, and scaffold-plan (plus the other lines listed below) to the locked decisions.
-2. **Track A: footprints and pathing.** Start with A0 (fixed-rate simulation and render interpolation), then footprints, the nav grid, and group paths. Sim plus tests; the 2D view keeps working.
+2. **Track A: footprints and pathing.** Start with A0 (fixed-rate simulation and render interpolation), then footprints, the nav grid, and group paths. Sim plus tests; the 2D view keeps working. The nav grid is built to accept slope blockers from Track D.
+   - **Track D sim side (D1–D5, D7)** follows right after: the height field, hill authoring in the F5 editor, slope blocking, height-scaled range and sight, and 2D contour drawing. It's testable in the 2D build before 3D exists.
 3. **P0 spikes** (can run alongside step 2):
    - the scale lineup, including the far-zoom strategic-icon A/B
    - the crowd spike: 300 animated stand-ins, rotating ortho camera, profiled **on the Steam Deck** for Forward+ vs. Mobile, Linux vs. Proton, and with and without far-zoom icons
@@ -508,7 +640,7 @@ Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules
    - Camera, picking seam, fog, overlays, rings, walls, ghost, minimap.
    - A 2D/3D toggle.
    - **Exit:** Levels 1 and 2 are playable end to end in 3D.
-6. **P2: terrain generator,** Level 1 regions, and the Level 2 data fixes.
+6. **P2: terrain generator** (the terrain mesh from the height field), Level 1 regions, the Level 2 data fixes, and **Level 2's elevation debut** (D6). Then the optional Gaea dressing pass, trialed on Wells at the Ridge.
 7. **P3: characters.**
    - The base body and rig first, then the Rifleman end to end.
    - Then Cadet, Grunt, Commander, Guardian.
@@ -545,10 +677,12 @@ Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules
   - `docs/technical-architecture.md` lines 66, 254, 531
   - `docs/system-contracts.md` lines 70, 80
   - `docs/product-roadmap.md` lines 168, 493
-- **`docs/system-contracts.md`**: pathing, placement, spawn/exit point, unit radius, range-to-outline, AI wall handling, and new unit-verb contracts (Tracks A and B).
+- **`docs/system-contracts.md`**: pathing, placement, spawn/exit point, unit radius, range-to-outline, AI wall handling, and new unit-verb contracts (Tracks A and B). Also elevation: slope blocking, height-scaled range and sight, the hard block (Track D).
+- **`docs/content-roadmap.md`**: the Cliffs and Ridges terrain grammar ("Do not add height bonuses yet" is superseded by Track D).
 - **`docs/content-data-spec.md`**
   - Footprint shape (polygons and circles)
   - `exit_point` and `collision_radius`
+  - Hill/ridge/plateau/depression shapes, `water_level`, and `elevation_rules`
   - `placement_buffer` meaning (217, 300)
   - The stale bridge example (437–438)
   - `decor`, only if added
@@ -569,6 +703,9 @@ Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules
 - **Occlusion from rotation.** Handled by terrain-generator placement rules first.
 - **Crowd performance on the Deck.** Front-loaded as the P0 spike, with VAT as the known fallback. Godot's CPU animation cost makes VAT a realistic outcome for large battles on the Deck.
 - **Mixamo is no longer actively updated by Adobe** *(indirect report)*. Download the full clip list early, in batched sessions, and keep the source FBX files archived outside the repo.
+- **Elevation readability and tuning.**
+  - Height-scaled range and sight only work if players can read which ground is higher through an orthographic camera. Guard this with the effective range ring, slope-based texturing, lighting, and a test hill in the P0 lineup.
+  - The numbers (6% per meter, the 0.6–1.25 clamps, the 6 m hard block, the 30° walkable slope) are starting proposals for Level 2 playtests.
 - **Behavior changes from Track A.** Small buffers, building walls, per-unit radius, and separation change how bases pack and how fights flow.
   - Re-run the Level 1 and Level 2 playtest checks after Track A.
   - Check that authored missions don't start with the player or enemy already walled in.

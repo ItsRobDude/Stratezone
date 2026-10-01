@@ -62,6 +62,12 @@ Current locked vision choices:
   - Animation mixes selected Mixamo clips with custom clips.
   - AI-assisted concept art remains acceptable as design reference.
 - The Steam Deck is the weakest target and sets the performance floor. The development desktops are not a constraint.
+- Playable elevation uses smooth hills authored in map data, debuting in Level 2.
+  - Slopes too steep to climb are impassable.
+  - Height difference scales weapon range and exploration sight both ways, with a hard block for big climbs.
+  - There is no uphill damage penalty.
+  - Hill crests do not block shots for now.
+  - Height is gameplay truth in the sim. Terrain art and Gaea dressing follow it.
 - Building footprints follow each building's real outline plus a small buffer, not generic circles or squares. Buildings are physical walls: players and the enemy can wall off routes with buildings or trap themselves with a bad layout.
 - Controls follow real-RTS conventions:
   - a grid command card (`Q W E R T` / `A S D F G` / `Z X C V B` by button position)

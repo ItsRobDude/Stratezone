@@ -196,7 +196,28 @@ Keep docs concrete. Prefer player verbs, systems, constraints, and examples over
 
 ## Validation
 
-Before calling implementation work done, run the relevant project checks once they exist. Until tooling exists, at minimum report:
+Before calling implementation work done, run the full local stack from the repo root:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File plugins/stratezone-mission-steward/scripts/validate_stratezone.ps1
+```
+
+It runs content validation, the Godot C# build, simulation smoke, the content drift check, and a headless Godot smoke. Pass `-SkipGodot` only for docs- or data-only work, and say so in the closeout.
+
+Individual checks:
+
+- `python tools/validate_content.py`: content schema, references, and i18n.
+- `python plugins/stratezone-mission-steward/scripts/check_content_drift.py`: locked design rules for every mission.
+- `python plugins/stratezone-mission-steward/scripts/mission_truth_report.py [--mission <id>]`: what each mission actually offers.
+- `dotnet build game/Stratezone.csproj`
+- `dotnet run --project tests/SimulationSmoke/SimulationSmoke.csproj`
+- `pwsh -NoProfile -File tools/godot.ps1 -Smoke`: headless engine smoke. `-Which` prints the resolved build, `-Import` runs an editor import pass, and any other arguments launch the game.
+
+Always launch Godot through `tools/godot.ps1`. It resolves the Godot .NET build that matches the `Godot.NET.Sdk` pin in `game/Stratezone.csproj` and fails when the log shows engine or C# errors, because a wrong Godot build can exit 0 without loading any C#.
+
+Git hooks live in `.githooks/`; enable them once per clone with `git config core.hooksPath .githooks`. pre-commit runs the content and drift checks when data or docs are staged and blocks local agent state; pre-push runs the build and simulation smoke. Do not bypass them with `--no-verify`.
+
+Every closeout should also report:
 
 - What files changed.
 - Whether the change is docs-only or implementation.

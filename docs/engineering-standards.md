@@ -231,15 +231,26 @@ Visual polish and scene wiring can use lighter smoke checks at first, but simula
 
 ## Validation Contract
 
-Current validation commands:
+Full stack, from the repo root:
+
+- `powershell -NoProfile -ExecutionPolicy Bypass -File plugins/stratezone-mission-steward/scripts/validate_stratezone.ps1` (add `-SkipGodot` for docs- or data-only work)
+
+Current validation commands it runs:
 
 - `python tools/validate_content.py`
 - `dotnet build game/Stratezone.csproj`
-- `%LOCALAPPDATA%/Microsoft/WinGet/Packages/GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7-stable_mono_win64/Godot_v4.7-stable_mono_win64_console.exe --headless --path game --quit`
+- `dotnet run --project tests/SimulationSmoke/SimulationSmoke.csproj`
+- `python plugins/stratezone-mission-steward/scripts/check_content_drift.py`
+- `pwsh -NoProfile -File tools/godot.ps1 -Smoke`
 
 `tools/validate_content.py` also validates the first-pass English localization catalog under `game/data/i18n/en.json`.
 
-In a fresh shell, `godot --headless --path game --quit` may work if the WinGet command alias is active. If not, use the explicit Godot console path above.
+Do not call a Godot executable directly. `tools/godot.ps1` resolves the Godot .NET build matching the `Godot.NET.Sdk` pin in `game/Stratezone.csproj` (`GODOT_EXE` overrides it, but must still match), rejects non-.NET or mismatched builds, and fails headless runs whose log contains engine or C# errors. A non-.NET Godot prints `No loader found for resource: ...cs` and still exits 0, so the exit code alone proves nothing.
+
+Git hooks in `.githooks/` (enable with `git config core.hooksPath .githooks`):
+
+- pre-commit: blocks local agent state (`.claude/worktrees/`, `.claude/settings.local.json`, nested repository gitlinks); runs content validation and the drift check when `game/data/`, `docs/`, `AGENTS.md`, or the validators are staged; warns on hand-written `.cs` files over 900 lines and on large `.uid`/`.import` churn mixed into code commits.
+- pre-push: runs the Godot C# build and simulation smoke unless every pushed change is Markdown.
 
 Later validation should add:
 

@@ -1,7 +1,7 @@
 {
   "name": "stratezone-mission-steward",
-  "version": "0.1.0",
-  "description": "Repo-local Codex workflows for Stratezone mission truth, validation, and content drift checks.",
+  "version": "0.2.0",
+  "description": "Repo-local Codex workflows for Stratezone validation, safe Godot launches, mission truth, and content drift checks.",
   "author": {
     "name": "Stratezone Local Tooling",
     "email": "",
@@ -33,7 +33,7 @@
     "termsOfServiceURL": "https://github.com/ItsRobDude/Stratezone",
     "defaultPrompt": [
       "Run the Stratezone mission steward checks.",
-      "Report First Landing mission truth.",
+      "Report Stratezone mission truth for every mission.",
       "Check Stratezone content drift."
     ],
     "brandColor": "#2F6F5E"

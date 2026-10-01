@@ -31,30 +31,6 @@ function Invoke-StratezoneStep {
     }
 }
 
-function Resolve-StratezoneGodot {
-    param([string]$Candidate)
-
-    if ($Candidate -and (Test-Path -LiteralPath $Candidate)) {
-        return (Resolve-Path -LiteralPath $Candidate).Path
-    }
-
-    $commands = @(
-        "Godot_v4.6.2-stable_mono_win64_console.exe",
-        "Godot_v4.6-stable_mono_win64_console.exe",
-        "godot",
-        "godot4"
-    )
-
-    foreach ($command in $commands) {
-        $found = Get-Command $command -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($found) {
-            return $found.Source
-        }
-    }
-
-    return $null
-}
-
 Push-Location $RepoRoot
 try {
     Invoke-StratezoneStep "Content validation" {
@@ -74,17 +50,13 @@ try {
     }
 
     if (-not $SkipGodot) {
-        $resolvedGodot = Resolve-StratezoneGodot -Candidate $GodotExe
-        if (-not $resolvedGodot) {
-            Write-Host ""
-            Write-Host "FAIL: Godot headless smoke"
-            Write-Host "Godot console executable was not found. Set GODOT_EXE or pass -GodotExe."
-            $script:Failures += "Godot headless smoke"
+        # tools/godot.ps1 resolves the Mono build matching the csproj pin and fails on
+        # engine errors in the log, not just on the exit code.
+        if ($GodotExe) {
+            $env:GODOT_EXE = $GodotExe
         }
-        else {
-            Invoke-StratezoneStep "Godot headless smoke" {
-                & $resolvedGodot --headless --path game --quit
-            }
+        Invoke-StratezoneStep "Godot headless smoke" {
+            & (Join-Path $RepoRoot "tools\godot.ps1") -Smoke
         }
     }
 }

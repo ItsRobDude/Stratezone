@@ -1,0 +1,6 @@
+#!/bin/sh
+# Stratezone pre-commit hook. Logic lives in tools/git_hooks/pre_commit.py.
+# Enable once per clone: git config core.hooksPath .githooks
+root=$(git rev-parse --show-toplevel) || exit 1
+if command -v python >/dev/null 2>&1; then py=python; else py=python3; fi
+exec "$py" "$root/tools/git_hooks/pre_commit.py" "$@"

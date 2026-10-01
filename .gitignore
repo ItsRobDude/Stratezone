@@ -16,5 +16,7 @@ artifacts/
 *.tmp
 *.temp
 
-# Local agent/worktree state
-.claude/
+# Local agent/worktree state (shared Claude settings, skills, and hooks are tracked)
+.claude/worktrees/
+.claude/settings.local.json
+.claude/hook-state/

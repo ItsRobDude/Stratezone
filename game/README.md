@@ -14,7 +14,7 @@ Current scaffold:
 
 The first scaffold is intentionally tiny. Gameplay rules should grow from `scripts/simulation/` and content data, not from scene-only logic.
 
-`Stratezone.csproj` currently pins `Godot.NET.Sdk/4.7.0` to match the installed Godot .NET 4.7 editor.
+`Stratezone.csproj` pins `Godot.NET.Sdk/4.7.0` to match the installed Godot .NET 4.7 editor. Launch Godot through `tools/godot.ps1`, which refuses any build that does not match this pin.
 
 Current greybox demo controls:
 

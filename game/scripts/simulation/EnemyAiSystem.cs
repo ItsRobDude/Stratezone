@@ -49,7 +49,7 @@ internal sealed class EnemyAiSystem
 
     public void Tick(RtsSimulation simulation, float deltaSeconds)
     {
-        _elapsedSeconds += deltaSeconds;
+        _elapsedSeconds = simulation.ElapsedSeconds;
         if (!simulation.HasLiveBuilding(ContentIds.Factions.PrivateMilitary, ContentIds.Buildings.ColonyHub))
         {
             return;

@@ -283,6 +283,9 @@ public partial class Main
         if (!_mapEditorEnabled)
         {
             _mapEditorEnabled = true;
+            _simulation?.CancelPendingCommands();
+            _simulation?.DrainCommandReceipts();
+            ResetSimulationLoop();
             _placementBuildingId = null;
             _placementGhost?.Clear();
             _selectionBoxView?.Clear();

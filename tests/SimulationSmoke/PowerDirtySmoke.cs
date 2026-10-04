@@ -18,7 +18,7 @@ internal static class PowerDirtySmoke
         simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(130, 0));
 
         var recomputesBeforeIdleTick = simulation.DebugPowerRecomputeCount;
-        simulation.Tick(0.5f);
+        simulation.Advance(0.5f);
         Assert(simulation.DebugPowerRecomputeCount == recomputesBeforeIdleTick, "idle simulation tick does not recompute power");
     }
 
@@ -32,7 +32,7 @@ internal static class PowerDirtySmoke
 
         var recomputesBeforeDestroy = simulation.DebugPowerRecomputeCount;
         powerPlant.ApplyDamage(9999, "debug");
-        simulation.Tick(0.1f);
+        simulation.Advance(0.1f);
 
         Assert(simulation.DebugPowerRecomputeCount > recomputesBeforeDestroy, "direct building destruction marks power dirty by next tick");
         Assert(!pylon.IsPowered, "directly destroyed power provider updates dependent power state");

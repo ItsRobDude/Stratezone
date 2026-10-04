@@ -118,10 +118,9 @@ The durable rule does not change: *RimWorld for colony stakes, Dominion/C&C-styl
 - The placement ghost is a square (`PlacementGhost.cs`).
 - The building click area merges sprite bounds with the footprint (`GreyboxBuilding.cs:255-273`).
 
-**7. Game logic runs once per rendered frame with a variable time step.**
-- `Main._Process` calls `_simulation.Tick(deltaSeconds)` every frame (`Main.cs:130`).
-- A 144 Hz desktop runs the whole simulation 144 times a second: pathing, combat, AI, power, fog. A Deck at 40 fps runs it 40 times.
-- Results can differ with frame rate, and every per-tick cost above is multiplied by the display's refresh rate.
+**7. Fixed-step timing is implemented (A0 baseline).**
+- Gameplay previously ran once per rendered frame. It now runs at 20 Hz with interpolated rendering and queued player commands.
+- The baseline passes controlled 30/40/60/120/144/240 FPS schedules. Final tick-rate selection, physical high-refresh feel checks, and Deck measurements remain open.
 
 **8. Every unit plans its own path, even when a whole group gets one order.**
 - A 20-unit move order runs 20 independent searches toward 20 formation spots, with 20 repaths when things change.
@@ -131,17 +130,17 @@ The durable rule does not change: *RimWorld for colony stakes, Dominion/C&C-styl
 
 The rule this track delivers: **buildings block exactly where their walls are.** If a soldier visibly fits through a gap, it walks through. If the gap is too tight, it's a wall, and that's the player's layout choice.
 
-- **A0. Fixed-rate simulation with smooth rendering. Do this first; everything else in Track A is cheaper on top of it.**
-  - **Sim-owned step length.** The sim owns one step length, proposed 20 steps per second (`TickSeconds = 0.05`). This follows the classic RTS pattern: StarCraft II's game logic runs about 16 times a second on Normal speed, Supreme Commander about 10.
-  - **Two sim methods:**
-    - `Step()` runs exactly one fixed step.
-    - `Advance(seconds)` runs as many whole steps as fit and carries the remainder.
-  - **`Main` accumulates frame time and calls `Step()`.** It caps catch-up at a few steps per frame, so a hitch can't spiral into a freeze.
-  - **Player commands** are queued and applied at the next step boundary, never mid-step.
-  - **Presentation interpolates.** Views keep the previous and current step's position and facing, and draw between them by `accumulator / TickSeconds`. Movement stays smooth at any frame rate while game logic runs at 20 Hz.
-  - **Result:** the same inputs give the same outcome on a 144 Hz desktop and a 40 Hz Deck. Sim CPU cost no longer scales with refresh rate. Smoke tests can assert exact step-by-step behavior.
-  - **Test impact:** smoke tests currently call `Tick` with 0.1–1000 s jumps. They move to `Advance(seconds)`. Watch smoke-test runtime, since a 1000 s jump becomes 20,000 steps; this is fine once A2's cached grid lands.
-  - Update the "Game Loop Direction" section of `docs/technical-architecture.md` to match.
+- **A0. Fixed-rate simulation with smooth rendering — implemented baseline.**
+  - The sim owns `StepsPerSecond = 20` and `TickSeconds = 0.05`; rendering remains independent. Rate selection is provisional pending responsiveness/performance comparison at 20/30/60 Hz.
+  - `Step()` executes a whole step; `Advance(seconds)` carries fractional time for tests. Integer step count owns elapsed time, with double-precision accumulation.
+  - Player commands enter a typed FIFO queue and validate/execute at the next step. Receipts update UI messages after execution; setup and AI retain immediate helpers.
+  - `Main` uses `FixedStepClock`, runs at most four steps per frame, logs/discards excess whole wall-time steps after severe hitches, and keeps the remainder. Simulation time is never fast-forwarded past gameplay.
+  - Views copy each step's pose and interpolate position/shortest-arc facing per rendered frame. Sprite orientation still has eight directions. Camera, animation, selection, and culling continue at render frequency. Picking follows the visible unit position.
+  - New entities, mission reloads, editor transitions, and terminal states reset or settle interpolation without stale commands. Alerts are consumed for each step, including catch-up.
+  - Movement carries unused distance through waypoint transitions instead of wasting a step at every corner. This does not implement A1/A2 pathfinding changes.
+  - Tests now use `Advance`; the depletion fixture starts near depletion rather than simulating an unnecessary 1,000 seconds. `FixedStepSmoke.cs` checks identical commands on identical ticks across frame schedules, resource revalidation, lifecycle, interpolation, and movement budgets.
+  - `tools/verify_fixed_step_presentation.gd` exercises the real 2D adapter at 30/40/60/120/144/240 FPS schedules and through both mission scenes. Hardware playtesting and Deck profiling remain required before rate finalization.
+  - Exact loop ownership and hitch policy are documented in `docs/technical-architecture.md`, "Game Loop Direction".
 - **A1. Shape-accurate footprints.**
   - Each building's footprint is its real ground outline: one or more convex polygons, plus circles for round parts such as silos and tower bases. Coordinates are content units relative to the building origin, with fixed orientation.
   - It lives in `buildings.json`, so content data stays the sim's source of truth.
@@ -201,7 +200,7 @@ The rule this track delivers: **buildings block exactly where their walls are.**
   - The same command script gives identical unit positions when run as 20 separate `Step()` calls or as one `Advance(1.0)`.
   - A 20-unit group move runs at most 2 path searches (one per radius class), not 20.
 
-Track A is pure sim plus content data plus tests. It can start immediately, and the current 2D view keeps working: its ghost and outline switch to drawing the real footprint shapes. Contract changes go into `docs/system-contracts.md`. Schema changes go into `docs/content-data-spec.md`: footprint shape, `exit_point`, and `collision_radius`.
+Track A changes the pure sim, content data, tests, and the presentation adapters needed to keep the current 2D view working. After A0, the placement ghost and outline will switch to drawing real footprint shapes. Contract changes go into `docs/system-contracts.md`. Schema changes go into `docs/content-data-spec.md`: footprint shape, `exit_point`, and `collision_radius`.
 
 ## Track B: Controls And Hotkeys Overhaul
 

@@ -4,6 +4,10 @@ namespace Stratezone.Simulation;
 
 public sealed partial class RtsSimulation
 {
+    public const int StepsPerSecond = 20;
+    public const double TickSeconds = 1.0 / StepsPerSecond;
+    private readonly FixedStepClock _advanceClock = new();
+    public long StepIndex { get; private set; }
     public const float ContentUnitScale = 24.0f;
     private const float ResourceWellCoreRadius = 28.0f;
     private const float CombatMovementScale = 95.0f;
@@ -311,14 +315,25 @@ public sealed partial class RtsSimulation
             SimulationMessage.Args(("buildingId", definition.Id), ("building", definition.DisplayName)));
     }
 
-    public void Tick(float deltaSeconds)
+    public void Advance(double seconds)
+    {
+        _advanceClock.Advance(seconds, Step);
+    }
+
+    public bool Step()
     {
         if (MissionState.Status != MissionStatus.Active)
         {
-            return;
+            CancelPendingCommands();
+            return false;
         }
 
-        _elapsedSeconds += deltaSeconds;
+        _crushContactsThisStep.Clear();
+        ApplyPendingCommands();
+        if (MissionState.Status != MissionStatus.Active) return false;
+        StepIndex++;
+        _elapsedSeconds = (float)(StepIndex * TickSeconds);
+        const float deltaSeconds = (float)TickSeconds;
         TickPresentationState(deltaSeconds);
         EnsurePowerCurrent();
         TickBarracksUpgrades(deltaSeconds);
@@ -362,6 +377,8 @@ public sealed partial class RtsSimulation
         RevealDestroyedBuildingUnits();
         UpdateEnemyOfficerState();
         UpdateMissionState();
+        if (MissionState.Status != MissionStatus.Active) CancelPendingCommands();
+        return true;
     }
 
     public UnitState AddUnit(string unitId, string factionId, SimVector2 position)

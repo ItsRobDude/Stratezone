@@ -99,16 +99,19 @@ public partial class Main
     {
         foreach (var view in _buildingViews.Values)
         {
+            view.GetParent()?.RemoveChild(view);
             view.QueueFree();
         }
 
         foreach (var view in _simUnitViews.Values)
         {
+            view.GetParent()?.RemoveChild(view);
             view.QueueFree();
         }
 
         foreach (var view in _resourceWellViews)
         {
+            view.GetParent()?.RemoveChild(view);
             view.QueueFree();
         }
 

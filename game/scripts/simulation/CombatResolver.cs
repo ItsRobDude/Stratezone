@@ -122,7 +122,8 @@ internal static class CombatResolver
         return destroyedBuilding;
     }
 
-    public static bool TryCrushInfantry(UnitState crusher, SimVector2 start, SimVector2 end, IReadOnlyList<UnitState> units)
+    public static bool TryCrushInfantry(UnitState crusher, SimVector2 start, SimVector2 end,
+        IReadOnlyList<UnitState> units, ISet<(int CrusherId, int TargetId)> contactsThisStep)
     {
         if (!crusher.Definition.CanRunOverInfantry || crusher.Definition.RunOverDamage <= 0.0f)
         {
@@ -145,6 +146,7 @@ internal static class CombatResolver
                 continue;
             }
 
+            if (!contactsThisStep.Add((crusher.EntityId, target.EntityId))) continue;
             target.ApplyDamage(crusher.Definition.RunOverDamage, crusher.Definition.RunOverDamageType);
             didCrush = true;
         }

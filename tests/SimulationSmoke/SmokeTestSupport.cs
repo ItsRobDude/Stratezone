@@ -63,13 +63,7 @@ internal static class SmokeTestSupport
 
     public static void TickFor(RtsSimulation simulation, float seconds)
     {
-        const float step = 0.1f;
-        var elapsed = 0.0f;
-        while (elapsed < seconds)
-        {
-            simulation.Tick(MathF.Min(step, seconds - elapsed));
-            elapsed += step;
-        }
+        simulation.Advance(seconds);
     }
 
     private static float EffectiveDamage(float rawDamage, string damageType, IReadOnlyDictionary<string, float> resistances)

@@ -125,12 +125,7 @@ public partial class Main : Node2D
         ApplyUiScaleIfViewportChanged();
         UpdateUiScaleIndicator(deltaSeconds);
 
-        if (_simulation is not null && !_mapEditorEnabled)
-        {
-            _simulation.Tick(deltaSeconds);
-            SyncWorldViews();
-            PollPlayerKnowledgeAlerts();
-        }
+        ProcessSimulation(delta);
 
         UpdatePlacementGhost();
         if (_mapEditorEnabled)
@@ -292,6 +287,7 @@ public partial class Main : Node2D
             _availableBuildingIds.Add(buildingId);
         }
 
+        ResetSimulationLoop();
         _simulation = runtime.Simulation;
         _mapRegionView?.UpdateFromMap(runtime.Map);
         UpdateMapEditorOverlayData();
@@ -462,8 +458,7 @@ public partial class Main : Node2D
             return true;
         }
 
-        var result = _simulation.TryQueueUnit(unitId, _selectedBuildingEntityId.Value);
-        _lastActionMessage = LocalizedProduction(result);
+        QueueGameplayCommand(new TrainUnitCommand(unitId, _selectedBuildingEntityId.Value));
         return true;
     }
 
@@ -482,8 +477,7 @@ public partial class Main : Node2D
                 return true;
             }
 
-            var retrofitResult = _simulation.TryStartGuardianRetrofit(_selectedBuildingEntityId.Value);
-            _lastActionMessage = LocalizedUpgrade(retrofitResult);
+            QueueGameplayCommand(new GuardianRetrofitCommand(_selectedBuildingEntityId.Value));
             return true;
         }
 
@@ -511,8 +505,7 @@ public partial class Main : Node2D
             return true;
         }
 
-        var result = _simulation.TryUpgradeBuilding(_selectedBuildingEntityId.Value, upgradeId);
-        _lastActionMessage = LocalizedUpgrade(result);
+        QueueGameplayCommand(new UpgradeBuildingCommand(_selectedBuildingEntityId.Value, upgradeId));
         return true;
     }
 
@@ -551,6 +544,13 @@ public partial class Main : Node2D
 
     private void CancelPlacementMode()
     {
+        if (_pendingPlacementCommand is { } commandId)
+        {
+            _simulation?.CancelPendingCommand(commandId);
+            // A cancelled receipt must not clear a replacement placement's state.
+            _commandCallbacks.Remove(commandId);
+            _pendingPlacementCommand = null;
+        }
         _placementBuildingId = null;
         _placementGhost?.Clear();
         _lastActionMessage = L("ui.action.placement_cancelled");
@@ -569,15 +569,19 @@ public partial class Main : Node2D
             return;
         }
 
-        var result = _simulation.TryPlaceBuilding(_placementBuildingId, ToSim(worldPosition));
-        _lastActionMessage = LocalizedPlacement(result);
-
-        if (result.Success)
+        if (_pendingPlacementCommand is not null) return;
+        var buildingId = _placementBuildingId;
+        var builderId = SelectedUnits().First(unit => unit.Definition.CanConstruct).EntityId;
+        _pendingPlacementCommand = QueueGameplayCommand(new PlaceBuildingCommand(buildingId, ToSim(worldPosition), builderId), outcome =>
         {
-            _placementBuildingId = null;
-            _placementGhost?.Clear();
-            SyncWorldViews();
-        }
+            _pendingPlacementCommand = null;
+            ShowCommandOutcome(outcome);
+            if (outcome.Success && _placementBuildingId == buildingId)
+            {
+                _placementBuildingId = null;
+                _placementGhost?.Clear();
+            }
+        });
     }
 
     private void UpdatePlacementGhost()

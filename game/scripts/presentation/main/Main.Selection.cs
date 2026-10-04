@@ -128,129 +128,64 @@ public partial class Main
 
     private void CommandSelectedUnits(Vector2 worldPosition)
     {
-        var selectedUnits = SelectedUnits().ToArray();
-        if (selectedUnits.Length == 0)
-        {
-            _lastActionMessage = L("ui.action.no_unit_selected");
-            return;
-        }
-
-        if (_simulation is null)
-        {
-            return;
-        }
+        var selected = SelectedUnits().ToArray();
+        if (selected.Length == 0) { _lastActionMessage = L("ui.action.no_unit_selected"); return; }
+        if (_simulation is null) return;
 
         var enemyUnit = FindEnemyUnitAt(worldPosition);
         if (enemyUnit is not null)
         {
-            var attackers = 0;
-            var attackingUnits = selectedUnits.Where(unit => unit.Definition.CanAttack).ToArray();
-            for (var index = 0; index < attackingUnits.Length; index++)
-            {
-                _simulation.CommandUnitAttackUnit(
-                    attackingUnits[index].EntityId,
-                    enemyUnit.EntityId,
-                    ToSim(GetGroupOffset(index, attackingUnits.Length)));
-                attackers++;
-            }
-
-            _lastActionMessage = attackers > 0
-                ? L("ui.action.units_attacking_unit", SimulationMessage.Args(("count", attackers), ("unit", UnitName(enemyUnit.Definition))))
-                : L("ui.action.selected_units_cannot_attack");
+            var attackers = selected.Where(unit => unit.Definition.CanAttack).ToArray();
+            QueueUnitOrders(attackers.Select((unit, index) => (SimulationCommand)new AttackUnitCommand(
+                unit.EntityId, enemyUnit.EntityId, ToSim(GetGroupOffset(index, attackers.Length)))).ToArray(),
+                "ui.action.units_attacking_unit", SimulationMessage.Args(("unit", UnitName(enemyUnit.Definition))),
+                "ui.action.selected_units_cannot_attack");
             return;
         }
-
         var enemyBuilding = FindEnemyBuildingAt(worldPosition);
         if (enemyBuilding is not null)
         {
-            var attackers = 0;
-            var attackingUnits = selectedUnits.Where(UnitCanAttackBuildings).ToArray();
-            for (var index = 0; index < attackingUnits.Length; index++)
-            {
-                _simulation.CommandUnitAttackBuilding(
-                    attackingUnits[index].EntityId,
-                    enemyBuilding.EntityId,
-                    ToSim(GetGroupOffset(index, attackingUnits.Length)));
-                attackers++;
-            }
-
-            _lastActionMessage = attackers > 0
-                ? L("ui.action.units_attacking_building", SimulationMessage.Args(("count", attackers), ("building", BuildingName(enemyBuilding.Definition))))
-                : L("ui.action.selected_units_cannot_attack");
+            var attackers = selected.Where(UnitCanAttackBuildings).ToArray();
+            QueueUnitOrders(attackers.Select((unit, index) => (SimulationCommand)new AttackBuildingCommand(
+                unit.EntityId, enemyBuilding.EntityId, ToSim(GetGroupOffset(index, attackers.Length)))).ToArray(),
+                "ui.action.units_attacking_building", SimulationMessage.Args(("building", BuildingName(enemyBuilding.Definition))),
+                "ui.action.selected_units_cannot_attack");
             return;
         }
-
         var repairTarget = FindRepairablePlayerBuildingAt(worldPosition);
         if (repairTarget is not null)
         {
-            var repairers = 0;
-            foreach (var grunt in selectedUnits.Where(unit => unit.Definition.CanRepair))
-            {
-                var result = _simulation.CommandUnitRepairBuilding(grunt.EntityId, repairTarget.EntityId);
-                if (result.Success)
-                {
-                    repairers++;
-                }
-            }
-
-            _lastActionMessage = repairers > 0
-                ? L("ui.action.units_repairing_building", SimulationMessage.Args(("count", repairers), ("building", BuildingName(repairTarget.Definition))))
-                : L("ui.action.selected_units_cannot_repair");
+            QueueUnitOrders(selected.Where(unit => unit.Definition.CanRepair)
+                .Select(unit => (SimulationCommand)new RepairBuildingCommand(unit.EntityId, repairTarget.EntityId)).ToArray(),
+                "ui.action.units_repairing_building", SimulationMessage.Args(("building", BuildingName(repairTarget.Definition))),
+                "ui.action.selected_units_cannot_repair");
             return;
         }
-
-        var bridgeTarget = FindBridgeAt(worldPosition);
-        if (bridgeTarget is not null)
+        var bridge = FindBridgeAt(worldPosition);
+        if (bridge is not null)
         {
-            if (bridgeTarget.IsDamaged)
+            var repairers = selected.Where(unit => unit.Definition.CanRepair).ToArray();
+            if (bridge.IsDamaged && repairers.Length > 0)
             {
-                var repairers = 0;
-                foreach (var grunt in selectedUnits.Where(unit => unit.Definition.CanRepair))
-                {
-                    var result = _simulation.CommandUnitRepairBridge(grunt.EntityId, bridgeTarget.Id);
-                    if (result.Success)
-                    {
-                        repairers++;
-                    }
-                }
-
-                if (repairers > 0)
-                {
-                    _lastActionMessage = L(
-                        "ui.action.units_repairing_bridge",
-                        SimulationMessage.Args(("count", repairers), ("bridge", BridgeName(bridgeTarget))));
-                    return;
-                }
+                QueueUnitOrders(repairers.Select(unit => (SimulationCommand)new RepairBridgeCommand(unit.EntityId, bridge.Id)).ToArray(),
+                    "ui.action.units_repairing_bridge", SimulationMessage.Args(("bridge", BridgeName(bridge))),
+                    "ui.action.selected_units_cannot_repair");
+                return;
             }
-
-            if (bridgeTarget.IsIntact)
+            if (bridge.IsIntact)
             {
-                var attackers = 0;
-                var attackingUnits = selectedUnits.Where(unit => unit.Definition.CanAttack).ToArray();
-                for (var index = 0; index < attackingUnits.Length; index++)
-                {
-                    _simulation.CommandUnitAttackBridge(
-                        attackingUnits[index].EntityId,
-                        bridgeTarget.Id,
-                        ToSim(GetGroupOffset(index, attackingUnits.Length)));
-                    attackers++;
-                }
-
-                _lastActionMessage = attackers > 0
-                    ? L("ui.action.units_attacking_bridge", SimulationMessage.Args(("count", attackers), ("bridge", BridgeName(bridgeTarget))))
-                    : L("ui.action.selected_units_cannot_attack");
+                var attackers = selected.Where(unit => unit.Definition.CanAttack).ToArray();
+                QueueUnitOrders(attackers.Select((unit, index) => (SimulationCommand)new AttackBridgeCommand(
+                    unit.EntityId, bridge.Id, ToSim(GetGroupOffset(index, attackers.Length)))).ToArray(),
+                    "ui.action.units_attacking_bridge", SimulationMessage.Args(("bridge", BridgeName(bridge))),
+                    "ui.action.selected_units_cannot_attack");
                 return;
             }
         }
-
-        for (var index = 0; index < selectedUnits.Length; index++)
-        {
-            _simulation.CommandUnitMove(selectedUnits[index].EntityId, ToSim(worldPosition + GetGroupOffset(index, selectedUnits.Length)));
-        }
-
-        _lastActionMessage = L(
-            "ui.action.moving_units",
-            SimulationMessage.Args(("count", selectedUnits.Length), ("x", $"{worldPosition.X:0}"), ("y", $"{worldPosition.Y:0}")));
+        QueueUnitOrders(selected.Select((unit, index) => (SimulationCommand)new MoveUnitCommand(
+            unit.EntityId, ToSim(worldPosition + GetGroupOffset(index, selected.Length)))).ToArray(),
+            "ui.action.moving_units", SimulationMessage.Args(("x", $"{worldPosition.X:0}"), ("y", $"{worldPosition.Y:0}")),
+            "ui.action.no_unit_selected");
     }
 
     private static Vector2 GetGroupOffset(int index, int count)
@@ -337,11 +272,12 @@ public partial class Main
             return null;
         }
 
-        return _simulation.Units
-            .Where(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && !unit.IsDestroyed)
-            .Where(unit => _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, unit.Position))
-            .Where(unit => new Vector2(unit.Position.X, unit.Position.Y).DistanceTo(worldPosition) <= 22.0f)
-            .OrderBy(unit => new Vector2(unit.Position.X, unit.Position.Y).DistanceTo(worldPosition))
+        return _simUnitViews.Values
+            .Where(view => view.Visible && view.State.FactionId == ContentIds.Factions.PrivateMilitary && !view.State.IsDestroyed)
+            .Where(view => _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, view.State.Position))
+            .Where(view => view.GlobalPosition.DistanceTo(worldPosition) <= view.SelectionRadius)
+            .OrderBy(view => view.GlobalPosition.DistanceTo(worldPosition))
+            .Select(view => view.State)
             .FirstOrDefault();
     }
 

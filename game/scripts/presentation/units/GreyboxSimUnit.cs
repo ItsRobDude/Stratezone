@@ -19,6 +19,7 @@ public partial class GreyboxSimUnit : Node2D
     private static UnitAnimationSettingsFile? UnitAnimationSettings;
 
     private UnitState? _state;
+    private readonly Stratezone.Presentation.UnitPoseInterpolation _pose = new();
     private Label? _label;
     private LocalizationCatalog? _localization;
     private Sprite2D? _directionalSprite;
@@ -122,12 +123,17 @@ public partial class GreyboxSimUnit : Node2D
     public void UpdateFromState(UnitState state)
     {
         var nextPosition = new Vector2(state.Position.X, state.Position.Y);
+        var direction = GetFacingDirection(state, nextPosition);
+        var heading = direction is { } d && d.LengthSquared() > 0.001f
+            ? Mathf.RadToDeg(Mathf.Atan2(d.X, -d.Y))
+            : _lastPosition is null ? _facingAngle : _pose.Current.FacingDegrees;
+        _pose.Push(new(state.Position, heading));
         UpdateRunAnimationState(nextPosition);
         UpdateAttackAnimationState(state);
         UpdateFacing(state, nextPosition);
 
         _state = state;
-        Position = nextPosition;
+        if (_lastPosition is null) Position = nextPosition;
         _lastPosition = nextPosition;
 
         if (_label is not null)
@@ -147,6 +153,20 @@ public partial class GreyboxSimUnit : Node2D
 
         Visible = !state.IsDestroyed;
         RequestRedrawIfChanged(state);
+    }
+
+    public void RenderInterpolated(float alpha)
+    {
+        var pose = _pose.Sample(alpha);
+        Position = new Vector2(pose.Position.X, pose.Position.Y);
+        var angle = Mathf.PosMod(Mathf.RoundToInt(pose.FacingDegrees / 45f) * 45, 360);
+        if (angle != _facingAngle)
+        {
+            _facingAngle = angle;
+            UpdateDirectionalTexture();
+            RequestRedrawIfChanged();
+        }
+        if (_selected || _state?.AttackFlashSeconds > 0 || _state?.HitFlashSeconds > 0) QueueRedraw();
     }
 
     public override void _Process(double delta)
@@ -174,7 +194,7 @@ public partial class GreyboxSimUnit : Node2D
             ApplyZoomDetailVisibility();
         }
 
-        if (_isMoving && _runMovementGraceSeconds <= 0.0f && !IsMoving(Position))
+        if (_isMoving && _runMovementGraceSeconds <= 0.0f)
         {
             _isMoving = false;
             UpdateDirectionalTexture();

@@ -230,18 +230,22 @@ The first implementation uses a small text-reviewable English catalog. Additiona
 
 ## Game Loop Direction
 
-The simulation runs at a **fixed step rate**, proposed at 20 steps per second (`TickSeconds = 0.05`). Presentation interpolates between steps. This is the classic RTS pattern: StarCraft II and Supreme Commander run their game logic at about 16 and 10 steps per second. It makes outcomes identical at any frame rate and stops simulation cost from scaling with the display's refresh rate.
+The simulation now runs at **20 steps per second** (`RtsSimulation.TickSeconds = 0.05`), the initial Track A0 baseline. This rate is shared by every machine; it is not tied to display refresh. Compare responsiveness and representative battle cost at 20, 30, and 60 Hz before treating 20 Hz as the final production rate. Steam Deck hardware measurements are still outstanding.
 
-This is planned as Track A0 in `docs/3d-presentation-plan.md`. The current code still ticks once per rendered frame with a variable delta (`Main.cs`).
+Implemented flow:
 
-Recommended flow:
+1. Input handlers capture immutable command values (IDs, destinations, formation offsets). The sim queues player commands; previews may validate immediately, but spending and final validation happen in FIFO order at the next step boundary. Receipts carry message keys/arguments back to the UI. AI and mission setup use the existing immediate helpers within their own simulation/setup phase.
+2. `RtsSimulation.Step()` runs one whole step. `Advance(seconds)` uses the same step with a retained fractional remainder for offline tests. Elapsed simulation time derives from an integer step index; accumulation uses double precision.
+3. `Main.SimulationLoop.cs` uses the same `FixedStepClock` to run zero or more steps per rendered frame. Catch-up is capped at four steps (200 ms); additional whole steps of wall time are discarded and logged, retaining the fractional remainder. Game time does not jump forward. A severe stall therefore slows game time instead of causing an unbounded catch-up loop. Offline tests do not use this real-time cap.
+4. After each step, views capture value copies of the latest two positions and headings, synchronize entity lifetime/state, and consume command receipts and alerts. Catch-up captures each step, not just each rendered frame.
+5. Each frame interpolates poses using the clock's remainder fraction. The current sprite view quantizes the interpolated heading to its eight directions; continuous heading is available for a later 3D view. Animation, camera, selection feedback, and culling stay on the frame loop. Gameplay visibility, hit outcomes, resources, and health are never interpolated. Enemy click-picking uses the displayed position while simulation checks use the authoritative state.
+6. New views initialize both poses at their actual location. Mission replacement clears the clock, callbacks, and views; editor entry cancels pending commands, and exit reinitializes the mission as before. Won/lost missions stop stepping and display the final pose.
 
-1. Input layer converts mouse/keyboard/gamepad events into game commands.
-2. Command layer validates whether the action is legal; accepted commands are queued for the next step boundary.
-3. The frame loop accumulates real time and runs whole fixed simulation steps (`Step()`), capping catch-up at a few steps per frame. Tests use `Advance(seconds)`, which runs the same whole steps.
-4. Each step applies commands, jobs, AI, combat, power updates, and events.
-5. Presentation reads the latest two step states and interpolates positions and facing by the leftover accumulator fraction, so motion stays smooth at any frame rate.
-6. UI displays current state, warnings, objectives, and selected entity actions.
+Identical commands assigned to the same step produce identical results across tested frame schedules on the same runtime, absent discarded wall time. This is not a claim of cross-platform lockstep determinism. Input waits at most one step plus host scheduling delay; previous/current interpolation adds about one step of visual delay. Camera and selection are independent of that delay. Rendering can run at 120, 144, or 240 FPS without increasing gameplay update frequency.
+
+Movement consumes its distance budget across waypoint transitions, so waypoint density no longer adds an idle step at every corner. No footprint or navigation-grid redesign is included in A0.
+
+Validation: `FixedStepSmoke.cs` covers step/advance equivalence, 30/40/60/120/144/240 FPS and uneven frame schedules, queued spending/order validity, clock remainder/catch-up, waypoint budgets, terminal states, and pose interpolation. `tools/verify_fixed_step_presentation.gd` drives the actual Godot adapter and input handlers through matching schedules, placement, editor/mission reset, and terminal-state checks. Run it through `tools/godot.ps1` with `--script res://../tools/verify_fixed_step_presentation.gd`. These are controlled frame-time tests, not physical high-refresh-display or Deck performance measurements.
 
 Do not tie combat or economy outcomes to animation completion unless there is a deliberate reason.
 

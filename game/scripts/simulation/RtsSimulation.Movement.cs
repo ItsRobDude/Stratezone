@@ -2,6 +2,8 @@ namespace Stratezone.Simulation;
 
 public sealed partial class RtsSimulation
 {
+    private readonly HashSet<(int CrusherId, int TargetId)> _crushContactsThisStep = [];
+
     public void CommandUnitMove(int unitEntityId, SimVector2 position)
     {
         var unit = FindLiveUnit(unitEntityId);
@@ -77,31 +79,28 @@ public sealed partial class RtsSimulation
             return;
         }
 
-        var waypoint = unit.CurrentWaypoint;
-        if (waypoint is null)
+        var remainingDistance = unit.Definition.MovementSpeed * CombatMovementScale * deltaSeconds;
+        // Consume a distance budget, including across turns. Reaching a waypoint must
+        // not cost an extra simulation step or give a free four-unit position snap.
+        while (unit.CurrentWaypoint is { } waypoint)
         {
-            unit.ClearPath();
-            return;
-        }
-
-        var direction = waypoint.Value - unit.Position;
-        var distance = direction.Length();
-        if (distance <= 4.0f)
-        {
-            unit.Position = waypoint.Value;
-            unit.AdvanceWaypoint();
-            if (unit.CurrentWaypoint is null)
+            var direction = waypoint - unit.Position;
+            var distance = direction.Length();
+            if (distance <= 0.0001f)
             {
-                unit.ClearPath();
+                unit.AdvanceWaypoint();
+                continue;
             }
-
-            return;
+            if (remainingDistance <= 0) break;
+            var traveled = MathF.Min(remainingDistance, distance);
+            var start = unit.Position;
+            unit.Position = traveled >= distance ? waypoint : start + direction.Normalized() * traveled;
+            CombatResolver.TryCrushInfantry(unit, start, unit.Position, _units, _crushContactsThisStep);
+            remainingDistance -= traveled;
+            if (traveled >= distance) unit.AdvanceWaypoint();
+            else break;
         }
-
-        var stepDistance = unit.Definition.MovementSpeed * CombatMovementScale * deltaSeconds;
-        var start = unit.Position;
-        unit.Position += direction.Normalized() * MathF.Min(stepDistance, distance);
-        CombatResolver.TryCrushInfantry(unit, start, unit.Position, _units);
+        if (unit.CurrentWaypoint is null) unit.ClearPath();
     }
 
     private void SetUnitPathTo(UnitState unit, SimVector2 target)

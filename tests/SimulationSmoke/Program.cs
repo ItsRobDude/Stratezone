@@ -69,14 +69,16 @@ claimedExtractor.Building!.ApplyDamage(9999, "explosive");
 Assert(reclaimedWellSimulation.ValidatePlacement(ContentIds.Buildings.ExtractorRefinery, new SimVector2(0, 0)).IsLegal, "destroyed Extractor releases the well for capture");
 
 var materialsBeforeIncome = simulation.Materials;
-simulation.Tick(1.0f);
+simulation.Advance(1.0f);
 Assert(simulation.Materials > materialsBeforeIncome, "powered extractor generates materials");
 
 var startWell = simulation.ResourceWells.First(well => well.Definition.Id == "well_first_landing_start");
-simulation.Tick(1000.0f);
+// Exercise depletion at a step boundary without simulating an entire mission.
+startWell.Remaining = startWell.Definition.ExtractionRate * 0.125f;
+simulation.Advance(0.15);
 Assert(startWell.IsDepleted, "well can deplete");
 var materialsAfterDepletion = simulation.Materials;
-simulation.Tick(10.0f);
+simulation.Advance(10.0f);
 Assert(Math.Abs(simulation.Materials - materialsAfterDepletion) < 0.01f, "depleted well stops generating income");
 
 var wallSimulation = new RtsSimulation(catalog, startingMaterials, []);
@@ -488,10 +490,10 @@ var missionLossSimulation = new RtsSimulation(catalog, startingMaterials, []);
 missionLossSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var commander = missionLossSimulation.AddUnit(ContentIds.Units.Commander, ContentIds.Factions.PlayerExpedition, new SimVector2(0, 0));
 commander.ApplyDamage(999, "ballistic");
-missionLossSimulation.Tick(0.1f);
+missionLossSimulation.Advance(0.1f);
 Assert(missionLossSimulation.MissionState.Status == MissionStatus.Lost, "commander death triggers mission loss");
 var elapsedAtLoss = missionLossSimulation.ElapsedSeconds;
-missionLossSimulation.Tick(1.0f);
+missionLossSimulation.Advance(1.0f);
 Assert(Math.Abs(missionLossSimulation.ElapsedSeconds - elapsedAtLoss) < 0.01f, "terminal mission loss stops simulation ticking");
 
 var debugLossSimulation = new RtsSimulation(catalog, startingMaterials, []);
@@ -504,43 +506,43 @@ var missionWinSimulation = new RtsSimulation(catalog, startingMaterials, []);
 missionWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var finalEnemy = missionWinSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(90, 0));
 finalEnemy.ApplyDamage(999, "ballistic");
-missionWinSimulation.Tick(0.1f);
+missionWinSimulation.Advance(0.1f);
 Assert(missionWinSimulation.MissionState.Status == MissionStatus.Won, "destroying all enemy targets triggers mission win");
 
 var destroyedEnemyBarracksSimulation = new RtsSimulation(catalog, startingMaterials, []);
 destroyedEnemyBarracksSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var destroyedEnemyBarracks = destroyedEnemyBarracksSimulation.AddStartingBuilding(ContentIds.Buildings.Barracks, new SimVector2(90, 0), ContentIds.Factions.PrivateMilitary);
 destroyedEnemyBarracks.ApplyDamage(9999, "explosive");
-destroyedEnemyBarracksSimulation.Tick(0.1f);
+destroyedEnemyBarracksSimulation.Advance(0.1f);
 Assert(destroyedEnemyBarracksSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Cadet && !unit.IsDestroyed) == 3, "destroyed enemy Barracks releases three Cadets");
 Assert(destroyedEnemyBarracksSimulation.MissionState.Status == MissionStatus.Active, "destroyed enemy Barracks Cadets must be cleared before victory");
-destroyedEnemyBarracksSimulation.Tick(1.0f);
+destroyedEnemyBarracksSimulation.Advance(1.0f);
 Assert(destroyedEnemyBarracksSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.Cadet && !unit.IsDestroyed) == 3, "destroyed Barracks Cadets spawn only once");
 
 var destroyedPlayerPowerSimulation = new RtsSimulation(catalog, startingMaterials, []);
 destroyedPlayerPowerSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var destroyedPlayerPower = destroyedPlayerPowerSimulation.AddStartingBuilding(ContentIds.Buildings.PowerPlant, new SimVector2(0, 0));
 destroyedPlayerPower.ApplyDamage(9999, "explosive");
-destroyedPlayerPowerSimulation.Tick(0.1f);
+destroyedPlayerPowerSimulation.Advance(0.1f);
 Assert(destroyedPlayerPowerSimulation.Units.Count(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.Cadet && !unit.IsDestroyed) == 1, "destroyed player Power Plant releases one player Cadet");
 
 var hubRevealWinSimulation = new RtsSimulation(catalog, startingMaterials, []);
 hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 var enemyHubToDestroy = hubRevealWinSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(90, 0), ContentIds.Factions.PrivateMilitary);
 enemyHubToDestroy.ApplyDamage(9999, "explosive");
-hubRevealWinSimulation.Tick(0.1f);
+hubRevealWinSimulation.Advance(0.1f);
 var revealedEnemyHubTank = hubRevealWinSimulation.Units.Single(unit => unit.FactionId == ContentIds.Factions.PrivateMilitary && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed);
 Assert(revealedEnemyHubTank.IsColonyHubOccupant, "destroyed enemy Hub releases a Medium Tank occupant");
 Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Active, "enemy Hub tank occupant must be cleared before destroy-all-enemies victory");
 revealedEnemyHubTank.ApplyDamage(9999, "explosive");
-hubRevealWinSimulation.Tick(0.1f);
+hubRevealWinSimulation.Advance(0.1f);
 Assert(hubRevealWinSimulation.MissionState.Status == MissionStatus.Won, "destroy-all-enemies victory waits for the released Hub tank to die");
 
 var playerHubRevealSimulation = new RtsSimulation(catalog, startingMaterials, []);
 var playerHubToDestroy = playerHubRevealSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 playerHubRevealSimulation.AddUnit(ContentIds.Units.Rifleman, ContentIds.Factions.PrivateMilitary, new SimVector2(90, 0));
 playerHubToDestroy.ApplyDamage(9999, "explosive");
-playerHubRevealSimulation.Tick(0.1f);
+playerHubRevealSimulation.Advance(0.1f);
 Assert(playerHubRevealSimulation.Units.Any(unit => unit.FactionId == ContentIds.Factions.PlayerExpedition && unit.Definition.Id == ContentIds.Units.MediumTank && !unit.IsDestroyed), "destroyed player Hub releases a Medium Tank for the player");
 Assert(playerHubRevealSimulation.MissionState.Status == MissionStatus.Active, "player Hub Medium Tank release does not replace mission loss conditions by itself");
 
@@ -638,5 +640,6 @@ BuildingDestroyedRevealSmoke.Run(context);
 EnemyAiBehaviorSmoke.Run(context);
 PowerDirtySmoke.Run(context);
 RenderSnapshotSmoke.Run(context);
+FixedStepSmoke.Run(context);
 
 Console.WriteLine("Simulation smoke checks passed.");

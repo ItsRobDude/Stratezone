@@ -20,6 +20,18 @@ Simulation owns resources, power, grunts, jobs, combat outcomes, fog truth, miss
 
 Scene scripts may submit commands and display results. They should not secretly become the only place where rules live.
 
+## Simulation Timing and Commands
+
+- Gameplay advances in whole 50 ms steps (20 Hz baseline) on all machines. `Step()` and `Advance(seconds)` share this behavior; no caller supplies a variable gameplay delta.
+- The integer step index owns elapsed simulation time. Offline advancement carries the remainder and does not skip steps.
+- Player commands capture IDs and values at submission, execute FIFO at the next step boundary, and revalidate against current resources and entity validity. Queueing is not success; command receipts report the result. Placement also rechecks the captured builder is alive and can construct.
+- Cancelling placement removes its unexecuted command without spending resources or disturbing other queued orders. A replacement placement can be submitted immediately; receipts from cancelled placements cannot change the new placement state. Executed commands cannot be cancelled retroactively.
+- The real-time host runs at most four catch-up steps per frame. Severe excess wall time is discarded with a developer diagnostic; no combat, production, or economy time is silently fast-forwarded. Editor pauses and mission replacement do not accrue gameplay debt.
+- Rendering interpolates copies of successive step positions/headings. Health, damage, fog knowledge, resources, and command legality use current simulation truth. Picking uses displayed positions, then commands operate on entity IDs.
+- New entities start with matching previous/current poses. Mission changes clear history and pending commands. Terminal missions reject new commands and stop the clock. Editor exit still reinitializes the mission from current edits.
+- Movement consumes its full distance budget across waypoint transitions, including crush checks on each traversed segment. Each vehicle damages a given crush target at most once per simulation step, even when both segments of a corner touch it. Separate vehicles and later steps can each deal damage again.
+- The final tick rate remains subject to Deck performance and responsiveness testing. Higher display refresh rates do not increase simulation frequency.
+
 ## Power System
 
 Owns:

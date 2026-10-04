@@ -41,9 +41,7 @@ public partial class Main
             return true;
         }
 
-        _lastActionMessage = _simulation.DebugKillPlayerCommander()
-            ? L("ui.action.debug_commander_killed")
-            : L("ui.action.debug_commander_missing");
+        QueueGameplayCommand(new KillCommanderCommand());
         return true;
     }
 

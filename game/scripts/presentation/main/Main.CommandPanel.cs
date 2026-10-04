@@ -66,8 +66,7 @@ public partial class Main
                             return;
                         }
 
-                        var result = _simulation.TryQueueUnit(unitId, _selectedBuildingEntityId.Value);
-                        _lastActionMessage = LocalizedProduction(result);
+                        QueueGameplayCommand(new TrainUnitCommand(unitId, _selectedBuildingEntityId.Value));
                     },
                     unit.Id,
                     TrainingCostLabel(unit, selectedBuilding));
@@ -86,8 +85,7 @@ public partial class Main
                     validation.Success,
                     () =>
                     {
-                        var result = _simulation.TryStartGuardianRetrofit(selectedBuilding.EntityId);
-                        _lastActionMessage = LocalizedUpgrade(result);
+                        QueueGameplayCommand(new GuardianRetrofitCommand(selectedBuilding.EntityId));
                     },
                     ContentIds.Units.Guardian,
                     BarracksUpgradeCostLabel(upgrade, selectedBuilding)));
@@ -110,8 +108,7 @@ public partial class Main
                         validation.Success,
                         () =>
                         {
-                            var result = _simulation.TryUpgradeBuilding(selectedBuilding.EntityId, upgradeId);
-                            _lastActionMessage = LocalizedUpgrade(result);
+                            QueueGameplayCommand(new UpgradeBuildingCommand(selectedBuilding.EntityId, upgradeId));
                         },
                         upgrade.Id,
                         L("ui.action_bar.cost", SimulationMessage.Args(("cost", upgrade.Cost))));

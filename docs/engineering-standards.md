@@ -241,16 +241,34 @@ Current validation commands it runs:
 - `dotnet build game/Stratezone.csproj`
 - `dotnet run --project tests/SimulationSmoke/SimulationSmoke.csproj`
 - `python plugins/stratezone-mission-steward/scripts/check_content_drift.py`
+- `python -m unittest discover -s tests/Tooling`
 - `pwsh -NoProfile -File tools/godot.ps1 -Smoke`
+- `pwsh -NoProfile -File tools/godot.ps1 -Check -Headless -Script res://../tools/verify_fixed_step_presentation.gd`
 
 `tools/validate_content.py` also validates the first-pass English localization catalog under `game/data/i18n/en.json`.
 
 Do not call a Godot executable directly. `tools/godot.ps1` resolves the Godot .NET build matching the `Godot.NET.Sdk` pin in `game/Stratezone.csproj` (`GODOT_EXE` overrides it, but must still match), rejects non-.NET or mismatched builds, and fails headless runs whose log contains engine or C# errors. A non-.NET Godot prints `No loader found for resource: ...cs` and still exits 0, so the exit code alone proves nothing.
 
+The standard interaction check drives the real scene/input adapter through placement cancellation/replacement, fog redraw on editor reveal/resume and mission reload, selected-path redraw during interpolation, and controlled frame schedules. It runs headless without waiting for a screenshot. Use `-Check -TimeoutSeconds 120 -Script <script path>` for a bounded script run; `-Check` checks completion, exit code and the engine log. An optional rendered capture is a separate command:
+
+```powershell
+pwsh -NoProfile -File tools/godot.ps1 -Check -Script res://../tools/verify_fixed_step_presentation.gd -UserArgsJson '["--capture"]'
+```
+
+Pass script arguments as a JSON string array with `-UserArgsJson`; the launcher appends Godot's user-argument delimiter itself. Add focused scene/input regressions as footprints, elevation and controls change when they protect behavior the simulation smoke cannot exercise.
+
 Git hooks in `.githooks/` (enable with `git config core.hooksPath .githooks`):
 
-- pre-commit: blocks local agent state (`.claude/worktrees/`, `.claude/settings.local.json`, nested repository gitlinks); runs content validation and the drift check when `game/data/`, `docs/`, `AGENTS.md`, or the validators are staged; blocks staged files over 50 MB outside Git LFS and warns over 5 MB; warns on hand-written `.cs` files over 900 lines and on large `.uid`/`.import` churn mixed into code commits.
+- pre-commit: blocks local agent state (`.claude/worktrees/`, `.claude/settings.local.json`, nested repository gitlinks); runs content validation and the drift check when changes, including deletions, to `game/data/`, `docs/`, `AGENTS.md`, or the validators are staged; blocks staged files over 50 MB outside Git LFS and warns over 5 MB; warns on hand-written `.cs` files over 900 lines and on large `.uid`/`.import` churn mixed into code commits. Removing local agent state is allowed.
 - pre-push: runs the Godot C# build and simulation smoke unless every pushed change is Markdown. It then runs `git lfs pre-push` to upload LFS files, because `core.hooksPath` replaces the hook `git lfs install` would add.
+
+The Claude-compatible Stop hook in `.claude/settings.json` runs content/drift checks, the C# build, simulation/tooling tests and the headless interaction check for changed watched paths. Grok also loads it when the repository is trusted. Its 300-second client budget covers the entire sequence; the interaction launcher has its own 120-second default. Treat a client timeout as incomplete validation and run the full validator directly before closeout. Pre-push does not run the interaction check. Graphical art captures are run explicitly through `check_art.py`, not automatically by the full validator or Stop hook.
+
+### Study Art Evidence
+
+Use `python tools/art/check_art.py --asset rifleman` (asset IDs: `colony_hub`, `rifleman`, `rover`, `trees`) or `python tools/art/check_art.py --all` for fresh checks and real Godot captures of existing study exports. The runner compiles the current C# adapters before capturing. It writes one ignored `artifacts/art-check/` folder per run with logs, captures and a receipt of asset hashes, engine/camera settings, check results and unchecked items. It does not rebuild or export art, finalize Blender sources, download LFS assets or overwrite tracked previews. Missing required runtime/check inputs, including LFS pointers, block a pass. Unavailable authoring sources are recorded separately and leave source provenance unverified even when runtime checks pass.
+
+Use `python tools/art/check_art.py --check-receipt <receipt.json>` to check whether a saved receipt still matches current inputs. The runner also checks Godot's raw-export, cached-resource and import-settings stamps; stale or missing import evidence blocks capture with an explicit `tools/godot.ps1 -Import` instruction. It reads the pinned Godot 4.7 cache format and fails closed if that format cannot establish freshness. Keep structural assertions separate from human sprite/shape/color, animation and readability review. Desktop captures do not prove Steam Deck performance, gameplay footprint integration or production approval. Source/export recovery details live in the shared `art-check` skill and the selected asset README.
 
 ## Large Files (Git LFS)
 
@@ -294,6 +312,13 @@ Until then, every implementation closeout should report:
 - any hand-written code files left over 900 lines, with the reason they were not split
 
 ## AI-Assisted Development Rules
+
+Repository skills share one canonical body under `plugins/stratezone-mission-steward/skills/`. Codex uses the `.agents/skills/` entrypoints; Claude Code uses `.claude/skills/`. Grok discovers both directories and, in the verified client, gives `.agents/skills/` priority when names match. All pointers lead to the same canonical files. Keep both sets of `name` and `description` in sync; change the workflow in its canonical file. The existing Codex plugin exposes the same skills. No agent-specific copy of a script or workflow is needed.
+
+- `mission-steward`: validation, pinned Godot launches, mission truth, content drift and implementation closeouts.
+- `art-check`: fresh study export checks/captures, receipt freshness and source/export provenance.
+
+All three agents run the same repository commands. Skill discovery updates take effect according to the client's reload/session behavior; adding a repository entrypoint does not require changing user-level configuration.
 
 AI agents should:
 

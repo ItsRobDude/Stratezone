@@ -78,3 +78,9 @@ First prototype roster:
 For this pass, placeholder shapes are acceptable, art direction can wait until gameplay works, and no story cutscenes are required.
 
 See [docs/product-roadmap.md](docs/product-roadmap.md) for the working roadmap.
+
+## Repository Workflows
+
+Codex, Claude Code and Grok share the repository's `mission-steward` and `art-check` skills. Canonical instructions live in [the local plugin](plugins/stratezone-mission-steward/skills/); `.agents/skills/` and `.claude/skills/` provide discovery entrypoints.
+
+Run `powershell -NoProfile -ExecutionPolicy Bypass -File plugins/stratezone-mission-steward/scripts/validate_stratezone.ps1` for the full validation stack, including headless Godot scene/input regressions. For fresh checks and engine captures of existing art studies, run `python tools/art/check_art.py --all` or choose an asset with `--asset colony_hub`, `rifleman`, `rover` or `trees`. Reports and asset receipts go under ignored `artifacts/art-check/`. See [Engineering Standards](docs/engineering-standards.md) for exact commands and verification limits.

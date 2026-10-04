@@ -1,7 +1,7 @@
 {
   "name": "stratezone-mission-steward",
-  "version": "0.2.0",
-  "description": "Repo-local Codex workflows for Stratezone validation, safe Godot launches, mission truth, and content drift checks.",
+  "version": "0.3.0",
+  "description": "Shared Stratezone workflows for validation, safe Godot launches, mission truth, content drift, and study-art verification with fresh captures.",
   "author": {
     "name": "Stratezone Local Tooling",
     "email": "",
@@ -14,13 +14,14 @@
     "stratezone",
     "godot",
     "mission-validation",
-    "content-drift"
+    "content-drift",
+    "art-verification"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Stratezone Mission Steward",
-    "shortDescription": "Validate Stratezone mission truth and content drift.",
-    "longDescription": "Repo-local Codex helper for Stratezone. It gives future runs a focused mission-steward workflow, validation command wrapper, mission truth report, and content drift checks that keep docs, JSON content, and simulation expectations aligned.",
+    "shortDescription": "Validate Stratezone missions and capture study art.",
+    "longDescription": "Repo-local workflows shared with Claude Code and Grok. Mission steward validates docs, content, simulation and Godot interactions. Art check verifies existing study exports and records fresh engine captures and asset receipts.",
     "developerName": "Stratezone Local Tooling",
     "category": "Developer Tools",
     "capabilities": [
@@ -34,7 +35,8 @@
     "defaultPrompt": [
       "Run the Stratezone mission steward checks.",
       "Report Stratezone mission truth for every mission.",
-      "Check Stratezone content drift."
+      "Check Stratezone content drift.",
+      "Check the current Stratezone study art and capture fresh previews."
     ],
     "brandColor": "#2F6F5E"
   }

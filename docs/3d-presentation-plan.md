@@ -633,6 +633,7 @@ Items 3–5 are `maps.json` data changes. Items 1–2 are `TerrainBuilder` rules
 3. **P0 spikes** (can run alongside step 2):
    - the scale lineup, including the far-zoom strategic-icon A/B
    - the crowd spike: 300 animated stand-ins, rotating ortho camera, profiled **on the Steam Deck** for Forward+ vs. Mobile, Linux vs. Proton, and with and without far-zoom icons
+   - **Deferred tooling, built with the crowd scene:** add a repository benchmark runner shared by Codex, Claude and Grok. Freeze crowd counts, animation workload, camera path, resolution and settings; use a stated warmup and record raw frame-time samples plus summary statistics. Save a receipt with hardware/OS, engine/export build, commit and dirty state, renderer, icon mode, run configuration and logs under ignored `artifacts/`. Run matched Forward+/Mobile, native Linux/Proton and strategic-icons on/off comparisons on the actual Deck. Desktop runs may diagnose problems but cannot satisfy this performance gate. The runner and benchmark scene are not implemented yet.
 4. **Track B: input layer and keymap,** plus the new sim verbs. The keymap is renderer-agnostic, so it lands in the 2D build first.
 5. **P1: 3D greybox parity.**
    - Primitive stand-ins sized from sim footprints.

@@ -5,7 +5,7 @@ description: Use for Stratezone validation, launching Godot, mission truth repor
 
 # Stratezone Mission Steward
 
-Use this skill only inside the Stratezone checkout. This file is shared by Codex (this plugin) and Claude Code (`.claude/skills/mission-steward/SKILL.md` points here). Edit this file, not the pointer.
+Use this skill only inside the Stratezone checkout. This is the canonical body for Codex (plugin and `.agents/skills`), Claude Code (`.claude/skills`), and Grok (both directories, with `.agents/skills` preferred by the verified client). Edit this file, not the discovery pointers.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Read `AGENTS.md` first. For broad changes, read the docs in its "Source of Truth
 
 ## Main Commands
 
-Run the full local validation stack (content, C# build, simulation smoke, drift check, headless Godot smoke):
+Run the full local validation stack (content, C# build, simulation smoke, drift check, tooling regressions, headless Godot smoke and interaction regressions):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\plugins\stratezone-mission-steward\scripts\validate_stratezone.ps1
@@ -50,6 +50,21 @@ pwsh -NoProfile -File tools/godot.ps1 -Smoke    # headless main-scene run, error
 pwsh -NoProfile -File tools/godot.ps1 -Import   # headless editor import pass, error scan
 pwsh -NoProfile -File tools/godot.ps1           # launch the game windowed
 ```
+
+Run the real scene/input assertions alone (no renderer required):
+
+```powershell
+pwsh -NoProfile -File tools/godot.ps1 -Check -Headless -Script res://../tools/verify_fixed_step_presentation.gd
+```
+
+`-Check` waits for the script to finish and checks its exit code and engine log;
+`-TimeoutSeconds 120` sets a bounded deadline. For an explicitly requested rendered
+capture, use `-Check -Script res://../tools/verify_fixed_step_presentation.gd -UserArgsJson '["--capture"]'`.
+Use `-UserArgsJson` for script arguments: the launcher appends Godot's user-argument
+delimiter after parsing the JSON string array. Do not add rendering to headless assertions.
+
+For fresh Hub, Rifleman, Rover or tree-study engine captures and asset receipts,
+read `plugins/stratezone-mission-steward/skills/art-check/SKILL.md`.
 
 ## Workflow
 

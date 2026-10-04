@@ -106,6 +106,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - **Track A:** fix building footprints and pathfinding. Real outline shapes, buildings as physical walls, spawn from the Hub exit, clearance-aware cached nav grid, separation, and a path-request budget. This is needed regardless of 3D and lands first.
    - **Track B:** overhaul controls and hotkeys to real-RTS conventions (grid command card, control groups, Stop/Hold/Attack-move/Shift-queue).
    - **Track C:** the 3D presentation, starting with a scale lineup and a crowd-performance spike on the Steam Deck, then 3D greybox parity.
+     - Build the repeatable benchmark runner alongside the P0 crowd scene, as specified in `docs/3d-presentation-plan.md` "Order Of Work": frozen workload/camera/settings, warmup, raw frame times and build/hardware receipts for matched renderer, Linux/Proton and far-zoom-icon comparisons. This remains deferred until that performance work starts; the acceptance runs require actual Steam Deck hardware.
 
 1. First Landing tactical route closeout
    - Treat the user-completed win run as the first playable proof for the current greybox slice.
@@ -118,6 +119,7 @@ The first prototype stack is locked as Godot 4 with C#.
    - Keep the project compiling after each implementation pass.
    - Keep content validation passing as data grows.
    - Expand automated checks only when they protect deterministic behavior found during playability passes.
+   - Keep the headless Godot interaction regressions in standard validation and use fresh art-check receipts when reviewing changing study exports.
 
 3. Mission grammar and architecture hardening
    - Make the next authored mission cheaper to add before introducing another broad gameplay layer.

@@ -1,0 +1,55 @@
+{
+  "triangles": 5990,
+  "part_triangles": {
+    "Chassis": 3722,
+    "Radar": 388,
+    "Wheel_FL": 470,
+    "Wheel_FR": 470,
+    "Wheel_RL": 470,
+    "Wheel_RR": 470
+  },
+  "bounds_min": [
+    -1.2999998331069946,
+    -2.4570000171661377,
+    0.007999956607818604
+  ],
+  "bounds_max": [
+    1.2999999523162842,
+    2.369999885559082,
+    3.2851901054382324
+  ],
+  "dimensions": [
+    2.599999785423279,
+    4.82699990272522,
+    3.277190148830414
+  ],
+  "wheel_centers": {
+    "Wheel_FL": [
+      -1.0,
+      -1.46,
+      0.58
+    ],
+    "Wheel_FR": [
+      1.0,
+      -1.46,
+      0.58
+    ],
+    "Wheel_RL": [
+      -1.0,
+      1.42,
+      0.58
+    ],
+    "Wheel_RR": [
+      1.0,
+      1.42,
+      0.58
+    ]
+  },
+  "wheelbase_m": 2.88,
+  "cage_top_m": 2.331,
+  "radar_top_m": 3.2851901054382324,
+  "sensor_revision": 1,
+  "driver_source": "Shared infantry base, unscaled, static seated pose",
+  "runtime_surfaces": 3,
+  "runtime_note": "Four identical wheels are one MultiMesh in review scene"
+}

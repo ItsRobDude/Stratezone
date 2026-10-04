@@ -6,6 +6,10 @@
 bin/
 obj/
 
+# Python-generated caches
+__pycache__/
+*.pyc
+
 # Export/build artifacts
 builds/
 exports/

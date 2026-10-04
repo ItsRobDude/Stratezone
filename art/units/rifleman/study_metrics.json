@@ -1,0 +1,154 @@
+{
+  "blender_version": "5.2.2 LTS",
+  "triangles": 3728,
+  "mesh_count": 1,
+  "material_surfaces": 1,
+  "bones": 25,
+  "mixamo_bones_after_end_removal": 22,
+  "helpers": [
+    "pauldron.L",
+    "pauldron.R",
+    "weapon"
+  ],
+  "maximum_influences": 4,
+  "rigid_gear_verified": true,
+  "shared_body_triangles": 982,
+  "shared_body_non_manifold_edges": 0,
+  "weight_transfer_max_distance_m": 0.10000001639127731,
+  "authored_boot_bottom_m": 0.018,
+  "authored_helmet_top_m": 2.225,
+  "clips": [
+    {
+      "blender_action": "rifle_aim_idle_loop",
+      "godot_name": "rifle_aim_idle",
+      "frames": 94,
+      "fps": 30,
+      "loop": true,
+      "maximum_support_palm_error_m": 3.796142102139293e-07
+    },
+    {
+      "blender_action": "rifle_ready_idle_loop",
+      "godot_name": "rifle_ready_idle",
+      "frames": 232,
+      "fps": 30,
+      "loop": true,
+      "maximum_support_palm_error_m": 0.001437394747969767
+    },
+    {
+      "blender_action": "rifle_run_loop",
+      "godot_name": "rifle_run",
+      "frames": 21,
+      "fps": 30,
+      "loop": true,
+      "maximum_support_palm_error_m": 3.047460516723627e-07
+    }
+  ],
+  "skeleton": [
+    {
+      "name": "mixamorig:Hips",
+      "parent": null
+    },
+    {
+      "name": "mixamorig:Spine",
+      "parent": "mixamorig:Hips"
+    },
+    {
+      "name": "mixamorig:Spine1",
+      "parent": "mixamorig:Spine"
+    },
+    {
+      "name": "mixamorig:Spine2",
+      "parent": "mixamorig:Spine1"
+    },
+    {
+      "name": "mixamorig:Neck",
+      "parent": "mixamorig:Spine2"
+    },
+    {
+      "name": "mixamorig:Head",
+      "parent": "mixamorig:Neck"
+    },
+    {
+      "name": "mixamorig:LeftShoulder",
+      "parent": "mixamorig:Spine2"
+    },
+    {
+      "name": "mixamorig:LeftArm",
+      "parent": "mixamorig:LeftShoulder"
+    },
+    {
+      "name": "mixamorig:LeftForeArm",
+      "parent": "mixamorig:LeftArm"
+    },
+    {
+      "name": "mixamorig:LeftHand",
+      "parent": "mixamorig:LeftForeArm"
+    },
+    {
+      "name": "pauldron.L",
+      "parent": "mixamorig:LeftShoulder"
+    },
+    {
+      "name": "mixamorig:RightShoulder",
+      "parent": "mixamorig:Spine2"
+    },
+    {
+      "name": "mixamorig:RightArm",
+      "parent": "mixamorig:RightShoulder"
+    },
+    {
+      "name": "mixamorig:RightForeArm",
+      "parent": "mixamorig:RightArm"
+    },
+    {
+      "name": "mixamorig:RightHand",
+      "parent": "mixamorig:RightForeArm"
+    },
+    {
+      "name": "weapon",
+      "parent": "mixamorig:RightHand"
+    },
+    {
+      "name": "pauldron.R",
+      "parent": "mixamorig:RightShoulder"
+    },
+    {
+      "name": "mixamorig:LeftUpLeg",
+      "parent": "mixamorig:Hips"
+    },
+    {
+      "name": "mixamorig:LeftLeg",
+      "parent": "mixamorig:LeftUpLeg"
+    },
+    {
+      "name": "mixamorig:LeftFoot",
+      "parent": "mixamorig:LeftLeg"
+    },
+    {
+      "name": "mixamorig:LeftToeBase",
+      "parent": "mixamorig:LeftFoot"
+    },
+    {
+      "name": "mixamorig:RightUpLeg",
+      "parent": "mixamorig:Hips"
+    },
+    {
+      "name": "mixamorig:RightLeg",
+      "parent": "mixamorig:RightUpLeg"
+    },
+    {
+      "name": "mixamorig:RightFoot",
+      "parent": "mixamorig:RightLeg"
+    },
+    {
+      "name": "mixamorig:RightToeBase",
+      "parent": "mixamorig:RightFoot"
+    }
+  ],
+  "sources_sha256": {
+    "infantry_base_tpose.fbx": "10121ee80c279769559bcf193a0f4e4eebaeb78ff09702b40438fcca69d64e4c",
+    "rifle_aim_idle_source.fbx": "536e2d2425a472c662c66edc00df0fced55fbcdc4a89d8f566ea1051ea20b6d0",
+    "rifle_idle_source.fbx": "a8402cf5a06c74c5acac65ebe1edef89719063d8b8c636d4683a6c5af6e472af",
+    "rifle_run_source.fbx": "d96f0df1f93a8eec0eafb92bfeadef1c510edbdec6c910216a065610359ef90c"
+  }
+}

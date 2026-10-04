@@ -1,0 +1,27 @@
+{
+  "blender": "5.2.2 LTS",
+  "triangles": 10917,
+  "editable_objects": 271,
+  "materials": 4,
+  "bounds_min": [
+    -4.195000171661377,
+    -5.598713397979736,
+    0.05999999865889549
+  ],
+  "bounds_max": [
+    4.195000171661377,
+    3.8880691528320312,
+    8.80000114440918
+  ],
+  "dimensions": [
+    8.390000343322754,
+    9.486782550811768,
+    8.740001145750284
+  ],
+  "door_clear_height_m": 2.7,
+  "door_clear_width_m": 2.62,
+  "entry_threshold_z_m": 0.52,
+  "height_revision": 1,
+  "lower_wall_top_m": 3.85,
+  "main_roof_top_m": 6.44
+}

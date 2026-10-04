@@ -135,8 +135,9 @@ Test these in the scale-lineup scene (P0), at close, default, and far zoom, on d
 
 - **Rover:**
   - an open-top 4×4 buggy with roll cage and visible driver
-  - a roof remote turret, antennas, cargo crates, cyan headlights, big off-road wheels
-  - Parts: chassis, 4 wheels (spin, front steer), turret yaw.
+  - a compact roof surveillance radar on a short swivel pedestal, antennas, cargo crates, cyan headlights, big off-road wheels
+  - Deliberate user-approved sprite exception: replace its roof gun with a sealed rectangular radar panel, rear cooling fins, and a cable connection. The Rover cannot shoot; its equipment must communicate its scout role.
+  - Parts: chassis, 4 wheels (spin, front steer), radar yaw.
 - **Medium Tank:**
   - a modern olive main battle tank with a long gun, side skirts, antennas, and a remote weapon station
   - Parts: hull, tracks (UV scroll), turret yaw, barrel recoil.
@@ -173,6 +174,97 @@ Test these in the scale-lineup scene (P0), at close, default, and far zoom, on d
   - antennas and dishes
   - hazard-stripe trims, warning plates, the insignia decal
   - doors and ramps
+
+## Basic World Tree Props
+
+`art/props/trees/tree_props.blend` contains four original, editable props;
+individual runtime GLBs live in `game/assets/models/props/trees/`.
+
+- **Pine A:** full layered crown, 7.0 m tall, 620 triangles.
+- **Pine B:** narrower crown, slight lean and an exposed lower trunk, 6.0 m, 558 triangles.
+- **Cherry A:** low fork and broad spreading summer canopy, 4.9 m, 750 triangles.
+- **Cherry B:** taller trunk and asymmetric upright summer canopy, 6.0 m, 750 triangles.
+
+The cherry trees use **green foliage**, per the user's choice, with a few
+small red fruit accents and pale horizontal bark marks. These are basic world
+props, with solid foliage masses and matte vertex colors rather than the
+future shared texture atlas. Each export has one mesh, one shared material,
+ground-level origin and no rig, collision, or animation. Use a MultiMesh batch
+per mesh variation when scatter is implemented. No mission placement or forest
+blocking rules change. The 45-degree `TreePropsStudy.tscn` viewer includes the
+existing Rifleman as a scale reference; colors and canopy density remain
+subject to review on actual terrain and the Steam Deck.
+
+## First Hub Look Study
+
+The first Colony Hub study (2026-10-03) is saved under
+`art/buildings/colony_hub/`; see its `README.md` for the source, previews,
+rebuild instructions, validation, and remaining work. It is a visual proposal
+for review, not an accepted production standard or a replacement for mission art.
+The isolated Godot scene is `game/scenes/studies/ColonyHubStudy.tscn`.
+`game/scenes/studies/ColonyHubMissionStudy.tscn` runs the actual First Landing
+presentation with the study Hub alongside the existing 2D troops. F2 switches
+between the original Hub sprite and model; troop sizes remain unchanged.
+It tests the existing sprite design with matte olive armor, dark frames, cyan
+windows, and an orthographic 45-degree camera. Its dimensions are provisional;
+this study does not change the simulation footprint or the Hub exit rules.
+
+Entrance revision 2 enlarges the opening to **2.70 m high by 2.62 m wide**,
+measured above the 0.52 m threshold, with wider doors/ramp and repositioned
+header, badge and lights. The entrance revision kept overall dimensions. This follows
+the equipped Rifleman scale check; it is a personnel entrance, not a vehicle bay.
+
+Height revision 1 raises the lower wall from 2.95 m to **3.85 m** and extends
+the upper glazed story by 0.30 m, bringing the main roof to **6.44 m**. The
+door header now sits below the shoulder deck. Door size, footprint and triangle
+count are preserved; taller walls deliberately restore the stepped-fortress
+proportions. All roof equipment moves with the roof.
+
+## First Rifleman And Shared Rig Study
+
+The first Rifleman study (2026-10-03) lives in `art/units/rifleman/`;
+its README records sources, settings, validation, and remaining look work.
+`game/scenes/studies/RiflemanStudy.tscn` compares it with the original sprite
+or places it beside the Hub at the same meter scale. It is isolated from missions.
+
+Our custom body has completed the Mixamo round trip. Reuse
+`art/units/shared_infantry/shared_infantry.blend` for future kits; preserve the
+`SZ_Infantry` armature name, rest pose, hierarchy, and bone names. Do not rig
+each soldier separately. This study has 22 retained Mixamo bones plus three
+baked helpers, 3,728 triangles, one mesh, and one material surface. Low-ready,
+aiming, and in-place run clips play through one separate AnimationLibrary.
+The user judged the soldier very rough: it needs major visual polish. Treat
+the present mesh as a rig/scale blockout, not the accepted look or quality bar.
+
+Verified import details for these downloads: preserve leaf bones during FBX
+import and remove only named `*_End` bones, otherwise unskinned clips lose hand
+bones. The skinned T-pose and unskinned clips have different FBX rest
+normalization; bake absolute poses onto the master instead of copying raw
+curves. Godot strips `_loop` from action names while enabling looping, so
+runtime names are `rifle_ready_idle`, `rifle_aim_idle`, and `rifle_run`.
+The Rifleman's support-hand correction is baked for its short bullpup. Other
+weapon shapes and Guardian armor still need clearance checks on this skeleton.
+
+## First Rover Scale Study
+
+`art/units/rover/rover_study.blend` and `game/scenes/studies/RoverScaleStudy.tscn`
+provide an isolated Rover/Rifleman/Hub lineup at 1:1 meter scale. The Rover
+follows the sprite's open 4x4, roll cage, cargo and cyan headlights, with the
+approved radar substitution described above. The equipment shape references
+the [FLIR Ranger R20SS](https://defense.flir.com/defense-products/ranger-r20ss/),
+using original geometry without manufacturer branding or real sensor specifications.
+The seated driver is an unscaled static pose of our shared infantry body.
+
+Measured starting proposal: **4.83 m long, 2.60 m wide**, cage top 2.33 m,
+radar top 3.29 m and highest antenna 3.07 m above ground. It has 5,990 triangles
+including crew, one material, and six rigid export parts. The viewer instances
+the four wheels as one MultiMesh, leaving three visible surfaces (chassis,
+radar, wheels). Front steering, wheel spin and radar scanning have preview motion.
+No vehicle skeleton or new simulation behavior is introduced.
+
+This is a scale/design study. Surface detail, cargo shaping, crew posing and
+collision/steering clearances still need production polish. The lineup is not
+approval of the current placeholder simulation footprint or performance on Deck.
 
 ## Armored Characters: Rigging And Animation
 

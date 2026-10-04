@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/main/Main.tscn" id="1_main"]
+[ext_resource type="Script" path="res://scripts/presentation/studies/ColonyHubMissionStudy.cs" id="2_study"]
+
+[node name="ColonyHubMissionStudy" instance=ExtResource("1_main")]
+script = ExtResource("2_study")

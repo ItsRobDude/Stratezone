@@ -1,20 +1,16 @@
 extends SceneTree
 
 const IDS = ["pine_a", "pine_b", "cherry_a", "cherry_b"]
-const OUT = "res://../art/props/trees/previews/"
+const CaptureCheck = preload("res://../tools/art/capture_check.gd")
+var output = CaptureCheck.new()
 
 func _initialize():
     call_deferred("verify")
 
-func capture(name):
-    await process_frame
-    await RenderingServer.frame_post_draw
-    root.get_texture().get_image().save_png(OUT + name + ".png")
-
 func verify():
+    if not output.begin(self): return
     root.size = Vector2i(1280, 800)
     root.msaa_3d = Viewport.MSAA_4X
-    DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
     var material = load("res://assets/models/props/trees/tree_props.tres")
     var metrics = JSON.parse_string(FileAccess.get_file_as_string("res://../art/props/trees/tree_metrics.json"))
     var study = load("res://scenes/studies/TreePropsStudy.tscn").instantiate()
@@ -44,13 +40,17 @@ func verify():
         batch.set_instance_transform(1, Transform3D(Basis(Vector3.UP, PI / 2), Vector3(6,0,0)))
         assert(batch.mesh.get_surface_count() == 1 and batch.instance_count == 2)
         print("TREE_PROP: ", IDS[i], " triangles=", tris, " height=", bounds.size.y)
-    await capture("lineup")
-    study.call("SetView", 2); await capture("pines")
-    study.call("SetView", 3); await capture("cherries")
-    study.call("SetYaw", 180.0); await capture("cherries_rear")
-    study.call("SetView", 2); await capture("pines_rear")
+    if not await output.capture("lineup"): return
+    study.call("SetView", 2)
+    if not await output.capture("pines"): return
+    study.call("SetView", 3)
+    if not await output.capture("cherries"): return
+    study.call("SetYaw", 180.0)
+    if not await output.capture("cherries_rear"): return
+    study.call("SetView", 2)
+    if not await output.capture("pines_rear"): return
     study.call("SetView", 1); study.call("SetYaw", 0.0)
     study.get_node("Camera").size = 25
-    await capture("far_lineup")
+    if not await output.capture("far_lineup"): return
     print("TREE_PROPS_PASS: four distinct props, dimensions, ground origins, budgets, shared material and MultiMesh compatibility")
-    quit()
+    output.finish("trees")

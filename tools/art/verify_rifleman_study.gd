@@ -2,11 +2,14 @@ extends SceneTree
 
 # Cross-export contract check, plus real 1280x800 Godot preview captures.
 # Run through tools/godot.ps1; requires a graphical renderer for screenshots.
+const CaptureCheck = preload("res://../tools/art/capture_check.gd")
+var output = CaptureCheck.new()
 
 func _initialize():
     call_deferred("capture")
 
 func capture():
+    if not output.begin(self): return
     root.size = Vector2i(1280, 800)
     root.msaa_3d = Viewport.MSAA_4X
     var study = load("res://scenes/studies/RiflemanStudy.tscn").instantiate()
@@ -42,22 +45,14 @@ func capture():
         assert(changed > 0.001, "Animation must move the shared skeleton")
         print("RIFLEMAN_CLIP: ", name, " duration=", anim.length, " tracks=", anim.get_track_count(), " left_leg_motion_rad=", changed)
     study.call("SelectClip", "rifle_ready_idle"); player.seek(0, true); player.speed_scale=0
-    await process_frame
-    await RenderingServer.frame_post_draw
-    root.get_texture().get_image().save_png("res://../art/units/rifleman/previews/godot_hub_scale.png")
+    if not await output.capture("godot_hub_scale"): return
     study.call("SetClose", true)
-    await process_frame
-    await RenderingServer.frame_post_draw
-    root.get_texture().get_image().save_png("res://../art/units/rifleman/previews/godot_reference.png")
+    if not await output.capture("godot_reference"): return
     for clip in ["rifle_aim_idle", "rifle_run"]:
         study.call("SelectClip", clip);player.seek(player.current_animation_length*.35, true);player.speed_scale=0
-        await process_frame
-        await RenderingServer.frame_post_draw
-        root.get_texture().get_image().save_png("res://../art/units/rifleman/previews/godot_"+clip+".png")
+        if not await output.capture("godot_" + clip): return
     study.call("SelectClip", "rifle_ready_idle");player.seek(0, true);player.speed_scale=0
     meshes[0].set_instance_shader_parameter("team_color", Color("e0473f"))
-    await process_frame
-    await RenderingServer.frame_post_draw
-    root.get_texture().get_image().save_png("res://../art/units/rifleman/previews/godot_enemy.png")
+    if not await output.capture("godot_enemy"): return
     print("RIFLEMAN_VERIFY: shared library bindings and screenshots complete")
-    quit()
+    output.finish("rifleman")

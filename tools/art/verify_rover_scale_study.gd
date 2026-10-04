@@ -1,15 +1,11 @@
 extends SceneTree
 
 # Cross-format pivot/dimension checks and real 1280x800 review captures.
-const OUT = "res://../art/units/rover/previews/"
+const CaptureCheck = preload("res://../tools/art/capture_check.gd")
+var output = CaptureCheck.new()
 
 func _initialize():
     call_deferred("verify")
-
-func capture(name):
-    await process_frame
-    await RenderingServer.frame_post_draw
-    root.get_texture().get_image().save_png(OUT + name + ".png")
 
 func key(code):
     var event = InputEventKey.new()
@@ -19,9 +15,9 @@ func key(code):
     await process_frame
 
 func verify():
+    if not output.begin(self): return
     root.size = Vector2i(1280,800)
     root.msaa_3d = Viewport.MSAA_4X
-    DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
     var study = load("res://scenes/studies/RoverScaleStudy.tscn").instantiate()
     root.add_child(study); current_scene = study
     for i in range(10): await process_frame
@@ -48,15 +44,15 @@ func verify():
         var actual = wheels.multimesh.get_instance_transform(i) * wheels.multimesh.mesh.get_aabb()
         assert(expected.position.distance_to(actual.position) < .001, "Wheel pivot/axis mismatch")
         assert(expected.size.distance_to(actual.size) < .001, "Wheel geometry must match source")
-    await capture("all_three")
+    if not await output.capture("all_three"): return
     study.call("SetView", 3)
-    await capture("hub_entrance")
+    if not await output.capture("hub_entrance"): return
     study.call("SetView", 1)
-    await capture("rover_reference")
+    if not await output.capture("rover_reference"): return
     study.call("SetYaw", 145.0)
-    await capture("rover_rear")
+    if not await output.capture("rover_rear"): return
     study.call("SetYaw", 90.0)
-    await capture("rover_side")
+    if not await output.capture("rover_side"): return
     var before = wheels.multimesh.get_instance_transform(0)
     var radar_before = radar.transform
     await key(KEY_R)
@@ -65,11 +61,11 @@ func verify():
     assert(not radar.transform.is_equal_approx(radar_before), "Radar scan motion failed")
     await key(KEY_R)
     await key(KEY_T)
-    await capture("rover_motion_red")
+    if not await output.capture("rover_motion_red"): return
     study.call("SetView", 1)
     study.call("SetYaw", -35.0)
     await key(KEY_T)
     radar.rotation.y = PI / 4
-    await capture("radar_scan")
+    if not await output.capture("radar_scan"): return
     print("ROVER_VERIFY: unscaled units, radar replaces gun, radar clearance/scan, four wheel pivots, three visible surfaces passed")
-    quit()
+    output.finish("rover")

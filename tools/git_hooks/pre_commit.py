@@ -44,8 +44,8 @@ def git(*args: str) -> str:
 
 
 def staged_entries() -> list[tuple[str, str, str]]:
-    """(new_mode, new_blob, path) for every added, copied, modified, or type-changed path."""
-    raw = git("diff", "--cached", "--raw", "--no-abbrev", "-z", "--no-renames", "--diff-filter=ACMT")
+    """(new_mode, new_blob, path), including deletions so content removal is validated."""
+    raw = git("diff", "--cached", "--raw", "--no-abbrev", "-z", "--no-renames", "--diff-filter=ACDMT")
     parts = raw.split("\0")
     entries: list[tuple[str, str, str]] = []
     for meta, path in zip(parts[0::2], parts[1::2]):
@@ -95,12 +95,14 @@ def main() -> int:
     warnings: list[str] = []
 
     for mode, _, path in entries:
+        if mode == "000000":
+            continue  # Removing local state is allowed; its path still triggers validation.
         if path in BLOCKED_PATHS or path.startswith(BLOCKED_PREFIXES):
             errors.append(f"{path}: local agent state must not be committed (see .gitignore).")
         elif mode == GITLINK_MODE:
             errors.append(f"{path}: nested repository or worktree gitlink; unstage it with `git rm --cached {path}`.")
 
-    sizes = blob_sizes([blob for mode, blob, _ in entries if mode != GITLINK_MODE])
+    sizes = blob_sizes([blob for mode, blob, _ in entries if mode not in (GITLINK_MODE, "000000")])
     for mode, blob, path in entries:
         size = sizes.get(blob, 0)
         megabytes = size / (1024 * 1024)

@@ -49,6 +49,10 @@ try {
         python plugins\stratezone-mission-steward\scripts\check_content_drift.py
     }
 
+    Invoke-StratezoneStep "Workflow tooling tests" {
+        python -m unittest discover -s tests/Tooling -p "test_*.py"
+    }
+
     if (-not $SkipGodot) {
         # tools/godot.ps1 resolves the Mono build matching the csproj pin and fails on
         # engine errors in the log, not just on the exit code.
@@ -57,6 +61,9 @@ try {
         }
         Invoke-StratezoneStep "Godot headless smoke" {
             & (Join-Path $RepoRoot "tools\godot.ps1") -Smoke
+        }
+        Invoke-StratezoneStep "Godot interaction regressions" {
+            & (Join-Path $RepoRoot "tools\godot.ps1") -Check -Headless -Script res://../tools/verify_fixed_step_presentation.gd
         }
     }
 }

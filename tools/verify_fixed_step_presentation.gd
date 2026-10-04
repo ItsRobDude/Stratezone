@@ -1,6 +1,7 @@
 extends SceneTree
-## Run through tools/godot.ps1 with --script res://../tools/verify_fixed_step_presentation.gd.
+## Run through tools/godot.ps1 -Check -Headless -Script res://../tools/verify_fixed_step_presentation.gd.
 ## Drives the real Main input handlers and rendering adapter with explicit frame times.
+## Optional rendered capture: omit -Headless and pass -UserArgsJson '["--capture"]'.
 
 var failures := 0
 
@@ -44,10 +45,29 @@ func load_mission(main: Node, mission: String):
     main.set_process(false)
 
 func run():
+    root.size = Vector2i(1280, 800) # Headless has no window to establish selection/culling bounds.
     var main = load("res://scenes/main/Main.tscn").instantiate()
     root.add_child(main)
     main.set_process(false)
     await process_frame
+    # Headless CanvasItem draw signals still expose redraw requests. Let each
+    # previous request drain before exercising a reveal change or a fresh fog instance.
+    var fog = main.get_node("WorldRoot/FogOfWarView")
+    var fog_draws := [0]
+    fog.draw.connect(func(): fog_draws[0] += 1)
+    for frame in range(3): await process_frame
+    var before_draws: int = fog_draws[0]
+    main.call("ToggleMapEditor")
+    for frame in range(3): await process_frame
+    check(fog_draws[0] > before_draws, "editor reveal did not redraw fog")
+    before_draws = fog_draws[0]
+    main.call("ToggleMapEditor")
+    for frame in range(3): await process_frame
+    check(fog_draws[0] > before_draws, "editor resume did not redraw the restored fog")
+    before_draws = fog_draws[0]
+    await load_mission(main, "mission_first_landing")
+    for frame in range(3): await process_frame
+    check(fog_draws[0] > before_draws, "same-mission reload did not redraw its new fog instance")
     var expected: Variant = null
     for fps in [30, 40, 60, 120, 144, 240]:
         await load_mission(main, "mission_first_landing")
@@ -68,6 +88,22 @@ func run():
             expected = rover.position
         check(rover.position.distance_to(expected) < 0.001, "frame schedule changed the displayed position after equal elapsed time")
         print("PRESENTATION ", fps, " FPS: moving_frames=", changes, " position=", rover.position)
+
+    await load_mission(main, "mission_first_landing")
+    var selected_rover := unit_view(main, "unit_rover")
+    selected_rover.set_process(false) # Isolate adapter redraw from animation/hover updates.
+    var path_draws := [0]
+    selected_rover.draw.connect(func(): path_draws[0] += 1)
+    main.call("SelectSingleAt", selected_rover.position)
+    main.call("CommandSelectedUnits", selected_rover.position + Vector2(400, 0))
+    main.call("ProcessSimulation", 0.05)
+    for frame in range(3): await process_frame
+    var before_path_draws: int = path_draws[0]
+    var before_pose := selected_rover.position
+    main.call("ProcessSimulation", 0.01) # No simulation step; only the displayed pose changes.
+    for frame in range(3): await process_frame
+    check(selected_rover.position.distance_to(before_pose) > 0.001, "intermediate frame did not interpolate the selected unit")
+    check(path_draws[0] > before_path_draws, "selected path did not redraw with the interpolated pose")
 
     await load_mission(main, "mission_first_landing")
     var grunt := unit_view(main, "unit_grunt")
@@ -141,13 +177,17 @@ func run():
     main.call("ProcessSimulation", 2.0)
     check(rover.position == terminal_position, "terminal mission kept moving")
 
-    await load_mission(main, "mission_first_landing")
-    main.get_node("GreyboxCamera").position = Vector2(-100, 70)
-    main.get_node("GreyboxCamera").zoom = Vector2(0.85, 0.85)
-    main.call("ProcessSimulation", 0.025)
-    await RenderingServer.frame_post_draw
-    var output_dir := ProjectSettings.globalize_path("res://../artifacts/fixed-step-review").simplify_path()
-    check(DirAccess.make_dir_recursive_absolute(output_dir) == OK, "could not create capture directory")
-    check(root.get_texture().get_image().save_png(output_dir.path_join("presentation.png")) == OK, "could not save capture")
+    if "--capture" in OS.get_cmdline_user_args():
+        if DisplayServer.get_name() == "headless":
+            check(false, "--capture requires a graphical renderer; omit --headless")
+        else:
+            await load_mission(main, "mission_first_landing")
+            main.get_node("GreyboxCamera").position = Vector2(-100, 70)
+            main.get_node("GreyboxCamera").zoom = Vector2(0.85, 0.85)
+            main.call("ProcessSimulation", 0.025)
+            await RenderingServer.frame_post_draw
+            var output_dir := ProjectSettings.globalize_path("res://../artifacts/fixed-step-review").simplify_path()
+            check(DirAccess.make_dir_recursive_absolute(output_dir) == OK, "could not create capture directory")
+            check(root.get_texture().get_image().save_png(output_dir.path_join("presentation.png")) == OK, "could not save capture")
     print("FIXED_STEP_PRESENTATION_", "PASS" if failures == 0 else "FAIL")
     quit(0 if failures == 0 else 1)

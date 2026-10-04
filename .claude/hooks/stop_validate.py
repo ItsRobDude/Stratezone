@@ -1,7 +1,7 @@
 """Claude Code Stop hook: validate code, tests, and content before Claude finishes a turn.
 
 When watched paths differ from HEAD and that change set has not been checked yet, runs the
-content validators, the Godot C# build, and the simulation smoke. Exit 2 blocks the stop and
+content validators, C# build, simulation/tooling tests and headless interaction checks. Exit 2 blocks the stop and
 sends the failure to Claude. An unchanged failing tree is reported once, and at most
 MAX_BLOCKS stops are blocked in a row, so a broken tree never traps Claude in a loop.
 State lives in .claude/hook-state/ (gitignored).
@@ -22,8 +22,14 @@ WATCHED = [
     "game/scripts",
     "game/data",
     "game/Stratezone.csproj",
+    "game/scenes/main",
     "tests",
     "tools/validate_content.py",
+    "tools/godot.ps1",
+    "tools/verify_fixed_step_presentation.gd",
+    "tools/git_hooks",
+    "tools/art",
+    ".claude/hooks",
     "plugins/stratezone-mission-steward/scripts",
 ]
 STEPS = (
@@ -31,6 +37,8 @@ STEPS = (
     ("Content drift check", [sys.executable, "plugins/stratezone-mission-steward/scripts/check_content_drift.py"]),
     ("Godot C# build", ["dotnet", "build", "game/Stratezone.csproj", "-nologo", "-v", "q"]),
     ("Simulation smoke", ["dotnet", "run", "--project", "tests/SimulationSmoke/SimulationSmoke.csproj"]),
+    ("Workflow tooling tests", [sys.executable, "-m", "unittest", "discover", "-s", "tests/Tooling", "-p", "test_*.py"]),
+    ("Godot interaction regressions", ["pwsh", "-NoProfile", "-File", "tools/godot.ps1", "-Check", "-Headless", "-Script", "res://../tools/verify_fixed_step_presentation.gd"]),
 )
 MAX_BLOCKS = 3
 
@@ -51,7 +59,7 @@ def fingerprint() -> str | None:
     ]
     if not diff and not untracked:
         return None
-    digest = hashlib.sha256(diff)
+    digest = hashlib.sha256(git_bytes("rev-parse", "HEAD") + diff)
     for path in sorted(untracked):
         digest.update(path.encode("utf-8"))
         try:

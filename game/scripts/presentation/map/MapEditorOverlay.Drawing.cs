@@ -320,12 +320,7 @@ public partial class MapEditorOverlay
             return;
         }
 
-        var cells = PathfindingSystem.SampleBlockedCells(
-            _simulation.Buildings,
-            _simulation.EnergyWalls,
-            _simulation.Map?.TerrainRegions ?? [],
-            _simulation.Bridges,
-            bounds: _simulation.PlayableBounds);
+        var cells = _simulation.SampleBlockedPathingCells(sampleSize: 32.0f);
         foreach (var cell in cells)
         {
             var size = new Vector2(cell.Size, cell.Size);

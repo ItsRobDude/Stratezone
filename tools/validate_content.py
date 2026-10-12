@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = ROOT / "game" / "data"
 I18N_ROOT = DATA_ROOT / "i18n"
 ID_PATTERN = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
+MAX_COLLISION_RADIUS = 2.5
 REFERENCE_KEY_PATTERN = re.compile(r".*_ids?$")
 REQUIRED_I18N_KEYS = {
     "mission.objective.establish_outpost",
@@ -318,6 +319,12 @@ def validate_unit_and_building_combat_fields(records: dict[str, dict[str, Any]])
             train_time = record.get("train_time_seconds")
             if isinstance(train_time, (int, float)) and train_time < 0:
                 errors.append(f"{record['_source_path']}: {record_id} has negative train_time_seconds")
+            # The navigation grid tracks clearance up to 64 px (about 2.67 content units).
+            radius = record.get("collision_radius")
+            if not _is_number(radius) or not 0 < radius <= MAX_COLLISION_RADIUS:
+                errors.append(
+                    f"{record['_source_path']}: {record_id}.collision_radius must be a number in (0, {MAX_COLLISION_RADIUS}]"
+                )
 
         if record_id.startswith("building_"):
             missing = sorted(field for field in building_fields if field not in record)

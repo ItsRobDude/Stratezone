@@ -152,9 +152,8 @@ public sealed partial class RtsSimulation
             return true;
         }
 
-        // Until A2's finer grid, pathing can stop a Grunt up to MaxApproachGap from a wall,
-        // so repair reaches at least that far.
-        var repairReach = MathF.Max(ToWorldRadius(RepairInteractionRange), PathfindingSystem.MaxApproachGap);
+        // Pathing can stop a Grunt up to MaxApproachGap from a wall, so repair reaches at least that far.
+        var repairReach = MathF.Max(ToWorldRadius(RepairInteractionRange), PathfindingSystem.MaxApproachGap(UnitRadius(unit)));
         if (!target.Footprint.IsWithin(unit.Position, repairReach))
         {
             MoveUnitToward(unit, GetBuildingApproachPoint(unit.Position, target, repairReach - RepairApproachMargin), deltaSeconds);

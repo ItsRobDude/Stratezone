@@ -641,6 +641,7 @@ BuildingDestroyedRevealSmoke.Run(context);
 EnemyAiBehaviorSmoke.Run(context);
 PowerDirtySmoke.Run(context);
 FootprintSmoke.Run(context);
+NavigationSmoke.Run(context);
 RenderSnapshotSmoke.Run(context);
 FixedStepSmoke.Run(context);
 

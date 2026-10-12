@@ -28,25 +28,19 @@ public sealed partial class RtsSimulation
         }
 
         // Units still spawn inside the Hub until A3, so the route starts at its center.
-        if (!IsEnemyHubRouteOpen(hub, _buildings))
+        var grid = GetNavigationGrid();
+        if (!IsEnemyHubRouteOpen(grid, hub))
         {
             // Something else already cut the route (terrain, a broken bridge); do not freeze rebuilding.
             return false;
         }
 
-        var candidate = new BuildingState(-1, _catalog.GetBuilding(buildingId), ContentIds.Factions.PrivateMilitary, position, null);
-        return !IsEnemyHubRouteOpen(hub, [.. _buildings, candidate]);
+        var candidate = BuildingFootprint.Place(_catalog.GetBuilding(buildingId).Footprint, position);
+        return !IsEnemyHubRouteOpen(grid.WithExtraFootprint(candidate), hub);
     }
 
-    private bool IsEnemyHubRouteOpen(BuildingState hub, IReadOnlyList<BuildingState> buildings)
+    private bool IsEnemyHubRouteOpen(NavigationGrid grid, BuildingState hub)
     {
-        return PathfindingSystem.FindPath(
-            hub.Position,
-            _enemyAi.RallyPosition,
-            buildings,
-            GetBlockingEnergyWallsForFaction(ContentIds.Factions.PrivateMilitary),
-            _map?.TerrainRegions ?? [],
-            _bridges,
-            _playableBounds).Success;
+        return PathfindingSystem.FindPath(grid, hub.Position, _enemyAi.RallyPosition, SmallestUnitRadius, ContentIds.Factions.PrivateMilitary).Success;
     }
 }

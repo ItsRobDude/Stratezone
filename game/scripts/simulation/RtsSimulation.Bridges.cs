@@ -39,18 +39,6 @@ public sealed partial class RtsSimulation
         return string.IsNullOrWhiteSpace(bridgeId) || FindBridge(bridgeId)?.IsIntact == true;
     }
 
-    public bool IsReachableForFaction(string factionId, SimVector2 start, SimVector2 destination)
-    {
-        return PathfindingSystem.FindPath(
-            start,
-            destination,
-            _buildings,
-            GetBlockingEnergyWallsForFaction(factionId),
-            _map?.TerrainRegions ?? [],
-            _bridges,
-            _playableBounds).Success;
-    }
-
     public bool DebugDamageBridge(string bridgeId, float amount)
     {
         var bridge = FindBridge(bridgeId);
@@ -110,7 +98,8 @@ public sealed partial class RtsSimulation
         var repairRange = ToWorldRadius(BridgeInteractionRange);
         if (bridge.DistanceTo(unit.Position) > repairRange)
         {
-            MoveUnitToward(unit, bridge.Center, deltaSeconds);
+            // Head for the near end of the bridge; a collapsed deck's center is open water.
+            MoveUnitToward(unit, bridge.Definition.ClosestPoint(unit.Position), deltaSeconds);
             return true;
         }
 

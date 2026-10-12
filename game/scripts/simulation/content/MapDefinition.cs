@@ -89,6 +89,16 @@ public sealed record MapObjectDefinition(
         };
     }
 
+    public SimVector2 ClosestPoint(SimVector2 position)
+    {
+        return Shape switch
+        {
+            "rect" => ConvexShape.Rect(Center, Size).ClosestPoint(position),
+            "circle" => ConvexShape.Circle(Center, Radius).ClosestPoint(position),
+            _ => Center
+        };
+    }
+
     private bool IsInsideRect(SimVector2 position, float padding)
     {
         var halfWidth = (Size.X * 0.5f) + padding;

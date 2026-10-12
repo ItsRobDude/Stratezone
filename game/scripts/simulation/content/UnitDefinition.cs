@@ -9,6 +9,7 @@ public sealed record UnitDefinition(
     IReadOnlyDictionary<string, float> DamageResistances,
     float MovementSpeed,
     float SightRange,
+    float CollisionRadius,
     string? AllowedByBuildingId,
     string? RequiredAddonBuildingId,
     string? RequiredBarracksUpgradeId,

@@ -85,7 +85,7 @@ Prototype behavior:
   - Pylon links and energy-wall links still measure center to center.
   - Building sight reaches the fallback distance past the farthest point of the outline.
   - The 2D sprite view also accepts clicks on the drawn sprite, because a tall sprite extends past its footprint. The 3D view picks the model.
-  - Implemented in Track A1. Pathing still uses the coarse first-pass grid and clearance until A2, so a gap that looks passable may still path as blocked.
+  - Implemented in Tracks A1 and A2. Pathing uses an 8 px clearance field, so visible gaps and walkable gaps agree within about one cell.
 - **Buildings are physical walls.**
   - Units cannot pass through a footprint.
   - A gap between buildings is passable only if the unit's `collision_radius` fits.
@@ -104,7 +104,7 @@ Prototype behavior:
 Tunable placeholders:
 
 - building buffer: small and uniform (starting proposal 0.25 content units). It only keeps models from touching; it is not an anti-cramming or walkway rule.
-- unit `collision_radius`: per unit type, so a gap a Rifleman fits through can still stop a tank
+- unit `collision_radius`: per unit type, so a gap a Rifleman fits through can still stop a tank. First pass: infantry 0.6, Rover 1.1, tanks 1.5.
 - build time: short enough for a 5-10 minute Level 1
 - repair rate: useful but not combat-dominating
 - repair cost: proportional to missing health and cheaper than full replacement unless playtests prove repair is too safe
@@ -365,8 +365,9 @@ Prototype behavior:
 - hostile tower walls use a short end-cap buffer so an authored chokepoint can seal against nearby cliffs/water/blocked terrain instead of being bypassed by walking around the tower
 - tower walls block movement, not line-of-fire; units may shoot through a wall if their weapon range reaches the target
 - building placement cannot cut through an active wall gap
-- first-pass pathing uses a coarse simulation grid around live building footprints and hostile wall segments
-- units that start inside a friendly spawn-building clearance can path outward instead of being trapped by the spawn footprint
+- pathing uses a cached 8 px clearance field around live building footprints, blocking terrain, and hostile wall segments. A unit passes where the clearance is at least its `collision_radius`.
+- a unit standing in blocked space, such as a fresh Hub spawn or a building placed on top of it, walks to its nearest passable cell first instead of being trapped
+- a blocked or unreachable destination resolves to the nearest reachable point near it, and paths are straightened wherever the unit has line of sight
 - tower placement should be expensive enough to matter
 - Level 1 central choke can be blocked by tower-wall play
 

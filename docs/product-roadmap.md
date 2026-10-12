@@ -103,7 +103,7 @@ The first prototype stack is locked as Godot 4 with C#.
 ## Near-Term Priorities
 
 0. 3D presentation overhaul (decided 2026-09-30). The order of work is in `docs/3d-presentation-plan.md`.
-   - **Track A:** fix building footprints and pathfinding. Real outline shapes, buildings as physical walls, spawn from the Hub exit, clearance-aware cached nav grid, separation, and a path-request budget. This is needed regardless of 3D and lands first. A0 (fixed-step simulation) and A1 (shape-accurate footprints) have implemented baselines; A2 (clearance-aware nav grid) is next.
+   - **Track A:** fix building footprints and pathfinding. Real outline shapes, buildings as physical walls, spawn from the Hub exit, clearance-aware cached nav grid, separation, and a path-request budget. This is needed regardless of 3D and lands first. A0 (fixed-step simulation), A1 (shape-accurate footprints) and A2 (clearance-aware nav grid, with A4 reachability labels and A5 path straightening) have implemented baselines; A3 (spawn from the Hub exit) is next.
    - **Track B:** overhaul controls and hotkeys to real-RTS conventions (grid command card, control groups, Stop/Hold/Attack-move/Shift-queue).
    - **Track C:** the 3D presentation, starting with a scale lineup and a crowd-performance spike on the Steam Deck, then 3D greybox parity.
      - Build the repeatable benchmark runner alongside the P0 crowd scene, as specified in `docs/3d-presentation-plan.md` "Order Of Work": frozen workload/camera/settings, warmup, raw frame times and build/hardware receipts for matched renderer, Linux/Proton and far-zoom-icon comparisons. This remains deferred until that performance work starts; the acceptance runs require actual Steam Deck hardware.
@@ -521,7 +521,7 @@ These are not first-prototype commitments:
 
 ## Open Decisions
 
-- Final footprint outlines and buffer value (first-pass sprite-based outlines and a uniform 0.25 buffer landed in Track A1; retune them when 3D models export real outlines), plus unit `collision_radius` values (Track A2).
+- Final footprint outlines and buffer value (first-pass sprite-based outlines and a uniform 0.25 buffer landed in Track A1; retune them when 3D models export real outlines), plus unit `collision_radius` values (first pass landed in Track A2: infantry 0.6, Rover 1.1, tanks 1.5).
 - Grunt replacement cost relative to basic combat units.
 - Exact Level 3 route/map shape for making Vehicle Bay/Rover matter without replacing infantry.
 - Exact Guardian Retrofit cost, build time, and Grunt-count tuning after Level 2 playtests.

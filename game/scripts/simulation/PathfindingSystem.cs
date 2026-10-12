@@ -1,68 +1,83 @@
-using Stratezone.Simulation.Content;
-
 namespace Stratezone.Simulation;
 
+// Grid A* over the cached clearance field (Track A2). Connected-region labels answer
+// reachability before searching (A4), so an unreachable target costs one lookup plus one
+// search to the nearest reachable stand-in. Line-of-sight smoothing straightens the grid
+// path (A5).
 internal static class PathfindingSystem
 {
-    private const float CellSize = 32.0f;
-    private const float UnitClearance = 18.0f;
-    private const int DestinationFallbackRadiusCells = 6;
+    // How far around a blocked destination to look for the nearest reachable stand-in.
+    private const int DestinationFallbackRings = 32;
 
-    // Farthest a unit sent toward a blocker may stop from it: the blocking clearance plus one cell diagonal.
-    internal const float MaxApproachGap = UnitClearance + (CellSize * 1.4143f);
+    // How far a unit standing in blocked space (a Hub spawn, a building placed on it) looks for open ground.
+    private const int StartEscapeRings = 32;
 
-    public static PathResult FindPath(
-        SimVector2 start,
-        SimVector2 destination,
-        IReadOnlyList<BuildingState> buildings,
-        IReadOnlyList<EnergyWallSegment> blockingWalls,
-        IReadOnlyList<MapRegionDefinition> terrainRegions,
-        IReadOnlyList<BridgeState>? bridges = null,
-        PlayableBounds? bounds = null)
+    private const float DiagonalCost = 1.41421356f;
+    private const float HeuristicTieBreak = 1.001f;
+    private const float LineOfSightStep = NavigationGrid.CellSize * 0.5f;
+
+    // Farthest a unit sent toward a wall may stop from it: its radius plus one cell diagonal.
+    internal static float MaxApproachGap(float radius)
     {
-        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, bridges ?? [], start, bounds ?? PlayableBounds.Default);
-        var startCell = grid.ToCell(start);
-        var preferredDestination = grid.ToCell(destination);
-        var candidateDestinations = grid.GetDestinationCandidates(preferredDestination, startCell)
-            .ToArray();
-
-        foreach (var destinationCell in candidateDestinations)
-        {
-            var result = TryFindPath(grid, startCell, destinationCell);
-            if (result is null)
-            {
-                continue;
-            }
-
-            var destinationPoint = destinationCell == preferredDestination && !grid.IsBlocked(preferredDestination, startCell)
-                ? destination
-                : grid.ToCenter(destinationCell);
-            var waypoints = SmoothWaypoints(result.Select(grid.ToCenter).ToArray(), destinationPoint);
-            return new PathResult(true, "Path found.", waypoints, destinationPoint);
-        }
-
-        return new PathResult(false, "No reachable path.", [], destination);
+        return radius + (NavigationGrid.CellSize * DiagonalCost);
     }
 
-    public static IReadOnlyList<PathfindingDebugCell> SampleBlockedCells(
-        IReadOnlyList<BuildingState> buildings,
-        IReadOnlyList<EnergyWallSegment> blockingWalls,
-        IReadOnlyList<MapRegionDefinition> terrainRegions,
-        IReadOnlyList<BridgeState> bridges,
-        float cellSize = 64.0f,
-        PlayableBounds? bounds = null)
+    public static PathResult FindPath(NavigationGrid grid, SimVector2 start, SimVector2 destination, float radius, string factionId)
     {
-        var resolvedBounds = bounds ?? PlayableBounds.Default;
-        var grid = new PathfindingGrid(buildings, blockingWalls, terrainRegions, bridges, new SimVector2(resolvedBounds.MinX, resolvedBounds.MinY), resolvedBounds, cellSize);
-        var cells = new List<PathfindingDebugCell>();
-        for (var x = 0; x <= grid.MaxCellX; x++)
+        var startCell = grid.CellIndexAt(start);
+        var origin = start;
+        var escaping = !grid.IsPassable(startCell, radius, factionId);
+        if (escaping)
         {
-            for (var y = 0; y <= grid.MaxCellY; y++)
+            startCell = grid.FindNearestCell(start, StartEscapeRings, cell => grid.IsPassable(cell, radius, factionId));
+            if (startCell < 0)
             {
-                var cell = new PathCell(x, y);
-                if (grid.IsBlocked(cell, new PathCell(-1, -1)))
+                return new PathResult(false, "No reachable path.", [], destination);
+            }
+
+            origin = grid.CellCenter(startCell);
+        }
+
+        var component = grid.ComponentOf(startCell, radius, factionId);
+        var destinationCell = grid.CellIndexAt(destination);
+        var destinationPoint = grid.ClampToBounds(destination);
+        if (grid.ComponentOf(destinationCell, radius, factionId) != component)
+        {
+            destinationCell = grid.FindNearestCell(
+                destination,
+                DestinationFallbackRings,
+                cell => grid.ComponentOf(cell, radius, factionId) == component);
+            if (destinationCell < 0)
+            {
+                return new PathResult(false, "No reachable path.", [], destination);
+            }
+
+            destinationPoint = grid.CellCenter(destinationCell);
+        }
+
+        var cells = SearchCells(grid, startCell, destinationCell, radius, factionId);
+        var route = Corners(grid, cells, destinationPoint);
+        var waypoints = StraightenWithLineOfSight(grid, origin, route, radius, factionId);
+        if (escaping)
+        {
+            waypoints.Insert(0, origin);
+        }
+
+        return new PathResult(true, "Path found.", waypoints, destinationPoint);
+    }
+
+    public static IReadOnlyList<PathfindingDebugCell> SampleBlockedCells(NavigationGrid grid, float radius, string factionId, float sampleSize)
+    {
+        var cells = new List<PathfindingDebugCell>();
+        var stride = Math.Max(1, (int)MathF.Round(sampleSize / NavigationGrid.CellSize));
+        for (var y = stride / 2; y < grid.Rows; y += stride)
+        {
+            for (var x = stride / 2; x < grid.Columns; x += stride)
+            {
+                var cell = (y * grid.Columns) + x;
+                if (!grid.IsPassable(cell, radius, factionId))
                 {
-                    cells.Add(new PathfindingDebugCell(grid.ToCenter(cell), cellSize));
+                    cells.Add(new PathfindingDebugCell(grid.CellCenter(cell), sampleSize));
                 }
             }
         }
@@ -70,267 +85,115 @@ internal static class PathfindingSystem
         return cells;
     }
 
-    private static IReadOnlyList<PathCell>? TryFindPath(PathfindingGrid grid, PathCell start, PathCell destination)
+    // Both cells share a connected region, so this search always succeeds.
+    private static List<int> SearchCells(NavigationGrid grid, int start, int goal, float radius, string factionId)
     {
-        var frontier = new PriorityQueue<PathCell, float>();
-        frontier.Enqueue(start, 0.0f);
-
-        var cameFrom = new Dictionary<PathCell, PathCell>();
-        var costSoFar = new Dictionary<PathCell, float>
+        var (cost, parent, stamp, generation) = grid.BeginSearch();
+        var goalX = goal % grid.Columns;
+        var goalY = goal / grid.Columns;
+        float Heuristic(int cell)
         {
-            [start] = 0.0f
-        };
+            var dx = Math.Abs((cell % grid.Columns) - goalX);
+            var dy = Math.Abs((cell / grid.Columns) - goalY);
+            return (dx + dy + ((DiagonalCost - 2.0f) * Math.Min(dx, dy))) * HeuristicTieBreak;
+        }
 
-        while (frontier.Count > 0)
+        var frontier = new PriorityQueue<int, float>();
+        cost[start] = 0.0f;
+        parent[start] = -1;
+        stamp[start] = generation;
+        frontier.Enqueue(start, Heuristic(start));
+        Span<int> neighbors = stackalloc int[8];
+        while (frontier.TryDequeue(out var current, out var priority))
         {
-            var current = frontier.Dequeue();
-            if (current == destination)
+            if (current == goal)
             {
-                return ReconstructPath(cameFrom, current);
+                break;
             }
 
-            foreach (var neighbor in grid.GetNeighbors(current, start))
+            if (priority > cost[current] + Heuristic(current) + 0.001f)
             {
-                var newCost = costSoFar[current] + current.DistanceTo(neighbor);
-                if (costSoFar.TryGetValue(neighbor, out var oldCost) && newCost >= oldCost)
+                continue; // A cheaper route to this cell was queued later.
+            }
+
+            var count = grid.GetNeighbors(current, radius, factionId, neighbors);
+            for (var index = 0; index < count; index++)
+            {
+                var neighbor = neighbors[index];
+                var diagonal = (neighbor % grid.Columns) != (current % grid.Columns) && (neighbor / grid.Columns) != (current / grid.Columns);
+                var newCost = cost[current] + (diagonal ? DiagonalCost : 1.0f);
+                if (stamp[neighbor] == generation && newCost >= cost[neighbor])
                 {
                     continue;
                 }
 
-                costSoFar[neighbor] = newCost;
-                frontier.Enqueue(neighbor, newCost + neighbor.DistanceTo(destination));
-                cameFrom[neighbor] = current;
+                stamp[neighbor] = generation;
+                cost[neighbor] = newCost;
+                parent[neighbor] = current;
+                frontier.Enqueue(neighbor, newCost + Heuristic(neighbor));
             }
         }
 
-        return null;
-    }
-
-    private static IReadOnlyList<PathCell> ReconstructPath(Dictionary<PathCell, PathCell> cameFrom, PathCell current)
-    {
-        var cells = new List<PathCell> { current };
-        while (cameFrom.TryGetValue(current, out var previous))
+        var cells = new List<int>();
+        for (var cell = goal; cell >= 0; cell = parent[cell])
         {
-            current = previous;
-            cells.Add(current);
+            cells.Add(cell);
         }
 
         cells.Reverse();
-        if (cells.Count > 0)
-        {
-            cells.RemoveAt(0);
-        }
-
         return cells;
     }
 
-    private static IReadOnlyList<SimVector2> SmoothWaypoints(IReadOnlyList<SimVector2> gridWaypoints, SimVector2 destination)
+    // Cell centers where the grid path turns, ending at the exact destination point.
+    private static List<SimVector2> Corners(NavigationGrid grid, IReadOnlyList<int> cells, SimVector2 destinationPoint)
     {
-        if (gridWaypoints.Count == 0)
+        var corners = new List<SimVector2>();
+        for (var index = 1; index < cells.Count - 1; index++)
         {
-            return [destination];
-        }
-
-        var smoothed = new List<SimVector2>();
-        SimVector2? previousDirection = null;
-        var previousPoint = gridWaypoints[0];
-
-        for (var index = 1; index < gridWaypoints.Count; index++)
-        {
-            var direction = NormalizeDirection(gridWaypoints[index] - previousPoint);
-            if (previousDirection is not null && direction != previousDirection.Value)
+            var previous = cells[index - 1];
+            var current = cells[index];
+            var next = cells[index + 1];
+            if (current - previous != next - current)
             {
-                smoothed.Add(previousPoint);
+                corners.Add(grid.CellCenter(current));
             }
-
-            previousDirection = direction;
-            previousPoint = gridWaypoints[index];
         }
 
-        smoothed.Add(destination);
-        return smoothed;
+        corners.Add(destinationPoint);
+        return corners;
     }
 
-    private static SimVector2 NormalizeDirection(SimVector2 direction)
+    // Drop every corner the unit can see past, so open-ground moves become straight lines.
+    private static List<SimVector2> StraightenWithLineOfSight(NavigationGrid grid, SimVector2 origin, IReadOnlyList<SimVector2> corners, float radius, string factionId)
     {
-        return new SimVector2(MathF.Sign(direction.X), MathF.Sign(direction.Y));
+        var waypoints = new List<SimVector2>();
+        var anchor = origin;
+        for (var index = 0; index < corners.Count - 1; index++)
+        {
+            if (!HasLineOfSight(grid, anchor, corners[index + 1], radius, factionId))
+            {
+                waypoints.Add(corners[index]);
+                anchor = corners[index];
+            }
+        }
+
+        waypoints.Add(corners[^1]);
+        return waypoints;
     }
 
-    private readonly record struct PathCell(int X, int Y)
+    private static bool HasLineOfSight(NavigationGrid grid, SimVector2 from, SimVector2 to, float radius, string factionId)
     {
-        public float DistanceTo(PathCell other)
+        var delta = to - from;
+        var steps = Math.Max(1, (int)MathF.Ceiling(delta.Length() / LineOfSightStep));
+        for (var step = 0; step <= steps; step++)
         {
-            var dx = X - other.X;
-            var dy = Y - other.Y;
-            return MathF.Sqrt((dx * dx) + (dy * dy));
-        }
-    }
-
-    private sealed class PathfindingGrid
-    {
-        private static readonly (int X, int Y)[] NeighborOffsets =
-        [
-            (-1, -1), (0, -1), (1, -1),
-            (-1, 0),           (1, 0),
-            (-1, 1),  (0, 1),  (1, 1)
-        ];
-
-        private readonly IReadOnlyList<BuildingState> _buildings;
-        private readonly IReadOnlyList<EnergyWallSegment> _blockingWalls;
-        private readonly IReadOnlyList<MapRegionDefinition> _terrainRegions;
-        private readonly IReadOnlyList<BridgeState> _bridges;
-        private readonly HashSet<int> _ignoredStartBlockers;
-        private readonly PlayableBounds _bounds;
-        private readonly float _cellSize;
-        private readonly int _maxCellX;
-        private readonly int _maxCellY;
-
-        public int MaxCellX => _maxCellX;
-        public int MaxCellY => _maxCellY;
-
-        public PathfindingGrid(
-            IReadOnlyList<BuildingState> buildings,
-            IReadOnlyList<EnergyWallSegment> blockingWalls,
-            IReadOnlyList<MapRegionDefinition> terrainRegions,
-            IReadOnlyList<BridgeState> bridges,
-            SimVector2 start,
-            PlayableBounds bounds,
-            float cellSize = CellSize)
-        {
-            _buildings = buildings;
-            _blockingWalls = blockingWalls;
-            _terrainRegions = terrainRegions;
-            _bridges = bridges;
-            _bounds = bounds;
-            _cellSize = cellSize;
-            _maxCellX = (int)MathF.Floor((bounds.MaxX - bounds.MinX) / _cellSize);
-            _maxCellY = (int)MathF.Floor((bounds.MaxY - bounds.MinY) / _cellSize);
-            _ignoredStartBlockers = buildings
-                .Where(building => !building.IsDestroyed)
-                .Where(building => building.Footprint.IsWithin(start, UnitClearance))
-                .Select(building => building.EntityId)
-                .ToHashSet();
-        }
-
-        public PathCell ToCell(SimVector2 point)
-        {
-            var x = (int)MathF.Floor((Math.Clamp(point.X, _bounds.MinX, _bounds.MaxX) - _bounds.MinX) / _cellSize);
-            var y = (int)MathF.Floor((Math.Clamp(point.Y, _bounds.MinY, _bounds.MaxY) - _bounds.MinY) / _cellSize);
-            return new PathCell(Math.Clamp(x, 0, _maxCellX), Math.Clamp(y, 0, _maxCellY));
-        }
-
-        public SimVector2 ToCenter(PathCell cell)
-        {
-            return new SimVector2(
-                _bounds.MinX + (cell.X * _cellSize) + (_cellSize / 2.0f),
-                _bounds.MinY + (cell.Y * _cellSize) + (_cellSize / 2.0f));
-        }
-
-        public IEnumerable<PathCell> GetDestinationCandidates(PathCell preferred, PathCell start)
-        {
-            if (!IsBlocked(preferred, start))
-            {
-                yield return preferred;
-            }
-
-            for (var radius = 1; radius <= DestinationFallbackRadiusCells; radius++)
-            {
-                var candidates = new List<PathCell>();
-                for (var x = preferred.X - radius; x <= preferred.X + radius; x++)
-                {
-                    for (var y = preferred.Y - radius; y <= preferred.Y + radius; y++)
-                    {
-                        if (Math.Abs(x - preferred.X) != radius && Math.Abs(y - preferred.Y) != radius)
-                        {
-                            continue;
-                        }
-
-                        var cell = new PathCell(x, y);
-                        if (!IsInsideBounds(cell) || IsBlocked(cell, start))
-                        {
-                            continue;
-                        }
-
-                        candidates.Add(cell);
-                    }
-                }
-
-                foreach (var candidate in candidates.OrderBy(candidate => candidate.DistanceTo(preferred)))
-                {
-                    yield return candidate;
-                }
-            }
-        }
-
-        public IEnumerable<PathCell> GetNeighbors(PathCell current, PathCell start)
-        {
-            foreach (var offset in NeighborOffsets)
-            {
-                var neighbor = new PathCell(current.X + offset.X, current.Y + offset.Y);
-                if (!IsInsideBounds(neighbor) ||
-                    IsBlocked(neighbor, start) ||
-                    IsMovementBlocked(current, neighbor))
-                {
-                    continue;
-                }
-
-                if (offset.X != 0 && offset.Y != 0)
-                {
-                    var horizontal = new PathCell(current.X + offset.X, current.Y);
-                    var vertical = new PathCell(current.X, current.Y + offset.Y);
-                    if (IsBlocked(horizontal, start) ||
-                        IsBlocked(vertical, start) ||
-                        IsMovementBlocked(current, horizontal) ||
-                        IsMovementBlocked(current, vertical))
-                    {
-                        continue;
-                    }
-                }
-
-                yield return neighbor;
-            }
-        }
-
-        public bool IsBlocked(PathCell cell, PathCell start)
-        {
-            if (cell == start)
+            if (!grid.IsPassableAt(from + (delta * (step / (float)steps)), radius, factionId))
             {
                 return false;
             }
-
-            var center = ToCenter(cell);
-            return IsBlockedByTerrain(center) ||
-                _blockingWalls.Any(wall =>
-                    SimulationGeometry.DistancePointToSegment(center, wall.ExtendedStart, wall.ExtendedEnd) <= EnergyWallSegment.BlockingClearance) ||
-                _buildings.Any(building =>
-                !building.IsDestroyed &&
-                !_ignoredStartBlockers.Contains(building.EntityId) &&
-                building.Footprint.IsWithin(center, UnitClearance));
         }
 
-        private bool IsBlockedByTerrain(SimVector2 center)
-        {
-            var blockedRegion = _terrainRegions.FirstOrDefault(region => region.BlocksMovement && region.Contains(center, UnitClearance));
-            if (blockedRegion is null)
-            {
-                return false;
-            }
-
-            return !_bridges.Any(bridge => bridge.IsIntact && bridge.Contains(center, UnitClearance));
-        }
-
-        private bool IsInsideBounds(PathCell cell)
-        {
-            return cell.X >= 0 && cell.Y >= 0 && cell.X <= _maxCellX && cell.Y <= _maxCellY;
-        }
-
-        private bool IsMovementBlocked(PathCell from, PathCell to)
-        {
-            var start = ToCenter(from);
-            var end = ToCenter(to);
-            return _blockingWalls.Any(wall =>
-                SimulationGeometry.DistanceSegmentToSegment(start, end, wall.ExtendedStart, wall.ExtendedEnd) <= EnergyWallSegment.BlockingClearance);
-        }
+        return true;
     }
 }
 

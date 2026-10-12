@@ -110,6 +110,7 @@ public sealed class ContentCatalog
                 LoadResistances(record),
                 record.GetProperty("movement_speed").GetSingle(),
                 record.GetProperty("sight_range").GetSingle(),
+                record.GetProperty("collision_radius").GetSingle(),
                 GetOptionalTrainRequirement(record, "allowed_by_building_id"),
                 GetOptionalTrainRequirement(record, "required_addon_building_id"),
                 GetOptionalTrainRequirement(record, "required_barracks_upgrade_id"),

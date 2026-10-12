@@ -112,6 +112,7 @@ Required fields:
 - `damage_resistances`
 - `movement_speed`
 - `sight_range`
+- `collision_radius`: content units, greater than 0 and at most 2.5 (the navigation grid tracks clearance up to 64 px). Pathing treats a cell as passable when its clearance is at least this radius, so a gap admits infantry (0.6) but stops a Rover (1.1) or tank (1.5). It is a first-pass tunable.
 - `train_requirements`
 - `spawn_rule`
 - `attack_damage`
@@ -313,10 +314,9 @@ Until 3D models exist, outlines are hand-authored to match the current sprite ar
 
 A placed building is legal when every existing footprint is at least the larger of the two buildings' `placement_buffer` away. Two buildings at that minimum gap form a wall.
 
-Planned schema changes (later Track A steps, not implemented yet):
+Planned schema change (Track A3, not implemented yet):
 
 - **`exit_point`:** for buildings that spawn units (Colony Hub). An offset just outside the footprint where new units appear.
-- **`collision_radius`:** on unit definitions. Used by clearance-aware pathing, so a gap can admit infantry but stop vehicles.
 
 Tunable placeholder example:
 

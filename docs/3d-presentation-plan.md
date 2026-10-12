@@ -171,16 +171,14 @@ The rule this track delivers: **buildings block exactly where their walls are.**
       - Artillery Battery: a radius-2 circle, until it has art
     - `BuildingFootprint` and `ConvexShape` own the geometry. The old circle uses are gone: placement, pathing blockers, power reach, resource wells, add-on adjacency (a gap of at most 1.5 units), energy-wall placement, attack and repair range and approach, tower reach, splash damage, and building sight.
     - The 2D ghost, outline, selection ring, and hit flash draw the real shape. The sprite's drawn bottom stands on the footprint's south edge. Picking takes the footprint plus the drawn sprite rectangle.
-    - **The coarse grid cannot always bring a unit within 1.5 units of a wall.**
-      - `PathfindingSystem.MaxApproachGap` is the clearance plus one cell diagonal: the farthest a unit sent toward a wall may stop.
-      - Grunts repair from a point just inside `max(1.5 units, MaxApproachGap)` of the nearest wall. A Grunt that ends its path still out of reach drops the order.
+    - **Pathing cannot always bring a unit right up to a wall.**
+      - `PathfindingSystem.MaxApproachGap(radius)` is the unit's radius plus one cell diagonal: the farthest a unit sent toward a wall may stop.
+      - Grunts repair from a point just inside `max(1.5 units, MaxApproachGap)` of the nearest wall. With A2's 8 px grid, that is 1.5 units again. A Grunt that ends its path still out of reach drops the order.
       - A retreating enemy stands down within one unit of its Hub's outline, or where its path toward the Hub ends.
-      - A2's finer grid shrinks `MaxApproachGap`, and repair reach then falls back to 1.5 units.
     - Units headed for a blocked point no longer repath every tick: `NeedsNewPath` compares against the requested target, not the substituted fallback.
     - **A8's placement guard is pulled forward,** because A1 removed the old spacing that left walkways between buildings. The AI skips a candidate placement that would cut the path from its Hub center to its rally point. The Hub center stands in for the exit until A3. Unreachable-target attack handling remains A8.
     - **Still open:**
-      - Pathing keeps the 32 px grid and 18 px clearance until A2, so visible gaps and walkable gaps still disagree.
-      - Production still spawns inside the Hub, and the start-point exemption remains, until A3.
+      - Production still spawns inside the Hub until A3.
       - The Barracks-upgrade Grunt range still measures from building centers.
     - **Coverage:**
       - `tests/SimulationSmoke/FootprintSmoke.cs`
@@ -196,6 +194,24 @@ The rule this track delivers: **buildings block exactly where their walls are.**
   - So a gap that lets a Rifleman through can still stop a tank.
   - The grid and field update locally when a building, wall, or bridge changes (a revision counter, like the power dirty flag), not on every path request.
   - **Navmesh fallback:** if the grid proves too slow or imprecise with many building shapes, the fallback is a navigation mesh, for example DotRecast (a pure C#, zlib-licensed library). That is a new dependency and needs approval first.
+  - **Implemented baseline (2026-10-11),** together with the parts of A3, A4, and A5 an 8 px grid needs.
+    - **Without them, A2 alone would regress:** the 6-ring blocked-destination fallback becomes about 600 searches, and grid paths zigzag.
+    - **`NavigationGrid`** caches three things over the playable bounds:
+      - a terrain clearance layer: blocking regions minus intact bridges, rasterized, then run through an exact Euclidean distance transform, minus half a cell
+      - a building clearance layer: exact distance from each cell center to each footprint, up to 64 px
+      - per-owner energy-wall masks: hard 28 px bands that block every other faction, as before
+    - **Rebuilds:**
+      - Each layer rebuilds only when its inputs change: live building footprints, wall anchors and owners, or bridge integrity.
+      - Re-stamping every building is cheap, so "local" updates are whole-layer re-stamps for now.
+    - **`collision_radius`:** infantry 0.6, Rover 1.1, Medium Tank and Heavy Tank 1.5. A cell is passable when its clearance is at least the unit's radius. A cell-aligned gap needs about twice the radius plus one 8 px cell.
+    - **A4:**
+      - Connected-region labels per (radius, faction) answer reachability with one lookup.
+      - A blocked or unreachable destination resolves to the nearest reachable cell within 32 cells (256 px) and costs one A* search.
+    - **A5:** grid corners are dropped wherever the unit has line of sight, sampled every 4 px against the clearance field. Open-ground moves are one straight segment.
+    - **A3 (part):** the whole-path start exemption is gone. A unit standing in blocked space walks to its nearest passable cell first. The `exit_point` itself is still to do.
+    - **Unit-to-building approaches aim at the near side of the target:** repair and bridge repair go to the closest point, and attacks go to the nearest wall. A collapsed bridge's center is open water.
+    - **Cost:** 100 cross-map Level 2 paths take about 0.19 s in a desktop Release build, against about 0.79 s for the old 32 px pathfinder on the same workload. Group pathing (A6b) and request budgets (A7) remain the planned answer for crowds. Steam Deck profiling is still required.
+    - Smoke coverage is `tests/SimulationSmoke/NavigationSmoke.cs`: gap admission by unit size, a sealed ring, straight open-ground paths, rebuild caching, terrain clearance accuracy, and the crowd timing guard.
 - **A3. Spawn from the door.**
   - Spawning buildings (the Colony Hub) get an authored `exit_point` just outside their footprint. Units spawn there and step clear of the door.
   - If a bad layout walls the exit, units spawn at the nearest free cell. If that's inside a walled pocket, they're stuck until the player opens it. That is intended.

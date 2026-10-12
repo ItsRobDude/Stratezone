@@ -106,14 +106,7 @@ public sealed partial class RtsSimulation
     private void SetUnitPathTo(UnitState unit, SimVector2 target)
     {
         DebugPathRequestCount++;
-        var path = PathfindingSystem.FindPath(
-            unit.Position,
-            target,
-            _buildings,
-            GetBlockingEnergyWallsForFaction(unit.FactionId),
-            _map?.TerrainRegions ?? [],
-            _bridges,
-            _playableBounds);
+        var path = FindUnitPath(unit, target);
 
         if (path.Success)
         {

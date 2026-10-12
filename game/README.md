@@ -38,7 +38,7 @@ Current greybox demo controls:
 - The enemy construction planner can spend enemy materials to build or replace basic infrastructure from authored slots.
 - Enemy units spend enemy materials, train from the enemy base, and then move toward the Colony Hub.
 - Energy walls force the enemy to attack a nearby wall anchor before it can continue toward the Hub.
-- Unit movement uses first-pass grid pathfinding around live building footprints and hostile energy wall segments.
+- Unit movement paths over a cached 8 px clearance field around building footprints, blocking terrain, and hostile energy walls; each unit passes where its `collision_radius` fits.
 - Fog starts black outside explored cells; scouted terrain stays revealed, and enemies in explored terrain remain visible in real time.
 - Mission state is simulation-owned: Commander death loses, and destroying all enemy targets wins.
 - The HUD alert line shows classic RTS warnings for player-known events such as enemy spotted, own assets under attack, power offline, construction complete, and training complete.

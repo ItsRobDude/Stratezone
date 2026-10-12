@@ -16,6 +16,7 @@
       },
       "movement_speed": 1.0,
       "sight_range": 6,
+      "collision_radius": 0.6,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
         "spawn_building_id": "building_colony_hub"
@@ -52,6 +53,7 @@
       },
       "movement_speed": 1.12,
       "sight_range": 6,
+      "collision_radius": 0.6,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
         "spawn_building_id": "building_colony_hub"
@@ -88,6 +90,7 @@
       },
       "movement_speed": 1.1,
       "sight_range": 7,
+      "collision_radius": 0.6,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
         "spawn_building_id": "building_colony_hub"
@@ -124,6 +127,7 @@
       },
       "movement_speed": 0.9,
       "sight_range": 7,
+      "collision_radius": 0.6,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
         "required_barracks_upgrade_id": "barracks_upgrade_guardian_retrofit",
@@ -161,6 +165,7 @@
       },
       "movement_speed": 1.6,
       "sight_range": 11,
+      "collision_radius": 1.1,
       "train_requirements": {
         "allowed_by_building_id": "building_barracks",
         "required_addon_building_id": "building_vehicle_bay",
@@ -200,6 +205,7 @@
       },
       "movement_speed": 0.9,
       "sight_range": 7,
+      "collision_radius": 0.6,
       "train_requirements": {
         "allowed_by_building_id": null,
         "spawn_building_id": null
@@ -236,6 +242,7 @@
       },
       "movement_speed": 0.85,
       "sight_range": 8,
+      "collision_radius": 1.5,
       "train_requirements": {
         "allowed_by_building_id": null,
         "spawn_building_id": null
@@ -274,6 +281,7 @@
       },
       "movement_speed": 0.75,
       "sight_range": 8,
+      "collision_radius": 1.5,
       "train_requirements": {
         "allowed_by_building_id": null,
         "spawn_building_id": null

@@ -41,6 +41,6 @@ public sealed partial class RtsSimulation
 
     private bool IsEnemyHubRouteOpen(NavigationGrid grid, BuildingState hub)
     {
-        return PathfindingSystem.FindPath(grid, hub.Position, _enemyAi.RallyPosition, SmallestUnitRadius, ContentIds.Factions.PrivateMilitary).Success;
+        return PathfindingSystem.CanReach(grid, hub.Position, _enemyAi.RallyPosition, SmallestUnitRadius, ContentIds.Factions.PrivateMilitary);
     }
 }

@@ -112,7 +112,7 @@ Required fields:
 - `damage_resistances`
 - `movement_speed`
 - `sight_range`
-- `collision_radius`: content units, greater than 0 and at most 2.5 (the navigation grid tracks clearance up to 64 px). Pathing treats a cell as passable when its clearance is at least this radius, so a gap admits infantry (0.6) but stops a Rover (1.1) or tank (1.5). It is a first-pass tunable.
+- `collision_radius`: content units, greater than 0 and at most 2.5 (the navigation grid tracks clearance up to 64 px). Pathing treats a cell as passable when its clearance is at least this radius, so a gap admits infantry (0.6) but stops a Rover (1.1) or tank (1.5). Movement segments also sweep the full radius against building outlines. It is a first-pass tunable.
 - `train_requirements`
 - `spawn_rule`
 - `attack_damage`
@@ -479,6 +479,7 @@ Bridge prototype rules:
 
 - Bridge objects are geographic facts of the map, not a generic neutral-infrastructure framework.
 - Intact bridges subtract passable geometry from blocked water/cliff terrain for pathfinding.
+- Rasterization preserves blocking regions smaller than an 8 px cell. A bridge subtracts a blocking cell only when its geometry covers the whole cell; partially covered edges remain conservative within the grid resolution.
 - Broken bridges add no passable geometry, so underlying blocked terrain applies normally.
 - Bridge IDs must be stable because missions, editor exports, smoke tests, and future saves may refer to them.
 

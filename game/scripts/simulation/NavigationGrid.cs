@@ -9,7 +9,7 @@ internal readonly record struct NavigationWall(EnergyWallSegment Segment, string
 // from its center to the nearest building or blocking terrain, so a cell is passable for a
 // unit when that distance is at least the unit's collision radius. Layers rebuild only when
 // their inputs change: buildings, energy walls, or terrain and bridge state.
-internal sealed class NavigationGrid
+internal sealed partial class NavigationGrid
 {
     public const float CellSize = 8.0f;
 
@@ -22,7 +22,15 @@ internal sealed class NavigationGrid
     private readonly float[] _clearance;
     private readonly Dictionary<string, bool[]> _wallMasksByOwner;
     private readonly Dictionary<(float Radius, string FactionId), int[]> _components = [];
+    private readonly Dictionary<(SimVector2 Start, SimVector2 Destination, float Radius, string Faction, BuildingFootprint? Target), bool> _reachability = [];
     private readonly bool _frozen;
+    private readonly NavigationGrid? _source;
+    private readonly BuildingFootprint? _extraFootprint;
+    private readonly List<NavigationWall> _walls = [];
+    private readonly bool[] _nearWalls;
+    private int[] _reachabilityStamp = [];
+    private int _reachabilityGeneration;
+    private readonly PriorityQueue<int, float> _reachabilityFrontier = new();
 
     private readonly List<BuildingFootprint> _footprintKey = [];
     private readonly List<(int Start, int End, string Owner)> _wallKey = [];
@@ -43,21 +51,28 @@ internal sealed class NavigationGrid
         _terrainClearance = new float[CellCount];
         _buildingClearance = new float[CellCount];
         _clearance = new float[CellCount];
+        _nearWalls = new bool[CellCount];
         _wallMasksByOwner = new Dictionary<string, bool[]>(StringComparer.Ordinal);
         Array.Fill(_terrainClearance, MaxClearance);
         Array.Fill(_buildingClearance, MaxClearance);
         Array.Fill(_clearance, MaxClearance);
     }
 
-    private NavigationGrid(NavigationGrid source)
+    private NavigationGrid(NavigationGrid source, BuildingFootprint extraFootprint)
     {
         _bounds = source._bounds;
         Columns = source.Columns;
         Rows = source.Rows;
         _terrainClearance = source._terrainClearance;
-        _buildingClearance = (float[])source._buildingClearance.Clone();
-        _clearance = (float[])source._clearance.Clone();
+        _buildingClearance = source._buildingClearance;
+        _clearance = source._clearance;
         _wallMasksByOwner = source._wallMasksByOwner;
+        _nearWalls = source._nearWalls;
+        _walls = source._walls;
+        _footprintKey = source._footprintKey;
+        _regionKey = source._regionKey;
+        _source = source;
+        _extraFootprint = extraFootprint;
         _frozen = true;
     }
 
@@ -65,6 +80,7 @@ internal sealed class NavigationGrid
     public int Rows { get; }
     public int CellCount => Columns * Rows;
     internal int DebugRebuildCount { get; private set; }
+    internal int DebugPathSearchCount { get; private set; }
 
     public void Refresh(
         IReadOnlyList<BuildingState> buildings,
@@ -107,30 +123,34 @@ internal sealed class NavigationGrid
 
         CombineLayers();
         _components.Clear();
+        _reachability.Clear();
     }
 
-    // A copy with one extra footprint, for asking "would this building wall something off?"
+    // A temporary read-only overlay, consumed before the source grid's next refresh.
+    // The candidate changes passability without cloning or relabeling the base layers.
     public NavigationGrid WithExtraFootprint(BuildingFootprint footprint)
     {
-        var copy = new NavigationGrid(this);
-        copy.StampFootprint(footprint);
-        copy.CombineLayers();
-        return copy;
+        return new NavigationGrid(this, footprint);
     }
 
     public bool IsPassable(int cell, float radius, string factionId)
     {
-        return _clearance[cell] >= radius && !IsWallBlocked(cell, factionId);
+        return _clearance[cell] >= radius && !IsWallBlocked(cell, factionId) &&
+            (_source is null || _source.IsPassable(cell, radius, factionId)) &&
+            IsExtraFootprintClear(CellCenter(cell), radius);
     }
 
     public float ClearanceAt(int cell)
     {
-        return _clearance[cell];
+        return _extraFootprint is null
+            ? _clearance[cell]
+            : MathF.Min(_source!.ClearanceAt(cell), _extraFootprint.DistanceTo(CellCenter(cell)));
     }
 
     public bool IsPassableAt(SimVector2 point, float radius, string factionId)
     {
-        return IsPassable(CellIndexAt(point), radius, factionId);
+        return _bounds.Contains(point) && IsPassable(CellIndexAt(point), radius, factionId) &&
+            IsGeometrySegmentPassable(point, point, radius, factionId);
     }
 
     public int CellIndexAt(SimVector2 point)
@@ -167,6 +187,74 @@ internal sealed class NavigationGrid
         }
 
         return labels[cell];
+    }
+
+    public BuildingFootprint? FootprintContaining(SimVector2 point)
+    {
+        return _footprintKey.FirstOrDefault(footprint => footprint.Contains(point));
+    }
+
+    internal bool TryGetReachability(SimVector2 start, SimVector2 destination, float radius, string factionId, BuildingFootprint? target, out bool reachable)
+    {
+        reachable = false;
+        return _source is null && _reachability.TryGetValue((start, destination, radius, factionId, target), out reachable);
+    }
+
+    internal void CacheReachability(SimVector2 start, SimVector2 destination, float radius, string factionId, BuildingFootprint? target, bool reachable)
+    {
+        if (_source is null) _reachability[(start, destination, radius, factionId, target)] = reachable;
+    }
+
+    // Base-grid connectivity is a label lookup. A candidate overlay needs only a
+    // goal-directed reachability search, using reusable scratch storage on the source.
+    public bool AreConnected(int start, int goal, float radius, string factionId)
+    {
+        if (!IsPassable(start, radius, factionId) || !IsPassable(goal, radius, factionId)) return false;
+        if (_source is null)
+        {
+            var component = ComponentOf(start, radius, factionId);
+            return component >= 0 && ComponentOf(goal, radius, factionId) == component;
+        }
+
+        var (stamp, generation, frontier) = BeginReachabilitySearch();
+        float Priority(int cell)
+        {
+            var dx = (cell % Columns) - (goal % Columns);
+            var dy = (cell / Columns) - (goal / Columns);
+            return (dx * dx) + (dy * dy);
+        }
+
+        stamp[start] = generation;
+        frontier.Enqueue(start, Priority(start));
+        Span<int> neighbors = stackalloc int[8];
+        while (frontier.TryDequeue(out var cell, out _))
+        {
+            if (cell == goal) return true;
+            var count = GetNeighbors(cell, radius, factionId, neighbors);
+            for (var index = 0; index < count; index++)
+            {
+                var neighbor = neighbors[index];
+                if (stamp[neighbor] == generation) continue;
+                stamp[neighbor] = generation;
+                frontier.Enqueue(neighbor, Priority(neighbor));
+            }
+        }
+
+        return false;
+    }
+
+    private (int[] Stamp, int Generation, PriorityQueue<int, float> Frontier) BeginReachabilitySearch()
+    {
+        if (_source is not null) return _source.BeginReachabilitySearch();
+        if (_reachabilityStamp.Length != CellCount) _reachabilityStamp = new int[CellCount];
+        _reachabilityFrontier.Clear();
+        return (_reachabilityStamp, ++_reachabilityGeneration, _reachabilityFrontier);
+    }
+
+    internal void RecordPathSearch()
+    {
+        if (_source is not null) _source.RecordPathSearch();
+        else DebugPathSearchCount++;
     }
 
     // The accepted cell nearest to `point`, searching square rings out to `maxRings`; -1 if none.
@@ -220,6 +308,7 @@ internal sealed class NavigationGrid
     // Reusable A* buffers; generation stamps avoid clearing them between searches.
     internal (float[] Cost, int[] Parent, int[] Stamp, int Generation) BeginSearch()
     {
+        if (_source is not null) return _source.BeginSearch();
         if (_searchStamp.Length != CellCount)
         {
             _searchCost = new float[CellCount];
@@ -314,8 +403,8 @@ internal sealed class NavigationGrid
 
     private void RebuildTerrain(IReadOnlyList<MapRegionDefinition> regions, IReadOnlyList<BridgeState> bridges)
     {
-        // Rasterize blocking terrain not spanned by an intact bridge, then take exact
-        // distances to it. Raster edges are within half a cell of the true edge.
+        // Rasterize every cell intersecting blocking terrain, including sub-cell barriers.
+        // An intact bridge must cover the whole cell before it removes that blocker.
         var blocked = new bool[CellCount];
         var anyBlocked = false;
         foreach (var region in regions.Where(region => region.BlocksMovement))
@@ -326,7 +415,7 @@ internal sealed class NavigationGrid
             ForEachCellIn(region.Center - halfExtent, region.Center + halfExtent, cell =>
             {
                 var center = CellCenter(cell);
-                if (region.Contains(center) && !bridges.Any(bridge => bridge.IsIntact && bridge.Contains(center)))
+                if (RegionOverlapsCell(region, center) && !bridges.Any(bridge => bridge.IsIntact && BridgeCoversCell(bridge, center)))
                 {
                     blocked[cell] = true;
                     anyBlocked = true;
@@ -364,7 +453,11 @@ internal sealed class NavigationGrid
     private void RebuildWalls(IReadOnlyList<NavigationWall> walls)
     {
         _wallMasksByOwner.Clear();
-        var reach = new SimVector2(EnergyWallSegment.BlockingClearance, EnergyWallSegment.BlockingClearance);
+        _walls.Clear();
+        _walls.AddRange(walls);
+        Array.Fill(_nearWalls, false);
+        var nearWallDistance = EnergyWallSegment.BlockingClearance + (CellSize * 1.41421356f);
+        var reach = new SimVector2(nearWallDistance, nearWallDistance);
         foreach (var wall in walls)
         {
             if (!_wallMasksByOwner.TryGetValue(wall.OwnerFactionId, out var mask))
@@ -379,7 +472,9 @@ internal sealed class NavigationGrid
             var max = new SimVector2(MathF.Max(start.X, end.X), MathF.Max(start.Y, end.Y)) + reach;
             ForEachCellIn(min, max, cell =>
             {
-                if (SimulationGeometry.DistancePointToSegment(CellCenter(cell), start, end) <= EnergyWallSegment.BlockingClearance)
+                var distance = SimulationGeometry.DistancePointToSegment(CellCenter(cell), start, end);
+                if (distance <= nearWallDistance) _nearWalls[cell] = true;
+                if (distance <= EnergyWallSegment.BlockingClearance)
                 {
                     mask[cell] = true;
                 }
@@ -469,7 +564,9 @@ internal sealed class NavigationGrid
                     continue;
                 }
 
-                output[count++] = ((y + dy) * Columns) + x + dx;
+                var neighbor = ((y + dy) * Columns) + x + dx;
+                if (!IsNeighborSegmentPassable(cell, neighbor, radius, factionId)) continue;
+                output[count++] = neighbor;
             }
         }
 

@@ -98,8 +98,29 @@ public sealed partial class RtsSimulation
         var repairRange = ToWorldRadius(BridgeInteractionRange);
         if (bridge.DistanceTo(unit.Position) > repairRange)
         {
-            // Head for the near end of the bridge; a collapsed deck's center is open water.
-            MoveUnitToward(unit, bridge.Definition.ClosestPoint(unit.Position), deltaSeconds);
+            if (unit.MoveTarget is null || unit.IsPathBlocked)
+            {
+                // The nearest bank may be sealed by buildings. Choose a reachable
+                // work point anywhere on this bridge before requesting one path.
+                var definition = bridge.Definition;
+                var shape = definition.Shape == "circle"
+                    ? ConvexShape.Circle(definition.Center, definition.Radius)
+                    : ConvexShape.Rect(definition.Center, definition.Size);
+                DebugPathRequestCount++;
+                var path = PathfindingSystem.FindPathToRange(GetNavigationGrid(), unit.Position, shape, repairRange, UnitRadius(unit), unit.FactionId);
+                if (!path.Success)
+                {
+                    unit.ClearPath();
+                    unit.RepairTargetBridgeId = null;
+                    return true;
+                }
+
+                unit.SetPath(path.Destination, path.Waypoints);
+            }
+
+            if (unit.MoveTarget is { } workPoint) MoveUnitToward(unit, workPoint, deltaSeconds);
+            if (unit.MoveTarget is null && bridge.DistanceTo(unit.Position) > repairRange)
+                unit.RepairTargetBridgeId = null;
             return true;
         }
 

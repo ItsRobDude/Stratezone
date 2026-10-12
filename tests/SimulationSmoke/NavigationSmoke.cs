@@ -13,6 +13,7 @@ internal static class NavigationSmoke
         ValidateGridRebuildsOnlyWhenObstaclesChange(context);
         ValidateTerrainClearanceMatchesWaterEdge(context);
         ValidateCrowdRepathCost(context);
+        NavigationRegressionSmoke.Run(context);
     }
 
     private static void ValidateGapsAdmitUnitsBySize(SmokeTestContext context)

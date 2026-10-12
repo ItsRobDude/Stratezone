@@ -197,7 +197,7 @@ The rule this track delivers: **buildings block exactly where their walls are.**
   - **Implemented baseline (2026-10-11),** together with the parts of A3, A4, and A5 an 8 px grid needs.
     - **Without them, A2 alone would regress:** the 6-ring blocked-destination fallback becomes about 600 searches, and grid paths zigzag.
     - **`NavigationGrid`** caches three things over the playable bounds:
-      - a terrain clearance layer: blocking regions minus intact bridges, rasterized, then run through an exact Euclidean distance transform, minus half a cell
+      - a terrain clearance layer: every cell intersecting a blocking region is rasterized, including regions smaller than a cell. An intact bridge removes a blocker only when it covers the whole cell. The exact Euclidean distance transform then measures distance to blocked centers, minus half a cell.
       - a building clearance layer: exact distance from each cell center to each footprint, up to 64 px
       - per-owner energy-wall masks: hard 28 px bands that block every other faction, as before
     - **Rebuilds:**
@@ -205,13 +205,14 @@ The rule this track delivers: **buildings block exactly where their walls are.**
       - Re-stamping every building is cheap, so "local" updates are whole-layer re-stamps for now.
     - **`collision_radius`:** infantry 0.6, Rover 1.1, Medium Tank and Heavy Tank 1.5. A cell is passable when its clearance is at least the unit's radius. A cell-aligned gap needs about twice the radius plus one 8 px cell.
     - **A4:**
-      - Connected-region labels per (radius, faction) answer reachability with one lookup.
+      - Connected-region labels per (radius, faction) answer reachability without A*. Repeated point queries are cached until obstacles change. A free destination must belong to the start's component; a building target may be reached at its outline. A movement fallback is not proof that the requested point is reachable.
+      - AI placement candidates use a temporary read-only footprint overlay and a goal-directed connectivity search with reused scratch buffers. They do not copy the grid, relabel the entire map, or construct an A* path.
       - A blocked or unreachable destination resolves to the nearest reachable cell within 32 cells (256 px) and costs one A* search.
-    - **A5:** grid corners are dropped wherever the unit has line of sight, sampled every 4 px against the clearance field. Open-ground moves are one straight segment.
-    - **A3 (part):** the whole-path start exemption is gone. A unit standing in blocked space walks to its nearest passable cell first. The `exit_point` itself is still to do.
-    - **Unit-to-building approaches aim at the near side of the target:** repair and bridge repair go to the closest point, and attacks go to the nearest wall. A collapsed bridge's center is open water.
-    - **Cost:** 100 cross-map Level 2 paths take about 0.19 s in a desktop Release build, against about 0.79 s for the old 32 px pathfinder on the same workload. Group pathing (A6b) and request budgets (A7) remain the planned answer for crowds. Steam Deck profiling is still required.
-    - Smoke coverage is `tests/SimulationSmoke/NavigationSmoke.cs`: gap admission by unit size, a sealed ring, straight open-ground paths, rebuild caching, terrain clearance accuracy, and the crowd timing guard.
+    - **A5:** grid corners are dropped wherever the unit has line of sight. Supercover traversal checks every crossed cell and both orthogonal cells at diagonal crossings; segment sweeps enforce the full unit radius around footprints and the hard hostile-wall band. A* and component labels use the same swept edge checks. Open-ground moves are one straight segment.
+    - **A3 (part):** the whole-path start exemption is gone. A unit standing in blocked space walks to its nearest passable cell with a legal escape segment. It may leave blockers already intersecting it, but cannot tunnel through another building, terrain region, or hostile wall. The `exit_point` itself is still to do.
+    - **Approaches:** building repair aims just inside range of the nearest wall, and attacks go to the nearest wall. Bridge repair chooses a reachable point within repair range of the bridge's geometry, including the other bank when the nearest bank is sealed, and drops the order when no work point is reachable. A collapsed bridge's center is open water.
+    - **Cost after the collision/reachability fixes:** 100 cross-map Level 2 paths take about 0.23 s in a desktop Release build, against about 0.79 s for the old 32 px pathfinder on the same workload. Twenty warmed AI candidate checks allocate about 39 KB rather than 65.9 MB. Group pathing (A6b) and request budgets (A7) remain the planned answer for crowds. Steam Deck profiling is still required.
+    - Smoke coverage is `tests/SimulationSmoke/NavigationSmoke.cs` and `NavigationRegressionSmoke.cs`: gap admission by unit size, a sealed ring, straight open-ground paths, rebuild caching, terrain clearance accuracy, escape and segment collision checks, thin terrain, strict reachability, bridge work points, candidate allocations, and the crowd timing guard.
 - **A3. Spawn from the door.**
   - Spawning buildings (the Colony Hub) get an authored `exit_point` just outside their footprint. Units spawn there and step clear of the door.
   - If a bad layout walls the exit, units spawn at the nearest free cell. If that's inside a walled pocket, they're stuck until the player opens it. That is intended.

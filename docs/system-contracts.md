@@ -366,8 +366,10 @@ Prototype behavior:
 - tower walls block movement, not line-of-fire; units may shoot through a wall if their weapon range reaches the target
 - building placement cannot cut through an active wall gap
 - pathing uses a cached 8 px clearance field around live building footprints, blocking terrain, and hostile wall segments. A unit passes where the clearance is at least its `collision_radius`.
-- a unit standing in blocked space, such as a fresh Hub spawn or a building placed on top of it, walks to its nearest passable cell first instead of being trapped
+- a unit standing in blocked space, such as a fresh Hub spawn or a building placed on top of it, walks to its nearest passable cell with a legal escape segment. The escape may leave a blocker already intersecting the unit, but cannot cross another obstacle or hostile wall.
 - a blocked or unreachable destination resolves to the nearest reachable point near it, and paths are straightened wherever the unit has line of sight
+- movement fallback does not count as reachability for AI dispatch or placement checks. Those checks require the requested point's component, or a reachable approach to a building's outline.
+- straightening checks every crossed grid cell and diagonal corner; swept segments clear building outlines by the full unit radius and stay outside hostile wall bands
 - tower placement should be expensive enough to matter
 - Level 1 central choke can be blocked by tower-wall play
 
@@ -404,6 +406,7 @@ Prototype behavior:
 - when a bridge reaches zero health, it becomes broken, emits a `bridge_collapsed` simulation event, and no longer subtracts passability from the blocked terrain beneath it
 - bridge damage is explicit; idle unit auto-fire should not target bridges as if they were normal hostile units or buildings
 - a Grunt can repair or rebuild a bridge by physically reaching its geometry and working over time
+- bridge repair chooses a reachable work point within 1.5 content units of that geometry. It may use the other bank when the nearest bank is sealed; if no work point is reachable, it drops the order rather than retrying every tick.
 - bridge repair spends materials based on missing health percentage, matching the existing building repair cost shape
 - until bridges have authored build costs or per-bridge repair overrides, full bridge repair costs 60% of bridge max health in materials
 - the first pass must avoid bridge soft-locks: Mission 2 needs at least one player-repairable route to the enemy island/base objective

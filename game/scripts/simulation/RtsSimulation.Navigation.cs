@@ -12,7 +12,8 @@ public sealed partial class RtsSimulation
 
     public bool IsReachableForFaction(string factionId, SimVector2 start, SimVector2 destination)
     {
-        return PathfindingSystem.FindPath(GetNavigationGrid(), start, destination, SmallestUnitRadius, factionId).Success;
+        var grid = GetNavigationGrid();
+        return PathfindingSystem.CanReach(grid, start, destination, SmallestUnitRadius, factionId, grid.FootprintContaining(destination));
     }
 
     internal static float UnitRadius(UnitState unit)

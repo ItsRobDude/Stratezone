@@ -14,7 +14,6 @@ internal static class PathfindingSystem
 
     private const float DiagonalCost = 1.41421356f;
     private const float HeuristicTieBreak = 1.001f;
-    private const float LineOfSightStep = NavigationGrid.CellSize * 0.5f;
 
     // Farthest a unit sent toward a wall may stop from it: its radius plus one cell diagonal.
     internal static float MaxApproachGap(float radius)
@@ -24,24 +23,15 @@ internal static class PathfindingSystem
 
     public static PathResult FindPath(NavigationGrid grid, SimVector2 start, SimVector2 destination, float radius, string factionId)
     {
-        var startCell = grid.CellIndexAt(start);
-        var origin = start;
-        var escaping = !grid.IsPassable(startCell, radius, factionId);
-        if (escaping)
+        if (!TryResolveStart(grid, start, radius, factionId, out var startCell, out var origin, out var escaping))
         {
-            startCell = grid.FindNearestCell(start, StartEscapeRings, cell => grid.IsPassable(cell, radius, factionId));
-            if (startCell < 0)
-            {
-                return new PathResult(false, "No reachable path.", [], destination);
-            }
-
-            origin = grid.CellCenter(startCell);
+            return new PathResult(false, "No reachable path.", [], destination);
         }
 
         var component = grid.ComponentOf(startCell, radius, factionId);
         var destinationCell = grid.CellIndexAt(destination);
         var destinationPoint = grid.ClampToBounds(destination);
-        if (grid.ComponentOf(destinationCell, radius, factionId) != component)
+        if (grid.ComponentOf(destinationCell, radius, factionId) != component || !grid.IsPassableAt(destinationPoint, radius, factionId))
         {
             destinationCell = grid.FindNearestCell(
                 destination,
@@ -54,6 +44,15 @@ internal static class PathfindingSystem
 
             destinationPoint = grid.CellCenter(destinationCell);
         }
+        else if (!grid.HasLineOfSight(grid.CellCenter(destinationCell), destinationPoint, radius, factionId))
+        {
+            // A free point and its cell center can still lie on opposite sides of an
+            // inflated curved corner. Connect the exact endpoint through a safe cell.
+            destinationCell = grid.FindNearestCell(destinationPoint, DestinationFallbackRings, cell =>
+                grid.ComponentOf(cell, radius, factionId) == component &&
+                grid.HasLineOfSight(grid.CellCenter(cell), destinationPoint, radius, factionId));
+            if (destinationCell < 0) return new PathResult(false, "No reachable path.", [], destination);
+        }
 
         var cells = SearchCells(grid, startCell, destinationCell, radius, factionId);
         var route = Corners(grid, cells, destinationPoint);
@@ -64,6 +63,60 @@ internal static class PathfindingSystem
         }
 
         return new PathResult(true, "Path found.", waypoints, destinationPoint);
+    }
+
+    // Reachability never treats a substituted movement destination as success.
+    // A blocked building target may be reached at its outline; a free point must
+    // belong to the start component itself.
+    public static bool CanReach(NavigationGrid grid, SimVector2 start, SimVector2 destination, float radius, string factionId, BuildingFootprint? target = null)
+    {
+        if (grid.TryGetReachability(start, destination, radius, factionId, target, out var cached)) return cached;
+        var reachable = false;
+        if (TryResolveStart(grid, start, radius, factionId, out var startCell, out _, out _))
+        {
+            if (grid.IsPassableAt(destination, radius, factionId))
+            {
+                reachable = grid.AreConnected(startCell, grid.CellIndexAt(destination), radius, factionId);
+            }
+            else if (target is not null)
+            {
+                var gap = MaxApproachGap(radius);
+                var rings = (int)MathF.Ceiling((target.BoundingRadius + gap) / NavigationGrid.CellSize) + 1;
+                reachable = grid.FindNearestCell(destination, rings, cell =>
+                    grid.IsPassable(cell, radius, factionId) && target.IsWithin(grid.CellCenter(cell), gap) &&
+                    grid.AreConnected(startCell, cell, radius, factionId)) >= 0;
+            }
+        }
+
+        grid.CacheReachability(start, destination, radius, factionId, target, reachable);
+        return reachable;
+    }
+
+    public static PathResult FindPathToRange(NavigationGrid grid, SimVector2 start, ConvexShape target, float range, float radius, string factionId)
+    {
+        var nearest = target.ClosestPoint(start);
+        if (!TryResolveStart(grid, start, radius, factionId, out var startCell, out _, out _))
+            return new PathResult(false, "No reachable path.", [], nearest);
+        var component = grid.ComponentOf(startCell, radius, factionId);
+        var rings = (int)MathF.Ceiling(((target.Radius * 2.0f) + range) / NavigationGrid.CellSize) + 1;
+        var cell = grid.FindNearestCell(nearest, rings, candidate =>
+            grid.ComponentOf(candidate, radius, factionId) == component && target.DistanceTo(grid.CellCenter(candidate)) <= range);
+        return cell < 0
+            ? new PathResult(false, "No reachable path.", [], nearest)
+            : FindPath(grid, start, grid.CellCenter(cell), radius, factionId);
+    }
+
+    private static bool TryResolveStart(NavigationGrid grid, SimVector2 start, float radius, string factionId, out int cell, out SimVector2 origin, out bool escaping)
+    {
+        cell = grid.CellIndexAt(start);
+        origin = start;
+        escaping = !grid.IsPassableAt(start, radius, factionId) || !grid.HasLineOfSight(start, grid.CellCenter(cell), radius, factionId);
+        if (!escaping) return true;
+        cell = grid.FindNearestCell(start, StartEscapeRings, candidate =>
+            grid.IsPassable(candidate, radius, factionId) && grid.CanEscapeTo(start, grid.CellCenter(candidate), radius, factionId));
+        if (cell < 0) return false;
+        origin = grid.CellCenter(cell);
+        return true;
     }
 
     public static IReadOnlyList<PathfindingDebugCell> SampleBlockedCells(NavigationGrid grid, float radius, string factionId, float sampleSize)
@@ -88,6 +141,7 @@ internal static class PathfindingSystem
     // Both cells share a connected region, so this search always succeeds.
     private static List<int> SearchCells(NavigationGrid grid, int start, int goal, float radius, string factionId)
     {
+        grid.RecordPathSearch();
         var (cost, parent, stamp, generation) = grid.BeginSearch();
         var goalX = goal % grid.Columns;
         var goalY = goal / grid.Columns;
@@ -148,6 +202,7 @@ internal static class PathfindingSystem
     private static List<SimVector2> Corners(NavigationGrid grid, IReadOnlyList<int> cells, SimVector2 destinationPoint)
     {
         var corners = new List<SimVector2>();
+        corners.Add(grid.CellCenter(cells[0]));
         for (var index = 1; index < cells.Count - 1; index++)
         {
             var previous = cells[index - 1];
@@ -159,7 +214,9 @@ internal static class PathfindingSystem
             }
         }
 
-        corners.Add(destinationPoint);
+        var goalCenter = grid.CellCenter(cells[^1]);
+        if (corners[^1] != goalCenter) corners.Add(goalCenter);
+        if (corners[^1] != destinationPoint) corners.Add(destinationPoint);
         return corners;
     }
 
@@ -183,17 +240,7 @@ internal static class PathfindingSystem
 
     private static bool HasLineOfSight(NavigationGrid grid, SimVector2 from, SimVector2 to, float radius, string factionId)
     {
-        var delta = to - from;
-        var steps = Math.Max(1, (int)MathF.Ceiling(delta.Length() / LineOfSightStep));
-        for (var step = 0; step <= steps; step++)
-        {
-            if (!grid.IsPassableAt(from + (delta * (step / (float)steps)), radius, factionId))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return grid.HasLineOfSight(from, to, radius, factionId);
     }
 }
 

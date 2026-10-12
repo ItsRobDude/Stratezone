@@ -10,6 +10,7 @@ public sealed partial class RtsSimulation
     public long StepIndex { get; private set; }
     public const float ContentUnitScale = 24.0f;
     private const float ResourceWellCoreRadius = 28.0f;
+    private const float AddonAdjacencyGap = 1.5f;
     private const float CombatMovementScale = 95.0f;
     private const float EnemyIncomeMultiplier = 0.75f;
     internal const float EnemyTrainTimeMultiplier = 1.25f;
@@ -112,6 +113,7 @@ public sealed partial class RtsSimulation
     }
 
     internal int DebugPowerRecomputeCount { get; private set; }
+    internal int DebugPathRequestCount { get; private set; }
 
     public static float ToWorldRadius(float contentRadius)
     {
@@ -128,7 +130,7 @@ public sealed partial class RtsSimulation
     public BuildingState AddStartingBuilding(string buildingId, SimVector2 position, string factionId = ContentIds.Factions.PlayerExpedition)
     {
         var definition = _catalog.GetBuilding(buildingId);
-        var targetWell = FindCompatibleResourceWell(definition, position);
+        var targetWell = FindCompatibleResourceWell(definition, BuildingFootprint.Place(definition.Footprint, position));
         var building = new BuildingState(_nextEntityId++, definition, factionId, position, targetWell?.Definition.Id)
         {
             IsPowered = !definition.RequiresPower
@@ -187,6 +189,7 @@ public sealed partial class RtsSimulation
                 SimulationMessage.Args(("amount", definition.Cost)));
         }
 
+        var footprint = BuildingFootprint.Place(definition.Footprint, position);
         foreach (var building in _buildings)
         {
             if (building.IsDestroyed)
@@ -194,8 +197,9 @@ public sealed partial class RtsSimulation
                 continue;
             }
 
-            var requiredDistance = building.OccupancyRadius + ToWorldRadius(definition.FootprintRadius + definition.PlacementBuffer);
-            if (building.Position.DistanceTo(position) < requiredDistance)
+            // The buffer only keeps models from touching; it is not a walkway rule.
+            var requiredGap = ToWorldRadius(MathF.Max(building.Definition.PlacementBuffer, definition.PlacementBuffer));
+            if (building.Footprint.DistanceTo(footprint) < requiredGap)
             {
                 return new PlacementValidation(
                     false,
@@ -206,8 +210,7 @@ public sealed partial class RtsSimulation
             }
         }
 
-        var footprintRadius = ToWorldRadius(definition.FootprintRadius);
-        if (_map?.BlocksBuildingAt(position, footprintRadius) == true)
+        if (_map?.BlocksBuildingAt(footprint) == true)
         {
             return new PlacementValidation(
                 false,
@@ -216,7 +219,7 @@ public sealed partial class RtsSimulation
                 "sim.placement.blocked_by_terrain");
         }
 
-        if (IsBuildingFootprintBlockedByEnergyWall(position, footprintRadius))
+        if (IsBuildingFootprintBlockedByEnergyWall(footprint))
         {
             return new PlacementValidation(
                 false,
@@ -225,7 +228,7 @@ public sealed partial class RtsSimulation
                 "sim.placement.blocked_by_energy_wall");
         }
 
-        if (_map?.AllowsBuildingAt(position, footprintRadius) == false)
+        if (_map?.AllowsBuildingAt(footprint) == false)
         {
             return new PlacementValidation(
                 false,
@@ -234,18 +237,18 @@ public sealed partial class RtsSimulation
                 "sim.placement.requires_buildable_clearing");
         }
 
-        var targetWell = FindCompatibleResourceWell(definition, position);
+        var targetWell = FindCompatibleResourceWell(definition, footprint);
         if (definition.ProvidesResourceExtraction && targetWell is null)
         {
             return new PlacementValidation(false, "Extractor must be placed on an open resource well.", null, "sim.placement.extractor_requires_well");
         }
 
-        if (BlocksOpenResourceWell(definition, position))
+        if (BlocksOpenResourceWell(definition, footprint))
         {
             return new PlacementValidation(false, "Resource wells are reserved for Extractors.", null, "sim.placement.resource_well_reserved");
         }
 
-        if (!IsAdjacentRequirementMet(factionId, definition, position))
+        if (!IsAdjacentRequirementMet(factionId, definition, footprint))
         {
             var required = _catalog.GetBuilding(definition.RequiresAdjacentBuildingId!);
             return new PlacementValidation(
@@ -260,7 +263,7 @@ public sealed partial class RtsSimulation
                     ("requiredBuilding", required.DisplayName)));
         }
 
-        if (definition.RequiresPower && !WouldBePowered(factionId, definition, position))
+        if (definition.RequiresPower && !WouldBePowered(factionId, definition, footprint))
         {
             return new PlacementValidation(false, "Must be placed inside powered support.", null, "sim.placement.requires_powered_support");
         }
@@ -562,7 +565,7 @@ public sealed partial class RtsSimulation
             unit.Position.DistanceTo(hubPosition) <= threatRadius);
     }
 
-    private ResourceWellState? FindCompatibleResourceWell(BuildingDefinition definition, SimVector2 position)
+    private ResourceWellState? FindCompatibleResourceWell(BuildingDefinition definition, BuildingFootprint footprint)
     {
         if (!definition.ProvidesResourceExtraction || definition.ExtractorResourceId is null)
         {
@@ -573,23 +576,22 @@ public sealed partial class RtsSimulation
             .Where(well => well.Definition.ResourceId == definition.ExtractorResourceId)
             .Where(IsResourceWellOpen)
             .Where(well => !well.IsDepleted)
-            .Where(well => well.Position.DistanceTo(position) <= ResourceWellCoreRadius + ToWorldRadius(definition.FootprintRadius))
-            .OrderBy(well => well.Position.DistanceTo(position))
+            .Where(well => footprint.IsWithin(well.Position, ResourceWellCoreRadius))
+            .OrderBy(well => well.Position.DistanceTo(footprint.Origin))
             .FirstOrDefault();
     }
 
-    private bool BlocksOpenResourceWell(BuildingDefinition definition, SimVector2 position)
+    private bool BlocksOpenResourceWell(BuildingDefinition definition, BuildingFootprint footprint)
     {
         if (definition.ProvidesResourceExtraction)
         {
             return false;
         }
 
-        var buildingRadius = ToWorldRadius(definition.FootprintRadius);
         return _resourceWells
             .Where(well => !well.IsDepleted)
             .Where(IsResourceWellOpen)
-            .Any(well => well.Position.DistanceTo(position) <= ResourceWellCoreRadius + buildingRadius);
+            .Any(well => footprint.IsWithin(well.Position, ResourceWellCoreRadius));
     }
 
     private bool IsResourceWellOpen(ResourceWellState well)
@@ -601,18 +603,19 @@ public sealed partial class RtsSimulation
                 !building.IsDestroyed);
     }
 
-    private bool IsAdjacentRequirementMet(string factionId, BuildingDefinition definition, SimVector2 position)
+    private bool IsAdjacentRequirementMet(string factionId, BuildingDefinition definition, BuildingFootprint footprint)
     {
         if (definition.RequiresAdjacentBuildingId is null)
         {
             return true;
         }
 
+        var maxGap = ToWorldRadius(AddonAdjacencyGap);
         return _buildings.Any(building =>
             building.FactionId == factionId &&
             building.Definition.Id == definition.RequiresAdjacentBuildingId &&
             !building.IsDestroyed &&
-            building.Position.DistanceTo(position) <= building.OccupancyRadius + ToWorldRadius(definition.FootprintRadius + definition.PlacementBuffer + 1.5f));
+            building.Footprint.DistanceTo(footprint) <= maxGap);
     }
 
     private float GetMaterialsForFaction(string factionId)
@@ -631,44 +634,43 @@ public sealed partial class RtsSimulation
         Materials = MathF.Max(0.0f, Materials - amount);
     }
 
-    private bool WouldBePowered(string factionId, BuildingDefinition definition, SimVector2 position)
+    private bool WouldBePowered(string factionId, BuildingDefinition definition, BuildingFootprint footprint)
     {
         if (!definition.RequiresPower)
         {
             return true;
         }
 
-        var targetRadius = ToWorldRadius(definition.FootprintRadius);
         return definition.Id == ContentIds.Buildings.Pylon
-            ? IsPylonSupported(factionId, position, targetRadius)
-            : IsPositionPowered(factionId, position, targetRadius);
+            ? IsPylonSupported(factionId, footprint)
+            : IsFootprintPowered(factionId, footprint);
     }
 
-    private bool IsPositionPowered(string factionId, SimVector2 position, float targetRadius)
+    // A building is powered when a power field reaches any part of its outline.
+    private bool IsFootprintPowered(string factionId, BuildingFootprint footprint)
     {
         return _buildings.Any(building =>
             building.FactionId == factionId &&
             building.Definition.ProvidesPower &&
             building.IsPowered &&
-            building.Definition.PowerRadius > 0 &&
-            building.Position.DistanceTo(position) <= ToWorldRadius(building.Definition.PowerRadius) + targetRadius);
+            IsInsideLocalPowerField(building, footprint));
     }
 
-    private bool IsPylonSupported(string factionId, SimVector2 position, float targetRadius)
+    private bool IsPylonSupported(string factionId, BuildingFootprint footprint)
     {
         foreach (var building in _buildings.Where(building =>
             building.FactionId == factionId &&
             building.Definition.ProvidesPower &&
             building.IsPowered))
         {
-            if (IsInsideLocalPowerField(building, position, targetRadius))
+            if (IsInsideLocalPowerField(building, footprint))
             {
                 return true;
             }
 
             if (building.Definition.Id == ContentIds.Buildings.Pylon &&
                 building.Definition.PylonLinkRange > 0 &&
-                building.Position.DistanceTo(position) <= ToWorldRadius(building.Definition.PylonLinkRange))
+                building.Position.DistanceTo(footprint.Origin) <= ToWorldRadius(building.Definition.PylonLinkRange))
             {
                 return true;
             }
@@ -677,10 +679,10 @@ public sealed partial class RtsSimulation
         return false;
     }
 
-    private static bool IsInsideLocalPowerField(BuildingState building, SimVector2 position, float targetRadius)
+    private static bool IsInsideLocalPowerField(BuildingState building, BuildingFootprint footprint)
     {
         return building.Definition.PowerRadius > 0 &&
-            building.Position.DistanceTo(position) <= ToWorldRadius(building.Definition.PowerRadius) + targetRadius;
+            footprint.IsWithin(building.Position, ToWorldRadius(building.Definition.PowerRadius));
     }
 
     private void RecomputePower()
@@ -698,10 +700,9 @@ public sealed partial class RtsSimulation
 
             foreach (var building in _buildings.Where(building => building.Definition.RequiresPower && !building.IsPowered && !building.IsDestroyed))
             {
-                var targetRadius = ToWorldRadius(building.Definition.FootprintRadius);
                 var powered = building.Definition.Id == ContentIds.Buildings.Pylon
-                    ? IsPylonSupported(building.FactionId, building.Position, targetRadius)
-                    : IsPositionPowered(building.FactionId, building.Position, targetRadius);
+                    ? IsPylonSupported(building.FactionId, building.Footprint)
+                    : IsFootprintPowered(building.FactionId, building.Footprint);
 
                 if (!powered)
                 {

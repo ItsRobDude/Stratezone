@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -542,6 +543,121 @@ def validate_destroyed_reveals(records: dict[str, dict[str, Any]]) -> list[str]:
     return errors
 
 
+def _is_number(value: Any) -> bool:
+    """JSON numbers only: Python treats true/false as ints, but the C# loader rejects them."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _vector(value: Any) -> tuple[float, float] | None:
+    if not isinstance(value, dict):
+        return None
+    x, y = value.get("x"), value.get("y")
+    if not _is_number(x) or not _is_number(y):
+        return None
+    return float(x), float(y)
+
+
+def _footprint_part_errors(prefix: str, part: Any) -> tuple[list[str], list[tuple[float, float]] | None, tuple[float, float, float] | None]:
+    """Return (errors, polygon points, circle) for one footprint part."""
+    if not isinstance(part, dict):
+        return [f"{prefix} must be an object"], None, None
+
+    shape = part.get("shape")
+    if shape == "rect":
+        center, size = _vector(part.get("center")), _vector(part.get("size"))
+        if center is None or size is None:
+            return [f"{prefix} rect needs numeric center and size"], None, None
+        if size[0] <= 0 or size[1] <= 0:
+            return [f"{prefix} rect size must be positive"], None, None
+        half_w, half_h = size[0] / 2, size[1] / 2
+        cx, cy = center
+        return [], [(cx - half_w, cy - half_h), (cx + half_w, cy - half_h), (cx + half_w, cy + half_h), (cx - half_w, cy + half_h)], None
+
+    if shape == "circle":
+        center, radius = _vector(part.get("center")), part.get("radius")
+        if center is None or not _is_number(radius) or radius <= 0:
+            return [f"{prefix} circle needs a numeric center and positive radius"], None, None
+        return [], None, (center[0], center[1], float(radius))
+
+    if shape == "polygon":
+        raw_points = part.get("points")
+        points = [_vector(point) for point in raw_points] if isinstance(raw_points, list) else []
+        if len(points) < 3 or any(point is None for point in points):
+            return [f"{prefix} polygon needs at least three numeric points"], None, None
+        crosses = []
+        turning = 0.0
+        for index, (ax, ay) in enumerate(points):
+            bx, by = points[(index + 1) % len(points)]
+            cx, cy = points[(index + 2) % len(points)]
+            cross = (bx - ax) * (cy - by) - (by - ay) * (cx - bx)
+            dot = (bx - ax) * (cx - bx) + (by - ay) * (cy - by)
+            crosses.append(cross)
+            turning += math.atan2(cross, dot)
+        same_turn = all(c > 1e-6 for c in crosses) or all(c < -1e-6 for c in crosses)
+        # Turning the same way at every corner still allows stars; a simple convex outline turns exactly once.
+        if not same_turn or abs(abs(turning) - 2 * math.pi) > 1e-6:
+            return [f"{prefix} polygon must be strictly convex and non-self-intersecting, with no repeated or collinear points"], None, None
+        return [], points, None
+
+    return [f"{prefix}.shape must be rect, circle or polygon"], None, None
+
+
+def _point_in_convex(point: tuple[float, float], polygon: list[tuple[float, float]]) -> bool:
+    signs = set()
+    for index, (ax, ay) in enumerate(polygon):
+        bx, by = polygon[(index + 1) % len(polygon)]
+        cross = (bx - ax) * (point[1] - ay) - (by - ay) * (point[0] - ax)
+        if abs(cross) > 1e-9:
+            signs.add(cross > 0)
+    return len(signs) <= 1
+
+
+def validate_building_footprints(records: dict[str, dict[str, Any]]) -> list[str]:
+    """Buildings block by their real outline: convex polygons and circles plus a small uniform buffer."""
+    errors: list[str] = []
+    buffers: dict[float, list[str]] = {}
+
+    for record_id, record in records.items():
+        if not record_id.startswith("building_"):
+            continue
+        source = record["_source_path"]
+
+        if "footprint_radius" in record:
+            errors.append(f"{source}: {record_id}.footprint_radius is retired; use footprint parts")
+
+        buffer = record.get("placement_buffer")
+        if not _is_number(buffer) or buffer <= 0:
+            errors.append(f"{source}: {record_id}.placement_buffer must be a positive number")
+        else:
+            buffers.setdefault(float(buffer), []).append(record_id)
+
+        footprint = record.get("footprint")
+        if not isinstance(footprint, list) or not footprint:
+            errors.append(f"{source}: {record_id}.footprint must be a non-empty list of shape parts")
+            continue
+
+        covers_origin = False
+        for index, part in enumerate(footprint):
+            part_errors, polygon, circle = _footprint_part_errors(f"{source}: {record_id}.footprint[{index}]", part)
+            errors.extend(part_errors)
+            if polygon is not None and _point_in_convex((0.0, 0.0), polygon):
+                covers_origin = True
+            if circle is not None and (circle[0] ** 2 + circle[1] ** 2) ** 0.5 <= circle[2]:
+                covers_origin = True
+        if not covers_origin and not any(error.startswith(f"{source}: {record_id}.footprint[") for error in errors):
+            errors.append(f"{source}: {record_id}.footprint must cover the building origin")
+
+        base_id = record.get("upgrade_from_building_id")
+        if isinstance(base_id, str) and base_id in records and records[base_id].get("footprint") != footprint:
+            errors.append(f"{source}: {record_id} upgrades in place, so its footprint must match {base_id}")
+
+    if len(buffers) > 1:
+        summary = ", ".join(f"{value:g}: {', '.join(sorted(ids))}" for value, ids in sorted(buffers.items()))
+        errors.append(f"building placement_buffer must be uniform across buildings ({summary})")
+
+    return errors
+
+
 def validate_i18n(records: dict[str, dict[str, Any]]) -> list[str]:
     errors: list[str] = []
     path = I18N_ROOT / "en.json"
@@ -602,6 +718,7 @@ def main() -> int:
     errors.extend(validate_mission_profiles(records))
     errors.extend(validate_map_objects(records))
     errors.extend(validate_destroyed_reveals(records))
+    errors.extend(validate_building_footprints(records))
     errors.extend(validate_i18n(records))
 
     if errors:

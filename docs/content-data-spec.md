@@ -213,8 +213,8 @@ Required fields:
 - `build_time_seconds`
 - `health`
 - `damage_resistances`
-- `footprint_radius` (current circle stand-in; replaced by a shape-accurate footprint in Track A, see below)
-- `placement_buffer` (becomes a small uniform model-separation buffer, not an anti-cramming rule)
+- `footprint` (the building's real ground outline; see Footprint Shape below)
+- `placement_buffer` (a small model-separation buffer, uniform across buildings; not an anti-cramming or walkway rule)
 - `requires_power`
 - `provides_power`
 - `power_radius`
@@ -286,13 +286,39 @@ Prototype rules:
 - Building construction is instant for now: `build_time_seconds` should be `0` for first-pass buildings.
 - Armed tower attack stats live directly on the building record.
 
-Tunable placeholder example:
+### Footprint Shape
 
-Planned schema changes (Track A of `docs/3d-presentation-plan.md`, not implemented yet). The field names will be finalized when Track A lands.
+Implemented in Track A1 of `docs/3d-presentation-plan.md`. `footprint` is a list of convex parts in content units relative to the building origin, with fixed orientation (+Y is south). The parts together are the building's ground outline. Placement, pathing, power reach, resource-well reservation, add-on adjacency, picking, the placement ghost, and weapon, repair, and splash range to buildings all measure against it.
 
-- **Footprint shape:** a list of convex polygons and/or circles, in content units relative to the building origin, with fixed orientation. It matches the building's real ground outline and replaces `footprint_radius`. Until 3D models exist, outlines are hand-authored to match the current art. Once models exist, the Blender export script writes them from the model's ground outline, and a validator flags drift.
+Each part has a `shape`:
+
+- `rect`: `center` and `size` objects (`{ "x": ..., "y": ... }`); loaded as a four-point polygon
+- `circle`: `center` and `radius`, for round parts such as silos and tower bases
+- `polygon`: `points`, a list of at least three `{ "x": ..., "y": ... }` objects that form a strictly convex shape in either winding
+
+```json
+"footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 4, "y": 5.5 } }],
+"placement_buffer": 0.25
+```
+
+Validation (`tools/validate_content.py`):
+
+- parts are well-formed and polygons are strictly convex
+- the footprint covers the building origin
+- in-place upgrades (`upgrade_from_building_id`) keep the base building's footprint
+- `placement_buffer` is positive and the same for every building
+- the retired `footprint_radius` field is rejected
+
+Until 3D models exist, outlines are hand-authored to match the current sprite art. They are first-pass and tunable. Ramps, aprons, and dirt pads are walkable decoration, not footprint. Once models exist, the Blender export script writes outlines from each model's ground outline, and a validator flags drift.
+
+A placed building is legal when every existing footprint is at least the larger of the two buildings' `placement_buffer` away. Two buildings at that minimum gap form a wall.
+
+Planned schema changes (later Track A steps, not implemented yet):
+
 - **`exit_point`:** for buildings that spawn units (Colony Hub). An offset just outside the footprint where new units appear.
 - **`collision_radius`:** on unit definitions. Used by clearance-aware pathing, so a gap can admit infantry but stop vehicles.
+
+Tunable placeholder example:
 
 ```text
 id: building_barracks
@@ -302,8 +328,8 @@ cost: 250
 build_time_seconds: 0
 health: 400
 damage_resistances: ballistic 0.2, energy 0.1, explosive 0.0, crush 0.4
-footprint_radius: 2
-placement_buffer: 1
+footprint: rect centered on the origin, 4 x 5.5
+placement_buffer: 0.25
 requires_power: true
 provides_power: false
 power_radius: 0

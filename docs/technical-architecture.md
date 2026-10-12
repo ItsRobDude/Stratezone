@@ -587,7 +587,7 @@ Browser/web is not the default if Godot C# remains the technical path.
 
 - Exact repo layout after Godot scaffolding.
 - Whether JSON remains the long-term content data format or Godot resources earn their place later.
-- Exact footprint outlines and the small placement buffer value for each building (Track A of `docs/3d-presentation-plan.md`).
+- Final footprint outlines and the small placement buffer value (first pass landed in Track A1 of `docs/3d-presentation-plan.md`; 3D model exports will replace the hand-authored outlines).
 - Exact grunt replacement cost relative to basic combat units.
 - Whether the cached simulation grid should later be replaced by a navmesh (for example DotRecast), a flow-field layer, or a dedicated RTS pathfinding helper.
 - Steam Deck renderer (Forward+ or Mobile) and ship path (native Linux or Proton), decided by the crowd spike.

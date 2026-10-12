@@ -386,12 +386,10 @@ public partial class MapEditorOverlay
         foreach (var building in _simulation.Buildings.Where(building => !building.IsDestroyed))
         {
             var position = ToGodot(building.Position);
-            DrawArc(
+            FootprintDrawing.DrawOutline(
+                this,
+                building.Definition.Footprint,
                 position,
-                building.FootprintWorldRadius,
-                0,
-                Mathf.Tau,
-                40,
                 building.FactionId == ContentIds.Factions.PlayerExpedition
                     ? new Color(0.40f, 0.78f, 1.0f, 0.60f)
                     : new Color(1.0f, 0.34f, 0.28f, 0.62f),

@@ -8,6 +8,9 @@ internal static class PathfindingSystem
     private const float UnitClearance = 18.0f;
     private const int DestinationFallbackRadiusCells = 6;
 
+    // Farthest a unit sent toward a blocker may stop from it: the blocking clearance plus one cell diagonal.
+    internal const float MaxApproachGap = UnitClearance + (CellSize * 1.4143f);
+
     public static PathResult FindPath(
         SimVector2 start,
         SimVector2 destination,
@@ -204,7 +207,7 @@ internal static class PathfindingSystem
             _maxCellY = (int)MathF.Floor((bounds.MaxY - bounds.MinY) / _cellSize);
             _ignoredStartBlockers = buildings
                 .Where(building => !building.IsDestroyed)
-                .Where(building => building.Position.DistanceTo(start) <= building.FootprintWorldRadius + UnitClearance)
+                .Where(building => building.Footprint.IsWithin(start, UnitClearance))
                 .Select(building => building.EntityId)
                 .ToHashSet();
         }
@@ -302,7 +305,7 @@ internal static class PathfindingSystem
                 _buildings.Any(building =>
                 !building.IsDestroyed &&
                 !_ignoredStartBlockers.Contains(building.EntityId) &&
-                building.Position.DistanceTo(center) <= building.FootprintWorldRadius + UnitClearance);
+                building.Footprint.IsWithin(center, UnitClearance));
         }
 
         private bool IsBlockedByTerrain(SimVector2 center)

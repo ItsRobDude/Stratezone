@@ -152,7 +152,7 @@ public sealed class ContentCatalog
                 record.GetProperty("cost").GetInt32(),
                 record.GetProperty("health").GetInt32(),
                 LoadResistances(record),
-                record.GetProperty("footprint_radius").GetSingle(),
+                LoadFootprint(record),
                 record.GetProperty("placement_buffer").GetSingle(),
                 record.GetProperty("requires_power").GetBoolean(),
                 record.GetProperty("provides_power").GetBoolean(),
@@ -583,6 +583,25 @@ public sealed class ContentCatalog
             reveal.GetProperty("unit_id").GetString() ?? string.Empty,
             reveal.TryGetProperty("count", out var count) ? count.GetInt32() : 0,
             reveal.TryGetProperty("occupant", out var occupant) && occupant.GetBoolean());
+    }
+
+    private static FootprintDefinition LoadFootprint(JsonElement record)
+    {
+        var id = record.GetProperty("id").GetString();
+        var parts = new List<FootprintPartDefinition>();
+        foreach (var part in record.GetProperty("footprint").EnumerateArray())
+        {
+            var shape = part.GetProperty("shape").GetString();
+            parts.Add(shape switch
+            {
+                "rect" => FootprintPartDefinition.Rect(LoadVector(part.GetProperty("center")), LoadVector(part.GetProperty("size"))),
+                "circle" => FootprintPartDefinition.Circle(LoadVector(part.GetProperty("center")), part.GetProperty("radius").GetSingle()),
+                "polygon" => FootprintPartDefinition.Polygon(part.GetProperty("points").EnumerateArray().Select(LoadVector).ToArray()),
+                _ => throw new InvalidDataException($"Building '{id}' has unknown footprint shape '{shape}'.")
+            });
+        }
+
+        return new FootprintDefinition(parts);
     }
 
     private static SimVector2 LoadVector(JsonElement record)

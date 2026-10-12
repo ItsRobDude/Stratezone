@@ -38,15 +38,15 @@ public sealed record MapDefinition(
         return TerrainRegions.Any(region => region.BlocksMovement && region.Contains(position, radius));
     }
 
-    public bool BlocksBuildingAt(SimVector2 position, float radius)
+    public bool BlocksBuildingAt(BuildingFootprint footprint)
     {
-        return TerrainRegions.Any(region => region.BlocksBuilding && region.Contains(position, radius));
+        return TerrainRegions.Any(region => region.BlocksBuilding && region.Overlaps(footprint));
     }
 
-    public bool AllowsBuildingAt(SimVector2 position, float radius)
+    public bool AllowsBuildingAt(BuildingFootprint footprint)
     {
         return !UsesRestrictedBuildRegions ||
-            TerrainRegions.Any(region => region.AllowsBuilding && region.Contains(position, radius));
+            TerrainRegions.Any(region => region.AllowsBuilding && region.Overlaps(footprint));
     }
 }
 
@@ -125,6 +125,17 @@ public sealed record MapRegionDefinition(
             "circle" => Center.DistanceTo(position) <= Radius + padding,
             _ => false
         };
+    }
+
+    public bool Overlaps(BuildingFootprint footprint)
+    {
+        var shape = Shape switch
+        {
+            "rect" => ConvexShape.Rect(Center, Size),
+            "circle" => ConvexShape.Circle(Center, Radius),
+            _ => null
+        };
+        return shape is not null && footprint.DistanceTo(shape) <= 0.0f;
     }
 
     private bool IsInsideRect(SimVector2 position, float padding)

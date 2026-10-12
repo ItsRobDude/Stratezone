@@ -177,7 +177,7 @@ public partial class Main
             view.ShowAlwaysOnLabel = !_mapEditorEnabled && _debugLabelsEnabled;
             view.Visible = !building.IsDestroyed &&
                 knownToPlayer &&
-                IsCircleInsideWorldBounds(building.Position, building.FootprintWorldRadius, visibleWorldBounds);
+                IsCircleInsideWorldBounds(building.Position, building.Footprint.BoundingRadius, visibleWorldBounds);
         }
 
         while (_resourceWellViews.Count < _simulation.ResourceWells.Count)

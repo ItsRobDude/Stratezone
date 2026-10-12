@@ -103,7 +103,7 @@ public partial class Main
             {
                 view.Visible = !building.IsDestroyed &&
                     (building.FactionId != ContentIds.Factions.PrivateMilitary || _simulation.IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, building.Position)) &&
-                    IsCircleInsideWorldBounds(building.Position, building.FootprintWorldRadius, bounds);
+                    IsCircleInsideWorldBounds(building.Position, building.Footprint.BoundingRadius, bounds);
                 view.SetCameraZoom(zoom);
             }
         for (var index = 0; index < _resourceWellViews.Count; index++)

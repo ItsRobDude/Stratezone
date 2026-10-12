@@ -76,7 +76,7 @@ The durable rule does not change: *RimWorld for colony stakes, Dominion/C&C-styl
 - **Scene:** `Main` is a Node2D with `WorldRoot` (Node2D) and `UiRoot` (CanvasLayer). Views are layered by ZIndex.
 - **Camera:** Camera2D with WASD/arrow pan and wheel zoom 0.55–1.8. No rotation.
 - **Units:** Sprite2D with 8 directional frames. Animation state is guessed from position deltas and timers. There are no health bars and no death animations.
-- **Buildings:** Sprite2D (south frame only). The placement ghost is a square, while the sim uses circles.
+- **Buildings:** Sprite2D (south frame only). Before A1, the placement ghost was a square while the sim used circles; both now use the authored footprint outline.
 - **Map:** `_Draw` rects and circles. Level 1 has no terrain regions.
 - **Fog:** 64 px cells.
 - **Picking:** 2D canvas only (`GetGlobalMousePosition`, world-space box select).
@@ -154,8 +154,38 @@ The rule this track delivers: **buildings block exactly where their walls are.**
     - pathing
     - the placement ghost
     - click-picking
-    - **weapon and repair range to buildings, measured to the nearest point on the outline.** Today these use the center plus a radius (`RtsSimulation.Combat.cs:480, 525, 679-696`, `RtsSimulation.Repair.cs:154`, `CombatResolver.cs:221`).
+    - **weapon and repair range to buildings, measured to the nearest point on the outline.**
   - This closes the open footprint/buffer item in `docs/product-roadmap.md`.
+  - **Implemented baseline (2026-10-11).**
+    - `footprint` parts (`rect`, `circle`, `polygon`) replace `footprint_radius` in `buildings.json`. `placement_buffer` is 0.25 for every building. Schema and validation are in `docs/content-data-spec.md`.
+    - **First-pass outlines,** sized from each sprite's base. All are tunable:
+      - Hub: 6 × 6
+      - Barracks: 4 × 5.5, long axis north–south
+      - Vehicle Bay: 5.75 × 4.5
+      - Power Plant: 3.5 × 3.25
+      - Pylon: 1.25 × 1.25
+      - Extractor: an octagon 5 across
+      - Defense, Gun, and Rocket Towers: one shared 2.5 × 2.5 square
+      - Med Hall: 4.75 × 5.25
+      - Logistics Pad: 4.75 × 4.5
+      - Artillery Battery: a radius-2 circle, until it has art
+    - `BuildingFootprint` and `ConvexShape` own the geometry. The old circle uses are gone: placement, pathing blockers, power reach, resource wells, add-on adjacency (a gap of at most 1.5 units), energy-wall placement, attack and repair range and approach, tower reach, splash damage, and building sight.
+    - The 2D ghost, outline, selection ring, and hit flash draw the real shape. The sprite's drawn bottom stands on the footprint's south edge. Picking takes the footprint plus the drawn sprite rectangle.
+    - **The coarse grid cannot always bring a unit within 1.5 units of a wall.**
+      - `PathfindingSystem.MaxApproachGap` is the clearance plus one cell diagonal: the farthest a unit sent toward a wall may stop.
+      - Grunts repair from a point just inside `max(1.5 units, MaxApproachGap)` of the nearest wall. A Grunt that ends its path still out of reach drops the order.
+      - A retreating enemy stands down within one unit of its Hub's outline, or where its path toward the Hub ends.
+      - A2's finer grid shrinks `MaxApproachGap`, and repair reach then falls back to 1.5 units.
+    - Units headed for a blocked point no longer repath every tick: `NeedsNewPath` compares against the requested target, not the substituted fallback.
+    - **A8's placement guard is pulled forward,** because A1 removed the old spacing that left walkways between buildings. The AI skips a candidate placement that would cut the path from its Hub center to its rally point. The Hub center stands in for the exit until A3. Unreachable-target attack handling remains A8.
+    - **Still open:**
+      - Pathing keeps the 32 px grid and 18 px clearance until A2, so visible gaps and walkable gaps still disagree.
+      - Production still spawns inside the Hub, and the start-point exemption remains, until A3.
+      - The Barracks-upgrade Grunt range still measures from building centers.
+    - **Coverage:**
+      - `tests/SimulationSmoke/FootprintSmoke.cs`
+      - `tests/Tooling/test_validate_content_footprints.py`
+      - the sprite-anchor and sprite-picking checks in `tools/verify_fixed_step_presentation.gd`
 - **A2. "Fits if it looks like it fits".**
   - **Cached obstacle grid:** building shapes, terrain blockers, energy walls, and broken bridges are drawn into a cached 8 px grid (1/3 content unit).
   - **Clearance field:** from that grid, compute a distance-to-nearest-obstacle field. A cell is passable for a unit when that distance is at least the unit's radius. Visible gaps and real gaps then agree to within about 4 px.
@@ -186,7 +216,7 @@ The rule this track delivers: **buildings block exactly where their walls are.**
   - Chase repaths run on a timer.
   - A per-tick cap limits path searches.
 - **A8. AI and building walls.**
-  - **Placement:** the enemy AI rejects a placement that would disconnect its own Hub exit from its internal AI rally position. The player is allowed to wall themselves in; the AI shouldn't do it by accident.
+  - **Placement:** the enemy AI rejects a placement that would disconnect its own Hub exit from its internal AI rally position. The player is allowed to wall themselves in; the AI shouldn't do it by accident. Implemented early with A1 (`RtsSimulation.EnemyPlacement.cs`). It uses the Hub center as the exit until A3.
   - **Attack:** when an attack target is unreachable because of *building* walls, attackers pick the nearest blocking building on their route and destroy it. This extends today's energy-wall-blocked handling (`RtsSimulation.Combat.cs:529-560`), which only checks energy walls along a straight line.
 - **A9. Tests** in `tests/SimulationSmoke`:
   - A soldier passes a gap exactly one soldier wide but a tank does not.

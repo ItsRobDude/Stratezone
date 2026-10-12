@@ -220,7 +220,7 @@ internal static class CombatResolver
                 building.IsDestroyed ||
                 !CanDamageFaction(sourceFactionId, building.FactionId, friendlyFire) ||
                 !targetFilters.Contains("building", StringComparer.Ordinal) ||
-                !IsInDamageArea(building.Position, center, radius + building.FootprintWorldRadius))
+                !building.Footprint.IsWithin(center, radius))
             {
                 continue;
             }

@@ -33,11 +33,11 @@ internal static class FirstLandingMissionSmoke
                     continue;
                 }
 
-                var requiredDistance = RtsSimulation.ToWorldRadius(left.Definition.FootprintRadius + left.Definition.PlacementBuffer) +
-                    RtsSimulation.ToWorldRadius(right.Definition.FootprintRadius + right.Definition.PlacementBuffer);
-                var actualDistance = left.Position.DistanceTo(right.Position);
+                var requiredGap = RtsSimulation.ToWorldRadius(MathF.Max(left.Definition.PlacementBuffer, right.Definition.PlacementBuffer));
+                var actualGap = BuildingFootprint.Place(left.Definition.Footprint, left.Position)
+                    .DistanceTo(BuildingFootprint.Place(right.Definition.Footprint, right.Position));
                 Assert(
-                    actualDistance >= requiredDistance,
+                    actualGap >= requiredGap,
                     $"mission starting buildings are spaced legally ({left.Entity.ContentId} at {left.Entity.MarkerId}, {right.Entity.ContentId} at {right.Entity.MarkerId})");
             }
         }

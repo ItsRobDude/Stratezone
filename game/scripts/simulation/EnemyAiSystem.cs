@@ -189,7 +189,7 @@ internal sealed class EnemyAiSystem
                 continue;
             }
 
-            if (simulation.TryPlaceBuildingForFaction(ContentIds.Factions.PrivateMilitary, buildingId, position + offset).Success)
+            if (simulation.TryPlaceEnemyBuilding(buildingId, position + offset))
             {
                 return true;
             }

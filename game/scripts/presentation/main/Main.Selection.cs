@@ -327,7 +327,7 @@ public partial class Main
             return view.ContainsInteractionPoint(worldPosition);
         }
 
-        return ToGodot(building.Position).DistanceTo(worldPosition) <= building.FootprintWorldRadius;
+        return building.Footprint.Contains(ToSim(worldPosition));
     }
 
     private float BuildingHitDistance(BuildingState building, Vector2 worldPosition)

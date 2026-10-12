@@ -131,7 +131,9 @@ public partial class GreyboxBuilding : Node2D
             return false;
         }
 
-        return GetInteractionRect().Grow(padding).HasPoint(ToLocal(worldPosition));
+        // The footprint is what blocks; the 2D sprite also takes clicks because it is what you see.
+        return _state.Footprint.IsWithin(ToSim(worldPosition), padding) ||
+            GetSpriteRect() is { } spriteRect && spriteRect.Grow(padding).HasPoint(ToLocal(worldPosition));
     }
 
     public override void _Process(double delta)
@@ -155,12 +157,17 @@ public partial class GreyboxBuilding : Node2D
             return float.MaxValue;
         }
 
+        var footprintDistance = _state.Footprint.DistanceTo(ToSim(worldPosition));
+        if (GetSpriteRect() is not { } rect)
+        {
+            return footprintDistance;
+        }
+
         var localPoint = ToLocal(worldPosition);
-        var rect = GetInteractionRect();
         var clamped = new Vector2(
             Mathf.Clamp(localPoint.X, rect.Position.X, rect.End.X),
             Mathf.Clamp(localPoint.Y, rect.Position.Y, rect.End.Y));
-        return localPoint.DistanceTo(clamped);
+        return Mathf.Min(footprintDistance, localPoint.DistanceTo(clamped));
     }
 
     public override void _Draw()
@@ -170,12 +177,11 @@ public partial class GreyboxBuilding : Node2D
             return;
         }
 
-        var radius = _state.FootprintWorldRadius;
         var fill = GetBodyFill(_state);
         var outline = _state.FactionId == ContentIds.Factions.PrivateMilitary
             ? new Color(0.18f, 0.04f, 0.04f)
             : new Color(0.05f, 0.12f, 0.16f);
-        DrawFootprintOutline(radius, _state);
+        DrawFootprintOutline(_state);
         if (_directionalSprite is null)
         {
             DrawBuildingSilhouette(_state, fill, outline);
@@ -195,7 +201,7 @@ public partial class GreyboxBuilding : Node2D
 
         if (_selected)
         {
-            DrawArc(Vector2.Zero, radius + 10.0f, 0, Mathf.Tau, 72, new Color(1.0f, 0.95f, 0.25f), 4.0f);
+            FootprintDrawing.DrawOutline(this, _state.Definition.Footprint, Vector2.Zero, new Color(1.0f, 0.95f, 0.25f), 4.0f, grow: 10.0f);
         }
     }
 
@@ -246,30 +252,37 @@ public partial class GreyboxBuilding : Node2D
         }
 
         var scale = GetDirectionalSpriteScale(state.Definition.Id);
-        var size = _directionalSprite.Texture.GetSize() * scale;
+        var textureHeight = _directionalSprite.Texture.GetSize().Y;
 
         _directionalSprite.Scale = Vector2.One * scale;
-        _directionalSprite.Offset = new Vector2(0, state.FootprintWorldRadius - (size.Y / 2.0f));
+        // The sprite's bottom stands on the footprint's south edge. Offset is in unscaled
+        // texture pixels, so convert the edge into that space.
+        var southEdge = RtsSimulation.ToWorldRadius(state.Definition.Footprint.SouthExtent);
+        _directionalSprite.Offset = new Vector2(0, (southEdge / scale) - (textureHeight / 2.0f));
     }
 
-    private Rect2 GetInteractionRect()
+    // The sprite's drawn rectangle in this building's local space.
+    private Rect2? GetSpriteRect()
+    {
+        if (_directionalSprite?.Texture is null)
+        {
+            return null;
+        }
+
+        return _directionalSprite.Transform * _directionalSprite.GetRect();
+    }
+
+    private Rect2 GetVisualBounds()
     {
         if (_state is null)
         {
             return new Rect2();
         }
 
-        var radius = _state.FootprintWorldRadius;
-        var footprint = new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f));
-        if (_directionalSprite?.Texture is null)
-        {
-            return footprint;
-        }
-
-        var size = _directionalSprite.Texture.GetSize() * _directionalSprite.Scale;
-        var spriteTopLeft = _directionalSprite.Offset - (size / 2.0f);
-        var spriteRect = new Rect2(spriteTopLeft, size);
-        return footprint.Merge(spriteRect);
+        var footprint = FootprintDrawing.GetBounds(_state.Definition.Footprint);
+        return GetSpriteRect() is { } spriteRect
+            ? footprint.Merge(spriteRect)
+            : footprint;
     }
 
     private static Texture2D? LoadDirectionalTexture(string assetSlug)
@@ -345,8 +358,8 @@ public partial class GreyboxBuilding : Node2D
 
         if (_directionalSprite?.Texture is not null)
         {
-            var interactionRect = GetInteractionRect();
-            _label.Position = new Vector2(-54, interactionRect.Position.Y - 24.0f);
+            var visualBounds = GetVisualBounds();
+            _label.Position = new Vector2(-54, visualBounds.Position.Y - 24.0f);
             return;
         }
 
@@ -441,17 +454,18 @@ public partial class GreyboxBuilding : Node2D
         var alpha = Mathf.Clamp(_state.HitFlashSeconds / 0.28f, 0.0f, 1.0f);
         var origin = ToLocal(ToGodot(_state.LastIncomingAttackOrigin.Value));
         var direction = origin.Length() > 0.001f ? origin.Normalized() : new Vector2(-1, 0);
-        var edge = direction * (_state.FootprintWorldRadius + 12.0f);
-        var impact = direction * MathF.Min(_state.FootprintWorldRadius, 34.0f);
+        var radius = _state.Footprint.BoundingRadius;
+        var edge = direction * (radius + 12.0f);
+        var impact = direction * MathF.Min(radius, 34.0f);
         var color = _state.FactionId == ContentIds.Factions.PrivateMilitary
             ? new Color(0.55f, 0.92f, 1.0f, alpha)
             : new Color(1.0f, 0.55f, 0.28f, alpha);
 
         DrawLine(edge, impact, color, 5.0f);
-        DrawArc(Vector2.Zero, _state.FootprintWorldRadius + 7.0f, 0, Mathf.Tau, 48, new Color(1.0f, 0.92f, 0.36f, alpha), 3.0f);
+        FootprintDrawing.DrawOutline(this, _state.Definition.Footprint, Vector2.Zero, new Color(1.0f, 0.92f, 0.36f, alpha), 3.0f, grow: 7.0f);
     }
 
-    private void DrawFootprintOutline(float radius, BuildingState state)
+    private void DrawFootprintOutline(BuildingState state)
     {
         var color = state.IsPowered || !state.Definition.RequiresPower
             ? new Color(0.55f, 0.9f, 1.0f, 0.34f)
@@ -461,8 +475,7 @@ public partial class GreyboxBuilding : Node2D
             color = new Color(1.0f, 0.42f, 0.34f, 0.34f);
         }
 
-        var rect = new Rect2(new Vector2(-radius, -radius), new Vector2(radius * 2.0f, radius * 2.0f));
-        DrawRect(rect, color, false, 2.0f);
+        FootprintDrawing.DrawOutline(this, state.Definition.Footprint, Vector2.Zero, color, 2.0f);
     }
 
     private void DrawBuildingSilhouette(BuildingState state, Color fill, Color outline)
@@ -624,6 +637,11 @@ public partial class GreyboxBuilding : Node2D
     private static Vector2 ToGodot(SimVector2 vector)
     {
         return new Vector2(vector.X, vector.Y);
+    }
+
+    private static SimVector2 ToSim(Vector2 vector)
+    {
+        return new SimVector2(vector.X, vector.Y);
     }
 
     private string ShortName(BuildingState state)

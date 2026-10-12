@@ -7,6 +7,7 @@ public sealed partial class RtsSimulation
     private const float GruntRepairRatePerSecond = 24.0f;
     private const float FullRepairCostFraction = 0.6f;
     private const float RepairInteractionRange = 1.5f;
+    private const float RepairApproachMargin = 4.0f;
 
     public RepairResult CommandUnitRepairBuilding(int unitEntityId, int targetBuildingEntityId)
     {
@@ -151,10 +152,18 @@ public sealed partial class RtsSimulation
             return true;
         }
 
-        var repairRange = target.FootprintWorldRadius + ToWorldRadius(RepairInteractionRange);
-        if (unit.Position.DistanceTo(target.Position) > repairRange)
+        // Until A2's finer grid, pathing can stop a Grunt up to MaxApproachGap from a wall,
+        // so repair reaches at least that far.
+        var repairReach = MathF.Max(ToWorldRadius(RepairInteractionRange), PathfindingSystem.MaxApproachGap);
+        if (!target.Footprint.IsWithin(unit.Position, repairReach))
         {
-            MoveUnitToward(unit, target.Position, deltaSeconds);
+            MoveUnitToward(unit, GetBuildingApproachPoint(unit.Position, target, repairReach - RepairApproachMargin), deltaSeconds);
+            if (unit.MoveTarget is null && !target.Footprint.IsWithin(unit.Position, repairReach))
+            {
+                // The Grunt is as close as pathing can bring it and still cannot reach.
+                unit.RepairTargetBuildingEntityId = null;
+            }
+
             return true;
         }
 

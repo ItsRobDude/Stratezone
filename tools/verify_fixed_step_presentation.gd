@@ -39,6 +39,42 @@ func cancel_placement(main: Node):
     right_click.pressed = true
     main.call("_UnhandledInput", right_click)
 
+## Southmost footprint edge per building id, in world pixels, read from content data.
+func footprint_south_edges() -> Dictionary:
+    var data = JSON.parse_string(FileAccess.get_file_as_string("res://data/buildings/buildings.json"))
+    var edges := {}
+    for record in data["records"]:
+        var south := -INF
+        for part in record["footprint"]:
+            match part["shape"]:
+                "rect":
+                    south = max(south, part["center"]["y"] + part["size"]["y"] / 2.0)
+                "circle":
+                    south = max(south, part["center"]["y"] + part["radius"])
+                "polygon":
+                    for point in part["points"]:
+                        south = max(south, point["y"])
+        edges[record["id"]] = south * 24.0
+    return edges
+
+## Each building sprite stands on its footprint's south edge and its drawn pixels take clicks.
+func check_building_sprites(main: Node) -> int:
+    var edges := footprint_south_edges()
+    var checked := 0
+    for view in main.get_node("WorldRoot").get_children():
+        if not str(view.name).begins_with("Building_") or view.is_queued_for_deletion():
+            continue
+        var building_id: String = str(view.name).split("_", true, 2)[2]
+        for sprite in view.get_children():
+            if not (sprite is Sprite2D) or sprite.texture == null:
+                continue
+            var drawn: Rect2 = sprite.get_transform() * sprite.get_rect()
+            check(absf(drawn.end.y - edges[building_id]) < 0.5, "%s sprite bottom %.2f is off its footprint south edge %.2f" % [building_id, drawn.end.y, edges[building_id]])
+            var top: Vector2 = view.to_global(Vector2(0, drawn.position.y + 2.0))
+            check(view.call("ContainsInteractionPoint", top, 0.0), "%s rejects a click on the top of its sprite" % building_id)
+            checked += 1
+    return checked
+
 func load_mission(main: Node, mission: String):
     main.call("LoadMission", mission)
     await process_frame
@@ -68,6 +104,7 @@ func run():
     await load_mission(main, "mission_first_landing")
     for frame in range(3): await process_frame
     check(fog_draws[0] > before_draws, "same-mission reload did not redraw its new fog instance")
+    check(check_building_sprites(main) >= 4, "First Landing building sprites were not available to check")
     var expected: Variant = null
     for fps in [30, 40, 60, 120, 144, 240]:
         await load_mission(main, "mission_first_landing")

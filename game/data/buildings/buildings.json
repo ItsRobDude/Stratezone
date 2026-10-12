@@ -13,8 +13,8 @@
         "explosive": -0.15,
         "crush": 0.5
       },
-      "footprint_radius": 4,
-      "placement_buffer": 2,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 6, "y": 6 } }],
+      "placement_buffer": 0.25,
       "requires_power": false,
       "provides_power": false,
       "power_radius": 0,
@@ -52,8 +52,8 @@
         "explosive": -0.15,
         "crush": 0.4
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 4, "y": 5.5 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -91,8 +91,8 @@
         "explosive": -0.15,
         "crush": 0.35
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 5.75, "y": 4.5 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -129,8 +129,8 @@
         "explosive": -0.15,
         "crush": 0.35
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 3.5, "y": 3.25 } }],
+      "placement_buffer": 0.25,
       "requires_power": false,
       "provides_power": true,
       "power_radius": 8,
@@ -168,8 +168,8 @@
         "explosive": -0.2,
         "crush": 0.25
       },
-      "footprint_radius": 0.75,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 1.25, "y": 1.25 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": true,
       "power_radius": 6,
@@ -202,8 +202,22 @@
         "explosive": -0.15,
         "crush": 0.35
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [
+        {
+          "shape": "polygon",
+          "points": [
+            { "x": -1.5, "y": -2.5 },
+            { "x": 1.5, "y": -2.5 },
+            { "x": 2.5, "y": -1.5 },
+            { "x": 2.5, "y": 1.5 },
+            { "x": 1.5, "y": 2.5 },
+            { "x": -1.5, "y": 2.5 },
+            { "x": -2.5, "y": 1.5 },
+            { "x": -2.5, "y": -1.5 }
+          ]
+        }
+      ],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -236,8 +250,8 @@
         "explosive": -0.15,
         "crush": 0.35
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 4.75, "y": 5.25 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -274,8 +288,8 @@
         "explosive": -0.15,
         "crush": 0.4
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 4.75, "y": 4.5 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -313,8 +327,8 @@
         "explosive": -0.15,
         "crush": 0.4
       },
-      "footprint_radius": 1,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 2.5, "y": 2.5 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -348,8 +362,8 @@
         "explosive": -0.15,
         "crush": 0.4
       },
-      "footprint_radius": 1,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 2.5, "y": 2.5 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -385,8 +399,8 @@
         "explosive": -0.15,
         "crush": 0.4
       },
-      "footprint_radius": 1,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "rect", "center": { "x": 0, "y": 0 }, "size": { "x": 2.5, "y": 2.5 } }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,
@@ -422,8 +436,8 @@
         "explosive": -0.25,
         "crush": 0.2
       },
-      "footprint_radius": 2,
-      "placement_buffer": 1,
+      "footprint": [{ "shape": "circle", "center": { "x": 0, "y": 0 }, "radius": 2 }],
+      "placement_buffer": 0.25,
       "requires_power": true,
       "provides_power": false,
       "power_radius": 0,

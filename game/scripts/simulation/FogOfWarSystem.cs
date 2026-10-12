@@ -33,7 +33,7 @@ internal static class FogOfWarSystem
     {
         var sightRange = building.Definition.SightRange > 0.0f
             ? building.Definition.SightRange
-            : BuildingSightFallback + building.Definition.FootprintRadius;
+            : BuildingSightFallback + building.Definition.Footprint.BoundingRadius;
         return RtsSimulation.ToWorldRadius(sightRange);
     }
 }

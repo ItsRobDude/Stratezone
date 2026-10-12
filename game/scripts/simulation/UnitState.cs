@@ -48,8 +48,18 @@ public sealed class UnitState
         ? _pathWaypoints[CurrentWaypointIndex]
         : null;
 
+    // The point the current path was requested for. MoveTarget may differ when pathing
+    // substituted a nearby reachable point for a blocked one.
+    internal SimVector2? RequestedMoveTarget { get; private set; }
+
     internal void SetPath(SimVector2 destination, IReadOnlyList<SimVector2> waypoints)
     {
+        SetPath(destination, destination, waypoints);
+    }
+
+    internal void SetPath(SimVector2 requested, SimVector2 destination, IReadOnlyList<SimVector2> waypoints)
+    {
+        RequestedMoveTarget = requested;
         MoveTarget = destination;
         _pathWaypoints.Clear();
         _pathWaypoints.AddRange(waypoints);
@@ -60,6 +70,7 @@ public sealed class UnitState
 
     internal void SetPathBlocked(SimVector2 destination, string reason)
     {
+        RequestedMoveTarget = destination;
         MoveTarget = destination;
         _pathWaypoints.Clear();
         CurrentWaypointIndex = 0;
@@ -69,6 +80,7 @@ public sealed class UnitState
 
     internal void ClearPath()
     {
+        RequestedMoveTarget = null;
         MoveTarget = null;
         _pathWaypoints.Clear();
         CurrentWaypointIndex = 0;

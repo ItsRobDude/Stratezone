@@ -405,12 +405,12 @@ public sealed partial class RtsSimulation
         if (unit.IsEnemyRetreating)
         {
             return unit.HealthRatio < EnemyRetreatRecoverRatio &&
-                unit.Position.DistanceTo(_enemyAi.HubPosition) > GetEnemyRetreatStandDownDistance();
+                !IsWithinEnemyRetreatDistance(unit, 0.0f);
         }
 
         return unit.HealthRatio > 0.0f &&
             unit.HealthRatio <= EnemyRetreatHealthRatio &&
-            unit.Position.DistanceTo(_enemyAi.HubPosition) > GetEnemyRetreatTriggerDistance();
+            !IsWithinEnemyRetreatDistance(unit, 2.0f);
     }
 
     private void TickEnemyRetreat(UnitState unit, float deltaSeconds)
@@ -425,7 +425,10 @@ public sealed partial class RtsSimulation
         unit.TargetBuildingEntityId = null;
         unit.TargetBridgeId = null;
         MoveUnitToward(unit, _enemyAi.HubPosition, deltaSeconds);
-        if (unit.Position.DistanceTo(_enemyAi.HubPosition) <= GetEnemyRetreatStandDownDistance())
+        // The Hub itself is blocked space, so finishing the path means the unit got as close
+        // as it can. Standing down also ends commitment, so retreat cannot re-trigger here.
+        var reachedPathEnd = unit.MoveTarget is null;
+        if (reachedPathEnd || IsWithinEnemyRetreatDistance(unit, 0.0f))
         {
             unit.IsEnemyRetreating = false;
             unit.IsEnemyAttackCommitted = false;
@@ -433,20 +436,17 @@ public sealed partial class RtsSimulation
         }
     }
 
-    private float GetEnemyRetreatStandDownDistance()
+    // Home is within one unit of the enemy Hub's outline, or two units of its marker once the
+    // Hub is gone. The margin widens the band that triggers a retreat.
+    private bool IsWithinEnemyRetreatDistance(UnitState unit, float marginContentUnits)
     {
         var hub = _buildings.FirstOrDefault(building =>
             building.FactionId == ContentIds.Factions.PrivateMilitary &&
             building.Definition.Id == ContentIds.Buildings.ColonyHub &&
             !building.IsDestroyed);
         return hub is null
-            ? ToWorldRadius(2.0f)
-            : hub.FootprintWorldRadius + ToWorldRadius(1.0f);
-    }
-
-    private float GetEnemyRetreatTriggerDistance()
-    {
-        return GetEnemyRetreatStandDownDistance() + ToWorldRadius(2.0f);
+            ? unit.Position.DistanceTo(_enemyAi.HubPosition) <= ToWorldRadius(2.0f + marginContentUnits)
+            : hub.Footprint.IsWithin(unit.Position, ToWorldRadius(1.0f + marginContentUnits));
     }
 
     private void TickEnemyScout(UnitState unit, float deltaSeconds)
@@ -476,8 +476,8 @@ public sealed partial class RtsSimulation
 
     private void TickUnitAttackTarget(UnitState attacker, BuildingState target, float deltaSeconds)
     {
-        var distanceToTarget = attacker.Position.DistanceTo(target.Position);
-        var attackRange = ToWorldRadius(attacker.Definition.AttackRange) + target.FootprintWorldRadius;
+        var distanceToTarget = target.Footprint.DistanceTo(attacker.Position);
+        var attackRange = ToWorldRadius(attacker.Definition.AttackRange);
         if (attacker.Definition.CanAttack && distanceToTarget <= attackRange)
         {
             TryUnitAttackBuilding(attacker, target);
@@ -514,16 +514,10 @@ public sealed partial class RtsSimulation
         MoveUnitToward(attacker, approachPoint, deltaSeconds);
     }
 
+    // Stand just inside weapon range of the nearest wall.
     private static SimVector2 GetBuildingAttackApproachPoint(UnitState attacker, BuildingState target, float attackRange)
     {
-        var directionFromTarget = (attacker.Position - target.Position).Normalized();
-        if (directionFromTarget.Length() <= 0.0001f)
-        {
-            directionFromTarget = new SimVector2(-1.0f, 0.0f);
-        }
-
-        var standOffDistance = MathF.Max(target.FootprintWorldRadius + 4.0f, attackRange - 0.5f);
-        return target.Position + (directionFromTarget * standOffDistance);
+        return GetBuildingApproachPoint(attacker.Position, target, MathF.Max(4.0f, attackRange - 0.5f));
     }
 
     private BuildingState? GetEnemyTargetBuilding(UnitState unit)
@@ -676,25 +670,25 @@ public sealed partial class RtsSimulation
 
     private UnitState? FindNearestHostileUnitForBuilding(BuildingState building)
     {
-        var range = ToWorldRadius(building.Definition.AttackRange) + building.FootprintWorldRadius;
+        var range = ToWorldRadius(building.Definition.AttackRange);
         return _units
             .Where(candidate => candidate.FactionId != building.FactionId && !candidate.IsDestroyed)
             .Where(candidate => building.FactionId != ContentIds.Factions.PlayerExpedition ||
                 IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, candidate.Position))
-            .Where(candidate => candidate.Position.DistanceTo(building.Position) <= range)
-            .OrderBy(candidate => candidate.Position.DistanceTo(building.Position))
+            .Where(candidate => building.Footprint.IsWithin(candidate.Position, range))
+            .OrderBy(candidate => building.Footprint.DistanceTo(candidate.Position))
             .FirstOrDefault();
     }
 
     private BuildingState? FindNearestHostileBuildingForBuilding(BuildingState building)
     {
-        var range = ToWorldRadius(building.Definition.AttackRange) + building.FootprintWorldRadius;
+        var range = ToWorldRadius(building.Definition.AttackRange);
         return _buildings
             .Where(candidate => candidate.FactionId != building.FactionId && !candidate.IsDestroyed)
             .Where(candidate => building.FactionId != ContentIds.Factions.PlayerExpedition ||
                 IsVisibleToFaction(ContentIds.Factions.PlayerExpedition, candidate.Position))
-            .Where(candidate => candidate.Position.DistanceTo(building.Position) <= range + candidate.FootprintWorldRadius)
-            .OrderBy(candidate => candidate.Position.DistanceTo(building.Position))
+            .Where(candidate => candidate.Footprint.DistanceTo(building.Footprint) <= range)
+            .OrderBy(candidate => candidate.Footprint.DistanceTo(building.Footprint))
             .FirstOrDefault();
     }
 }

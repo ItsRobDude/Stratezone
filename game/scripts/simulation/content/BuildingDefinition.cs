@@ -7,7 +7,7 @@ public sealed record BuildingDefinition(
     int Cost,
     int Health,
     IReadOnlyDictionary<string, float> DamageResistances,
-    float FootprintRadius,
+    FootprintDefinition Footprint,
     float PlacementBuffer,
     bool RequiresPower,
     bool ProvidesPower,

@@ -32,14 +32,15 @@ var lowBudgetSimulation = new RtsSimulation(catalog, 100, []);
 lowBudgetSimulation.AddStartingBuilding(ContentIds.Buildings.ColonyHub, new SimVector2(-300, -140));
 Assert(!lowBudgetSimulation.ValidatePlacement(ContentIds.Buildings.PowerPlant, new SimVector2(-170, 40)).IsLegal, "spending cannot go below zero");
 Assert(!simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(520, 320)).IsLegal, "pylon cannot be placed globally from a power plant");
-Assert(catalog.GetBuilding(ContentIds.Buildings.Pylon).FootprintRadius < catalog.GetBuilding(ContentIds.Buildings.DefenseTower).FootprintRadius, "pylon footprint is smaller than a tower footprint");
+Assert(catalog.GetBuilding(ContentIds.Buildings.Pylon).Footprint.BoundingRadius < catalog.GetBuilding(ContentIds.Buildings.DefenseTower).Footprint.BoundingRadius, "pylon footprint is smaller than a tower footprint");
 Assert(Math.Abs(catalog.GetBuilding(ContentIds.Buildings.Pylon).PylonLinkRange - 30.0f) < 0.01f, "Pylon links cover long enough distances to avoid wasteful short-hop power grids");
 
 var pylon = simulation.TryPlaceBuilding(ContentIds.Buildings.Pylon, new SimVector2(-220, 160));
 Assert(pylon.Success, pylon.Message);
 Assert(pylon.Building?.IsPowered == true, "pylon is powered by the plant");
 Assert(simulation.ValidatePlacement(ContentIds.Buildings.Pylon, new SimVector2(-430, 170)).IsLegal, "powered pylons can daisy chain to new pylons");
-Assert(simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(-350, 80)).IsLegal, "pylon extends powered placement");
+var pylonOnlyBarracks = simulation.ValidatePlacement(ContentIds.Buildings.Barracks, new SimVector2(-380, 300));
+Assert(pylonOnlyBarracks.IsLegal, $"pylon extends powered placement beyond the plant's field: {pylonOnlyBarracks.Reason}");
 
 var extractor = simulation.TryPlaceBuilding(ContentIds.Buildings.ExtractorRefinery, new SimVector2(-350, 170));
 Assert(extractor.Success, extractor.Message);
@@ -639,6 +640,7 @@ CombatRobustnessSmoke.Run(context);
 BuildingDestroyedRevealSmoke.Run(context);
 EnemyAiBehaviorSmoke.Run(context);
 PowerDirtySmoke.Run(context);
+FootprintSmoke.Run(context);
 RenderSnapshotSmoke.Run(context);
 FixedStepSmoke.Run(context);
 

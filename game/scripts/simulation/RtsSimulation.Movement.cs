@@ -105,6 +105,7 @@ public sealed partial class RtsSimulation
 
     private void SetUnitPathTo(UnitState unit, SimVector2 target)
     {
+        DebugPathRequestCount++;
         var path = PathfindingSystem.FindPath(
             unit.Position,
             target,
@@ -116,13 +117,31 @@ public sealed partial class RtsSimulation
 
         if (path.Success)
         {
-            unit.SetPath(path.Destination, path.Waypoints);
+            unit.SetPath(target, path.Destination, path.Waypoints);
             unit.IsBlockedByEnergyWall = false;
             return;
         }
 
         unit.SetPathBlocked(target, path.Message);
         unit.IsBlockedByEnergyWall = FindBlockingEnergyWallForFaction(unit.FactionId, unit.Position, target) is not null;
+    }
+
+    // A point outside the building, standOffDistance from the wall nearest to `from`.
+    private static SimVector2 GetBuildingApproachPoint(SimVector2 from, BuildingState target, float standOffDistance)
+    {
+        var nearestWall = target.Footprint.ClosestPoint(from);
+        var directionFromWall = (from - nearestWall).Normalized();
+        if (directionFromWall.Length() <= 0.0001f)
+        {
+            directionFromWall = (from - target.Position).Normalized();
+        }
+
+        if (directionFromWall.Length() <= 0.0001f)
+        {
+            directionFromWall = new SimVector2(-1.0f, 0.0f);
+        }
+
+        return nearestWall + (directionFromWall * standOffDistance);
     }
 
     private static bool NeedsNewPath(UnitState unit, SimVector2 target)
@@ -137,7 +156,10 @@ public sealed partial class RtsSimulation
             return true;
         }
 
-        return unit.PathWaypoints.Count == 0 || unit.MoveTarget.Value.DistanceTo(target) > 32.0f;
+        // Compare against what was requested, not the substituted fallback, so a unit headed
+        // for a blocked point does not repath every tick.
+        var requested = unit.RequestedMoveTarget ?? unit.MoveTarget.Value;
+        return unit.PathWaypoints.Count == 0 || requested.DistanceTo(target) > 32.0f;
     }
 
     private EnergyWallSegment? FindBlockingEnergyWall(SimVector2 start, SimVector2 end)
@@ -151,10 +173,10 @@ public sealed partial class RtsSimulation
             .FirstOrDefault(wall => DoesEnergyWallBlockLine(wall, start, end));
     }
 
-    private bool IsBuildingFootprintBlockedByEnergyWall(SimVector2 position, float footprintRadius)
+    private bool IsBuildingFootprintBlockedByEnergyWall(BuildingFootprint footprint)
     {
         return _energyWalls.Any(wall =>
-            SimulationGeometry.DistancePointToSegment(position, wall.ExtendedStart, wall.ExtendedEnd) <= footprintRadius + EnergyWallSegment.PlacementBuffer);
+            footprint.DistanceToSegment(wall.ExtendedStart, wall.ExtendedEnd) <= EnergyWallSegment.PlacementBuffer);
     }
 
     private static bool DoesEnergyWallBlockLine(EnergyWallSegment wall, SimVector2 start, SimVector2 end)

@@ -81,17 +81,23 @@ Prototype behavior:
 - placement should feel freeform, with no visible grid
 - **Footprint shape.** Each building's footprint follows its real ground outline (convex polygons plus circles for round parts) plus a small uniform buffer that keeps models from touching. Generic circles or squares are not acceptable stand-ins.
 - **One shape everywhere.** Placement, pathing, the placement ghost, click-picking, and weapon/repair ranges to buildings all use the same footprint. Range to a building is measured to the nearest point on its outline.
+  - The same applies to splash damage, a tower's own reach, power fields (a building is powered when a power field reaches any part of its outline), resource-well reservation, and add-on adjacency.
+  - Pylon links and energy-wall links still measure center to center.
+  - Building sight reaches the fallback distance past the farthest point of the outline.
+  - The 2D sprite view also accepts clicks on the drawn sprite, because a tall sprite extends past its footprint. The 3D view picks the model.
+  - Implemented in Track A1. Pathing still uses the coarse first-pass grid and clearance until A2, so a gap that looks passable may still path as blocked.
 - **Buildings are physical walls.**
   - Units cannot pass through a footprint.
   - A gap between buildings is passable only if the unit's `collision_radius` fits.
   - Players and enemies may wall off routes with buildings or trap themselves with a bad layout. There is no guaranteed walking lane.
-  - The enemy AI must not wall off its own Colony Hub exit by accident.
+  - The enemy AI must not wall off its own Colony Hub exit by accident. It skips any candidate placement that would cut the path from its Hub to its rally point.
 - **Spawning.** Units produced at the Colony Hub spawn at its exit point outside the footprint, never inside it.
 - The implementation plan for these rules is Track A of `docs/3d-presentation-plan.md`.
 - grunts construct buildings by player command
 - grunts construct Barracks add-ons adjacent to the Barracks by player command
 - grunts can upgrade a Defense Tower into an armed tower variant in place when the player pays the cost and requirements
 - grunts can repair during danger if the player commands them
+- a repairing Grunt works from just outside the building's nearest wall. A Grunt that cannot get within reach, for example a building sealed in by others, drops the order instead of retrying forever.
 - repair spends materials based on missing health; the cost scales with percent destroyed instead of being free or flat-priced
 - construction should fail clearly if unaffordable, blocked, or outside legal support
 

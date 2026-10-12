@@ -12,6 +12,7 @@ public sealed class BuildingState
         Position = position;
         ResourceWellId = resourceWellId;
         Health = definition.Health;
+        Footprint = BuildingFootprint.Place(definition.Footprint, position);
     }
 
     public int EntityId { get; }
@@ -31,8 +32,7 @@ public sealed class BuildingState
     public float ActiveBarracksUpgradeRemainingSeconds { get; private set; }
     public bool IsBarracksUpgradeInProgress => ActiveBarracksUpgradeId is not null;
 
-    public float FootprintWorldRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius);
-    public float OccupancyRadius => RtsSimulation.ToWorldRadius(Definition.FootprintRadius + Definition.PlacementBuffer);
+    public BuildingFootprint Footprint { get; private set; }
 
     internal bool ApplyDamage(float rawDamage, string damageType)
     {
@@ -118,6 +118,7 @@ public sealed class BuildingState
             ? 1.0f
             : Health / Definition.Health;
         Definition = definition;
+        Footprint = BuildingFootprint.Place(definition.Footprint, Position);
         Health = MathF.Max(1.0f, definition.Health * healthPercent);
         AttackCooldownRemaining = 0.0f;
     }

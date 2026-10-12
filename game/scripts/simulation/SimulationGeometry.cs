@@ -17,18 +17,22 @@ internal static class SimulationGeometry
 
     public static float DistancePointToSegment(SimVector2 point, SimVector2 start, SimVector2 end)
     {
+        return point.DistanceTo(ClosestPointOnSegment(point, start, end));
+    }
+
+    public static SimVector2 ClosestPointOnSegment(SimVector2 point, SimVector2 start, SimVector2 end)
+    {
         var segment = end - start;
         var lengthSquared = (segment.X * segment.X) + (segment.Y * segment.Y);
         if (lengthSquared <= 0.0001f)
         {
-            return point.DistanceTo(start);
+            return start;
         }
 
         var pointOffset = point - start;
         var t = Dot(pointOffset, segment) / lengthSquared;
         t = Math.Clamp(t, 0.0f, 1.0f);
-        var projection = start + (segment * t);
-        return point.DistanceTo(projection);
+        return start + (segment * t);
     }
 
     public static float DistanceSegmentToSegment(SimVector2 a, SimVector2 b, SimVector2 c, SimVector2 d)
